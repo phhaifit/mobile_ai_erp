@@ -5,8 +5,6 @@ import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/category_attribute.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/product_metadata_validation_exception.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/tag.dart';
-import 'package:mobile_ai_erp/domain/entity/product_metadata/unit.dart';
-import 'package:mobile_ai_erp/domain/entity/product_metadata/unit_group.dart';
 
 class ProductMetadataDataSource {
   final List<Category> _categories = <Category>[
@@ -78,7 +76,8 @@ class ProductMetadataDataSource {
       name: 'Weight',
       code: 'weight',
       valueType: AttributeValueType.number,
-      unitGroup: UnitGroup.weight,
+      unitLabel: 'kg',
+      allowedUnitLabels: <String>['kg', 'g', 'lb'],
       sortOrder: 40,
       isFilterable: false,
       minValue: 0,
@@ -145,30 +144,6 @@ class ProductMetadataDataSource {
       categoryId: 'cat_accessories',
       attributeId: 'attr_weight',
       sortOrder: 10,
-    ),
-  ];
-
-  final List<Unit> _units = <Unit>[
-    const Unit(
-      id: 'unit_g',
-      code: 'g',
-      name: 'Gram',
-      symbol: 'g',
-      unitGroup: UnitGroup.weight,
-    ),
-    const Unit(
-      id: 'unit_kg',
-      code: 'kg',
-      name: 'Kilogram',
-      symbol: 'kg',
-      unitGroup: UnitGroup.weight,
-    ),
-    const Unit(
-      id: 'unit_cm',
-      code: 'cm',
-      name: 'Centimeter',
-      symbol: 'cm',
-      unitGroup: UnitGroup.length,
     ),
   ];
 
@@ -370,10 +345,21 @@ class ProductMetadataDataSource {
           'Attribute codes must be unique.');
     }
     if (attribute.valueType != AttributeValueType.number &&
-        attribute.unitGroup != null) {
+        (attribute.unitLabel != null ||
+            attribute.allowedUnitLabels.isNotEmpty)) {
       throw const ProductMetadataValidationException(
-        'Only number attributes can use a unit group.',
+        'Only number attributes can use units.',
       );
+    }
+
+    final normalizedAllowedUnits =
+        attribute.valueType == AttributeValueType.number
+            ? _normalizeUnitLabels(attribute.allowedUnitLabels)
+            : const <String>[];
+    if (attribute.valueType == AttributeValueType.number &&
+        normalizedAllowedUnits.isEmpty &&
+        _normalizeNullable(attribute.unitLabel) != null) {
+      normalizedAllowedUnits.add(_normalizeNullable(attribute.unitLabel)!);
     }
 
     final savedAttribute = attribute.copyWith(
@@ -381,9 +367,11 @@ class ProductMetadataDataSource {
       name: name,
       code: code,
       inputPattern: _normalizeNullable(attribute.inputPattern),
-      unitGroup: attribute.valueType == AttributeValueType.number
-          ? attribute.unitGroup
+      unitLabel: attribute.valueType == AttributeValueType.number &&
+              normalizedAllowedUnits.isNotEmpty
+          ? normalizedAllowedUnits.first
           : null,
+      allowedUnitLabels: normalizedAllowedUnits,
     );
 
     _upsertById(_attributes, savedAttribute, (item) => item.id);
@@ -504,44 +492,6 @@ class ProductMetadataDataSource {
 
   Future<void> deleteCategoryAttribute(String categoryAttributeId) async {
     _categoryAttributes.removeWhere((item) => item.id == categoryAttributeId);
-  }
-
-  Future<List<Unit>> getUnits() async =>
-      _sortByOrderThenName(_units, (item) => item.name, (_) => null);
-
-  Future<Unit> saveUnit(Unit unit) async {
-    final code = unit.code.trim();
-    final name = unit.name.trim();
-    final symbol = unit.symbol.trim();
-    if (code.isEmpty || name.isEmpty || symbol.isEmpty) {
-      throw const ProductMetadataValidationException(
-        'Unit code, name, and symbol are required.',
-      );
-    }
-
-    final unitId = unit.id.trim();
-    final hasDuplicateCode = _units.any(
-      (existing) =>
-          existing.id != unitId &&
-          _normalize(existing.code) == _normalize(code),
-    );
-    if (hasDuplicateCode) {
-      throw const ProductMetadataValidationException(
-          'Unit codes must be unique.');
-    }
-
-    final saved = unit.copyWith(
-      id: unitId.isEmpty ? _generateId('unit') : unitId,
-      code: code,
-      name: name,
-      symbol: symbol,
-    );
-    _upsertById(_units, saved, (item) => item.id);
-    return saved;
-  }
-
-  Future<void> deleteUnit(String unitId) async {
-    _units.removeWhere((item) => item.id == unitId);
   }
 
   Future<List<Brand>> getBrands() async => _sortByOrderThenName(
@@ -666,6 +616,22 @@ class ProductMetadataDataSource {
 
   String _generateId(String prefix) =>
       '${prefix}_${DateTime.now().microsecondsSinceEpoch}';
+
+  List<String> _normalizeUnitLabels(List<String> units) {
+    final normalized = <String>[];
+    final seen = <String>{};
+    for (final unit in units) {
+      final trimmed = unit.trim();
+      if (trimmed.isEmpty) {
+        continue;
+      }
+      final key = trimmed.toLowerCase();
+      if (seen.add(key)) {
+        normalized.add(trimmed);
+      }
+    }
+    return normalized;
+  }
 
   T? _firstWhereOrNull<T>(Iterable<T> items, bool Function(T item) test) {
     for (final item in items) {

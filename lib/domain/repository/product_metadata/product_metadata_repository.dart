@@ -4,7 +4,6 @@ import 'package:mobile_ai_erp/domain/entity/product_metadata/brand.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/category_attribute.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/tag.dart';
-import 'package:mobile_ai_erp/domain/entity/product_metadata/unit.dart';
 
 abstract class ProductMetadataRepository {
   Future<List<Category>> getCategories();
@@ -23,10 +22,6 @@ abstract class ProductMetadataRepository {
   Future<List<CategoryAttribute>> getCategoryAttributes();
   Future<CategoryAttribute> saveCategoryAttribute(CategoryAttribute item);
   Future<void> deleteCategoryAttribute(String categoryAttributeId);
-
-  Future<List<Unit>> getUnits();
-  Future<Unit> saveUnit(Unit unit);
-  Future<void> deleteUnit(String unitId);
 
   Future<List<Brand>> getBrands();
   Future<Brand> saveBrand(Brand brand);
