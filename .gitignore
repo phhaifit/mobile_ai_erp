@@ -117,3 +117,22 @@ app.*.symbols
 !**/ios/**/default.perspectivev3
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 !/dev/ci/**/Gemfile.lock
+
+
+./idea
+*.iml
+
+# Code generation
+*.g.dart
+*.freezed.dart
+*.inject.dart
+*.inject.summary
+
+# IDE (optional better control)
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+.idea/*
+!.idea/codeStyles
+!.idea/runConfigurations
