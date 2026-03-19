@@ -66,18 +66,20 @@ class _ProductMetadataCategoryDetailScreenState
                 category.name,
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: <Widget>[
-                  MetadataStatusChip(label: category.status.label),
-                ],
-              ),
               const SizedBox(height: 16),
               MetadataDetailSectionCard(
                 title: 'Main information',
                 children: <Widget>[
+                  MetadataDetailRow(
+                    label: 'Status',
+                    valueChild: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: <Widget>[
+                        MetadataStatusChip(label: category.status.label),
+                      ],
+                    ),
+                  ),
                   MetadataDetailRow(label: 'Code', value: category.code),
                   MetadataDetailRow(label: 'Slug', value: category.slug),
                   MetadataDetailRow(
@@ -120,10 +122,25 @@ class _ProductMetadataCategoryDetailScreenState
                       final code = attribute?.code ?? '';
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
-                        child: Text(
-                          '$name${code.isEmpty ? '' : ' ($code)'}'
-                          ' - ${link.isRequired ? 'Required' : 'Optional'}'
-                          ' - Sort ${link.sortOrder}',
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text('$name${code.isEmpty ? '' : ' ($code)'}'),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: <Widget>[
+                                MetadataStatusChip(
+                                  label:
+                                      link.isRequired ? 'Required' : 'Optional',
+                                ),
+                                MetadataStatusChip(
+                                  label: 'Sort order: ${link.sortOrder}',
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       );
                     }),

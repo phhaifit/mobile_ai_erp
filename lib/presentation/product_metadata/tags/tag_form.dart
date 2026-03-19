@@ -3,6 +3,7 @@ import 'package:mobile_ai_erp/domain/entity/product_metadata/product_metadata_va
 import 'package:mobile_ai_erp/domain/entity/product_metadata/tag.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_route_args.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_form_decoration.dart';
 import 'package:flutter/material.dart';
 
 class ProductMetadataTagFormScreen extends StatefulWidget {
@@ -80,11 +81,9 @@ class _ProductMetadataTagFormScreenState
             children: <Widget>[
               TextFormField(
                 controller: _nameController,
-                decoration: InputDecoration(
+                decoration: metadataFormDecoration(
                   labelText: 'Name',
-                  border: const OutlineInputBorder(),
                   errorText: _nameErrorText,
-                  errorMaxLines: 3,
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -96,9 +95,8 @@ class _ProductMetadataTagFormScreenState
               const SizedBox(height: 16),
               TextFormField(
                 controller: _descriptionController,
-                decoration: const InputDecoration(
+                decoration: metadataFormDecoration(
                   labelText: 'Description',
-                  border: OutlineInputBorder(),
                 ),
                 minLines: 2,
                 maxLines: 4,
@@ -106,18 +104,16 @@ class _ProductMetadataTagFormScreenState
               const SizedBox(height: 16),
               TextFormField(
                 controller: _colorHexController,
-                decoration: const InputDecoration(
+                decoration: metadataFormDecoration(
                   labelText: 'Color hex',
                   hintText: '#FF6B6B',
-                  border: OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<TagStatus>(
                 initialValue: _status,
-                decoration: const InputDecoration(
+                decoration: metadataFormDecoration(
                   labelText: 'Status',
-                  border: OutlineInputBorder(),
                 ),
                 items: TagStatus.values
                     .map(
@@ -140,9 +136,8 @@ class _ProductMetadataTagFormScreenState
               TextFormField(
                 controller: _sortOrderController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
+                decoration: metadataFormDecoration(
                   labelText: 'Sort order',
-                  border: OutlineInputBorder(),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {

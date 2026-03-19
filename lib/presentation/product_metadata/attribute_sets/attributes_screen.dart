@@ -5,10 +5,25 @@ import 'package:mobile_ai_erp/presentation/product_metadata/attribute_sets/attri
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_navigator.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_route_args.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_empty_state.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_form_decoration.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_list_card.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_list_controls.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_pagination_controls.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_status_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+
+enum _AttributeSortOption {
+  sortOrder('Sort order'),
+  nameAsc('Name A-Z'),
+  nameDesc('Name Z-A'),
+  valueType('Value type');
+
+  const _AttributeSortOption(this.label);
+
+  final String label;
+}
 
 class ProductMetadataAttributesScreen extends StatefulWidget {
   const ProductMetadataAttributesScreen({
@@ -103,124 +118,364 @@ class _ProductMetadataAttributesScreenState
   }
 }
 
-class _AttributesListTab extends StatelessWidget {
+class _AttributesListTab extends StatefulWidget {
   const _AttributesListTab({required this.store});
 
   final ProductMetadataStore store;
 
   @override
+  State<_AttributesListTab> createState() => _AttributesListTabState();
+}
+
+class _AttributesListTabState extends State<_AttributesListTab> {
+  static const int _pageSize = 10;
+
+  final TextEditingController _searchController = TextEditingController();
+  String _query = '';
+  AttributeValueType? _valueTypeFilter;
+  bool _filterableOnly = false;
+  _AttributeSortOption _sortOption = _AttributeSortOption.sortOrder;
+  int _currentPage = 1;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (store.attributes.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 360),
-            child: Card(
+    if (widget.store.attributes.isEmpty) {
+      return const MetadataEmptyState(
+        icon: Icons.tune_outlined,
+        title: 'No attributes yet',
+        message: 'Add the first attribute to define reusable product metadata.',
+      );
+    }
+
+    final filteredAttributes = _applyFilters(widget.store.attributes.toList());
+    final totalPages = _totalPages(filteredAttributes.length);
+    final currentPage = totalPages == 0 ? 1 : _currentPage.clamp(1, totalPages);
+    final visibleAttributes =
+        _pageItems(filteredAttributes, currentPage, _pageSize);
+
+    return Column(
+      children: <Widget>[
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: MetadataListControls(
+            searchController: _searchController,
+            onSearchChanged: (value) => setState(() {
+              _query = value.trim();
+              _currentPage = 1;
+            }),
+            searchHint: 'Search by name, code, type, or unit',
+            resultLabel:
+                'Showing ${visibleAttributes.length} of ${filteredAttributes.length} attributes',
+            filterSummary: _filterSummary(),
+            hasActiveFilter: _valueTypeFilter != null || _filterableOnly,
+            hasCustomSort: _sortOption != _AttributeSortOption.sortOrder,
+            onOpenFilter: _openFilterSheet,
+            onOpenSort: _openSortSheet,
+          ),
+        ),
+        Expanded(
+          child: filteredAttributes.isEmpty
+              ? const MetadataEmptyState(
+                  icon: Icons.tune_outlined,
+                  title: 'No matching attributes',
+                  message: 'Try changing your search, filter, or sort order.',
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+                  itemBuilder: (context, index) {
+                    if (index >= visibleAttributes.length) {
+                      return MetadataPaginationControls(
+                        currentPage: currentPage,
+                        totalPages: totalPages,
+                        onPrevious: currentPage > 1
+                            ? () => setState(() {
+                                  _currentPage = currentPage - 1;
+                                })
+                            : null,
+                        onNext: currentPage < totalPages
+                            ? () => setState(() {
+                                  _currentPage = currentPage + 1;
+                                })
+                            : null,
+                      );
+                    }
+
+                    final attribute = visibleAttributes[index];
+                    return MetadataListCard(
+                      title: attribute.name,
+                      leading: const Icon(Icons.label_outline),
+                      detailLines: _attributeSummary(
+                        attribute,
+                        widget.store.optionCountForAttribute(attribute.id),
+                      ),
+                      chips: <Widget>[
+                        MetadataStatusChip(label: attribute.valueType.label),
+                        if (attribute.isFilterable)
+                          const MetadataStatusChip(label: 'Filterable'),
+                      ],
+                      trailing: PopupMenuButton<String>(
+                        onSelected: (value) {
+                          switch (value) {
+                            case 'options':
+                              ProductMetadataNavigator.openAttributeOptions(
+                                context,
+                                args: AttributeOptionsArgs(
+                                    attributeId: attribute.id),
+                              );
+                              break;
+                            case 'edit':
+                              ProductMetadataNavigator.openAttributeForm(
+                                context,
+                                args: AttributeFormArgs(
+                                    attributeId: attribute.id),
+                              );
+                              break;
+                            case 'delete':
+                              _deleteAttribute(
+                                  context, widget.store, attribute);
+                              break;
+                          }
+                        },
+                        itemBuilder: (context) => <PopupMenuEntry<String>>[
+                          if (attribute.valueType.supportsOptions)
+                            const PopupMenuItem<String>(
+                              value: 'options',
+                              child: Text('Manage options'),
+                            ),
+                          const PopupMenuItem<String>(
+                            value: 'edit',
+                            child: Text('Edit'),
+                          ),
+                          const PopupMenuItem<String>(
+                            value: 'delete',
+                            child: Text('Delete'),
+                          ),
+                        ],
+                      ),
+                      onTap: () => ProductMetadataNavigator.openAttributeDetail(
+                        context,
+                        args: AttributeDetailArgs(attributeId: attribute.id),
+                      ),
+                    );
+                  },
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemCount:
+                      visibleAttributes.length + (totalPages > 1 ? 1 : 0),
+                ),
+        ),
+      ],
+    );
+  }
+
+  List<Attribute> _applyFilters(List<Attribute> attributes) {
+    final query = _query.toLowerCase();
+    final filtered = attributes.where((attribute) {
+      if (_valueTypeFilter != null && attribute.valueType != _valueTypeFilter) {
+        return false;
+      }
+      if (_filterableOnly && !attribute.isFilterable) {
+        return false;
+      }
+      if (query.isEmpty) {
+        return true;
+      }
+      final units = attribute.effectiveUnitLabels.join(' ').toLowerCase();
+      return attribute.name.toLowerCase().contains(query) ||
+          attribute.code.toLowerCase().contains(query) ||
+          attribute.valueType.label.toLowerCase().contains(query) ||
+          units.contains(query);
+    }).toList();
+
+    filtered.sort((left, right) {
+      switch (_sortOption) {
+        case _AttributeSortOption.sortOrder:
+          final orderCompare = left.sortOrder.compareTo(right.sortOrder);
+          if (orderCompare != 0) {
+            return orderCompare;
+          }
+          return left.name.toLowerCase().compareTo(right.name.toLowerCase());
+        case _AttributeSortOption.nameAsc:
+          return left.name.toLowerCase().compareTo(right.name.toLowerCase());
+        case _AttributeSortOption.nameDesc:
+          return right.name.toLowerCase().compareTo(left.name.toLowerCase());
+        case _AttributeSortOption.valueType:
+          final typeCompare =
+              left.valueType.label.compareTo(right.valueType.label);
+          if (typeCompare != 0) {
+            return typeCompare;
+          }
+          return left.name.toLowerCase().compareTo(right.name.toLowerCase());
+      }
+    });
+
+    return filtered;
+  }
+
+  String _filterSummary() {
+    final parts = <String>[
+      if (_valueTypeFilter != null) 'Type: ${_valueTypeFilter!.label}',
+      if (_filterableOnly) 'Filterable only',
+      if (_sortOption != _AttributeSortOption.sortOrder)
+        'Sort order: ${_sortOption.label}',
+    ];
+    return parts.join('  |  ');
+  }
+
+  Future<void> _openFilterSheet() async {
+    final result = await showModalBottomSheet<_AttributeFilterState>(
+      context: context,
+      builder: (context) {
+        AttributeValueType? tempValueType = _valueTypeFilter;
+        bool tempFilterableOnly = _filterableOnly;
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return SafeArea(
               child: Padding(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.secondaryContainer,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.tune_outlined,
-                        size: 28,
-                        color:
-                            Theme.of(context).colorScheme.onSecondaryContainer,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
                     Text(
-                      'No attributes yet',
+                      'Filter attributes',
                       style: Theme.of(context).textTheme.titleMedium,
-                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    Flexible(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: const Text('All types'),
+                              trailing: tempValueType == null
+                                  ? const Icon(Icons.check)
+                                  : null,
+                              onTap: () => setModalState(() {
+                                tempValueType = null;
+                              }),
+                            ),
+                            for (final valueType in AttributeValueType.values)
+                              ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                title: Text(valueType.label),
+                                trailing: tempValueType == valueType
+                                    ? const Icon(Icons.check)
+                                    : null,
+                                onTap: () => setModalState(() {
+                                  tempValueType = valueType;
+                                }),
+                              ),
+                            SwitchListTile(
+                              value: tempFilterableOnly,
+                              contentPadding: EdgeInsets.zero,
+                              onChanged: (value) => setModalState(() {
+                                tempFilterableOnly = value;
+                              }),
+                              title: const Text('Filterable only'),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      'Add the first attribute to define reusable product metadata.',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
-                      textAlign: TextAlign.center,
+                    FilledButton(
+                      onPressed: () => Navigator.of(context).pop(
+                        _AttributeFilterState(
+                          valueType: tempValueType,
+                          filterableOnly: tempFilterableOnly,
+                        ),
+                      ),
+                      child: const Text('Apply'),
                     ),
                   ],
                 ),
               ),
-            ),
-          ),
-        ),
-      );
-    }
-
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
-      itemBuilder: (context, index) {
-        final attribute = store.attributes[index];
-        return MetadataListCard(
-          title: attribute.name,
-          leading: const Icon(Icons.label_outline),
-          detailLines: _attributeSummary(
-            attribute,
-            store.optionCountForAttribute(attribute.id),
-          ),
-          chips: <Widget>[
-            MetadataStatusChip(label: attribute.valueType.label),
-            if (attribute.isFilterable)
-              const MetadataStatusChip(label: 'Filterable'),
-          ],
-          trailing: PopupMenuButton<String>(
-            onSelected: (value) {
-              switch (value) {
-                case 'options':
-                  ProductMetadataNavigator.openAttributeOptions(
-                    context,
-                    args: AttributeOptionsArgs(attributeId: attribute.id),
-                  );
-                  break;
-                case 'edit':
-                  ProductMetadataNavigator.openAttributeForm(
-                    context,
-                    args: AttributeFormArgs(attributeId: attribute.id),
-                  );
-                  break;
-                case 'delete':
-                  _deleteAttribute(context, store, attribute);
-                  break;
-              }
-            },
-            itemBuilder: (context) => <PopupMenuEntry<String>>[
-              if (attribute.valueType.supportsOptions)
-                const PopupMenuItem<String>(
-                  value: 'options',
-                  child: Text('Manage options'),
-                ),
-              const PopupMenuItem<String>(
-                value: 'edit',
-                child: Text('Edit'),
-              ),
-              const PopupMenuItem<String>(
-                value: 'delete',
-                child: Text('Delete'),
-              ),
-            ],
-          ),
-          onTap: () => ProductMetadataNavigator.openAttributeDetail(
-            context,
-            args: AttributeDetailArgs(attributeId: attribute.id),
-          ),
+            );
+          },
         );
       },
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemCount: store.attributes.length,
     );
+
+    if (result == null || !mounted) {
+      return;
+    }
+    setState(() {
+      _valueTypeFilter = result.valueType;
+      _filterableOnly = result.filterableOnly;
+      _currentPage = 1;
+    });
+  }
+
+  Future<void> _openSortSheet() async {
+    final selected = await showModalBottomSheet<_AttributeSortOption>(
+      context: context,
+      builder: (context) {
+        _AttributeSortOption tempSort = _sortOption;
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      'Sort attributes',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 16),
+                    for (final option in _AttributeSortOption.values)
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(option.label),
+                        trailing:
+                            tempSort == option ? const Icon(Icons.check) : null,
+                        onTap: () => setModalState(() {
+                          tempSort = option;
+                        }),
+                      ),
+                    const SizedBox(height: 8),
+                    FilledButton(
+                      onPressed: () => Navigator.of(context).pop(tempSort),
+                      child: const Text('Apply'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (selected == null || !mounted) {
+      return;
+    }
+    setState(() {
+      _sortOption = selected;
+      _currentPage = 1;
+    });
+  }
+
+  int _totalPages(int itemCount) =>
+      itemCount == 0 ? 0 : ((itemCount - 1) ~/ _pageSize) + 1;
+
+  List<Attribute> _pageItems(List<Attribute> items, int page, int pageSize) {
+    final start = (page - 1) * pageSize;
+    if (start >= items.length) {
+      return const <Attribute>[];
+    }
+    final end = (start + pageSize).clamp(0, items.length);
+    return items.sublist(start, end);
   }
 
   List<String> _attributeSummary(Attribute attribute, int optionCount) {
@@ -293,6 +548,16 @@ class _AttributesListTab extends StatelessWidget {
   }
 }
 
+class _AttributeFilterState {
+  const _AttributeFilterState({
+    required this.valueType,
+    required this.filterableOnly,
+  });
+
+  final AttributeValueType? valueType;
+  final bool filterableOnly;
+}
+
 class ProductMetadataAttributeFormScreen extends StatefulWidget {
   const ProductMetadataAttributeFormScreen({
     super.key,
@@ -319,12 +584,13 @@ class _ProductMetadataAttributeFormScreenState
   late final TextEditingController _minValueController;
   late final TextEditingController _maxValueController;
   late final TextEditingController _decimalPlacesController;
-  late final TextEditingController _allowedUnitsController;
+  late final TextEditingController _unitInputController;
   AttributeValueType _valueType = AttributeValueType.dropdown;
   bool _isFilterable = true;
   bool _isSaving = false;
   String? _nameErrorText;
   Attribute? _editingAttribute;
+  final List<String> _units = <String>[];
 
   @override
   void initState() {
@@ -338,7 +604,7 @@ class _ProductMetadataAttributeFormScreenState
     _minValueController = TextEditingController();
     _maxValueController = TextEditingController();
     _decimalPlacesController = TextEditingController();
-    _allowedUnitsController = TextEditingController();
+    _unitInputController = TextEditingController();
     _nameController.addListener(_clearNameError);
     Future<void>.microtask(_initialize);
   }
@@ -353,8 +619,9 @@ class _ProductMetadataAttributeFormScreenState
       _sortOrderController.text = _editingAttribute!.sortOrder.toString();
       _valueType = _editingAttribute!.valueType;
       _isFilterable = _editingAttribute!.isFilterable;
-      _allowedUnitsController.text =
-          _editingAttribute!.effectiveUnitLabels.join(', ');
+      _units
+        ..clear()
+        ..addAll(_editingAttribute!.effectiveUnitLabels);
       _minLengthController.text =
           _editingAttribute!.minLength?.toString() ?? '';
       _maxLengthController.text =
@@ -382,7 +649,7 @@ class _ProductMetadataAttributeFormScreenState
     _minValueController.dispose();
     _maxValueController.dispose();
     _decimalPlacesController.dispose();
-    _allowedUnitsController.dispose();
+    _unitInputController.dispose();
     super.dispose();
   }
 
@@ -453,7 +720,8 @@ class _ProductMetadataAttributeFormScreenState
                   setState(() {
                     _valueType = value;
                     if (_valueType != AttributeValueType.number) {
-                      _allowedUnitsController.clear();
+                      _unitInputController.clear();
+                      _units.clear();
                     }
                   });
                 },
@@ -546,14 +814,18 @@ class _ProductMetadataAttributeFormScreenState
       case AttributeValueType.number:
         return <Widget>[
           const SizedBox(height: 16),
-          TextFormField(
-            controller: _allowedUnitsController,
-            decoration: const InputDecoration(
-              labelText: 'Units',
-              helperText: 'Comma-separated, for example: kg, g, lb',
-              border: OutlineInputBorder(),
-              errorMaxLines: 3,
-            ),
+          _UnitChipInput(
+            units: _units,
+            controller: _unitInputController,
+            onSubmitted: _addUnitsFromInput,
+            onRemove: _removeUnit,
+            helperText:
+                'Add one unit at a time. Press Enter or comma, for example: kg, g, lb',
+            onChanged: (_) {
+              if (_unitInputController.text.contains(',')) {
+                _addUnitsFromInput(_unitInputController.text);
+              }
+            },
           ),
           const SizedBox(height: 16),
           TextFormField(
@@ -610,10 +882,10 @@ class _ProductMetadataAttributeFormScreenState
           code: _codeController.text.trim(),
           valueType: _valueType,
           unitLabel: _valueType == AttributeValueType.number
-              ? _parsePrimaryUnit(_allowedUnitsController.text)
+              ? _parsePrimaryUnit(_serializedUnits)
               : null,
           allowedUnitLabels: _valueType == AttributeValueType.number
-              ? _parseUnits(_allowedUnitsController.text)
+              ? _parseUnits(_serializedUnits)
               : const <String>[],
           sortOrder: _parseInt(_sortOrderController.text) ?? 0,
           isFilterable: _isFilterable,
@@ -700,6 +972,15 @@ class _ProductMetadataAttributeFormScreenState
   String? _parseString(String value) =>
       value.trim().isEmpty ? null : value.trim();
 
+  String get _serializedUnits {
+    final combined = <String>[
+      ..._units,
+      if (_unitInputController.text.trim().isNotEmpty)
+        _unitInputController.text,
+    ];
+    return combined.join(', ');
+  }
+
   String? _parsePrimaryUnit(String value) {
     final units = _parseUnits(value);
     return units.isEmpty ? null : units.first;
@@ -721,6 +1002,29 @@ class _ProductMetadataAttributeFormScreenState
     return units;
   }
 
+  void _addUnitsFromInput(String rawValue) {
+    final parsed = _parseUnits(rawValue);
+    if (parsed.isEmpty) {
+      return;
+    }
+
+    setState(() {
+      final seen = _units.map((unit) => unit.toLowerCase()).toSet();
+      for (final unit in parsed) {
+        if (seen.add(unit.toLowerCase())) {
+          _units.add(unit);
+        }
+      }
+      _unitInputController.clear();
+    });
+  }
+
+  void _removeUnit(String unit) {
+    setState(() {
+      _units.remove(unit);
+    });
+  }
+
   void _clearNameError() {
     if (_nameErrorText == null) {
       return;
@@ -728,5 +1032,74 @@ class _ProductMetadataAttributeFormScreenState
     setState(() {
       _nameErrorText = null;
     });
+  }
+}
+
+class _UnitChipInput extends StatelessWidget {
+  const _UnitChipInput({
+    required this.units,
+    required this.controller,
+    required this.onSubmitted,
+    required this.onRemove,
+    required this.helperText,
+    required this.onChanged,
+  });
+
+  final List<String> units;
+  final TextEditingController controller;
+  final ValueChanged<String> onSubmitted;
+  final ValueChanged<String> onRemove;
+  final String helperText;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        if (units.isNotEmpty) ...<Widget>[
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: units
+                .map(
+                  (unit) => InputChip(
+                    label: Text(unit),
+                    onDeleted: () => onRemove(unit),
+                  ),
+                )
+                .toList(),
+          ),
+          const SizedBox(height: 12),
+        ],
+        TextField(
+          controller: controller,
+          onChanged: onChanged,
+          onSubmitted: onSubmitted,
+          decoration: metadataFormDecoration(
+            labelText: 'Units',
+            helperText: helperText,
+            hintText: 'Type a unit and press Enter',
+          ).copyWith(
+            suffixIcon: IconButton(
+              onPressed: () => onSubmitted(controller.text),
+              icon: const Icon(Icons.add),
+              tooltip: 'Add unit',
+            ),
+          ),
+        ),
+        if (units.isEmpty) ...<Widget>[
+          const SizedBox(height: 8),
+          Text(
+            'No units added yet.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+          ),
+        ],
+      ],
+    );
   }
 }

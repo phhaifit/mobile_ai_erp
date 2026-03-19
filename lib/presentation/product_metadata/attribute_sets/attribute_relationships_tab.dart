@@ -5,8 +5,10 @@ import 'package:mobile_ai_erp/domain/entity/product_metadata/category_attribute.
 import 'package:mobile_ai_erp/domain/entity/product_metadata/product_metadata_validation_exception.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_list_card.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_form_decoration.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_status_chip.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
 
 class AttributeRelationshipsTab extends StatefulWidget {
   const AttributeRelationshipsTab({super.key, required this.store});
@@ -68,8 +70,10 @@ class _AttributeRelationshipsTabState extends State<AttributeRelationshipsTab> {
                   store: widget.store,
                   selectedCategoryId: _selectedCategoryId!,
                   onAdd: () => _openRelationshipForm(context),
-                  onEdit: (relationship) => _openRelationshipForm(context,
-                      relationship: relationship),
+                  onEdit: (relationship) => _openRelationshipForm(
+                    context,
+                    relationship: relationship,
+                  ),
                 ),
               ),
             ],
@@ -110,8 +114,10 @@ class _AttributeRelationshipsTabState extends State<AttributeRelationshipsTab> {
                 store: widget.store,
                 selectedCategoryId: _selectedCategoryId!,
                 onAdd: () => _openRelationshipForm(context),
-                onEdit: (relationship) =>
-                    _openRelationshipForm(context, relationship: relationship),
+                onEdit: (relationship) => _openRelationshipForm(
+                  context,
+                  relationship: relationship,
+                ),
               ),
             ),
           ],
@@ -214,112 +220,124 @@ class _RelationshipsContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final category = store.findCategoryById(selectedCategoryId);
-    final relationships =
-        store.categoryAttributesForCategory(selectedCategoryId);
+    return Observer(
+      builder: (context) {
+        final category = store.findCategoryById(selectedCategoryId);
+        final relationships =
+            store.categoryAttributesForCategory(selectedCategoryId);
 
-    if (category == null) {
-      return const Center(child: Text('Category not found.'));
-    }
+        if (category == null) {
+          return const Center(child: Text('Category not found.'));
+        }
 
-    return Column(
-      children: <Widget>[
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-          child: Row(
-            children: <Widget>[
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      category.name,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Manage attribute links for ${category.code}',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-              FilledButton.icon(
-                onPressed: onAdd,
-                icon: const Icon(Icons.add_link_outlined),
-                label: const Text('Add'),
-              ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: relationships.isEmpty
-              ? const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(24),
-                    child: Text(
-                      'No attribute relationships yet for this category.',
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                )
-              : ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-                  itemBuilder: (context, index) {
-                    final relationship = relationships[index];
-                    final attribute =
-                        store.findAttributeById(relationship.attributeId);
-                    return MetadataListCard(
-                      title: attribute?.name ?? relationship.attributeId,
-                      leading: const Icon(Icons.link_outlined),
-                      detailLines: <String>[
-                        if (attribute != null) 'Code: ${attribute.code}',
-                        if (attribute != null)
-                          'Type: ${attribute.valueType.label}',
-                        'Sort order: ${relationship.sortOrder}',
-                      ],
-                      chips: <Widget>[
-                        MetadataStatusChip(
-                          label:
-                              relationship.isRequired ? 'Required' : 'Optional',
+        return Column(
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          category.name,
+                          style:
+                              Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Manage attribute links for ${category.code}',
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
                         ),
                       ],
-                      trailing: PopupMenuButton<String>(
-                        onSelected: (value) {
-                          switch (value) {
-                            case 'edit':
-                              onEdit(relationship);
-                              break;
-                            case 'remove':
-                              _deleteRelationship(context, store, relationship);
-                              break;
-                          }
-                        },
-                        itemBuilder: (context) =>
-                            const <PopupMenuEntry<String>>[
-                          PopupMenuItem<String>(
-                            value: 'edit',
-                            child: Text('Edit'),
-                          ),
-                          PopupMenuItem<String>(
-                            value: 'remove',
-                            child: Text('Remove'),
-                          ),
-                        ],
+                    ),
+                  ),
+                  FilledButton.icon(
+                    onPressed: onAdd,
+                    icon: const Icon(Icons.add_link_outlined),
+                    label: const Text('Add'),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: relationships.isEmpty
+                  ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Text(
+                          'No attribute relationships yet for this category.',
+                          textAlign: TextAlign.center,
+                        ),
                       ),
-                      onTap: () => onEdit(relationship),
-                    );
-                  },
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemCount: relationships.length,
-                ),
-        ),
-      ],
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+                      itemBuilder: (context, index) {
+                        final relationship = relationships[index];
+                        final attribute =
+                            store.findAttributeById(relationship.attributeId);
+                        return MetadataListCard(
+                          title: attribute?.name ?? relationship.attributeId,
+                          leading: const Icon(Icons.link_outlined),
+                          detailLines: <String>[
+                            if (attribute != null) 'Code: ${attribute.code}',
+                            if (attribute != null)
+                              'Type: ${attribute.valueType.label}',
+                            'Sort order: ${relationship.sortOrder}',
+                          ],
+                          chips: <Widget>[
+                            MetadataStatusChip(
+                              label: relationship.isRequired
+                                  ? 'Required'
+                                  : 'Optional',
+                            ),
+                          ],
+                          trailing: PopupMenuButton<String>(
+                            onSelected: (value) {
+                              switch (value) {
+                                case 'edit':
+                                  onEdit(relationship);
+                                  break;
+                                case 'remove':
+                                  _deleteRelationship(
+                                    context,
+                                    store,
+                                    relationship,
+                                  );
+                                  break;
+                              }
+                            },
+                            itemBuilder: (context) =>
+                                const <PopupMenuEntry<String>>[
+                              PopupMenuItem<String>(
+                                value: 'edit',
+                                child: Text('Edit'),
+                              ),
+                              PopupMenuItem<String>(
+                                value: 'remove',
+                                child: Text('Remove'),
+                              ),
+                            ],
+                          ),
+                          onTap: () => onEdit(relationship),
+                        );
+                      },
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemCount: relationships.length,
+                    ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -412,13 +430,14 @@ class _ProductMetadataCategoryRelationshipFormScreenState
   Future<void> _initialize() async {
     await _store.loadDashboard();
     await _store.loadAttributes();
+    final categoryOptions = _uniqueCategories();
     final editing = widget.relationship;
     _selectedCategoryId = editing?.categoryId ?? widget.initialCategoryId;
     _selectedAttributeId = editing?.attributeId;
     _isRequired = editing?.isRequired ?? false;
     _sortOrderController.text = (editing?.sortOrder ?? 0).toString();
     _selectedCategoryId ??=
-        _store.categories.isEmpty ? null : _store.categories.first.id;
+        categoryOptions.isEmpty ? null : categoryOptions.first.id;
     _selectedAttributeId = _syncSelectedAttribute(
       currentAttributeId: _selectedAttributeId,
       availableAttributes: _availableAttributes(),
@@ -437,6 +456,15 @@ class _ProductMetadataCategoryRelationshipFormScreenState
   @override
   Widget build(BuildContext context) {
     final availableAttributes = _availableAttributes();
+    final categoryOptions = _uniqueCategories();
+    final selectedCategoryValue = _resolveDropdownValue(
+      currentValue: _selectedCategoryId,
+      optionValues: categoryOptions.map((category) => category.id),
+    );
+    final selectedAttributeValue = _resolveDropdownValue(
+      currentValue: _selectedAttributeId,
+      optionValues: availableAttributes.map((attribute) => attribute.id),
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -454,14 +482,12 @@ class _ProductMetadataCategoryRelationshipFormScreenState
             children: <Widget>[
               DropdownButtonFormField<String>(
                 isExpanded: true,
-                initialValue: _selectedCategoryId,
-                decoration: InputDecoration(
+                initialValue: selectedCategoryValue,
+                decoration: metadataFormDecoration(
                   labelText: 'Category',
-                  border: const OutlineInputBorder(),
                   errorText: _errorText,
-                  errorMaxLines: 3,
                 ),
-                items: _store.categories
+                items: categoryOptions
                     .map(
                       (category) => DropdownMenuItem<String>(
                         value: category.id,
@@ -484,10 +510,9 @@ class _ProductMetadataCategoryRelationshipFormScreenState
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 isExpanded: true,
-                initialValue: _selectedAttributeId,
-                decoration: const InputDecoration(
+                initialValue: selectedAttributeValue,
+                decoration: metadataFormDecoration(
                   labelText: 'Attribute',
-                  border: OutlineInputBorder(),
                 ),
                 items: availableAttributes
                     .map(
@@ -524,9 +549,8 @@ class _ProductMetadataCategoryRelationshipFormScreenState
               TextFormField(
                 controller: _sortOrderController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
+                decoration: metadataFormDecoration(
                   labelText: 'Sort order',
-                  border: OutlineInputBorder(),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -564,7 +588,7 @@ class _ProductMetadataCategoryRelationshipFormScreenState
   List<Attribute> _availableAttributes([String? categoryId]) {
     final effectiveCategoryId = categoryId ?? _selectedCategoryId;
     if (effectiveCategoryId == null) {
-      return _store.attributes.toList();
+      return _uniqueAttributes(_store.attributes);
     }
     final linkedIds = _store.categoryAttributes
         .where((item) => item.categoryId == effectiveCategoryId)
@@ -572,13 +596,33 @@ class _ProductMetadataCategoryRelationshipFormScreenState
         .toSet();
     final editingAttributeId = widget.relationship?.attributeId;
 
-    return _store.attributes.where((attribute) {
+    final available = _store.attributes.where((attribute) {
       if (attribute.id == editingAttributeId) {
         return true;
       }
       return !linkedIds.contains(attribute.id);
-    }).toList()
+    }).toList();
+
+    return _uniqueAttributes(available)
       ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+  }
+
+  List<Category> _uniqueCategories() {
+    final uniqueById = <String, Category>{};
+    for (final category in _store.categories) {
+      uniqueById[category.id] = category;
+    }
+    final categories = uniqueById.values.toList()
+      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    return categories;
+  }
+
+  List<Attribute> _uniqueAttributes(Iterable<Attribute> source) {
+    final uniqueById = <String, Attribute>{};
+    for (final attribute in source) {
+      uniqueById[attribute.id] = attribute;
+    }
+    return uniqueById.values.toList();
   }
 
   String? _syncSelectedAttribute({
@@ -590,6 +634,17 @@ class _ProductMetadataCategoryRelationshipFormScreenState
       return currentAttributeId;
     }
     return availableAttributes.isEmpty ? null : availableAttributes.first.id;
+  }
+
+  String? _resolveDropdownValue({
+    required String? currentValue,
+    required Iterable<String> optionValues,
+  }) {
+    if (currentValue == null) {
+      return null;
+    }
+    final matches = optionValues.where((value) => value == currentValue).length;
+    return matches == 1 ? currentValue : null;
   }
 
   Future<void> _save() async {
