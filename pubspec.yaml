@@ -60,6 +60,9 @@ dependencies:
   # Y
   # Z
 
+dependency_overrides:
+  path_provider_foundation: 2.4.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
