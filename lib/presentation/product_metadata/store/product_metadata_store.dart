@@ -5,7 +5,6 @@ import 'package:mobile_ai_erp/domain/entity/product_metadata/brand.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/category_attribute.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/tag.dart';
-import 'package:mobile_ai_erp/domain/entity/product_metadata/unit.dart';
 import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadata_repository.dart';
 import 'package:mobx/mobx.dart';
 
@@ -45,9 +44,6 @@ abstract class ProductMetadataStoreBase with Store {
       ObservableList<CategoryAttribute>();
 
   @observable
-  ObservableList<Unit> units = ObservableList<Unit>();
-
-  @observable
   ObservableList<Brand> brands = ObservableList<Brand>();
 
   @observable
@@ -67,7 +63,6 @@ abstract class ProductMetadataStoreBase with Store {
         _repository.getCategories(),
         _repository.getAttributes(),
         _repository.getCategoryAttributes(),
-        _repository.getUnits(),
         _repository.getBrands(),
         _repository.getTags(),
       ]);
@@ -76,9 +71,8 @@ abstract class ProductMetadataStoreBase with Store {
       attributes = ObservableList<Attribute>.of(results[1] as List<Attribute>);
       categoryAttributes = ObservableList<CategoryAttribute>.of(
           results[2] as List<CategoryAttribute>);
-      units = ObservableList<Unit>.of(results[3] as List<Unit>);
-      brands = ObservableList<Brand>.of(results[4] as List<Brand>);
-      tags = ObservableList<Tag>.of(results[5] as List<Tag>);
+      brands = ObservableList<Brand>.of(results[3] as List<Brand>);
+      tags = ObservableList<Tag>.of(results[4] as List<Tag>);
       attributeOptionCounts = ObservableMap<String, int>.of(
         await _repository.getAttributeOptionCounts(
           attributes.map((attribute) => attribute.id).toList(),
@@ -189,18 +183,6 @@ abstract class ProductMetadataStoreBase with Store {
   }
 
   @action
-  Future<void> saveUnit(Unit unit) async {
-    final savedUnit = await _repository.saveUnit(unit);
-    _upsertUnit(savedUnit);
-  }
-
-  @action
-  Future<void> deleteUnit(String unitId) async {
-    await _repository.deleteUnit(unitId);
-    units.removeWhere((unit) => unit.id == unitId);
-  }
-
-  @action
   Future<void> saveBrand(Brand brand) async {
     final savedBrand = await _repository.saveBrand(brand);
     _upsertBrand(savedBrand);
@@ -239,8 +221,6 @@ abstract class ProductMetadataStoreBase with Store {
 
   Category? findCategoryById(String? id) =>
       _findById(categories, id, (item) => item.id);
-
-  Unit? findUnitById(String? id) => _findById(units, id, (item) => item.id);
 
   Brand? findBrandById(String? id) => _findById(brands, id, (item) => item.id);
 
@@ -342,23 +322,6 @@ abstract class ProductMetadataStoreBase with Store {
           return orderCompare;
         }
         return left.attributeId.compareTo(right.attributeId);
-      },
-    );
-  }
-
-  @action
-  void _upsertUnit(Unit unit) {
-    _upsert<Unit>(
-      list: units,
-      item: unit,
-      idSelector: (item) => item.id,
-      compare: (left, right) {
-        final typeCompare =
-            left.unitGroup.index.compareTo(right.unitGroup.index);
-        if (typeCompare != 0) {
-          return typeCompare;
-        }
-        return left.name.toLowerCase().compareTo(right.name.toLowerCase());
       },
     );
   }

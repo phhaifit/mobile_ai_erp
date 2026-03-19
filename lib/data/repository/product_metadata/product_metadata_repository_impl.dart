@@ -5,7 +5,6 @@ import 'package:mobile_ai_erp/domain/entity/product_metadata/brand.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/category_attribute.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/tag.dart';
-import 'package:mobile_ai_erp/domain/entity/product_metadata/unit.dart';
 import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadata_repository.dart';
 
 class ProductMetadataRepositoryImpl extends ProductMetadataRepository {
@@ -64,15 +63,6 @@ class ProductMetadataRepositoryImpl extends ProductMetadataRepository {
   @override
   Future<void> deleteCategoryAttribute(String categoryAttributeId) =>
       _dataSource.deleteCategoryAttribute(categoryAttributeId);
-
-  @override
-  Future<List<Unit>> getUnits() => _dataSource.getUnits();
-
-  @override
-  Future<Unit> saveUnit(Unit unit) => _dataSource.saveUnit(unit);
-
-  @override
-  Future<void> deleteUnit(String unitId) => _dataSource.deleteUnit(unitId);
 
   @override
   Future<List<Brand>> getBrands() => _dataSource.getBrands();

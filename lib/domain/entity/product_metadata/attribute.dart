@@ -1,5 +1,3 @@
-import 'package:mobile_ai_erp/domain/entity/product_metadata/unit_group.dart';
-
 enum AttributeValueType {
   dropdown('Dropdown'),
   multiselect('Multi-select'),
@@ -21,7 +19,8 @@ class Attribute {
     required this.name,
     required this.code,
     required this.valueType,
-    this.unitGroup,
+    this.unitLabel,
+    this.allowedUnitLabels = const <String>[],
     this.sortOrder = 0,
     this.isFilterable = true,
     this.minLength,
@@ -36,7 +35,8 @@ class Attribute {
   final String name;
   final String code;
   final AttributeValueType valueType;
-  final UnitGroup? unitGroup;
+  final String? unitLabel;
+  final List<String> allowedUnitLabels;
   final int sortOrder;
   final bool isFilterable;
   final int? minLength;
@@ -46,12 +46,23 @@ class Attribute {
   final num? maxValue;
   final int? decimalPlaces;
 
+  List<String> get effectiveUnitLabels {
+    if (allowedUnitLabels.isNotEmpty) {
+      return List<String>.unmodifiable(allowedUnitLabels);
+    }
+    if (unitLabel != null && unitLabel!.trim().isNotEmpty) {
+      return List<String>.unmodifiable(<String>[unitLabel!.trim()]);
+    }
+    return const <String>[];
+  }
+
   Attribute copyWith({
     String? id,
     String? name,
     String? code,
     AttributeValueType? valueType,
-    Object? unitGroup = _sentinel,
+    Object? unitLabel = _sentinel,
+    List<String>? allowedUnitLabels,
     int? sortOrder,
     bool? isFilterable,
     Object? minLength = _sentinel,
@@ -66,9 +77,10 @@ class Attribute {
       name: name ?? this.name,
       code: code ?? this.code,
       valueType: valueType ?? this.valueType,
-      unitGroup: identical(unitGroup, _sentinel)
-          ? this.unitGroup
-          : unitGroup as UnitGroup?,
+      unitLabel: identical(unitLabel, _sentinel)
+          ? this.unitLabel
+          : unitLabel as String?,
+      allowedUnitLabels: allowedUnitLabels ?? this.allowedUnitLabels,
       sortOrder: sortOrder ?? this.sortOrder,
       isFilterable: isFilterable ?? this.isFilterable,
       minLength:
