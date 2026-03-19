@@ -63,31 +63,41 @@ class _ProductMetadataTagDetailScreenState
                 tag.name,
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: <Widget>[
-                  MetadataStatusChip(label: tag.status.label),
-                  if (tag.colorHex?.trim().isNotEmpty == true)
-                    MetadataStatusChip(label: tag.colorHex!),
-                ],
-              ),
               const SizedBox(height: 16),
               MetadataDetailSectionCard(
                 title: 'Main information',
                 children: <Widget>[
+                  MetadataDetailRow(
+                    label: 'Status',
+                    valueChild: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: <Widget>[
+                        MetadataStatusChip(label: tag.status.label),
+                      ],
+                    ),
+                  ),
+                  if (tag.colorHex?.trim().isNotEmpty == true)
+                    MetadataDetailRow(
+                      label: 'Color',
+                      valueChild: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: <Widget>[
+                          MetadataStatusChip(label: tag.colorHex!),
+                        ],
+                      ),
+                    ),
                   if (tag.description != null && tag.description!.isNotEmpty)
                     MetadataDetailRow(
                       label: 'Description',
                       value: tag.description!,
                     ),
-                  MetadataDetailRow(
-                    label: 'Color',
-                    value: tag.colorHex?.trim().isNotEmpty == true
-                        ? tag.colorHex!
-                        : 'Not set',
-                  ),
+                  if (tag.colorHex?.trim().isNotEmpty != true)
+                    const MetadataDetailRow(
+                      label: 'Color',
+                      value: 'Not set',
+                    ),
                   MetadataDetailRow(
                     label: 'Sort order',
                     value: tag.sortOrder.toString(),

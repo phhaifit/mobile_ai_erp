@@ -63,18 +63,20 @@ class _ProductMetadataBrandDetailScreenState
                 brand.name,
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: <Widget>[
-                  MetadataStatusChip(label: brand.status.label),
-                ],
-              ),
               const SizedBox(height: 16),
               MetadataDetailSectionCard(
                 title: 'Main information',
                 children: <Widget>[
+                  MetadataDetailRow(
+                    label: 'Status',
+                    valueChild: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: <Widget>[
+                        MetadataStatusChip(label: brand.status.label),
+                      ],
+                    ),
+                  ),
                   if (brand.description != null &&
                       brand.description!.isNotEmpty)
                     MetadataDetailRow(

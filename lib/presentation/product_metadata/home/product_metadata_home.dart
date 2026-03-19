@@ -39,22 +39,21 @@ class _ProductMetadataHomeScreenState extends State<ProductMetadataHomeScreen> {
             children: <Widget>[
               MetadataSectionCard(
                 title: 'Categories',
-                description: 'Keep categories organized in a clear tree.',
+                description: 'Manage how items are organized in the catalog.',
                 countLabel: '${_store.categories.length} categories',
                 icon: Icons.account_tree_outlined,
                 onTap: () => ProductMetadataNavigator.openCategories(context),
               ),
               MetadataSectionCard(
                 title: 'Attributes',
-                description:
-                    'Define attribute definitions, options, and rules.',
+                description: 'Define fields, options, and rules for item data.',
                 countLabel: '${_store.attributes.length} attributes',
                 icon: Icons.tune_outlined,
                 onTap: () => ProductMetadataNavigator.openAttributes(context),
               ),
               MetadataSectionCard(
                 title: 'Brands',
-                description: 'Keep one clean brand list for product data.',
+                description: 'Manage the brands available in your catalog.',
                 countLabel: '${_store.brands.length} brands',
                 icon: Icons.workspace_premium_outlined,
                 onTap: () => ProductMetadataNavigator.openBrands(context),
@@ -62,7 +61,7 @@ class _ProductMetadataHomeScreenState extends State<ProductMetadataHomeScreen> {
               MetadataSectionCard(
                 title: 'Tags',
                 description:
-                    'Use tags for campaigns, highlights, and hashtags.',
+                    'Use tags to group items for campaigns and highlights.',
                 countLabel: '${_store.tags.length} tags',
                 icon: Icons.sell_outlined,
                 onTap: () => ProductMetadataNavigator.openTags(context),

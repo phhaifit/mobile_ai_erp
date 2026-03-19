@@ -101,24 +101,74 @@ class _ProductMetadataAttributeDetailScreenState
               MetadataDetailSectionCard(
                 title: 'Usage',
                 children: <Widget>[
-                  if (attribute.valueType.supportsOptions)
-                    MetadataDetailRow(
-                      label: 'Options',
-                      value: _store
-                          .optionCountForAttribute(attribute.id)
-                          .toString(),
-                    ),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: <Widget>[
+                      _UsageMetricChip(
+                        label: 'Linked categories',
+                        value: linkedCategories.length.toString(),
+                      ),
+                      if (attribute.valueType.supportsOptions)
+                        _UsageMetricChip(
+                          label: 'Options',
+                          value: _store
+                              .optionCountForAttribute(attribute.id)
+                              .toString(),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Linked categories',
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
                   if (linkedCategories.isEmpty)
                     const Text('Not linked to any category yet.')
                   else
                     ...linkedCategories.map((link) {
                       final category = _store.findCategoryById(link.categoryId);
                       return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: Text(
-                          '${category?.name ?? link.categoryId}'
-                          ' - ${link.isRequired ? 'Required' : 'Optional'}'
-                          ' - Sort ${link.sortOrder}',
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerLow,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                category?.name ?? link.categoryId,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleSmall
+                                    ?.copyWith(fontWeight: FontWeight.w600),
+                              ),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: <Widget>[
+                                  MetadataStatusChip(
+                                    label: link.isRequired
+                                        ? 'Required'
+                                        : 'Optional',
+                                  ),
+                                  MetadataStatusChip(
+                                    label: 'Sort order: ${link.sortOrder}',
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       );
                     }),
@@ -176,5 +226,42 @@ class _ProductMetadataAttributeDetailScreenState
           ),
         ];
     }
+  }
+}
+
+class _UsageMetricChip extends StatelessWidget {
+  const _UsageMetricChip({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: colorScheme.secondaryContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: RichText(
+        text: TextSpan(
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSecondaryContainer,
+              ),
+          children: <InlineSpan>[
+            TextSpan(
+              text: '$value ',
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            TextSpan(text: label),
+          ],
+        ),
+      ),
+    );
   }
 }

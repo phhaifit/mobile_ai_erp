@@ -3,6 +3,7 @@ import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/product_metadata_validation_exception.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_route_args.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_form_decoration.dart';
 import 'package:flutter/material.dart';
 
 class ProductMetadataCategoryFormScreen extends StatefulWidget {
@@ -94,9 +95,8 @@ class _ProductMetadataCategoryFormScreenState
             children: <Widget>[
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(
+                decoration: metadataFormDecoration(
                   labelText: 'Name',
-                  border: OutlineInputBorder(),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -108,9 +108,8 @@ class _ProductMetadataCategoryFormScreenState
               const SizedBox(height: 16),
               TextFormField(
                 controller: _codeController,
-                decoration: const InputDecoration(
+                decoration: metadataFormDecoration(
                   labelText: 'Code',
-                  border: OutlineInputBorder(),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -123,9 +122,8 @@ class _ProductMetadataCategoryFormScreenState
               TextFormField(
                 controller: _slugController,
                 enabled: false,
-                decoration: const InputDecoration(
+                decoration: metadataFormDecoration(
                   labelText: 'Slug',
-                  border: OutlineInputBorder(),
                   helperText: 'Slug is generated automatically from name.',
                 ),
               ),
@@ -133,9 +131,8 @@ class _ProductMetadataCategoryFormScreenState
               DropdownButtonFormField<String?>(
                 isExpanded: true,
                 initialValue: _selectedParentId,
-                decoration: const InputDecoration(
+                decoration: metadataFormDecoration(
                   labelText: 'Parent',
-                  border: OutlineInputBorder(),
                 ),
                 items: <DropdownMenuItem<String?>>[
                   const DropdownMenuItem<String?>(
@@ -164,9 +161,8 @@ class _ProductMetadataCategoryFormScreenState
               const SizedBox(height: 16),
               DropdownButtonFormField<CategoryStatus>(
                 initialValue: _status,
-                decoration: const InputDecoration(
+                decoration: metadataFormDecoration(
                   labelText: 'Status',
-                  border: OutlineInputBorder(),
                 ),
                 items: CategoryStatus.values
                     .map(
@@ -188,9 +184,8 @@ class _ProductMetadataCategoryFormScreenState
               const SizedBox(height: 16),
               TextFormField(
                 controller: _descriptionController,
-                decoration: const InputDecoration(
+                decoration: metadataFormDecoration(
                   labelText: 'Description',
-                  border: OutlineInputBorder(),
                 ),
                 minLines: 2,
                 maxLines: 4,
@@ -198,18 +193,16 @@ class _ProductMetadataCategoryFormScreenState
               const SizedBox(height: 16),
               TextFormField(
                 controller: _coverImageUrlController,
-                decoration: const InputDecoration(
+                decoration: metadataFormDecoration(
                   labelText: 'Cover image URL',
-                  border: OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _sortOrderController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
+                decoration: metadataFormDecoration(
                   labelText: 'Sort order',
-                  border: OutlineInputBorder(),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {

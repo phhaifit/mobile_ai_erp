@@ -3,10 +3,23 @@ import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_navigator.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_route_args.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_empty_state.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_list_controls.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_pagination_controls.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_secondary_details.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_status_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+
+enum _CategorySortOption {
+  sortOrder('Sort order'),
+  nameAsc('Name A-Z'),
+  nameDesc('Name Z-A');
+
+  const _CategorySortOption(this.label);
+
+  final String label;
+}
 
 class ProductMetadataCategoriesScreen extends StatefulWidget {
   const ProductMetadataCategoriesScreen({
@@ -23,12 +36,25 @@ class ProductMetadataCategoriesScreen extends StatefulWidget {
 
 class _ProductMetadataCategoriesScreenState
     extends State<ProductMetadataCategoriesScreen> {
+  static const int _pageSize = 10;
+
   final ProductMetadataStore _store = getIt<ProductMetadataStore>();
+  final TextEditingController _searchController = TextEditingController();
+  String _query = '';
+  CategoryStatus? _statusFilter;
+  _CategorySortOption _sortOption = _CategorySortOption.sortOrder;
+  int _currentPage = 1;
 
   @override
   void initState() {
     super.initState();
     Future<void>.microtask(() => _store.loadDashboard());
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -38,6 +64,13 @@ class _ProductMetadataCategoriesScreenState
     return Scaffold(
       appBar: AppBar(
         title: Text(_appBarTitle()),
+        actions: <Widget>[
+          IconButton(
+            onPressed: _goToProductMetadataHome,
+            icon: const Icon(Icons.dashboard_outlined),
+            tooltip: 'Back to Product Metadata',
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
@@ -51,7 +84,13 @@ class _ProductMetadataCategoriesScreenState
       ),
       body: Observer(
         builder: (context) {
-          final categories = _store.childrenOf(parentId);
+          final categories = _applyFilters(_store.childrenOf(parentId));
+          final totalPages = _totalPages(categories.length);
+          final currentPage =
+              totalPages == 0 ? 1 : _currentPage.clamp(1, totalPages);
+          final visibleCategories =
+              _pageItems(categories, currentPage, _pageSize);
+
           if (_store.isLoading && !_store.hasLoadedDashboard) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -73,12 +112,46 @@ class _ProductMetadataCategoriesScreenState
                 },
               ),
               const SizedBox(height: 16),
+              MetadataListControls(
+                searchController: _searchController,
+                onSearchChanged: (value) => setState(() {
+                  _query = value.trim();
+                  _currentPage = 1;
+                }),
+                searchHint: 'Search by name, code, slug, or description',
+                resultLabel:
+                    'Showing ${visibleCategories.length} of ${categories.length} categories',
+                filterSummary: _filterSummary(),
+                hasActiveFilter: _statusFilter != null,
+                hasCustomSort: _sortOption != _CategorySortOption.sortOrder,
+                onOpenFilter: _openFilterSheet,
+                onOpenSort: _openSortSheet,
+              ),
+              const SizedBox(height: 16),
               if (categories.isEmpty)
                 _CategoriesEmptyState(
                   currentCategory: _store.findCategoryById(parentId),
+                  hasFilters: _query.isNotEmpty || _statusFilter != null,
                 )
-              else
-                ...categories.map((category) => _buildCategoryRow(category)),
+              else ...<Widget>[
+                ...visibleCategories
+                    .map((category) => _buildCategoryRow(category)),
+                if (totalPages > 1)
+                  MetadataPaginationControls(
+                    currentPage: currentPage,
+                    totalPages: totalPages,
+                    onPrevious: currentPage > 1
+                        ? () => setState(() {
+                              _currentPage = currentPage - 1;
+                            })
+                        : null,
+                    onNext: currentPage < totalPages
+                        ? () => setState(() {
+                              _currentPage = currentPage + 1;
+                            })
+                        : null,
+                  ),
+              ],
             ],
           );
         },
@@ -86,10 +159,187 @@ class _ProductMetadataCategoriesScreenState
     );
   }
 
+  List<Category> _applyFilters(List<Category> source) {
+    final query = _query.toLowerCase();
+    final filtered = source.where((category) {
+      if (_statusFilter != null && category.status != _statusFilter) {
+        return false;
+      }
+      if (query.isEmpty) {
+        return true;
+      }
+      return category.name.toLowerCase().contains(query) ||
+          category.code.toLowerCase().contains(query) ||
+          category.slug.toLowerCase().contains(query) ||
+          (category.description?.toLowerCase().contains(query) ?? false);
+    }).toList();
+
+    filtered.sort((left, right) {
+      switch (_sortOption) {
+        case _CategorySortOption.sortOrder:
+          final orderCompare = left.sortOrder.compareTo(right.sortOrder);
+          if (orderCompare != 0) {
+            return orderCompare;
+          }
+          return left.name.toLowerCase().compareTo(right.name.toLowerCase());
+        case _CategorySortOption.nameAsc:
+          return left.name.toLowerCase().compareTo(right.name.toLowerCase());
+        case _CategorySortOption.nameDesc:
+          return right.name.toLowerCase().compareTo(left.name.toLowerCase());
+      }
+    });
+
+    return filtered;
+  }
+
+  String _filterSummary() {
+    final parts = <String>[
+      if (_statusFilter != null) 'Status: ${_statusFilter!.label}',
+      if (_sortOption != _CategorySortOption.sortOrder)
+        'Sort order: ${_sortOption.label}',
+    ];
+    return parts.join('  |  ');
+  }
+
+  Future<void> _openFilterSheet() async {
+    final selected = await showModalBottomSheet<CategoryStatus?>(
+      context: context,
+      builder: (context) {
+        CategoryStatus? tempStatus = _statusFilter;
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      'Filter categories',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 16),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('All statuses'),
+                      trailing:
+                          tempStatus == null ? const Icon(Icons.check) : null,
+                      onTap: () => setModalState(() {
+                        tempStatus = null;
+                      }),
+                    ),
+                    for (final status in CategoryStatus.values)
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(status.label),
+                        trailing: tempStatus == status
+                            ? const Icon(Icons.check)
+                            : null,
+                        onTap: () => setModalState(() {
+                          tempStatus = status;
+                        }),
+                      ),
+                    const SizedBox(height: 8),
+                    FilledButton(
+                      onPressed: () => Navigator.of(context).pop(tempStatus),
+                      child: const Text('Apply'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _statusFilter = selected;
+      _currentPage = 1;
+    });
+  }
+
+  Future<void> _openSortSheet() async {
+    final selected = await showModalBottomSheet<_CategorySortOption>(
+      context: context,
+      builder: (context) {
+        _CategorySortOption tempSort = _sortOption;
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      'Sort categories',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 16),
+                    for (final option in _CategorySortOption.values)
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(option.label),
+                        trailing:
+                            tempSort == option ? const Icon(Icons.check) : null,
+                        onTap: () => setModalState(() {
+                          tempSort = option;
+                        }),
+                      ),
+                    const SizedBox(height: 8),
+                    FilledButton(
+                      onPressed: () => Navigator.of(context).pop(tempSort),
+                      child: const Text('Apply'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (selected == null || !mounted) {
+      return;
+    }
+    setState(() {
+      _sortOption = selected;
+      _currentPage = 1;
+    });
+  }
+
+  int _totalPages(int itemCount) =>
+      itemCount == 0 ? 0 : ((itemCount - 1) ~/ _pageSize) + 1;
+
+  List<Category> _pageItems(List<Category> items, int page, int pageSize) {
+    final start = (page - 1) * pageSize;
+    if (start >= items.length) {
+      return const <Category>[];
+    }
+    final end = (start + pageSize).clamp(0, items.length);
+    return items.sublist(start, end);
+  }
+
   String _appBarTitle() {
     final parentCategory =
         _store.findCategoryById(widget.args?.parentCategoryId);
     return parentCategory?.name ?? 'Categories';
+  }
+
+  void _goToProductMetadataHome() {
+    Navigator.of(context).popUntil(
+      (route) =>
+          route.settings.name ==
+              ProductMetadataNavigator.productMetadataHomeRoute ||
+          route.isFirst,
+    );
   }
 
   List<Category> _buildPath(String? categoryId) {
@@ -204,7 +454,8 @@ class _ProductMetadataCategoriesScreenState
                               runSpacing: 8,
                               children: <Widget>[
                                 MetadataStatusChip(
-                                    label: category.status.label),
+                                  label: category.status.label,
+                                ),
                               ],
                             ),
                           ],
@@ -428,50 +679,30 @@ class _CategoriesLevelHeader extends StatelessWidget {
 }
 
 class _CategoriesEmptyState extends StatelessWidget {
-  const _CategoriesEmptyState({required this.currentCategory});
+  const _CategoriesEmptyState({
+    required this.currentCategory,
+    required this.hasFilters,
+  });
 
   final Category? currentCategory;
+  final bool hasFilters;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: colorScheme.secondaryContainer,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                currentCategory == null
-                    ? Icons.account_tree_outlined
-                    : Icons.folder_open_outlined,
-                color: colorScheme.onSecondaryContainer,
-                size: 28,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              currentCategory == null
-                  ? 'No categories yet'
-                  : 'No subcategories yet',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
+    return MetadataEmptyState(
+      icon: currentCategory == null
+          ? Icons.account_tree_outlined
+          : Icons.folder_open_outlined,
+      title: hasFilters
+          ? 'No matching categories'
+          : currentCategory == null
+              ? 'No categories yet'
+              : 'No subcategories yet',
+      message: hasFilters
+          ? 'Try changing your search, filter, or sort order.'
+          : currentCategory == null
+              ? 'Add the first category to organize product metadata.'
+              : 'Add a subcategory to continue organizing this level.',
     );
   }
 }

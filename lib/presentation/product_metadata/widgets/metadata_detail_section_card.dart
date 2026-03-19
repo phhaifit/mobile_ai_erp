@@ -37,11 +37,13 @@ class MetadataDetailRow extends StatelessWidget {
   const MetadataDetailRow({
     super.key,
     required this.label,
-    required this.value,
-  });
+    this.value,
+    this.valueChild,
+  }) : assert(value != null || valueChild != null);
 
   final String label;
-  final String value;
+  final String? value;
+  final Widget? valueChild;
 
   @override
   Widget build(BuildContext context) {
@@ -57,10 +59,11 @@ class MetadataDetailRow extends StatelessWidget {
                 ),
           ),
           const SizedBox(height: 4),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
+          valueChild ??
+              Text(
+                value!,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
         ],
       ),
     );

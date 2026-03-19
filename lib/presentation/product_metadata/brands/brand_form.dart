@@ -3,6 +3,7 @@ import 'package:mobile_ai_erp/domain/entity/product_metadata/brand.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/product_metadata_validation_exception.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_route_args.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_form_decoration.dart';
 import 'package:flutter/material.dart';
 
 class ProductMetadataBrandFormScreen extends StatefulWidget {
@@ -89,11 +90,9 @@ class _ProductMetadataBrandFormScreenState
             children: <Widget>[
               TextFormField(
                 controller: _nameController,
-                decoration: InputDecoration(
+                decoration: metadataFormDecoration(
                   labelText: 'Name',
-                  border: const OutlineInputBorder(),
                   errorText: _nameErrorText,
-                  errorMaxLines: 3,
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -105,9 +104,8 @@ class _ProductMetadataBrandFormScreenState
               const SizedBox(height: 16),
               TextFormField(
                 controller: _descriptionController,
-                decoration: const InputDecoration(
+                decoration: metadataFormDecoration(
                   labelText: 'Description',
-                  border: OutlineInputBorder(),
                 ),
                 minLines: 2,
                 maxLines: 4,
@@ -115,42 +113,37 @@ class _ProductMetadataBrandFormScreenState
               const SizedBox(height: 16),
               TextFormField(
                 controller: _logoUrlController,
-                decoration: const InputDecoration(
+                decoration: metadataFormDecoration(
                   labelText: 'Logo URL',
-                  border: OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _countryCodeController,
                 textCapitalization: TextCapitalization.characters,
-                decoration: const InputDecoration(
+                decoration: metadataFormDecoration(
                   labelText: 'Country code',
-                  border: OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _regionController,
-                decoration: const InputDecoration(
+                decoration: metadataFormDecoration(
                   labelText: 'Region / State',
-                  border: OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _cityController,
-                decoration: const InputDecoration(
+                decoration: metadataFormDecoration(
                   labelText: 'City',
-                  border: OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<BrandStatus>(
                 initialValue: _status,
-                decoration: const InputDecoration(
+                decoration: metadataFormDecoration(
                   labelText: 'Status',
-                  border: OutlineInputBorder(),
                 ),
                 items: BrandStatus.values
                     .map(
@@ -173,9 +166,8 @@ class _ProductMetadataBrandFormScreenState
               TextFormField(
                 controller: _sortOrderController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
+                decoration: metadataFormDecoration(
                   labelText: 'Sort order',
-                  border: OutlineInputBorder(),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
