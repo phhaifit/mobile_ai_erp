@@ -7,7 +7,6 @@ class MetadataListControls extends StatelessWidget {
     required this.onSearchChanged,
     required this.searchHint,
     required this.resultLabel,
-    this.filterSummary,
     this.hasActiveFilter = false,
     this.hasCustomSort = false,
     this.onOpenFilter,
@@ -18,7 +17,6 @@ class MetadataListControls extends StatelessWidget {
   final ValueChanged<String> onSearchChanged;
   final String searchHint;
   final String resultLabel;
-  final String? filterSummary;
   final bool hasActiveFilter;
   final bool hasCustomSort;
   final VoidCallback? onOpenFilter;
@@ -26,6 +24,13 @@ class MetadataListControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final resultLabelStyle = theme.textTheme.labelSmall?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.74),
+      fontWeight: FontWeight.w500,
+      letterSpacing: 0.1,
+    );
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final isTablet = constraints.maxWidth >= 720;
@@ -71,10 +76,7 @@ class MetadataListControls extends StatelessWidget {
                   Expanded(
                     child: Text(
                       resultLabel,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                      style: resultLabelStyle,
                     ),
                   ),
                   _ActionIconButton(
@@ -103,19 +105,7 @@ class MetadataListControls extends StatelessWidget {
               const SizedBox(height: 12),
               Text(
                 resultLabel,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-              ),
-            ],
-            if (filterSummary != null &&
-                filterSummary!.trim().isNotEmpty) ...<Widget>[
-              const SizedBox(height: 8),
-              Text(
-                filterSummary!,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                style: resultLabelStyle,
               ),
             ],
           ],

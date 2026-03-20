@@ -36,7 +36,7 @@ class ProductMetadataCategoriesScreen extends StatefulWidget {
 
 class _ProductMetadataCategoriesScreenState
     extends State<ProductMetadataCategoriesScreen> {
-  static const int _pageSize = 10;
+  static const int _pageSize = 2;
 
   final ProductMetadataStore _store = getIt<ProductMetadataStore>();
   final TextEditingController _searchController = TextEditingController();
@@ -121,7 +121,6 @@ class _ProductMetadataCategoriesScreenState
                 searchHint: 'Search by name, code, slug, or description',
                 resultLabel:
                     'Showing ${visibleCategories.length} of ${categories.length} categories',
-                filterSummary: _filterSummary(),
                 hasActiveFilter: _statusFilter != null,
                 hasCustomSort: _sortOption != _CategorySortOption.sortOrder,
                 onOpenFilter: _openFilterSheet,
@@ -190,15 +189,6 @@ class _ProductMetadataCategoriesScreenState
     });
 
     return filtered;
-  }
-
-  String _filterSummary() {
-    final parts = <String>[
-      if (_statusFilter != null) 'Status: ${_statusFilter!.label}',
-      if (_sortOption != _CategorySortOption.sortOrder)
-        'Sort order: ${_sortOption.label}',
-    ];
-    return parts.join('  |  ');
   }
 
   Future<void> _openFilterSheet() async {
@@ -454,8 +444,7 @@ class _ProductMetadataCategoriesScreenState
                               runSpacing: 8,
                               children: <Widget>[
                                 MetadataStatusChip(
-                                  label: category.status.label,
-                                ),
+                                    label: category.status.label),
                               ],
                             ),
                           ],
@@ -645,10 +634,7 @@ class _CategoriesLevelHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         if (path.isEmpty)
-          Text(
-            'Manage categories one level at a time.',
-            style: theme.textTheme.bodyMedium,
-          )
+          const SizedBox.shrink()
         else ...<Widget>[
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,

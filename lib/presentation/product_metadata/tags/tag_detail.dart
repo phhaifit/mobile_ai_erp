@@ -1,4 +1,5 @@
 import 'package:mobile_ai_erp/di/service_locator.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_color_utils.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_navigator.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_route_args.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
@@ -41,6 +42,7 @@ class _ProductMetadataTagDetailScreenState
             body: const Center(child: Text('Tag not found.')),
           );
         }
+        final tagColor = tryParseHexColor(tag.colorHex);
 
         return Scaffold(
           appBar: AppBar(
@@ -84,7 +86,17 @@ class _ProductMetadataTagDetailScreenState
                         spacing: 8,
                         runSpacing: 8,
                         children: <Widget>[
-                          MetadataStatusChip(label: tag.colorHex!),
+                          MetadataStatusChip(
+                            label: tag.colorHex!,
+                            foregroundColor: tagColor == null
+                                ? null
+                                : readableForegroundFor(
+                                    softenedColor(tagColor),
+                                  ),
+                            backgroundColor: tagColor == null
+                                ? null
+                                : softenedColor(tagColor),
+                          ),
                         ],
                       ),
                     ),
