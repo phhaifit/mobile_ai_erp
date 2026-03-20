@@ -77,6 +77,10 @@ class _ProductMetadataBrandDetailScreenState
                       ],
                     ),
                   ),
+                  MetadataDetailRow(
+                    label: 'Code',
+                    value: brand.code,
+                  ),
                   if (brand.description != null &&
                       brand.description!.isNotEmpty)
                     MetadataDetailRow(

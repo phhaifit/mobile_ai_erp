@@ -93,7 +93,7 @@ class _ProductMetadataBrandsScreenState
                     _query = value.trim();
                     _currentPage = 1;
                   }),
-                  searchHint: 'Search by brand, location, or description',
+                  searchHint: 'Search by brand, code, or location',
                   resultLabel:
                       'Showing ${visibleBrands.length} of ${filteredBrands.length} brands',
                   hasActiveFilter: _statusFilter != null,
@@ -197,7 +197,7 @@ class _ProductMetadataBrandsScreenState
         return true;
       }
       return brand.name.toLowerCase().contains(query) ||
-          (brand.description?.toLowerCase().contains(query) ?? false) ||
+          brand.code.toLowerCase().contains(query) ||
           (brand.displayLocation?.toLowerCase().contains(query) ?? false);
     }).toList();
 
@@ -356,8 +356,7 @@ class _ProductMetadataBrandsScreenState
 
   List<String> _brandSummary(Brand brand) {
     return <String>[
-      if (brand.description != null && brand.description!.trim().isNotEmpty)
-        brand.description!.trim(),
+      'Code: ${brand.code}',
       if (brand.displayLocation != null) 'Location: ${brand.displayLocation}',
       'Sort order: ${brand.sortOrder}',
     ];

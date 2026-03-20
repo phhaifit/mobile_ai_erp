@@ -11,6 +11,7 @@ class Brand {
   const Brand({
     required this.id,
     required this.name,
+    required this.code,
     this.description,
     this.logoUrl,
     this.countryCode,
@@ -22,6 +23,7 @@ class Brand {
 
   final String id;
   final String name;
+  final String code;
   final String? description;
   final String? logoUrl;
   final String? countryCode;
@@ -49,6 +51,7 @@ class Brand {
   Brand copyWith({
     String? id,
     String? name,
+    String? code,
     Object? description = _sentinel,
     Object? logoUrl = _sentinel,
     Object? countryCode = _sentinel,
@@ -60,6 +63,7 @@ class Brand {
     return Brand(
       id: id ?? this.id,
       name: name ?? this.name,
+      code: code ?? this.code,
       description: identical(description, _sentinel)
           ? this.description
           : description as String?,

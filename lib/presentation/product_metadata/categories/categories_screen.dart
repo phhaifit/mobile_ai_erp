@@ -118,7 +118,7 @@ class _ProductMetadataCategoriesScreenState
                   _query = value.trim();
                   _currentPage = 1;
                 }),
-                searchHint: 'Search by name, code, slug, or description',
+                searchHint: 'Search by name, code, or slug',
                 resultLabel:
                     'Showing ${visibleCategories.length} of ${categories.length} categories',
                 hasActiveFilter: _statusFilter != null,
@@ -169,8 +169,7 @@ class _ProductMetadataCategoriesScreenState
       }
       return category.name.toLowerCase().contains(query) ||
           category.code.toLowerCase().contains(query) ||
-          category.slug.toLowerCase().contains(query) ||
-          (category.description?.toLowerCase().contains(query) ?? false);
+          category.slug.toLowerCase().contains(query);
     }).toList();
 
     filtered.sort((left, right) {

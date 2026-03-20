@@ -151,6 +151,7 @@ class ProductMetadataDataSource {
     const Brand(
       id: 'brand_nike',
       name: 'Nike',
+      code: 'nike',
       logoUrl: 'https://example.com/nike.png',
       countryCode: 'US',
       regionOrState: 'Oregon',
@@ -160,6 +161,7 @@ class ProductMetadataDataSource {
     const Brand(
       id: 'brand_uniqlo',
       name: 'Uniqlo',
+      code: 'uniqlo',
       countryCode: 'JP',
       regionOrState: 'Tokyo',
       city: 'Tokyo',
@@ -168,6 +170,7 @@ class ProductMetadataDataSource {
     const Brand(
       id: 'brand_anker',
       name: 'Anker',
+      code: 'anker',
       countryCode: 'CN',
       regionOrState: 'Hunan',
       city: 'Changsha',
@@ -499,8 +502,12 @@ class ProductMetadataDataSource {
 
   Future<Brand> saveBrand(Brand brand) async {
     final name = brand.name.trim();
+    final code = brand.code.trim();
     if (name.isEmpty) {
       throw const ProductMetadataValidationException('Brand name is required.');
+    }
+    if (code.isEmpty) {
+      throw const ProductMetadataValidationException('Brand code is required.');
     }
 
     final brandId = brand.id.trim();
@@ -512,6 +519,15 @@ class ProductMetadataDataSource {
     if (hasDuplicateName) {
       throw const ProductMetadataValidationException(
           'Brand names must be unique.');
+    }
+    final hasDuplicateCode = _brands.any(
+      (existing) =>
+          existing.id != brandId &&
+          _normalize(existing.code) == _normalize(code),
+    );
+    if (hasDuplicateCode) {
+      throw const ProductMetadataValidationException(
+          'Brand codes must be unique.');
     }
 
     final normalizedCountry =
@@ -536,6 +552,7 @@ class ProductMetadataDataSource {
     final saved = brand.copyWith(
       id: brandId.isEmpty ? _generateId('brand') : brandId,
       name: name,
+      code: code,
       description: _normalizeNullable(brand.description),
       logoUrl: _normalizeNullable(brand.logoUrl),
       countryCode: normalizedCountry,
