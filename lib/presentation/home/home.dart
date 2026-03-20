@@ -24,6 +24,13 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: _buildAppBar(),
       body: PostListScreen(),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.of(context).pushNamed(Routes.webBuilder);
+        },
+        icon: const Icon(Icons.web),
+        label: const Text('Web Builder'),
+      ),
     );
   }
 
