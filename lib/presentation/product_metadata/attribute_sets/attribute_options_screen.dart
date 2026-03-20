@@ -36,7 +36,7 @@ class ProductMetadataAttributeOptionsScreen extends StatefulWidget {
 
 class _ProductMetadataAttributeOptionsScreenState
     extends State<ProductMetadataAttributeOptionsScreen> {
-  static const int _pageSize = 10;
+  static const int _pageSize = 5;
 
   final ProductMetadataStore _store = getIt<ProductMetadataStore>();
   final TextEditingController _searchController = TextEditingController();
@@ -116,7 +116,6 @@ class _ProductMetadataAttributeOptionsScreenState
                   searchHint: 'Search by option value or sort order',
                   resultLabel:
                       'Showing ${visibleOptions.length} of ${filteredOptions.length} options',
-                  filterSummary: _filterSummary(),
                   hasActiveFilter: _sortOrderFilter != null,
                   hasCustomSort:
                       _sortOption != _AttributeOptionSortOption.sortOrder,
@@ -231,15 +230,6 @@ class _ProductMetadataAttributeOptionsScreenState
     });
 
     return filtered;
-  }
-
-  String _filterSummary() {
-    final parts = <String>[
-      if (_sortOrderFilter != null) 'Sort order filter: $_sortOrderFilter',
-      if (_sortOption != _AttributeOptionSortOption.sortOrder)
-        'Sort order: ${_sortOption.label}',
-    ];
-    return parts.join('  |  ');
   }
 
   Future<void> _openFilterSheet() async {

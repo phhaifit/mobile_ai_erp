@@ -3,6 +3,7 @@ import 'package:mobile_ai_erp/domain/entity/product_metadata/tag.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_navigator.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_route_args.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_color_utils.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_empty_state.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_list_card.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_list_controls.dart';
@@ -30,7 +31,7 @@ class ProductMetadataTagsScreen extends StatefulWidget {
 }
 
 class _ProductMetadataTagsScreenState extends State<ProductMetadataTagsScreen> {
-  static const int _pageSize = 10;
+  static const int _pageSize = 2;
 
   final ProductMetadataStore _store = getIt<ProductMetadataStore>();
   final TextEditingController _searchController = TextEditingController();
@@ -56,6 +57,13 @@ class _ProductMetadataTagsScreenState extends State<ProductMetadataTagsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Tags'),
+        actions: <Widget>[
+          IconButton(
+            onPressed: _goToProductMetadataHome,
+            icon: const Icon(Icons.dashboard_outlined),
+            tooltip: 'Back to Product Metadata',
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => ProductMetadataNavigator.openTagForm(context),
@@ -87,7 +95,6 @@ class _ProductMetadataTagsScreenState extends State<ProductMetadataTagsScreen> {
                   searchHint: 'Search by tag, color, or description',
                   resultLabel:
                       'Showing ${visibleTags.length} of ${filteredTags.length} tags',
-                  filterSummary: _filterSummary(),
                   hasActiveFilter: _statusFilter != null,
                   hasCustomSort: _sortOption != _TagSortOption.sortOrder,
                   onOpenFilter: _openFilterSheet,
@@ -209,15 +216,6 @@ class _ProductMetadataTagsScreenState extends State<ProductMetadataTagsScreen> {
     return filtered;
   }
 
-  String _filterSummary() {
-    final parts = <String>[
-      if (_statusFilter != null) 'Status: ${_statusFilter!.label}',
-      if (_sortOption != _TagSortOption.sortOrder)
-        'Sort order: ${_sortOption.label}',
-    ];
-    return parts.join('  |  ');
-  }
-
   Future<void> _openFilterSheet() async {
     final selected = await showModalBottomSheet<TagStatus?>(
       context: context,
@@ -335,6 +333,15 @@ class _ProductMetadataTagsScreenState extends State<ProductMetadataTagsScreen> {
   int _totalPages(int itemCount) =>
       itemCount == 0 ? 0 : ((itemCount - 1) ~/ _pageSize) + 1;
 
+  void _goToProductMetadataHome() {
+    Navigator.of(context).popUntil(
+      (route) =>
+          route.settings.name ==
+              ProductMetadataNavigator.productMetadataHomeRoute ||
+          route.isFirst,
+    );
+  }
+
   List<Tag> _pageItems(List<Tag> items, int page, int pageSize) {
     final start = (page - 1) * pageSize;
     if (start >= items.length) {
@@ -409,7 +416,7 @@ class _TagColorDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final parsedColor = _parseColor(colorHex);
+    final parsedColor = tryParseHexColor(colorHex);
     if (parsedColor == null) {
       return const Icon(Icons.sell_outlined);
     }
@@ -425,20 +432,5 @@ class _TagColorDot extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  Color? _parseColor(String? value) {
-    if (value == null) {
-      return null;
-    }
-    final normalized = value.trim().replaceFirst('#', '');
-    if (normalized.length != 6) {
-      return null;
-    }
-    final parsed = int.tryParse(normalized, radix: 16);
-    if (parsed == null) {
-      return null;
-    }
-    return Color(0xFF000000 | parsed);
   }
 }

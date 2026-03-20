@@ -31,7 +31,7 @@ class ProductMetadataBrandsScreen extends StatefulWidget {
 
 class _ProductMetadataBrandsScreenState
     extends State<ProductMetadataBrandsScreen> {
-  static const int _pageSize = 10;
+  static const int _pageSize = 2;
 
   final ProductMetadataStore _store = getIt<ProductMetadataStore>();
   final TextEditingController _searchController = TextEditingController();
@@ -57,6 +57,13 @@ class _ProductMetadataBrandsScreenState
     return Scaffold(
       appBar: AppBar(
         title: const Text('Brands'),
+        actions: <Widget>[
+          IconButton(
+            onPressed: _goToProductMetadataHome,
+            icon: const Icon(Icons.dashboard_outlined),
+            tooltip: 'Back to Product Metadata',
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => ProductMetadataNavigator.openBrandForm(context),
@@ -89,7 +96,6 @@ class _ProductMetadataBrandsScreenState
                   searchHint: 'Search by brand, location, or description',
                   resultLabel:
                       'Showing ${visibleBrands.length} of ${filteredBrands.length} brands',
-                  filterSummary: _filterSummary(),
                   hasActiveFilter: _statusFilter != null,
                   hasCustomSort: _sortOption != _BrandSortOption.sortOrder,
                   onOpenFilter: _openFilterSheet,
@@ -213,15 +219,6 @@ class _ProductMetadataBrandsScreenState
     return filtered;
   }
 
-  String _filterSummary() {
-    final parts = <String>[
-      if (_statusFilter != null) 'Status: ${_statusFilter!.label}',
-      if (_sortOption != _BrandSortOption.sortOrder)
-        'Sort order: ${_sortOption.label}',
-    ];
-    return parts.join('  |  ');
-  }
-
   Future<void> _openFilterSheet() async {
     final selected = await showModalBottomSheet<BrandStatus?>(
       context: context,
@@ -338,6 +335,15 @@ class _ProductMetadataBrandsScreenState
 
   int _totalPages(int itemCount) =>
       itemCount == 0 ? 0 : ((itemCount - 1) ~/ _pageSize) + 1;
+
+  void _goToProductMetadataHome() {
+    Navigator.of(context).popUntil(
+      (route) =>
+          route.settings.name ==
+              ProductMetadataNavigator.productMetadataHomeRoute ||
+          route.isFirst,
+    );
+  }
 
   List<Brand> _pageItems(List<Brand> items, int page, int pageSize) {
     final start = (page - 1) * pageSize;

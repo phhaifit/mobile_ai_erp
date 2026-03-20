@@ -73,6 +73,13 @@ class _ProductMetadataAttributesScreenState
     return Scaffold(
       appBar: AppBar(
         title: const Text('Attributes'),
+        actions: <Widget>[
+          IconButton(
+            onPressed: _goToProductMetadataHome,
+            icon: const Icon(Icons.dashboard_outlined),
+            tooltip: 'Back to Product Metadata',
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           tabs: const <Tab>[
@@ -116,6 +123,15 @@ class _ProductMetadataAttributesScreenState
       ),
     );
   }
+
+  void _goToProductMetadataHome() {
+    Navigator.of(context).popUntil(
+      (route) =>
+          route.settings.name ==
+              ProductMetadataNavigator.productMetadataHomeRoute ||
+          route.isFirst,
+    );
+  }
 }
 
 class _AttributesListTab extends StatefulWidget {
@@ -128,7 +144,7 @@ class _AttributesListTab extends StatefulWidget {
 }
 
 class _AttributesListTabState extends State<_AttributesListTab> {
-  static const int _pageSize = 10;
+  static const int _pageSize = 2;
 
   final TextEditingController _searchController = TextEditingController();
   String _query = '';
@@ -172,7 +188,6 @@ class _AttributesListTabState extends State<_AttributesListTab> {
             searchHint: 'Search by name, code, type, or unit',
             resultLabel:
                 'Showing ${visibleAttributes.length} of ${filteredAttributes.length} attributes',
-            filterSummary: _filterSummary(),
             hasActiveFilter: _valueTypeFilter != null || _filterableOnly,
             hasCustomSort: _sortOption != _AttributeSortOption.sortOrder,
             onOpenFilter: _openFilterSheet,
@@ -317,85 +332,80 @@ class _AttributesListTabState extends State<_AttributesListTab> {
     return filtered;
   }
 
-  String _filterSummary() {
-    final parts = <String>[
-      if (_valueTypeFilter != null) 'Type: ${_valueTypeFilter!.label}',
-      if (_filterableOnly) 'Filterable only',
-      if (_sortOption != _AttributeSortOption.sortOrder)
-        'Sort order: ${_sortOption.label}',
-    ];
-    return parts.join('  |  ');
-  }
-
   Future<void> _openFilterSheet() async {
     final result = await showModalBottomSheet<_AttributeFilterState>(
       context: context,
+      isScrollControlled: true,
       builder: (context) {
         AttributeValueType? tempValueType = _valueTypeFilter;
         bool tempFilterableOnly = _filterableOnly;
         return StatefulBuilder(
           builder: (context, setModalState) {
             return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      'Filter attributes',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 16),
-                    Flexible(
-                      child: SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            ListTile(
-                              contentPadding: EdgeInsets.zero,
-                              title: const Text('All types'),
-                              trailing: tempValueType == null
-                                  ? const Icon(Icons.check)
-                                  : null,
-                              onTap: () => setModalState(() {
-                                tempValueType = null;
-                              }),
-                            ),
-                            for (final valueType in AttributeValueType.values)
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.6,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        'Filter attributes',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 16),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
                               ListTile(
                                 contentPadding: EdgeInsets.zero,
-                                title: Text(valueType.label),
-                                trailing: tempValueType == valueType
+                                title: const Text('All types'),
+                                trailing: tempValueType == null
                                     ? const Icon(Icons.check)
                                     : null,
                                 onTap: () => setModalState(() {
-                                  tempValueType = valueType;
+                                  tempValueType = null;
                                 }),
                               ),
-                            SwitchListTile(
-                              value: tempFilterableOnly,
-                              contentPadding: EdgeInsets.zero,
-                              onChanged: (value) => setModalState(() {
-                                tempFilterableOnly = value;
-                              }),
-                              title: const Text('Filterable only'),
-                            ),
-                          ],
+                              for (final valueType in AttributeValueType.values)
+                                ListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  title: Text(valueType.label),
+                                  trailing: tempValueType == valueType
+                                      ? const Icon(Icons.check)
+                                      : null,
+                                  onTap: () => setModalState(() {
+                                    tempValueType = valueType;
+                                  }),
+                                ),
+                              SwitchListTile(
+                                value: tempFilterableOnly,
+                                contentPadding: EdgeInsets.zero,
+                                onChanged: (value) => setModalState(() {
+                                  tempFilterableOnly = value;
+                                }),
+                                title: const Text('Filterable only'),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    FilledButton(
-                      onPressed: () => Navigator.of(context).pop(
-                        _AttributeFilterState(
-                          valueType: tempValueType,
-                          filterableOnly: tempFilterableOnly,
+                      const SizedBox(height: 12),
+                      FilledButton(
+                        onPressed: () => Navigator.of(context).pop(
+                          _AttributeFilterState(
+                            valueType: tempValueType,
+                            filterableOnly: tempFilterableOnly,
+                          ),
                         ),
+                        child: const Text('Apply'),
                       ),
-                      child: const Text('Apply'),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             );
