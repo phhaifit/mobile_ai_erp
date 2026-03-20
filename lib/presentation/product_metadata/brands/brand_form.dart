@@ -24,6 +24,7 @@ class _ProductMetadataBrandFormScreenState
   final ProductMetadataStore _store = getIt<ProductMetadataStore>();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _codeController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _logoUrlController = TextEditingController();
   final TextEditingController _countryCodeController = TextEditingController();
@@ -48,6 +49,7 @@ class _ProductMetadataBrandFormScreenState
     _editingBrand = _store.findBrandById(widget.args?.brandId);
     if (_editingBrand != null) {
       _nameController.text = _editingBrand!.name;
+      _codeController.text = _editingBrand!.code;
       _descriptionController.text = _editingBrand!.description ?? '';
       _logoUrlController.text = _editingBrand!.logoUrl ?? '';
       _countryCodeController.text = _editingBrand!.countryCode ?? '';
@@ -67,6 +69,7 @@ class _ProductMetadataBrandFormScreenState
   void dispose() {
     _nameController.removeListener(_clearNameError);
     _nameController.dispose();
+    _codeController.dispose();
     _descriptionController.dispose();
     _logoUrlController.dispose();
     _countryCodeController.dispose();
@@ -97,6 +100,19 @@ class _ProductMetadataBrandFormScreenState
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Name is required.';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _codeController,
+                decoration: metadataFormDecoration(
+                  labelText: 'Code',
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Code is required.';
                   }
                   return null;
                 },
@@ -214,6 +230,7 @@ class _ProductMetadataBrandFormScreenState
         Brand(
           id: _editingBrand?.id ?? '',
           name: _nameController.text.trim(),
+          code: _codeController.text.trim(),
           description: _trimOrNull(_descriptionController.text),
           logoUrl: _trimOrNull(_logoUrlController.text),
           countryCode: _trimOrNull(_countryCodeController.text)?.toUpperCase(),

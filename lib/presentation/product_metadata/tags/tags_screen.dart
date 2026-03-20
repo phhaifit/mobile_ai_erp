@@ -92,7 +92,7 @@ class _ProductMetadataTagsScreenState extends State<ProductMetadataTagsScreen> {
                     _query = value.trim();
                     _currentPage = 1;
                   }),
-                  searchHint: 'Search by tag, color, or description',
+                  searchHint: 'Search by tag or color',
                   resultLabel:
                       'Showing ${visibleTags.length} of ${filteredTags.length} tags',
                   hasActiveFilter: _statusFilter != null,
@@ -194,7 +194,6 @@ class _ProductMetadataTagsScreenState extends State<ProductMetadataTagsScreen> {
         return true;
       }
       return tag.name.toLowerCase().contains(query) ||
-          (tag.description?.toLowerCase().contains(query) ?? false) ||
           (tag.colorHex?.toLowerCase().contains(query) ?? false);
     }).toList();
 
@@ -353,8 +352,6 @@ class _ProductMetadataTagsScreenState extends State<ProductMetadataTagsScreen> {
 
   List<String> _tagSummary(Tag tag) {
     return <String>[
-      if (tag.description != null && tag.description!.trim().isNotEmpty)
-        tag.description!.trim(),
       if (tag.colorHex != null && tag.colorHex!.trim().isNotEmpty)
         'Color: ${tag.colorHex}',
       'Sort order: ${tag.sortOrder}',
