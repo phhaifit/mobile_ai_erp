@@ -558,7 +558,6 @@ class _AttributesListTabState extends State<_AttributesListTab> {
         SnackBar(content: Text('Deleted "${attribute.name}".')),
       );
     } catch (error) {
-      debugPrint('Failed to delete attribute: $error');
       if (!context.mounted) {
         return;
       }
