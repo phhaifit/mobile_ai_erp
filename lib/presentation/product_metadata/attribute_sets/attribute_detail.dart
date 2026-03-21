@@ -84,6 +84,12 @@ class _ProductMetadataAttributeDetailScreenState
                 children: <Widget>[
                   MetadataDetailRow(label: 'Code', value: attribute.code),
                   MetadataDetailRow(
+                    label: 'Description',
+                    value: attribute.description?.trim().isNotEmpty == true
+                        ? attribute.description!
+                        : 'Not set',
+                  ),
+                  MetadataDetailRow(
                     label: 'Sort order',
                     value: attribute.sortOrder.toString(),
                   ),
