@@ -271,7 +271,6 @@ class _ProductMetadataTagFormScreenState
         _nameErrorText = error.message;
       });
     } catch (error) {
-      debugPrint('Failed to save tag: $error');
       if (!mounted) {
         return;
       }

@@ -422,7 +422,6 @@ class _ProductMetadataAttributeOptionsScreenState
         SnackBar(content: Text('Deleted "${attributeOption.value}".')),
       );
     } catch (error) {
-      debugPrint('Failed to delete attribute option: $error');
       if (!mounted) {
         return;
       }
@@ -597,7 +596,6 @@ class _ProductMetadataAttributeOptionFormScreenState
         _valueErrorText = error.message;
       });
     } catch (error) {
-      debugPrint('Failed to save attribute option: $error');
       if (!mounted) {
         return;
       }

@@ -60,7 +60,7 @@ class _AttributeRelationshipsTabState extends State<AttributeRelationshipsTab> {
               return Row(
                 children: <Widget>[
                   SizedBox(
-                    width: 280,
+                    width: constraints.maxWidth * 0.28,
                     child: _RelationshipsCategoryRail(
                       categories: categories,
                       selectedCategoryId: _selectedCategoryId,
@@ -254,7 +254,7 @@ class _RelationshipsContent extends StatefulWidget {
 }
 
 class _RelationshipsContentState extends State<_RelationshipsContent> {
-  static const int _pageSize = 2;
+  static const int _pageSize = 10;
 
   int _currentPage = 1;
 
@@ -436,7 +436,6 @@ class _RelationshipsContentState extends State<_RelationshipsContent> {
         const SnackBar(content: Text('Relationship removed.')),
       );
     } catch (error) {
-      debugPrint('Failed to delete relationship: $error');
       if (!context.mounted) {
         return;
       }
@@ -744,7 +743,6 @@ class _ProductMetadataCategoryRelationshipFormScreenState
         _errorText = error.message;
       });
     } catch (error) {
-      debugPrint('Failed to save relationship: $error');
       if (!mounted) {
         return;
       }

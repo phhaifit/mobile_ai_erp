@@ -4,6 +4,7 @@ import 'package:mobile_ai_erp/domain/entity/product_metadata/product_metadata_va
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_route_args.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_form_decoration.dart';
+import 'package:mobile_ai_erp/core/utils/slug_util.dart';
 import 'package:flutter/material.dart';
 
 class ProductMetadataCategoryFormScreen extends StatefulWidget {
@@ -323,7 +324,6 @@ class _ProductMetadataCategoryFormScreenState
         SnackBar(content: Text(error.message)),
       );
     } catch (error) {
-      debugPrint('Failed to save category: $error');
       if (!mounted) {
         return;
       }
@@ -346,7 +346,7 @@ class _ProductMetadataCategoryFormScreenState
   }
 
   String _buildSlugPreview() {
-    final ownSlug = _slugify(_nameController.text);
+    final ownSlug = SlugUtil.slugify(_nameController.text);
     if (_selectedParentId == null) {
       return ownSlug;
     }
@@ -362,20 +362,11 @@ class _ProductMetadataCategoryFormScreenState
       if (parent == null || !visitedIds.add(parent.id)) {
         break;
       }
-      parentSegments.insert(0, _slugify(parent.name));
+      parentSegments.insert(0, SlugUtil.slugify(parent.name));
       cursor = parent.parentId;
     }
 
     return <String>[...parentSegments, ownSlug].join('/');
-  }
-
-  String _slugify(String value) {
-    final slug = value
-        .trim()
-        .toLowerCase()
-        .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
-        .replaceAll(RegExp(r'^-+|-+$'), '');
-    return slug.isEmpty ? 'category' : slug;
   }
 
   String? _trimOrNull(String value) {
