@@ -31,6 +31,15 @@ class FulfillmentRepositoryImpl extends FulfillmentRepository {
   Future<void> updateOrderStatus(String id, FulfillmentStatus status) async {
     await Future.delayed(const Duration(milliseconds: 300));
     final order = _orders.firstWhere((o) => o.id == id);
+
+    _validateStatusTransition(order, status);
+
+    if (status == FulfillmentStatus.shipped) {
+      for (final item in order.items) {
+        item.shippedQuantity = item.packedQuantity;
+      }
+    }
+
     order.status = status;
     order.updatedAt = DateTime.now();
     order.trackingEvents.add(TrackingEvent(
@@ -40,6 +49,30 @@ class FulfillmentRepositoryImpl extends FulfillmentRepository {
       timestamp: DateTime.now(),
       updatedBy: 'System',
     ));
+  }
+
+  void _validateStatusTransition(
+      FulfillmentOrder order, FulfillmentStatus target) {
+    switch (target) {
+      case FulfillmentStatus.packing:
+        if (!order.isFullyPicked) {
+          throw Exception('All items must be picked before packing');
+        }
+        break;
+      case FulfillmentStatus.packed:
+        if (!order.isFullyPacked) {
+          throw Exception(
+              'All items must be packed into packages before marking as packed');
+        }
+        break;
+      case FulfillmentStatus.shipped:
+        if (!order.isFullyPacked) {
+          throw Exception('All items must be packed before shipping');
+        }
+        break;
+      default:
+        break;
+    }
   }
 
   @override
