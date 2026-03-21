@@ -72,7 +72,9 @@ abstract class _FulfillmentStore with Store {
   Future<void> getOrderDetail(String orderId) async {
     loading = true;
     try {
-      selectedOrder = await _getOrderDetailUseCase.call(params: orderId);
+      final order = await _getOrderDetailUseCase.call(params: orderId);
+      selectedOrder = null;
+      selectedOrder = order;
       success = true;
     } catch (e) {
       errorStore.errorMessage = e.toString();
