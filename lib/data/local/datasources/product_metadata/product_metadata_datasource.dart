@@ -54,6 +54,7 @@ class ProductMetadataDataSource {
       name: 'Color',
       code: 'color',
       valueType: AttributeValueType.dropdown,
+      description: 'Primary color used to classify and filter products.',
       sortOrder: 10,
     ),
     const Attribute(
@@ -61,6 +62,7 @@ class ProductMetadataDataSource {
       name: 'Size',
       code: 'size',
       valueType: AttributeValueType.multiselect,
+      description: 'Available size values that can be assigned to a product.',
       sortOrder: 20,
     ),
     const Attribute(
@@ -68,6 +70,7 @@ class ProductMetadataDataSource {
       name: 'Material',
       code: 'material',
       valueType: AttributeValueType.text,
+      description: 'Free-text material composition shown in specifications.',
       sortOrder: 30,
       maxLength: 100,
     ),
@@ -76,6 +79,7 @@ class ProductMetadataDataSource {
       name: 'Weight',
       code: 'weight',
       valueType: AttributeValueType.number,
+      description: 'Numeric shipping or packaging weight for the product.',
       unitLabel: 'kg',
       allowedUnitLabels: <String>['kg', 'g', 'lb'],
       sortOrder: 40,
@@ -369,6 +373,7 @@ class ProductMetadataDataSource {
       id: attributeId.isEmpty ? _generateId('attr') : attributeId,
       name: name,
       code: code,
+      description: _normalizeNullable(attribute.description),
       inputPattern: _normalizeNullable(attribute.inputPattern),
       unitLabel: attribute.valueType == AttributeValueType.number &&
               normalizedAllowedUnits.isNotEmpty

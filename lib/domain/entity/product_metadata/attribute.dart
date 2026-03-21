@@ -19,6 +19,7 @@ class Attribute {
     required this.name,
     required this.code,
     required this.valueType,
+    this.description,
     this.unitLabel,
     this.allowedUnitLabels = const <String>[],
     this.sortOrder = 0,
@@ -35,6 +36,7 @@ class Attribute {
   final String name;
   final String code;
   final AttributeValueType valueType;
+  final String? description;
   final String? unitLabel;
   final List<String> allowedUnitLabels;
   final int sortOrder;
@@ -61,6 +63,7 @@ class Attribute {
     String? name,
     String? code,
     AttributeValueType? valueType,
+    Object? description = _sentinel,
     Object? unitLabel = _sentinel,
     List<String>? allowedUnitLabels,
     int? sortOrder,
@@ -77,6 +80,9 @@ class Attribute {
       name: name ?? this.name,
       code: code ?? this.code,
       valueType: valueType ?? this.valueType,
+      description: identical(description, _sentinel)
+          ? this.description
+          : description as String?,
       unitLabel: identical(unitLabel, _sentinel)
           ? this.unitLabel
           : unitLabel as String?,

@@ -587,6 +587,7 @@ class _ProductMetadataAttributeFormScreenState
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _codeController;
+  late final TextEditingController _descriptionController;
   late final TextEditingController _sortOrderController;
   late final TextEditingController _minLengthController;
   late final TextEditingController _maxLengthController;
@@ -607,6 +608,7 @@ class _ProductMetadataAttributeFormScreenState
     super.initState();
     _nameController = TextEditingController();
     _codeController = TextEditingController();
+    _descriptionController = TextEditingController();
     _sortOrderController = TextEditingController();
     _minLengthController = TextEditingController();
     _maxLengthController = TextEditingController();
@@ -626,6 +628,7 @@ class _ProductMetadataAttributeFormScreenState
     if (_editingAttribute != null) {
       _nameController.text = _editingAttribute!.name;
       _codeController.text = _editingAttribute!.code;
+      _descriptionController.text = _editingAttribute!.description ?? '';
       _sortOrderController.text = _editingAttribute!.sortOrder.toString();
       _valueType = _editingAttribute!.valueType;
       _isFilterable = _editingAttribute!.isFilterable;
@@ -652,6 +655,7 @@ class _ProductMetadataAttributeFormScreenState
     _nameController.removeListener(_clearNameError);
     _nameController.dispose();
     _codeController.dispose();
+    _descriptionController.dispose();
     _sortOrderController.dispose();
     _minLengthController.dispose();
     _maxLengthController.dispose();
@@ -706,6 +710,18 @@ class _ProductMetadataAttributeFormScreenState
                   }
                   return null;
                 },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _descriptionController,
+                minLines: 3,
+                maxLines: 4,
+                decoration: const InputDecoration(
+                  labelText: 'Description',
+                  border: OutlineInputBorder(),
+                  alignLabelWithHint: true,
+                  errorMaxLines: 3,
+                ),
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<AttributeValueType>(
@@ -890,6 +906,7 @@ class _ProductMetadataAttributeFormScreenState
           id: _editingAttribute?.id ?? '',
           name: _nameController.text.trim(),
           code: _codeController.text.trim(),
+          description: _parseString(_descriptionController.text),
           valueType: _valueType,
           unitLabel: _valueType == AttributeValueType.number
               ? _parsePrimaryUnit(_serializedUnits)
