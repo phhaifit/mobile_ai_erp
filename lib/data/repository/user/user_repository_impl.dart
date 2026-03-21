@@ -1,28 +1,24 @@
 import 'dart:async';
 
+import 'package:mobile_ai_erp/data/local/datasources/user/user_datasource.dart';
 import 'package:mobile_ai_erp/domain/repository/user/user_repository.dart';
-import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
 
 import '../../../domain/entity/user/user.dart';
-import '../../../domain/usecase/user/login_usecase.dart';
 
-class UserRepositoryImpl extends UserRepository {
-  // shared pref object
-  final SharedPreferenceHelper _sharedPrefsHelper;
+class UserRepositoryImpl implements UserRepository {
+  final UserDataSource dataSource;
 
-  // constructor
-  UserRepositoryImpl(this._sharedPrefsHelper);
-
-  // Login:---------------------------------------------------------------------
-  @override
-  Future<User?> login(LoginParams params) async {
-    return await Future.delayed(Duration(seconds: 2), () => User());
-  }
+  UserRepositoryImpl(this.dataSource);
 
   @override
-  Future<void> saveIsLoggedIn(bool value) =>
-      _sharedPrefsHelper.saveIsLoggedIn(value);
+  Future<List<User>> getAll() => dataSource.getUsers();
 
   @override
-  Future<bool> get isLoggedIn => _sharedPrefsHelper.isLoggedIn;
+  Future<void> create(User user) => dataSource.addUser(user);
+
+  @override
+  Future<void> update(User user) => dataSource.updateUser(user);
+
+  @override
+  Future<void> delete(int id) => dataSource.deleteUser(id);
 }
