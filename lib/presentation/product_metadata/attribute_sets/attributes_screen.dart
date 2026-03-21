@@ -146,7 +146,7 @@ class _AttributesListTab extends StatefulWidget {
 }
 
 class _AttributesListTabState extends State<_AttributesListTab> {
-  static const int _pageSize = 2;
+  static const int _pageSize = 10;
 
   final TextEditingController _searchController = TextEditingController();
   String _query = '';
@@ -962,7 +962,6 @@ class _ProductMetadataAttributeFormScreenState
         _nameErrorText = error.message;
       });
     } catch (error) {
-      debugPrint('Failed to save attribute: $error');
       if (!mounted) {
         return;
       }

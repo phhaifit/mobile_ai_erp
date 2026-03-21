@@ -36,7 +36,7 @@ class ProductMetadataCategoriesScreen extends StatefulWidget {
 
 class _ProductMetadataCategoriesScreenState
     extends State<ProductMetadataCategoriesScreen> {
-  static const int _pageSize = 2;
+  static const int _pageSize = 10;
 
   final ProductMetadataStore _store = getIt<ProductMetadataStore>();
   final TextEditingController _searchController = TextEditingController();
@@ -530,7 +530,6 @@ class _ProductMetadataCategoriesScreenState
         SnackBar(content: Text('Deleted "${category.name}".')),
       );
     } catch (error) {
-      debugPrint('Failed to delete category: $error');
       if (!mounted) {
         return;
       }

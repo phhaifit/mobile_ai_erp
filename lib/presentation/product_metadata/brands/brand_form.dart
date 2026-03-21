@@ -253,7 +253,6 @@ class _ProductMetadataBrandFormScreenState
         _nameErrorText = error.message;
       });
     } catch (error) {
-      debugPrint('Failed to save brand: $error');
       if (!mounted) {
         return;
       }

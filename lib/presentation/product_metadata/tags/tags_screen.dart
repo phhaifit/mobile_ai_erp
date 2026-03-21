@@ -31,7 +31,7 @@ class ProductMetadataTagsScreen extends StatefulWidget {
 }
 
 class _ProductMetadataTagsScreenState extends State<ProductMetadataTagsScreen> {
-  static const int _pageSize = 2;
+  static const int _pageSize = 10;
 
   final ProductMetadataStore _store = getIt<ProductMetadataStore>();
   final TextEditingController _searchController = TextEditingController();
@@ -395,7 +395,6 @@ class _ProductMetadataTagsScreenState extends State<ProductMetadataTagsScreen> {
         SnackBar(content: Text('Deleted "${tag.name}".')),
       );
     } catch (error) {
-      debugPrint('Failed to delete tag: $error');
       if (!mounted) {
         return;
       }

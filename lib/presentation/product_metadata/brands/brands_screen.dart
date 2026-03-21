@@ -31,7 +31,7 @@ class ProductMetadataBrandsScreen extends StatefulWidget {
 
 class _ProductMetadataBrandsScreenState
     extends State<ProductMetadataBrandsScreen> {
-  static const int _pageSize = 2;
+  static const int _pageSize = 10;
 
   final ProductMetadataStore _store = getIt<ProductMetadataStore>();
   final TextEditingController _searchController = TextEditingController();
@@ -399,7 +399,6 @@ class _ProductMetadataBrandsScreenState
         SnackBar(content: Text('Deleted "${brand.name}".')),
       );
     } catch (error) {
-      debugPrint('Failed to delete brand: $error');
       if (!mounted) {
         return;
       }

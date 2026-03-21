@@ -5,6 +5,7 @@ import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/category_attribute.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/product_metadata_validation_exception.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/tag.dart';
+import 'package:mobile_ai_erp/core/utils/slug_util.dart';
 
 class ProductMetadataDataSource {
   final List<Category> _categories = <Category>[
@@ -632,21 +633,12 @@ class ProductMetadataDataSource {
     return trimmed == null || trimmed.isEmpty ? null : trimmed;
   }
 
-  String _slugify(String value) {
-    final normalized = value
-        .trim()
-        .toLowerCase()
-        .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
-        .replaceAll(RegExp(r'^-+|-+$'), '');
-    return normalized.isEmpty ? 'category' : normalized;
-  }
-
   String _buildCategorySlug({
     required String categoryId,
     required String name,
     required String? parentId,
   }) {
-    final ownSlug = _slugify(name);
+    final ownSlug = SlugUtil.slugify(name);
     if (parentId == null) {
       return ownSlug;
     }
@@ -661,7 +653,7 @@ class ProductMetadataDataSource {
       if (parent == null || !visitedIds.add(parent.id)) {
         break;
       }
-      parentSegments.insert(0, _slugify(parent.name));
+      parentSegments.insert(0, SlugUtil.slugify(parent.name));
       cursor = parent.parentId;
     }
 
