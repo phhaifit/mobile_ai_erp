@@ -26,105 +26,109 @@ class _AttributeRelationshipsTabState extends State<AttributeRelationshipsTab> {
 
   @override
   Widget build(BuildContext context) {
-    final categories = widget.store.categories.toList()
-      ..sort((a, b) {
-        final orderCompare = a.sortOrder.compareTo(b.sortOrder);
-        if (orderCompare != 0) {
-          return orderCompare;
-        }
-        return a.name.toLowerCase().compareTo(b.name.toLowerCase());
-      });
+    return Observer(
+      builder: (context) {
+        final categories = widget.store.categories.toList()
+          ..sort((a, b) {
+            final orderCompare = a.sortOrder.compareTo(b.sortOrder);
+            if (orderCompare != 0) {
+              return orderCompare;
+            }
+            return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+          });
 
-    if (categories.isEmpty) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Text(
-            'Create at least one category before managing attribute relationships.',
-            textAlign: TextAlign.center,
-          ),
-        ),
-      );
-    }
-
-    _selectedCategoryId ??= categories.first.id;
-    if (!categories.any((category) => category.id == _selectedCategoryId)) {
-      _selectedCategoryId = categories.first.id;
-    }
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth >= 900) {
-          return Row(
-            children: <Widget>[
-              SizedBox(
-                width: 280,
-                child: _RelationshipsCategoryRail(
-                  categories: categories,
-                  selectedCategoryId: _selectedCategoryId,
-                  onSelected: _onCategorySelected,
-                ),
+        if (categories.isEmpty) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(24),
+              child: Text(
+                'Create at least one category before managing attribute relationships.',
+                textAlign: TextAlign.center,
               ),
-              const VerticalDivider(width: 1),
-              Expanded(
-                child: _RelationshipsContent(
-                  store: widget.store,
-                  selectedCategoryId: _selectedCategoryId!,
-                  onAdd: () => _openRelationshipForm(context),
-                  onEdit: (relationship) => _openRelationshipForm(
-                    context,
-                    relationship: relationship,
-                  ),
-                ),
-              ),
-            ],
+            ),
           );
         }
 
-        return Column(
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: DropdownButtonFormField<String>(
-                isExpanded: true,
-                initialValue: _selectedCategoryId,
-                decoration: const InputDecoration(
-                  labelText: 'Category',
-                  border: OutlineInputBorder(),
-                ),
-                items: categories
-                    .map(
-                      (category) => DropdownMenuItem<String>(
-                        value: category.id,
-                        child: Text(
-                          _buildCategoryPathLabel(
-                            category,
-                            categories,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
+        _selectedCategoryId ??= categories.first.id;
+        if (!categories.any((category) => category.id == _selectedCategoryId)) {
+          _selectedCategoryId = categories.first.id;
+        }
+
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            if (constraints.maxWidth >= 900) {
+              return Row(
+                children: <Widget>[
+                  SizedBox(
+                    width: 280,
+                    child: _RelationshipsCategoryRail(
+                      categories: categories,
+                      selectedCategoryId: _selectedCategoryId,
+                      onSelected: _onCategorySelected,
+                    ),
+                  ),
+                  const VerticalDivider(width: 1),
+                  Expanded(
+                    child: _RelationshipsContent(
+                      store: widget.store,
+                      selectedCategoryId: _selectedCategoryId!,
+                      onAdd: () => _openRelationshipForm(context),
+                      onEdit: (relationship) => _openRelationshipForm(
+                        context,
+                        relationship: relationship,
                       ),
-                    )
-                    .toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    _onCategorySelected(value);
-                  }
-                },
-              ),
-            ),
-            Expanded(
-              child: _RelationshipsContent(
-                store: widget.store,
-                selectedCategoryId: _selectedCategoryId!,
-                onAdd: () => _openRelationshipForm(context),
-                onEdit: (relationship) => _openRelationshipForm(
-                  context,
-                  relationship: relationship,
+                    ),
+                  ),
+                ],
+              );
+            }
+
+            return Column(
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: DropdownButtonFormField<String>(
+                    isExpanded: true,
+                    initialValue: _selectedCategoryId,
+                    decoration: const InputDecoration(
+                      labelText: 'Category',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: categories
+                        .map(
+                          (category) => DropdownMenuItem<String>(
+                            value: category.id,
+                            child: Text(
+                              _buildCategoryPathLabel(
+                                category,
+                                categories,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        _onCategorySelected(value);
+                      }
+                    },
+                  ),
                 ),
-              ),
-            ),
-          ],
+                Expanded(
+                  child: _RelationshipsContent(
+                    store: widget.store,
+                    selectedCategoryId: _selectedCategoryId!,
+                    onAdd: () => _openRelationshipForm(context),
+                    onEdit: (relationship) => _openRelationshipForm(
+                      context,
+                      relationship: relationship,
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -266,7 +270,8 @@ class _RelationshipsContentState extends State<_RelationshipsContent> {
   Widget build(BuildContext context) {
     return Observer(
       builder: (context) {
-        final category = widget.store.findCategoryById(widget.selectedCategoryId);
+        final category =
+            widget.store.findCategoryById(widget.selectedCategoryId);
         final relationships = widget.store
             .categoryAttributesForCategory(widget.selectedCategoryId);
         final totalPages = _totalPages(relationships.length);
@@ -364,8 +369,8 @@ class _RelationshipsContentState extends State<_RelationshipsContent> {
                         );
                       },
                       separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemCount:
-                          visibleRelationships.length + (totalPages > 1 ? 1 : 0),
+                      itemCount: visibleRelationships.length +
+                          (totalPages > 1 ? 1 : 0),
                     ),
             ),
           ],
