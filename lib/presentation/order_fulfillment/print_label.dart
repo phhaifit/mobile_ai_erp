@@ -59,6 +59,9 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
 
   Widget _buildBody(List<PackageInfo> packages) {
     final order = _store.selectedOrder!;
+    if (_selectedPackageIndex >= packages.length) {
+      _selectedPackageIndex = packages.length - 1;
+    }
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
