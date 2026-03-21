@@ -19,7 +19,7 @@ class ProductMetadataDataSource {
       id: 'cat_women',
       name: 'Women',
       code: 'women',
-      slug: 'women',
+      slug: 'fashion/women',
       parentId: 'cat_fashion',
       sortOrder: 10,
     ),
@@ -27,7 +27,7 @@ class ProductMetadataDataSource {
       id: 'cat_dresses',
       name: 'Dresses',
       code: 'dresses',
-      slug: 'dresses',
+      slug: 'fashion/women/dresses',
       parentId: 'cat_women',
       sortOrder: 10,
     ),
@@ -42,7 +42,7 @@ class ProductMetadataDataSource {
       id: 'cat_accessories',
       name: 'Accessories',
       code: 'accessories',
-      slug: 'accessories',
+      slug: 'electronics/accessories',
       parentId: 'cat_electronics',
       sortOrder: 10,
     ),
@@ -249,7 +249,11 @@ class ProductMetadataDataSource {
     }
 
     final categoryId = category.id.trim();
-    final slug = _slugify(name);
+    final slug = _buildCategorySlug(
+      categoryId: categoryId,
+      name: name,
+      parentId: parentId,
+    );
     final hasDuplicateName = _categories.any(
       (existing) =>
           existing.id != categoryId &&
@@ -303,6 +307,7 @@ class ProductMetadataDataSource {
     );
 
     _upsertById(_categories, savedCategory, (item) => item.id);
+    _refreshDescendantSlugs(savedCategory.id);
     return savedCategory;
   }
 
@@ -634,6 +639,55 @@ class ProductMetadataDataSource {
         .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
         .replaceAll(RegExp(r'^-+|-+$'), '');
     return normalized.isEmpty ? 'category' : normalized;
+  }
+
+  String _buildCategorySlug({
+    required String categoryId,
+    required String name,
+    required String? parentId,
+  }) {
+    final ownSlug = _slugify(name);
+    if (parentId == null) {
+      return ownSlug;
+    }
+
+    final visitedIds = <String>{if (categoryId.isNotEmpty) categoryId};
+    final parentSegments = <String>[];
+    String? cursor = parentId;
+
+    while (cursor != null) {
+      final parent = _firstWhereOrNull(_categories, (item) => item.id == cursor);
+      if (parent == null || !visitedIds.add(parent.id)) {
+        break;
+      }
+      parentSegments.insert(0, _slugify(parent.name));
+      cursor = parent.parentId;
+    }
+
+    return <String>[...parentSegments, ownSlug].join('/');
+  }
+
+  void _refreshDescendantSlugs(String categoryId) {
+    final childIds = _categories
+        .where((item) => item.parentId == categoryId)
+        .map((item) => item.id)
+        .toList();
+
+    for (final childId in childIds) {
+      final index = _categories.indexWhere((item) => item.id == childId);
+      if (index < 0) {
+        continue;
+      }
+      final child = _categories[index];
+      _categories[index] = child.copyWith(
+        slug: _buildCategorySlug(
+          categoryId: child.id,
+          name: child.name,
+          parentId: child.parentId,
+        ),
+      );
+      _refreshDescendantSlugs(childId);
+    }
   }
 
   String _generateId(String prefix) =>
