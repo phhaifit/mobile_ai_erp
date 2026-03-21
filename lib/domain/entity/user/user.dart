@@ -6,7 +6,7 @@ class User {
   final String email;
   final String phone;
   final UserStatus status;
-  final List<int> roleIds;
+  final int roleId;
 
   User({
     required this.id,
@@ -14,7 +14,7 @@ class User {
     required this.email,
     required this.phone,
     required this.status,
-    required this.roleIds,
+    required this.roleId,
   });
 
   User copyWith({
@@ -22,7 +22,7 @@ class User {
     String? email,
     String? phone,
     UserStatus? status,
-    List<int>? roleIds,
+    int? roleId,
   }) {
     return User(
       id: id,
@@ -30,7 +30,7 @@ class User {
       email: email ?? this.email,
       phone: phone ?? this.phone,
       status: status ?? this.status,
-      roleIds: roleIds ?? this.roleIds,
+      roleId: roleId ?? this.roleId,
     );
   }
 }

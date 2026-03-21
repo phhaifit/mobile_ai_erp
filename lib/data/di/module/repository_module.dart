@@ -19,9 +19,9 @@ class RepositoryModule {
       getIt<SharedPreferenceHelper>(),
     ));
 
-    getIt.registerSingleton<UserRepository>(UserRepositoryImpl(
-      getIt<SharedPreferenceHelper>(),
-    ));
+    // getIt.registerSingleton<UserRepository>(UserRepositoryImpl(
+    //   getIt<SharedPreferenceHelper>(),
+    // ));
 
     getIt.registerSingleton<PostRepository>(PostRepositoryImpl(
       getIt<PostApi>(),
