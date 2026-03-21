@@ -185,6 +185,24 @@ class _PackagingScreenState extends State<PackagingScreen> {
   }
 
   void _showCreatePackageDialog(List<FulfillmentItem> orderItems) {
+    final packableItems = orderItems
+        .where((item) => item.pickedQuantity - item.packedQuantity > 0)
+        .toList();
+
+    if (packableItems.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            orderItems.any((i) => i.pickedQuantity > 0)
+                ? 'All picked items have been packed'
+                : 'No items have been picked yet. Pick items first.',
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     final labelController = TextEditingController();
     final weightController = TextEditingController();
     final lengthController = TextEditingController();
@@ -198,6 +216,8 @@ class _PackagingScreenState extends State<PackagingScreen> {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
+            final hasSelectedItems =
+                selectedItems.values.any((qty) => qty > 0);
             return AlertDialog(
               title: const Text('Create Package'),
               content: SingleChildScrollView(
@@ -260,9 +280,8 @@ class _PackagingScreenState extends State<PackagingScreen> {
                       style: Theme.of(context).textTheme.titleSmall,
                     ),
                     const SizedBox(height: 8),
-                    ...orderItems.map((item) {
-                      final maxQty = item.quantity - item.packedQuantity;
-                      if (maxQty <= 0) return const SizedBox.shrink();
+                    ...packableItems.map((item) {
+                      final maxQty = item.pickedQuantity - item.packedQuantity;
                       final currentQty = selectedItems[item.id] ?? 0;
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 8),
@@ -328,36 +347,37 @@ class _PackagingScreenState extends State<PackagingScreen> {
                   child: const Text('Cancel'),
                 ),
                 ElevatedButton(
-                  onPressed: () {
-                    if (labelController.text.isEmpty) return;
-                    final pkgItems = <PackageItem>[];
-                    for (final entry in selectedItems.entries) {
-                      if (entry.value > 0) {
-                        final item =
-                            orderItems.firstWhere((i) => i.id == entry.key);
-                        pkgItems.add(PackageItem(
-                          itemId: item.id,
-                          productName: item.productName,
-                          quantity: entry.value,
-                        ));
-                      }
-                    }
-                    final pkg = PackageInfo(
-                      id: 'PKG-${DateTime.now().millisecondsSinceEpoch}',
-                      orderId: _store.selectedOrder!.id,
-                      label: labelController.text,
-                      weight: double.tryParse(weightController.text),
-                      length: double.tryParse(lengthController.text),
-                      width: double.tryParse(widthController.text),
-                      height: double.tryParse(heightController.text),
-                      trackingNumber: trackingController.text.isNotEmpty
-                          ? trackingController.text
-                          : null,
-                      items: pkgItems,
-                    );
-                    _store.addPackage(_store.selectedOrder!.id, pkg);
-                    Navigator.of(ctx).pop();
-                  },
+                  onPressed: hasSelectedItems && labelController.text.isNotEmpty
+                      ? () {
+                          final pkgItems = <PackageItem>[];
+                          for (final entry in selectedItems.entries) {
+                            if (entry.value > 0) {
+                              final item = packableItems
+                                  .firstWhere((i) => i.id == entry.key);
+                              pkgItems.add(PackageItem(
+                                itemId: item.id,
+                                productName: item.productName,
+                                quantity: entry.value,
+                              ));
+                            }
+                          }
+                          final pkg = PackageInfo(
+                            id: 'PKG-${DateTime.now().millisecondsSinceEpoch}',
+                            orderId: _store.selectedOrder!.id,
+                            label: labelController.text,
+                            weight: double.tryParse(weightController.text),
+                            length: double.tryParse(lengthController.text),
+                            width: double.tryParse(widthController.text),
+                            height: double.tryParse(heightController.text),
+                            trackingNumber: trackingController.text.isNotEmpty
+                                ? trackingController.text
+                                : null,
+                            items: pkgItems,
+                          );
+                          _store.addPackage(_store.selectedOrder!.id, pkg);
+                          Navigator.of(ctx).pop();
+                        }
+                      : null,
                   child: const Text('Create'),
                 ),
               ],

@@ -7,6 +7,7 @@ import 'package:mobile_ai_erp/domain/entity/fulfillment/fulfillment_status.dart'
 import 'package:mobile_ai_erp/presentation/order_fulfillment/store/fulfillment_store.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
 import 'package:intl/intl.dart';
+import 'package:mobx/mobx.dart';
 
 class FulfillmentDetailScreen extends StatefulWidget {
   @override
@@ -17,6 +18,32 @@ class FulfillmentDetailScreen extends StatefulWidget {
 class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
   final FulfillmentStore _store = getIt<FulfillmentStore>();
   final _currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: 'VND');
+  late ReactionDisposer _errorDisposer;
+
+  @override
+  void initState() {
+    super.initState();
+    _errorDisposer = reaction(
+      (_) => _store.errorStore.errorMessage,
+      (String message) {
+        if (message.isNotEmpty && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(message),
+              backgroundColor: Colors.red.shade700,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _errorDisposer();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -216,19 +243,50 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
+                  if (item.pickedQuantity > 0)
+                    IconButton(
+                      icon: const Icon(Icons.remove_circle_outline, size: 22),
+                      tooltip: 'Pick -1',
+                      onPressed: () => _store.updatePickedQuantity(
+                          order.id, item.id, item.pickedQuantity - 1),
+                    ),
+                  if (!item.isFullyPicked)
+                    IconButton(
+                      icon: const Icon(Icons.add_circle_outline, size: 22),
+                      tooltip: 'Pick +1',
+                      onPressed: () => _store.updatePickedQuantity(
+                          order.id, item.id, item.pickedQuantity + 1),
+                    ),
                   if (!item.isFullyPicked)
                     TextButton.icon(
-                      icon: const Icon(Icons.check, size: 18),
+                      icon: const Icon(Icons.done_all, size: 18),
                       label: const Text('Pick All'),
                       onPressed: () => _store.updatePickedQuantity(
                           order.id, item.id, item.quantity),
                     ),
-                  if (item.pickedQuantity > 0 && !item.isFullyPicked)
-                    TextButton.icon(
-                      icon: const Icon(Icons.remove, size: 18),
-                      label: const Text('Reset'),
-                      onPressed: () =>
-                          _store.updatePickedQuantity(order.id, item.id, 0),
+                  if (item.isFullyPicked)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.check_circle,
+                              size: 16, color: Colors.green),
+                          SizedBox(width: 4),
+                          Text(
+                            'Fully Picked',
+                            style: TextStyle(
+                                color: Colors.green,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
                     ),
                 ],
               ),
@@ -300,8 +358,7 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
               order.status != FulfillmentStatus.delivered) ...[
             const SizedBox(height: 8),
             OutlinedButton.icon(
-              onPressed: () =>
-                  _store.updateStatus(order.id, FulfillmentStatus.cancelled),
+              onPressed: () => _confirmCancelOrder(order.id),
               icon: const Icon(Icons.cancel_outlined),
               label: const Text('Cancel Order'),
               style: OutlinedButton.styleFrom(
@@ -310,6 +367,31 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  void _confirmCancelOrder(String orderId) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Cancel Order'),
+        content: const Text(
+            'Are you sure you want to cancel this order? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('No'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              _store.updateStatus(orderId, FulfillmentStatus.cancelled);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Yes, Cancel'),
+          ),
         ],
       ),
     );
