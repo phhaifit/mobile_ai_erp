@@ -277,7 +277,7 @@ class _CmsPageEditorScreenState extends State<CmsPageEditorScreen> {
 
   Widget _buildPageInfoSection(ThemeData theme) {
     return Card(
-      elevation: 1,
+      elevation: Theme.of(context).brightness == Brightness.dark ? 2 : 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -349,7 +349,7 @@ class _CmsPageEditorScreenState extends State<CmsPageEditorScreen> {
 
   Widget _buildContentBlocksSection(ThemeData theme) {
     return Card(
-      elevation: 1,
+      elevation: Theme.of(context).brightness == Brightness.dark ? 2 : 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -491,7 +491,7 @@ class _CmsPageEditorScreenState extends State<CmsPageEditorScreen> {
 
   Widget _buildSeoSection(ThemeData theme) {
     return Card(
-      elevation: 1,
+      elevation: Theme.of(context).brightness == Brightness.dark ? 2 : 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       clipBehavior: Clip.antiAlias,
       child: ExpansionTile(
@@ -545,7 +545,8 @@ class _CmsPageEditorScreenState extends State<CmsPageEditorScreen> {
   // ── Bottom Bar ─────────────────────────────────────────────────────
 
   Widget _buildBottomBar(ThemeData theme) {
-    return Container(
+    return SafeArea(
+      child: Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
@@ -593,6 +594,7 @@ class _CmsPageEditorScreenState extends State<CmsPageEditorScreen> {
           ),
         ],
       ),
+    ),
     );
   }
 
@@ -600,7 +602,10 @@ class _CmsPageEditorScreenState extends State<CmsPageEditorScreen> {
 
   void _handlePreview() {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Preview will be available in Phase 2')),
+      const SnackBar(
+        content: Text('Preview will be available in Phase 2'),
+        behavior: SnackBarBehavior.floating,
+      ),
     );
   }
 
@@ -618,6 +623,7 @@ class _CmsPageEditorScreenState extends State<CmsPageEditorScreen> {
         content: Text(
           _isEditMode ? 'Page updated successfully' : 'Page created successfully',
         ),
+        behavior: SnackBarBehavior.floating,
       ),
     );
 

@@ -140,7 +140,7 @@ class _CmsPageListScreenState extends State<CmsPageListScreen> {
     final isPublished = page.status == 'Published';
 
     return Card(
-      elevation: 1,
+      elevation: Theme.of(context).brightness == Brightness.dark ? 2 : 1,
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
@@ -281,7 +281,10 @@ class _CmsPageListScreenState extends State<CmsPageListScreen> {
             break;
           case 'duplicate':
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('"${page.title}" duplicated')),
+              SnackBar(
+                content: Text('"${page.title}" duplicated'),
+                behavior: SnackBarBehavior.floating,
+              ),
             );
             break;
           case 'delete':
@@ -315,7 +318,10 @@ class _CmsPageListScreenState extends State<CmsPageListScreen> {
             onPressed: () {
               Navigator.of(ctx).pop();
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('"${page.title}" deleted')),
+                SnackBar(
+                  content: Text('"${page.title}" deleted'),
+                  behavior: SnackBarBehavior.floating,
+                ),
               );
             },
             child: const Text('Delete', style: TextStyle(color: Colors.red)),
