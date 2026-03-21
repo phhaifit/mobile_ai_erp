@@ -11,6 +11,8 @@ import 'package:mobile_ai_erp/presentation/home/store/language/language_store.da
 import 'package:mobile_ai_erp/presentation/home/store/theme/theme_store.dart';
 import 'package:mobile_ai_erp/presentation/login/store/login_store.dart';
 import 'package:mobile_ai_erp/presentation/post/store/post_store.dart';
+import 'package:mobile_ai_erp/presentation/reports/data/reports_mock_repository.dart';
+import 'package:mobile_ai_erp/presentation/reports/store/reports_store.dart';
 
 import '../../../di/service_locator.dart';
 
@@ -22,6 +24,7 @@ class StoreModule {
     getIt.registerFactory(
       () => FormStore(getIt<FormErrorStore>(), getIt<ErrorStore>()),
     );
+    getIt.registerLazySingleton(() => ReportsMockRepository());
 
     // stores:------------------------------------------------------------------
     getIt.registerSingleton<UserStore>(
@@ -37,6 +40,13 @@ class StoreModule {
     getIt.registerSingleton<PostStore>(
       PostStore(
         getIt<GetPostUseCase>(),
+        getIt<ErrorStore>(),
+      ),
+    );
+
+    getIt.registerSingleton<ReportsStore>(
+      ReportsStore(
+        getIt<ReportsMockRepository>(),
         getIt<ErrorStore>(),
       ),
     );

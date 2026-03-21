@@ -28,9 +28,9 @@ dependencies:
   flutter_mobx: ^2.0.6+5
   # G
   get_it: ^7.2.0
-  google_fonts: ^4.0.3
+  google_fonts: ^8.0.2
   # H
-  http: ^0.13.5
+  http: ^1.6.0
   # I
   intl: ^0.20.2
   # J
@@ -63,6 +63,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_lints: ^5.0.0
 
   # The following adds the launcher icon support to your application.
   # run below mentioned commands to generate launcher icons
