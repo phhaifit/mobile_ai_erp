@@ -5,6 +5,7 @@ import 'package:mobile_ai_erp/domain/entity/product_metadata/category_attribute.
 import 'package:mobile_ai_erp/domain/entity/product_metadata/product_metadata_validation_exception.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_list_card.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_pagination_controls.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_form_decoration.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_status_chip.dart';
 import 'package:flutter/material.dart';
@@ -96,7 +97,10 @@ class _AttributeRelationshipsTabState extends State<AttributeRelationshipsTab> {
                       (category) => DropdownMenuItem<String>(
                         value: category.id,
                         child: Text(
-                          category.name,
+                          _buildCategoryPathLabel(
+                            category,
+                            categories,
+                          ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -147,6 +151,29 @@ class _AttributeRelationshipsTabState extends State<AttributeRelationshipsTab> {
   }
 }
 
+String _buildCategoryPathLabel(
+  Category category,
+  Iterable<Category> allCategories,
+) {
+  final categoriesById = <String, Category>{
+    for (final item in allCategories) item.id: item,
+  };
+  final segments = <String>[category.name];
+  final visitedIds = <String>{category.id};
+  var currentParentId = category.parentId;
+
+  while (currentParentId != null) {
+    final parent = categoriesById[currentParentId];
+    if (parent == null || !visitedIds.add(parent.id)) {
+      break;
+    }
+    segments.insert(0, parent.name);
+    currentParentId = parent.parentId;
+  }
+
+  return segments.join(' / ');
+}
+
 class _RelationshipsCategoryRail extends StatelessWidget {
   const _RelationshipsCategoryRail({
     required this.categories,
@@ -179,7 +206,7 @@ class _RelationshipsCategoryRail extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    category.name,
+                    _buildCategoryPathLabel(category, categories),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -205,7 +232,7 @@ class _RelationshipsCategoryRail extends StatelessWidget {
   }
 }
 
-class _RelationshipsContent extends StatelessWidget {
+class _RelationshipsContent extends StatefulWidget {
   const _RelationshipsContent({
     required this.store,
     required this.selectedCategoryId,
@@ -219,12 +246,34 @@ class _RelationshipsContent extends StatelessWidget {
   final ValueChanged<CategoryAttribute> onEdit;
 
   @override
+  State<_RelationshipsContent> createState() => _RelationshipsContentState();
+}
+
+class _RelationshipsContentState extends State<_RelationshipsContent> {
+  static const int _pageSize = 2;
+
+  int _currentPage = 1;
+
+  @override
+  void didUpdateWidget(covariant _RelationshipsContent oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedCategoryId != widget.selectedCategoryId) {
+      _currentPage = 1;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Observer(
       builder: (context) {
-        final category = store.findCategoryById(selectedCategoryId);
-        final relationships =
-            store.categoryAttributesForCategory(selectedCategoryId);
+        final category = widget.store.findCategoryById(widget.selectedCategoryId);
+        final relationships = widget.store
+            .categoryAttributesForCategory(widget.selectedCategoryId);
+        final totalPages = _totalPages(relationships.length);
+        final currentPage =
+            totalPages == 0 ? 1 : _currentPage.clamp(1, totalPages);
+        final visibleRelationships =
+            _pageItems(relationships, currentPage, _pageSize);
 
         if (category == null) {
           return const Center(child: Text('Category not found.'));
@@ -232,42 +281,6 @@ class _RelationshipsContent extends StatelessWidget {
 
         return Column(
           children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          category.name,
-                          style:
-                              Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Manage attribute links for ${category.code}',
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
-                                  ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  FilledButton.icon(
-                    onPressed: onAdd,
-                    icon: const Icon(Icons.add_link_outlined),
-                    label: const Text('Add'),
-                  ),
-                ],
-              ),
-            ),
             Expanded(
               child: relationships.isEmpty
                   ? const Center(
@@ -282,19 +295,38 @@ class _RelationshipsContent extends StatelessWidget {
                   : ListView.separated(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
                       itemBuilder: (context, index) {
-                        final relationship = relationships[index];
-                        final attribute =
-                            store.findAttributeById(relationship.attributeId);
+                        if (index >= visibleRelationships.length) {
+                          return MetadataPaginationControls(
+                            currentPage: currentPage,
+                            totalPages: totalPages,
+                            onPrevious: currentPage > 1
+                                ? () => setState(() {
+                                      _currentPage = currentPage - 1;
+                                    })
+                                : null,
+                            onNext: currentPage < totalPages
+                                ? () => setState(() {
+                                      _currentPage = currentPage + 1;
+                                    })
+                                : null,
+                          );
+                        }
+
+                        final relationship = visibleRelationships[index];
+                        final attribute = widget.store
+                            .findAttributeById(relationship.attributeId);
                         return MetadataListCard(
                           title: attribute?.name ?? relationship.attributeId,
                           leading: const Icon(Icons.link_outlined),
                           detailLines: <String>[
                             if (attribute != null) 'Code: ${attribute.code}',
-                            if (attribute != null)
-                              'Type: ${attribute.valueType.label}',
                             'Sort order: ${relationship.sortOrder}',
                           ],
                           chips: <Widget>[
+                            if (attribute != null)
+                              MetadataStatusChip(
+                                label: attribute.valueType.label,
+                              ),
                             MetadataStatusChip(
                               label: relationship.isRequired
                                   ? 'Required'
@@ -305,12 +337,12 @@ class _RelationshipsContent extends StatelessWidget {
                             onSelected: (value) {
                               switch (value) {
                                 case 'edit':
-                                  onEdit(relationship);
+                                  widget.onEdit(relationship);
                                   break;
                                 case 'remove':
                                   _deleteRelationship(
                                     context,
-                                    store,
+                                    widget.store,
                                     relationship,
                                   );
                                   break;
@@ -328,17 +360,34 @@ class _RelationshipsContent extends StatelessWidget {
                               ),
                             ],
                           ),
-                          onTap: () => onEdit(relationship),
+                          onTap: () => widget.onEdit(relationship),
                         );
                       },
                       separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemCount: relationships.length,
+                      itemCount:
+                          visibleRelationships.length + (totalPages > 1 ? 1 : 0),
                     ),
             ),
           ],
         );
       },
     );
+  }
+
+  int _totalPages(int itemCount) =>
+      itemCount == 0 ? 0 : ((itemCount - 1) ~/ _pageSize) + 1;
+
+  List<CategoryAttribute> _pageItems(
+    List<CategoryAttribute> items,
+    int page,
+    int pageSize,
+  ) {
+    final start = (page - 1) * pageSize;
+    if (start >= items.length) {
+      return const <CategoryAttribute>[];
+    }
+    final end = (start + pageSize).clamp(0, items.length);
+    return items.sublist(start, end);
   }
 
   Future<void> _deleteRelationship(
@@ -491,8 +540,10 @@ class _ProductMetadataCategoryRelationshipFormScreenState
                     .map(
                       (category) => DropdownMenuItem<String>(
                         value: category.id,
-                        child: Text(category.name,
-                            overflow: TextOverflow.ellipsis),
+                        child: Text(
+                          _buildCategoryPathLabel(category, categoryOptions),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     )
                     .toList(),
