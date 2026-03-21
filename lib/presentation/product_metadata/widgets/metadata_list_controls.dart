@@ -41,13 +41,9 @@ class MetadataListControls extends StatelessWidget {
               Row(
                 children: <Widget>[
                   Expanded(
-                    child: TextField(
-                      controller: searchController,
-                      onChanged: onSearchChanged,
-                      decoration: _searchDecoration(
-                        searchHint: searchHint,
-                        showHelperText: false,
-                      ),
+                    child: _buildSearchField(
+                      searchHint: searchHint,
+                      showHelperText: false,
                     ),
                   ),
                   if (onOpenFilter != null) ...<Widget>[
@@ -79,11 +75,14 @@ class MetadataListControls extends StatelessWidget {
                       style: resultLabelStyle,
                     ),
                   ),
-                  _ActionIconButton(
-                    icon: Icons.search,
-                    tooltip: 'Search',
-                    isActive: searchController.text.trim().isNotEmpty,
-                    onPressed: () => _openSearchSheet(context),
+                  ValueListenableBuilder<TextEditingValue>(
+                    valueListenable: searchController,
+                    builder: (context, value, _) => _ActionIconButton(
+                      icon: Icons.search,
+                      tooltip: 'Search',
+                      isActive: value.text.trim().isNotEmpty,
+                      onPressed: () => _openSearchSheet(context),
+                    ),
                   ),
                   if (onOpenFilter != null)
                     _ActionIconButton(
@@ -135,24 +134,38 @@ class MetadataListControls extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 12),
-              TextField(
-                controller: searchController,
-                autofocus: true,
-                onChanged: onSearchChanged,
-                decoration: _searchDecoration(
-                  searchHint: searchHint,
-                  showHelperText: true,
-                  onClear: () {
-                    searchController.clear();
-                    onSearchChanged('');
-                    Navigator.of(context).pop();
-                  },
-                ),
+              _buildSearchField(
+                searchHint: searchHint,
+                showHelperText: true,
+                onClear: () {
+                  searchController.clear();
+                  onSearchChanged('');
+                  Navigator.of(context).pop();
+                },
               ),
             ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildSearchField({
+    required String searchHint,
+    required bool showHelperText,
+    VoidCallback? onClear,
+  }) {
+    return ValueListenableBuilder<TextEditingValue>(
+      valueListenable: searchController,
+      builder: (context, _, __) => TextField(
+        controller: searchController,
+        onChanged: onSearchChanged,
+        decoration: _searchDecoration(
+          searchHint: searchHint,
+          showHelperText: showHelperText,
+          onClear: onClear,
+        ),
+      ),
     );
   }
 
