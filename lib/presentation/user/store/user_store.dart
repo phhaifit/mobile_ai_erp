@@ -55,8 +55,8 @@ abstract class _UserStore with Store {
   }
 
   @action
-  Future<void> assignRoles(int userId, List<int> roleIds) async {
+  Future<void> assignRole(int userId, int roleId) async {
     final user = userList.firstWhere((u) => u.id == userId);
-    await updateUser(user.copyWith(roleIds: roleIds));
+    await updateUser(user.copyWith(roleId: roleId));
   }
 }
