@@ -61,6 +61,8 @@ class _ProductMetadataCategoryFormScreenState
       _sortOrderController.text = '0';
     }
 
+    _syncSlug();
+
     if (mounted) {
       setState(() {});
     }
@@ -124,7 +126,8 @@ class _ProductMetadataCategoryFormScreenState
                 enabled: false,
                 decoration: metadataFormDecoration(
                   labelText: 'Slug',
-                  helperText: 'Slug is generated automatically from name.',
+                  helperText:
+                      'Slug is generated automatically from the category path.',
                 ),
               ),
               const SizedBox(height: 16),
@@ -155,6 +158,7 @@ class _ProductMetadataCategoryFormScreenState
                 onChanged: (value) {
                   setState(() {
                     _selectedParentId = value;
+                    _syncSlug();
                   });
                 },
               ),
@@ -338,15 +342,40 @@ class _ProductMetadataCategoryFormScreenState
   }
 
   void _syncSlug() {
-    if (_editingCategory != null) {
-      return;
+    _slugController.text = _buildSlugPreview();
+  }
+
+  String _buildSlugPreview() {
+    final ownSlug = _slugify(_nameController.text);
+    if (_selectedParentId == null) {
+      return ownSlug;
     }
-    final slug = _nameController.text
+
+    final parentSegments = <String>[];
+    final visitedIds = <String>{
+      if (_editingCategory != null) _editingCategory!.id,
+    };
+    String? cursor = _selectedParentId;
+
+    while (cursor != null) {
+      final parent = _store.findCategoryById(cursor);
+      if (parent == null || !visitedIds.add(parent.id)) {
+        break;
+      }
+      parentSegments.insert(0, _slugify(parent.name));
+      cursor = parent.parentId;
+    }
+
+    return <String>[...parentSegments, ownSlug].join('/');
+  }
+
+  String _slugify(String value) {
+    final slug = value
         .trim()
         .toLowerCase()
         .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
         .replaceAll(RegExp(r'^-+|-+$'), '');
-    _slugController.text = slug;
+    return slug.isEmpty ? 'category' : slug;
   }
 
   String? _trimOrNull(String value) {
