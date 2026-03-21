@@ -29,6 +29,7 @@ class MyApp extends StatelessWidget {
               ? AppThemeData.darkThemeData
               : AppThemeData.lightThemeData,
           routes: Routes.routes,
+          onGenerateRoute: Routes.onGenerateRoute,
           locale: Locale(_languageStore.locale),
           supportedLocales: _languageStore.supportedLanguages
               .map((language) => Locale(language.locale, language.code))
