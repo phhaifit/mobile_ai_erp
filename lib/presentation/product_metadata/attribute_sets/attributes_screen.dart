@@ -88,22 +88,24 @@ class _ProductMetadataAttributesScreenState
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _currentTabIndex == 0
-            ? () => ProductMetadataNavigator.openAttributeForm(context)
-            : (_store.categories.isNotEmpty && _store.attributes.isNotEmpty)
-                ? () => Navigator.of(context).push<void>(
-                      MaterialPageRoute<void>(
-                        builder: (_) =>
-                            const ProductMetadataCategoryRelationshipFormScreen(),
-                      ),
-                    )
-                : null,
-        icon: Icon(
-          _currentTabIndex == 0 ? Icons.add : Icons.add_link_outlined,
-        ),
-        label: Text(
-          _currentTabIndex == 0 ? 'Add attribute' : 'Add relationship',
+      floatingActionButton: Observer(
+        builder: (context) => FloatingActionButton.extended(
+          onPressed: _currentTabIndex == 0
+              ? () => ProductMetadataNavigator.openAttributeForm(context)
+              : (_store.categories.isNotEmpty && _store.attributes.isNotEmpty)
+                  ? () => Navigator.of(context).push<void>(
+                        MaterialPageRoute<void>(
+                          builder: (_) =>
+                              const ProductMetadataCategoryRelationshipFormScreen(),
+                        ),
+                      )
+                  : null,
+          icon: Icon(
+            _currentTabIndex == 0 ? Icons.add : Icons.add_link_outlined,
+          ),
+          label: Text(
+            _currentTabIndex == 0 ? 'Add attribute' : 'Add relationship',
+          ),
         ),
       ),
       body: Observer(
@@ -161,130 +163,141 @@ class _AttributesListTabState extends State<_AttributesListTab> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.store.attributes.isEmpty) {
-      return const MetadataEmptyState(
-        icon: Icons.tune_outlined,
-        title: 'No attributes yet',
-        message: 'Add the first attribute to define reusable product metadata.',
-      );
-    }
+    return Observer(
+      builder: (context) {
+        if (widget.store.attributes.isEmpty) {
+          return const MetadataEmptyState(
+            icon: Icons.tune_outlined,
+            title: 'No attributes yet',
+            message:
+                'Add the first attribute to define reusable product metadata.',
+          );
+        }
 
-    final filteredAttributes = _applyFilters(widget.store.attributes.toList());
-    final totalPages = _totalPages(filteredAttributes.length);
-    final currentPage = totalPages == 0 ? 1 : _currentPage.clamp(1, totalPages);
-    final visibleAttributes =
-        _pageItems(filteredAttributes, currentPage, _pageSize);
+        final filteredAttributes =
+            _applyFilters(widget.store.attributes.toList());
+        final totalPages = _totalPages(filteredAttributes.length);
+        final currentPage =
+            totalPages == 0 ? 1 : _currentPage.clamp(1, totalPages);
+        final visibleAttributes =
+            _pageItems(filteredAttributes, currentPage, _pageSize);
 
-    return Column(
-      children: <Widget>[
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-          child: MetadataListControls(
-            searchController: _searchController,
-            onSearchChanged: (value) => setState(() {
-              _query = value.trim();
-              _currentPage = 1;
-            }),
-            searchHint: 'Search by name, code, type, or unit',
-            resultLabel:
-                'Showing ${visibleAttributes.length} of ${filteredAttributes.length} attributes',
-            hasActiveFilter: _valueTypeFilter != null || _filterableOnly,
-            hasCustomSort: _sortOption != _AttributeSortOption.sortOrder,
-            onOpenFilter: _openFilterSheet,
-            onOpenSort: _openSortSheet,
-          ),
-        ),
-        Expanded(
-          child: filteredAttributes.isEmpty
-              ? const MetadataEmptyState(
-                  icon: Icons.tune_outlined,
-                  title: 'No matching attributes',
-                  message: 'Try changing your search, filter, or sort order.',
-                )
-              : ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-                  itemBuilder: (context, index) {
-                    if (index >= visibleAttributes.length) {
-                      return MetadataPaginationControls(
-                        currentPage: currentPage,
-                        totalPages: totalPages,
-                        onPrevious: currentPage > 1
-                            ? () => setState(() {
-                                  _currentPage = currentPage - 1;
-                                })
-                            : null,
-                        onNext: currentPage < totalPages
-                            ? () => setState(() {
-                                  _currentPage = currentPage + 1;
-                                })
-                            : null,
-                      );
-                    }
+        return Column(
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: MetadataListControls(
+                searchController: _searchController,
+                onSearchChanged: (value) => setState(() {
+                  _query = value.trim();
+                  _currentPage = 1;
+                }),
+                searchHint: 'Search by name, code, type, or unit',
+                resultLabel:
+                    'Showing ${visibleAttributes.length} of ${filteredAttributes.length} attributes',
+                hasActiveFilter: _valueTypeFilter != null || _filterableOnly,
+                hasCustomSort: _sortOption != _AttributeSortOption.sortOrder,
+                onOpenFilter: _openFilterSheet,
+                onOpenSort: _openSortSheet,
+              ),
+            ),
+            Expanded(
+              child: filteredAttributes.isEmpty
+                  ? const MetadataEmptyState(
+                      icon: Icons.tune_outlined,
+                      title: 'No matching attributes',
+                      message:
+                          'Try changing your search, filter, or sort order.',
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+                      itemBuilder: (context, index) {
+                        if (index >= visibleAttributes.length) {
+                          return MetadataPaginationControls(
+                            currentPage: currentPage,
+                            totalPages: totalPages,
+                            onPrevious: currentPage > 1
+                                ? () => setState(() {
+                                      _currentPage = currentPage - 1;
+                                    })
+                                : null,
+                            onNext: currentPage < totalPages
+                                ? () => setState(() {
+                                      _currentPage = currentPage + 1;
+                                    })
+                                : null,
+                          );
+                        }
 
-                    final attribute = visibleAttributes[index];
-                    return MetadataListCard(
-                      title: attribute.name,
-                      leading: const Icon(Icons.label_outline),
-                      detailLines: _attributeSummary(
-                        attribute,
-                        widget.store.optionCountForAttribute(attribute.id),
-                      ),
-                      chips: <Widget>[
-                        MetadataStatusChip(label: attribute.valueType.label),
-                        if (attribute.isFilterable)
-                          const MetadataStatusChip(label: 'Filterable'),
-                      ],
-                      trailing: PopupMenuButton<String>(
-                        onSelected: (value) {
-                          switch (value) {
-                            case 'options':
-                              ProductMetadataNavigator.openAttributeOptions(
-                                context,
-                                args: AttributeOptionsArgs(
-                                    attributeId: attribute.id),
-                              );
-                              break;
-                            case 'edit':
-                              ProductMetadataNavigator.openAttributeForm(
-                                context,
-                                args: AttributeFormArgs(
-                                    attributeId: attribute.id),
-                              );
-                              break;
-                            case 'delete':
-                              _deleteAttribute(
-                                  context, widget.store, attribute);
-                              break;
-                          }
-                        },
-                        itemBuilder: (context) => <PopupMenuEntry<String>>[
-                          if (attribute.valueType.supportsOptions)
-                            const PopupMenuItem<String>(
-                              value: 'options',
-                              child: Text('Manage options'),
-                            ),
-                          const PopupMenuItem<String>(
-                            value: 'edit',
-                            child: Text('Edit'),
+                        final attribute = visibleAttributes[index];
+                        return MetadataListCard(
+                          title: attribute.name,
+                          leading: const Icon(Icons.label_outline),
+                          detailLines: _attributeSummary(
+                            attribute,
+                            widget.store.optionCountForAttribute(attribute.id),
                           ),
-                          const PopupMenuItem<String>(
-                            value: 'delete',
-                            child: Text('Delete'),
+                          chips: <Widget>[
+                            MetadataStatusChip(
+                                label: attribute.valueType.label),
+                            if (attribute.isFilterable)
+                              const MetadataStatusChip(label: 'Filterable'),
+                          ],
+                          trailing: PopupMenuButton<String>(
+                            onSelected: (value) {
+                              switch (value) {
+                                case 'options':
+                                  ProductMetadataNavigator.openAttributeOptions(
+                                    context,
+                                    args: AttributeOptionsArgs(
+                                        attributeId: attribute.id),
+                                  );
+                                  break;
+                                case 'edit':
+                                  ProductMetadataNavigator.openAttributeForm(
+                                    context,
+                                    args: AttributeFormArgs(
+                                        attributeId: attribute.id),
+                                  );
+                                  break;
+                                case 'delete':
+                                  _deleteAttribute(
+                                      context, widget.store, attribute);
+                                  break;
+                              }
+                            },
+                            itemBuilder: (context) => <PopupMenuEntry<String>>[
+                              if (attribute.valueType.supportsOptions)
+                                const PopupMenuItem<String>(
+                                  value: 'options',
+                                  child: Text('Manage options'),
+                                ),
+                              const PopupMenuItem<String>(
+                                value: 'edit',
+                                child: Text('Edit'),
+                              ),
+                              const PopupMenuItem<String>(
+                                value: 'delete',
+                                child: Text('Delete'),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      onTap: () => ProductMetadataNavigator.openAttributeDetail(
-                        context,
-                        args: AttributeDetailArgs(attributeId: attribute.id),
-                      ),
-                    );
-                  },
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemCount:
-                      visibleAttributes.length + (totalPages > 1 ? 1 : 0),
-                ),
-        ),
-      ],
+                          onTap: () =>
+                              ProductMetadataNavigator.openAttributeDetail(
+                            context,
+                            args:
+                                AttributeDetailArgs(attributeId: attribute.id),
+                          ),
+                        );
+                      },
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemCount:
+                          visibleAttributes.length + (totalPages > 1 ? 1 : 0),
+                    ),
+            ),
+          ],
+        );
+      },
     );
   }
 

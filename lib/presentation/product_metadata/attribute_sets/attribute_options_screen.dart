@@ -63,12 +63,17 @@ class _ProductMetadataAttributeOptionsScreenState
 
   @override
   Widget build(BuildContext context) {
-    final attribute = _store.findAttributeById(widget.args.attributeId);
-
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          attribute == null ? 'Attribute Options' : '${attribute.name} Options',
+        title: Observer(
+          builder: (context) {
+            final attribute = _store.findAttributeById(widget.args.attributeId);
+            return Text(
+              attribute == null
+                  ? 'Attribute Options'
+                  : '${attribute.name} Options',
+            );
+          },
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(

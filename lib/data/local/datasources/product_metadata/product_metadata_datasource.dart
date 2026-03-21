@@ -656,7 +656,8 @@ class ProductMetadataDataSource {
     String? cursor = parentId;
 
     while (cursor != null) {
-      final parent = _firstWhereOrNull(_categories, (item) => item.id == cursor);
+      final parent =
+          _firstWhereOrNull(_categories, (item) => item.id == cursor);
       if (parent == null || !visitedIds.add(parent.id)) {
         break;
       }

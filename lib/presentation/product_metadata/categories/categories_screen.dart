@@ -63,7 +63,9 @@ class _ProductMetadataCategoriesScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_appBarTitle()),
+        title: Observer(
+          builder: (context) => Text(_appBarTitle()),
+        ),
         actions: <Widget>[
           IconButton(
             onPressed: _goToProductMetadataHome,
@@ -627,8 +629,6 @@ class _CategoriesLevelHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -652,10 +652,6 @@ class _CategoriesLevelHeader extends StatelessWidget {
                 ],
               ],
             ),
-          ),
-          Text(
-            'Viewing subcategories under ${currentCategory!.name}.',
-            style: theme.textTheme.bodyMedium,
           ),
         ],
       ],
