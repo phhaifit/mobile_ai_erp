@@ -491,7 +491,7 @@ class _AttributesListTabState extends State<_AttributesListTab> {
   List<String> _attributeSummary(Attribute attribute, int optionCount) {
     return <String>[
       'Code: ${attribute.code}',
-      'Type: ${attribute.valueType.label}',
+      'Sort order: ${attribute.sortOrder}',
       if (attribute.valueType.supportsOptions) 'Options: $optionCount',
       if (attribute.effectiveUnitLabels.isNotEmpty)
         'Units: ${attribute.effectiveUnitLabels.join(', ')}',
