@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:mobile_ai_erp/core/stores/error/error_store.dart';
 import 'package:mobile_ai_erp/core/stores/form/form_store.dart';
+import 'package:mobile_ai_erp/domain/repository/customer/customer_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/setting/setting_repository.dart';
+import 'package:mobile_ai_erp/presentation/customer_management/store/customer_store.dart';
 import 'package:mobile_ai_erp/domain/usecase/post/get_post_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/is_logged_in_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/login_usecase.dart';
@@ -51,6 +53,13 @@ class StoreModule {
     getIt.registerSingleton<LanguageStore>(
       LanguageStore(
         getIt<SettingRepository>(),
+        getIt<ErrorStore>(),
+      ),
+    );
+
+    getIt.registerSingleton<CustomerStore>(
+      CustomerStore(
+        getIt<CustomerRepository>(),
         getIt<ErrorStore>(),
       ),
     );
