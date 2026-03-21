@@ -15,6 +15,7 @@ import 'package:mobile_ai_erp/presentation/cart/screens/wishlist_page.dart';
 import 'package:mobile_ai_erp/utils/routes/cart_routes.dart';
 import 'package:mobile_ai_erp/utils/locale/app_localization.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
+import 'package:mobile_ai_erp/constants/strings.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -50,6 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _buildSuppliersEntry(),
           _buildUsersManagementEntry(),
           // _buildSuppliersEntry(),
+          _buildProductsBody(),
           // Expanded(child: PostListScreen()),
         ],
       ),
@@ -205,6 +207,21 @@ class _HomeScreenState extends State<HomeScreen> {
           subtitle: Text('Manage profile, address book, and order history.'),
           trailing: Icon(Icons.chevron_right),
           onTap: () => Navigator.of(context).pushNamed(Routes.profileDashboard), 
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProductsBody() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      child: Card(
+        child: ListTile(
+          leading: Icon(Icons.insights_outlined),
+          title: Text(ProductStrings.screenTitle),
+          subtitle: Text(ProductStrings.screenDescription),
+          trailing: Icon(Icons.chevron_right),
+          onTap: () => Navigator.of(context).pushNamed(Routes.productManagementList),
         ),
       ),
     );

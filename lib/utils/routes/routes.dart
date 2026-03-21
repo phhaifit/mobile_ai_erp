@@ -27,11 +27,11 @@ import 'package:mobile_ai_erp/presentation/order_fulfillment/fulfillment_list.da
 import 'package:mobile_ai_erp/presentation/order_fulfillment/order_tracking.dart';
 import 'package:mobile_ai_erp/presentation/order_fulfillment/packaging.dart';
 import 'package:mobile_ai_erp/presentation/order_fulfillment/print_label.dart';
-import 'package:mobile_ai_erp/presentation/order_tracking/order_tracking.dart';
-import 'package:mobile_ai_erp/presentation/product_detail/product_detail_screen.dart';
-import 'package:mobile_ai_erp/presentation/reports/reports_analytics.dart';
-import 'package:mobile_ai_erp/presentation/stock_operations/stock_operations_screen.dart';
-import 'package:mobile_ai_erp/presentation/user/home/user_home.dart';
+import 'package:mobile_ai_erp/presentation/product/screens/product_list_screen.dart';
+import 'package:mobile_ai_erp/presentation/product/screens/product_info_screen.dart';
+import 'package:mobile_ai_erp/presentation/product/screens/product_create_edit_screen.dart';
+import 'package:mobile_ai_erp/presentation/product/screens/product_filter_screen.dart';
+import 'package:mobile_ai_erp/domain/entity/product/product.dart';
 import 'package:mobile_ai_erp/presentation/user/store/role_store.dart';
 import 'package:mobile_ai_erp/presentation/user/store/user_store.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/cms_pages/cms_page_editor_screen.dart';
@@ -72,6 +72,10 @@ class Routes {
   static const String fulfillmentTracking = '/fulfillment/tracking';
   static const String fulfillmentPackaging = '/fulfillment/packaging';
   static const String fulfillmentPrintLabel = '/fulfillment/print-label';
+  static const String productManagementList = '/products-management';
+  static const String productManagementInfo = '/products-management/info';
+  static const String productManagementCreateEdit = '/products-management/create-edit';
+  static const String productManagementFilter = '/products-management/filter';
 
   static const String profileDashboard = '/profile';
   static const String addressBook = '/address_book';
@@ -116,6 +120,32 @@ class Routes {
     fulfillmentTracking: (BuildContext context) => FulfillmentTrackingScreen(),
     fulfillmentPackaging: (BuildContext context) => PackagingScreen(),
     fulfillmentPrintLabel: (BuildContext context) => PrintLabelScreen(),
+    productManagementList: (BuildContext context) => ProductListScreen(),
+    productManagementFilter: (BuildContext context) => ProductFilterScreen(),
   };
 
+  // Handle dynamic routes
+  static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
+    switch (settings.name) {
+      case productManagementInfo:
+        if (settings.arguments is int) {
+          return MaterialPageRoute(
+            builder: (context) => ProductInfoScreen(
+              productId: settings.arguments as int,
+            ),
+          );
+        }
+        return null;
+      case productManagementCreateEdit:
+        // Handle optional product argument for editing
+        final args = settings.arguments;
+        return MaterialPageRoute(
+          builder: (context) => ProductCreateEditScreen(
+            product: args is Product ? args : null,
+          ),
+        );
+      default:
+        return null;
+    }
+  }
 }
