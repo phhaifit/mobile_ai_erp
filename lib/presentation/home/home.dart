@@ -37,10 +37,23 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<Widget> _buildActions(BuildContext context) {
     return <Widget>[
+      _buildOrderTrackingButton(),
       _buildLanguageButton(),
       _buildThemeButton(),
       _buildLogoutButton(),
     ];
+  }
+
+  Widget _buildOrderTrackingButton() {
+    return IconButton(
+      tooltip: 'Track Order',
+      onPressed: () {
+        Navigator.of(context).pushNamed(Routes.orderTracking);
+      },
+      icon: Icon(
+        Icons.local_shipping_outlined,
+      ),
+    );
   }
 
   Widget _buildThemeButton() {

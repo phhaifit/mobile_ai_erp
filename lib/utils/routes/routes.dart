@@ -1,5 +1,6 @@
 import 'package:mobile_ai_erp/presentation/home/home.dart';
 import 'package:mobile_ai_erp/presentation/login/login.dart';
+import 'package:mobile_ai_erp/presentation/order_tracking/order_tracking.dart';
 import 'package:flutter/material.dart';
 
 class Routes {
@@ -9,9 +10,11 @@ class Routes {
   static const String splash = '/splash';
   static const String login = '/login';
   static const String home = '/post';
+  static const String orderTracking = '/order-tracking';
 
   static final routes = <String, WidgetBuilder>{
     login: (BuildContext context) => LoginScreen(),
     home: (BuildContext context) => HomeScreen(),
+    orderTracking: (BuildContext context) => const OrderTrackingScreen(),
   };
 }

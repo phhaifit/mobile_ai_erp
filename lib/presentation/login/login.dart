@@ -111,7 +111,9 @@ class _LoginScreenState extends State<LoginScreen> {
             _buildUserIdField(),
             _buildPasswordField(),
             _buildForgotPasswordButton(),
-            _buildSignInButton()
+            _buildSignInButton(),
+            SizedBox(height: 8.0),
+            _buildTrackOrderGuestButton(),
           ],
         ),
       ),
@@ -192,6 +194,21 @@ class _LoginScreenState extends State<LoginScreen> {
           _showErrorMessage('Please fill in all fields');
         }
       },
+    );
+  }
+
+  Widget _buildTrackOrderGuestButton() {
+    return OutlinedButton.icon(
+      onPressed: () {
+        Navigator.of(context).pushNamed(Routes.orderTracking, arguments: {
+          'orderId': 'ORD-10001',
+          'token': 'guest123',
+        });
+      },
+      icon: Icon(Icons.local_shipping_outlined),
+      label: Text(
+        AppLocalizations.of(context).translate('login_btn_track_order_guest'),
+      ),
     );
   }
 
