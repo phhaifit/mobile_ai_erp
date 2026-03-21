@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:mobile_ai_erp/core/stores/error/error_store.dart';
 import 'package:mobile_ai_erp/core/stores/form/form_store.dart';
 import 'package:mobile_ai_erp/domain/repository/setting/setting_repository.dart';
+import 'package:mobile_ai_erp/domain/usecase/order_tracking/find_order_tracking_scenario_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/order_tracking/get_order_tracking_scenarios_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/post/get_post_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/is_logged_in_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/login_usecase.dart';
@@ -10,6 +12,7 @@ import 'package:mobile_ai_erp/domain/usecase/user/save_login_in_status_usecase.d
 import 'package:mobile_ai_erp/presentation/home/store/language/language_store.dart';
 import 'package:mobile_ai_erp/presentation/home/store/theme/theme_store.dart';
 import 'package:mobile_ai_erp/presentation/login/store/login_store.dart';
+import 'package:mobile_ai_erp/presentation/order_tracking/store/order_tracking_store.dart';
 import 'package:mobile_ai_erp/presentation/post/store/post_store.dart';
 
 import '../../../di/service_locator.dart';
@@ -37,6 +40,14 @@ class StoreModule {
     getIt.registerSingleton<PostStore>(
       PostStore(
         getIt<GetPostUseCase>(),
+        getIt<ErrorStore>(),
+      ),
+    );
+
+    getIt.registerSingleton<OrderTrackingStore>(
+      OrderTrackingStore(
+        getIt<GetOrderTrackingScenariosUseCase>(),
+        getIt<FindOrderTrackingScenarioUseCase>(),
         getIt<ErrorStore>(),
       ),
     );

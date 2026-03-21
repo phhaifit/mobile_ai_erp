@@ -20,7 +20,8 @@ class TimelineItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final Color markerColor =
         isDone ? Theme.of(context).colorScheme.primary : Colors.grey.shade400;
-    final Color titleColor = isActive ? const Color(0xFF0F172A) : const Color(0xFF334155);
+    final Color titleColor =
+        isActive ? const Color(0xFF0F172A) : const Color(0xFF334155);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -57,10 +58,13 @@ class TimelineItem extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(12, 9, 12, 10),
             margin: const EdgeInsets.only(bottom: 8),
             decoration: BoxDecoration(
-              color: isActive ? const Color(0xFFF1F8F7) : const Color(0xFFF8FAFA),
+              color:
+                  isActive ? const Color(0xFFF1F8F7) : const Color(0xFFF8FAFA),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isActive ? const Color(0xFF99D5CE) : const Color(0xFFE5E7EB),
+                color: isActive
+                    ? const Color(0xFF99D5CE)
+                    : const Color(0xFFE5E7EB),
               ),
             ),
             child: Column(
@@ -69,7 +73,8 @@ class TimelineItem extends StatelessWidget {
                 Text(
                   label,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
+                        fontWeight:
+                            isActive ? FontWeight.w700 : FontWeight.w600,
                         color: titleColor,
                       ),
                 ),
