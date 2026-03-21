@@ -248,10 +248,12 @@ class _ProductMetadataCategoriesScreenState
     if (!mounted) {
       return;
     }
-    setState(() {
-      _statusFilter = selected;
-      _currentPage = 1;
-    });
+    if (selected != null) {
+      setState(() {
+        _statusFilter = selected;
+        _currentPage = 1;
+      });
+    }
   }
 
   Future<void> _openSortSheet() async {

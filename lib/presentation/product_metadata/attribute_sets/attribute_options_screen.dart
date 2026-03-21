@@ -87,7 +87,7 @@ class _ProductMetadataAttributeOptionsScreenState
       body: Observer(
         builder: (context) {
           if (_store.isLoading &&
-              _store.activeAttributeId != widget.args.attributeId) {
+              _store.activeAttributeId == widget.args.attributeId) {
             return const Center(child: CircularProgressIndicator());
           }
 
@@ -300,10 +300,12 @@ class _ProductMetadataAttributeOptionsScreenState
     if (!mounted) {
       return;
     }
-    setState(() {
-      _sortOrderFilter = selected;
-      _currentPage = 1;
-    });
+    if (selected != null) {
+      setState(() {
+        _sortOrderFilter = selected;
+        _currentPage = 1;
+      });
+    }
   }
 
   Future<void> _openSortSheet() async {
