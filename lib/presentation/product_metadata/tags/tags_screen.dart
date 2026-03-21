@@ -216,7 +216,7 @@ class _ProductMetadataTagsScreenState extends State<ProductMetadataTagsScreen> {
   }
 
   Future<void> _openFilterSheet() async {
-    final selected = await showModalBottomSheet<TagStatus?>(
+    final result = await showModalBottomSheet<_TagFilterResult>(
       context: context,
       builder: (context) {
         TagStatus? tempStatus = _statusFilter;
@@ -256,7 +256,9 @@ class _ProductMetadataTagsScreenState extends State<ProductMetadataTagsScreen> {
                       ),
                     const SizedBox(height: 8),
                     FilledButton(
-                      onPressed: () => Navigator.of(context).pop(tempStatus),
+                      onPressed: () => Navigator.of(context).pop(
+                        _TagFilterResult(status: tempStatus),
+                      ),
                       child: const Text('Apply'),
                     ),
                   ],
@@ -268,15 +270,13 @@ class _ProductMetadataTagsScreenState extends State<ProductMetadataTagsScreen> {
       },
     );
 
-    if (!mounted) {
+    if (result == null || !mounted) {
       return;
     }
-    if (selected != null) {
-      setState(() {
-        _statusFilter = selected;
-        _currentPage = 1;
-      });
-    }
+    setState(() {
+      _statusFilter = result.status;
+      _currentPage = 1;
+    });
   }
 
   Future<void> _openSortSheet() async {
@@ -406,6 +406,12 @@ class _ProductMetadataTagsScreenState extends State<ProductMetadataTagsScreen> {
       );
     }
   }
+}
+
+class _TagFilterResult {
+  const _TagFilterResult({required this.status});
+
+  final TagStatus? status;
 }
 
 class _TagColorDot extends StatelessWidget {

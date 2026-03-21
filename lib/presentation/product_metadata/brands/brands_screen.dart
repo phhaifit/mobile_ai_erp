@@ -220,7 +220,7 @@ class _ProductMetadataBrandsScreenState
   }
 
   Future<void> _openFilterSheet() async {
-    final selected = await showModalBottomSheet<BrandStatus?>(
+    final result = await showModalBottomSheet<_BrandFilterResult>(
       context: context,
       builder: (context) {
         BrandStatus? tempStatus = _statusFilter;
@@ -260,7 +260,9 @@ class _ProductMetadataBrandsScreenState
                       ),
                     const SizedBox(height: 8),
                     FilledButton(
-                      onPressed: () => Navigator.of(context).pop(tempStatus),
+                      onPressed: () => Navigator.of(context).pop(
+                        _BrandFilterResult(status: tempStatus),
+                      ),
                       child: const Text('Apply'),
                     ),
                   ],
@@ -272,15 +274,13 @@ class _ProductMetadataBrandsScreenState
       },
     );
 
-    if (!mounted) {
+    if (result == null || !mounted) {
       return;
     }
-    if (selected != null) {
-      setState(() {
-        _statusFilter = selected;
-        _currentPage = 1;
-      });
-    }
+    setState(() {
+      _statusFilter = result.status;
+      _currentPage = 1;
+    });
   }
 
   Future<void> _openSortSheet() async {
@@ -410,4 +410,10 @@ class _ProductMetadataBrandsScreenState
       );
     }
   }
+}
+
+class _BrandFilterResult {
+  const _BrandFilterResult({required this.status});
+
+  final BrandStatus? status;
 }
