@@ -115,7 +115,9 @@ class _ThemeListScreenState extends State<ThemeListScreen> {
           _buildCategoryFilter(theme),
           // Theme grid
           Expanded(
-            child: LayoutBuilder(
+            child: _filteredThemes.isEmpty
+                ? _buildEmptyState(theme)
+                : LayoutBuilder(
               builder: (context, constraints) {
                 final crossAxisCount = constraints.maxWidth > 800
                     ? 3
@@ -136,6 +138,35 @@ class _ThemeListScreenState extends State<ThemeListScreen> {
                   },
                 );
               },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(ThemeData theme) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.palette_outlined,
+            size: 64,
+            color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.3),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No themes found',
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Try selecting a different category',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.4),
             ),
           ),
         ],
@@ -169,7 +200,7 @@ class _ThemeListScreenState extends State<ThemeListScreen> {
     final theme = Theme.of(context);
 
     return Card(
-      elevation: 1,
+      elevation: Theme.of(context).brightness == Brightness.dark ? 2 : 1,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
