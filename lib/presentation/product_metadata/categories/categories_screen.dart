@@ -193,7 +193,7 @@ class _ProductMetadataCategoriesScreenState
   }
 
   Future<void> _openFilterSheet() async {
-    final selected = await showModalBottomSheet<CategoryStatus?>(
+    final result = await showModalBottomSheet<_CategoryFilterResult>(
       context: context,
       builder: (context) {
         CategoryStatus? tempStatus = _statusFilter;
@@ -233,7 +233,9 @@ class _ProductMetadataCategoriesScreenState
                       ),
                     const SizedBox(height: 8),
                     FilledButton(
-                      onPressed: () => Navigator.of(context).pop(tempStatus),
+                      onPressed: () => Navigator.of(context).pop(
+                        _CategoryFilterResult(status: tempStatus),
+                      ),
                       child: const Text('Apply'),
                     ),
                   ],
@@ -245,15 +247,13 @@ class _ProductMetadataCategoriesScreenState
       },
     );
 
-    if (!mounted) {
+    if (result == null || !mounted) {
       return;
     }
-    if (selected != null) {
-      setState(() {
-        _statusFilter = selected;
-        _currentPage = 1;
-      });
-    }
+    setState(() {
+      _statusFilter = result.status;
+      _currentPage = 1;
+    });
   }
 
   Future<void> _openSortSheet() async {
@@ -544,6 +544,12 @@ class _ProductMetadataCategoriesScreenState
 }
 
 enum _CategoryMenuAction { addChild, edit, delete }
+
+class _CategoryFilterResult {
+  const _CategoryFilterResult({required this.status});
+
+  final CategoryStatus? status;
+}
 
 class _CategoryActionsMenu extends StatelessWidget {
   const _CategoryActionsMenu({required this.onSelected});

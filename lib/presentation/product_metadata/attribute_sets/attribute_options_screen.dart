@@ -244,7 +244,7 @@ class _ProductMetadataAttributeOptionsScreenState
         .toList()
       ..sort();
 
-    final selected = await showModalBottomSheet<int?>(
+    final result = await showModalBottomSheet<_AttributeOptionFilterResult>(
       context: context,
       builder: (context) {
         int? tempSortOrder = _sortOrderFilter;
@@ -285,7 +285,11 @@ class _ProductMetadataAttributeOptionsScreenState
                       ),
                     const SizedBox(height: 8),
                     FilledButton(
-                      onPressed: () => Navigator.of(context).pop(tempSortOrder),
+                      onPressed: () => Navigator.of(context).pop(
+                        _AttributeOptionFilterResult(
+                          sortOrder: tempSortOrder,
+                        ),
+                      ),
                       child: const Text('Apply'),
                     ),
                   ],
@@ -297,15 +301,13 @@ class _ProductMetadataAttributeOptionsScreenState
       },
     );
 
-    if (!mounted) {
+    if (result == null || !mounted) {
       return;
     }
-    if (selected != null) {
-      setState(() {
-        _sortOrderFilter = selected;
-        _currentPage = 1;
-      });
-    }
+    setState(() {
+      _sortOrderFilter = result.sortOrder;
+      _currentPage = 1;
+    });
   }
 
   Future<void> _openSortSheet() async {
@@ -444,6 +446,12 @@ class ProductMetadataAttributeOptionFormScreen extends StatefulWidget {
   @override
   State<ProductMetadataAttributeOptionFormScreen> createState() =>
       _ProductMetadataAttributeOptionFormScreenState();
+}
+
+class _AttributeOptionFilterResult {
+  const _AttributeOptionFilterResult({required this.sortOrder});
+
+  final int? sortOrder;
 }
 
 class _ProductMetadataAttributeOptionFormScreenState
