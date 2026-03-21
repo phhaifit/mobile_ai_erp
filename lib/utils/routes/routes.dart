@@ -10,11 +10,11 @@ class Routes {
   static const String splash = '/splash';
   static const String login = '/login';
   static const String home = '/post';
-  static const String orderTracking = '/order-tracking';
+  static const String orderTracking = OrderTrackingNavigation.routeName;
 
   static final routes = <String, WidgetBuilder>{
     login: (BuildContext context) => LoginScreen(),
     home: (BuildContext context) => HomeScreen(),
-    orderTracking: (BuildContext context) => const OrderTrackingScreen(),
+    orderTracking: OrderTrackingNavigation.buildScreen,
   };
 }
