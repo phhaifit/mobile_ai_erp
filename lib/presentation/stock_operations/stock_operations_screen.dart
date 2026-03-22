@@ -287,15 +287,24 @@ class _TransferPanel extends StatelessWidget {
       );
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _TransferForm(store: store, isDesktop: false),
-        const SizedBox(height: 16),
-        _TransferPreview(store: store),
-      ],
-    );
-  }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _TransferForm(store: store, isDesktop: false),
+                    const SizedBox(height: 16),
+                    _TransferPreview(store: store),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      }
 }
 
 class _TransferForm extends StatelessWidget {
@@ -461,98 +470,100 @@ class _DamagedExpiredPanel extends StatelessWidget {
         return Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Damaged / Expired Goods',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 12),
-                _WarehouseDropdown(
-                  label: 'Warehouse',
-                  value: store.disposalWarehouseId,
-                  warehouses: store.warehouses.toList(growable: false),
-                  onChanged: store.setDisposalWarehouse,
-                ),
-                const SizedBox(height: 12),
-                _ProductDropdown(
-                  label: 'Product',
-                  value: store.disposalProductId,
-                  products: store.getProductsByWarehouse(
-                    store.disposalWarehouseId,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Damaged / Expired Goods',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
                   ),
-                  onChanged: store.setDisposalProduct,
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ChoiceChip(
-                        label: const Text('Damaged'),
-                        selected:
-                            store.disposalType == StockOperationType.damaged,
-                        selectedColor: Colors.orange.shade200,
-                        onSelected: (_) =>
-                            store.setDisposalType(StockOperationType.damaged),
-                      ),
+                  const SizedBox(height: 12),
+                  _WarehouseDropdown(
+                    label: 'Warehouse',
+                    value: store.disposalWarehouseId,
+                    warehouses: store.warehouses.toList(growable: false),
+                    onChanged: store.setDisposalWarehouse,
+                  ),
+                  const SizedBox(height: 12),
+                  _ProductDropdown(
+                    label: 'Product',
+                    value: store.disposalProductId,
+                    products: store.getProductsByWarehouse(
+                      store.disposalWarehouseId,
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ChoiceChip(
-                        label: const Text('Expired'),
-                        selected:
-                            store.disposalType == StockOperationType.expired,
-                        selectedColor: Colors.red.shade200,
-                        onSelected: (_) =>
-                            store.setDisposalType(StockOperationType.expired),
+                    onChanged: store.setDisposalProduct,
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ChoiceChip(
+                          label: const Text('Damaged'),
+                          selected:
+                              store.disposalType == StockOperationType.damaged,
+                          selectedColor: Colors.orange.shade200,
+                          onSelected: (_) =>
+                              store.setDisposalType(StockOperationType.damaged),
+                        ),
                       ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ChoiceChip(
+                          label: const Text('Expired'),
+                          selected:
+                              store.disposalType == StockOperationType.expired,
+                          selectedColor: Colors.red.shade200,
+                          onSelected: (_) =>
+                              store.setDisposalType(StockOperationType.expired),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    keyboardType: TextInputType.number,
+                    initialValue: store.disposalQuantityInput,
+                    onChanged: store.setDisposalQuantity,
+                    decoration: const InputDecoration(
+                      labelText: 'Quantity',
+                      border: OutlineInputBorder(),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  keyboardType: TextInputType.number,
-                  initialValue: store.disposalQuantityInput,
-                  onChanged: store.setDisposalQuantity,
-                  decoration: const InputDecoration(
-                    labelText: 'Quantity',
-                    border: OutlineInputBorder(),
                   ),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  initialValue: store.disposalNote,
-                  onChanged: store.setDisposalNote,
-                  decoration: const InputDecoration(
-                    labelText: 'Note (optional)',
-                    border: OutlineInputBorder(),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    initialValue: store.disposalNote,
+                    onChanged: store.setDisposalNote,
+                    decoration: const InputDecoration(
+                      labelText: 'Note (optional)',
+                      border: OutlineInputBorder(),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                FilledButton.icon(
-                  onPressed:
-                      store.isSubmitting || !store.canSubmitDamagedOrExpired
-                      ? null
-                      : () async {
-                          final success = await store.submitDamagedOrExpired();
-                          if (!context.mounted) {
-                            return;
-                          }
-                          if (success) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Damaged/expired record saved locally.',
+                  const SizedBox(height: 12),
+                  FilledButton.icon(
+                    onPressed:
+                        store.isSubmitting || !store.canSubmitDamagedOrExpired
+                        ? null
+                        : () async {
+                            final success = await store.submitDamagedOrExpired();
+                            if (!context.mounted) {
+                              return;
+                            }
+                            if (success) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Damaged/expired record saved locally.',
+                                  ),
                                 ),
-                              ),
-                            );
-                          }
-                        },
-                  icon: const Icon(Icons.save_outlined),
-                  label: const Text('Save Operation'),
-                ),
-              ],
+                              );
+                            }
+                          },
+                    icon: const Icon(Icons.save_outlined),
+                    label: const Text('Save Operation'),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -720,8 +731,8 @@ class _MobileHistoryList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+      shrinkWrap: false,
+      physics: const ClampingScrollPhysics(),
       itemCount: operations.length,
       separatorBuilder: (_, __) => const SizedBox(height: 10),
       itemBuilder: (_, index) {
