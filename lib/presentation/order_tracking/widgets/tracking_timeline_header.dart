@@ -45,6 +45,7 @@ class TrackingTimelineHeader extends StatelessWidget {
               children: <Widget>[
                 for (int i = 0; i < stages.length; i++) ...<Widget>[
                   Expanded(
+                    flex: 3,
                     child: _TimelineStage(
                       stage: stages[i],
                       index: i,
@@ -54,13 +55,16 @@ class TrackingTimelineHeader extends StatelessWidget {
                     ),
                   ),
                   if (i < stages.length - 1)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 24),
-                      child: Container(
-                        height: 2,
-                        color: selected.currentStage.index > i
-                            ? primaryColor
-                            : colorScheme.onSurface.withValues(alpha: 0.12),
+                    Expanded(
+                      flex: 2,
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 24),
+                        child: Container(
+                          height: 2,
+                          color: selected.currentStage.index > i
+                              ? primaryColor
+                              : colorScheme.onSurface.withValues(alpha: 0.12),
+                        ),
                       ),
                     ),
                 ],

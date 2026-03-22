@@ -64,7 +64,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       builder: (context) {
         final AppLocalizations t = AppLocalizations.of(context);
         final ColorScheme colorScheme = Theme.of(context).colorScheme;
-        final bool isCompact = MediaQuery.sizeOf(context).width < 420;
+        final double width = MediaQuery.sizeOf(context).width;
+        final bool isCompact = width < 420;
+        final bool isWideLayout = width >= 960;
+        final double contentMaxWidth = isWideLayout ? 1200 : 860;
         final OrderTrackingScenario? selected =
             _orderTrackingStore.selectedScenario;
         final String title = _tr(t, 'tracking_title', 'Order Tracking');
@@ -101,120 +104,292 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             ),
           ),
           body: SingleChildScrollView(
-            child: Column(
-              children: <Widget>[
-                if (!isReturnFlow)
-                  TrackingTimelineHeader(
-                    selected: selectedScenario,
-                    primaryColor: colorScheme.primary,
-                    shipmentStageLabel: (ShipmentStage stage) =>
-                        _shipmentStageLabel(stage, t),
-                    orderIdLabel: _tr(t, 'tracking_order_id_label', 'Order ID'),
-                  ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      TrackingScenarioSelector(
-                        isCompact: isCompact,
-                        scenarios: _scenarios,
-                        selected: selectedScenario,
-                        primaryColor: colorScheme.primary,
-                        onChanged: _orderTrackingStore.selectScenario,
-                        scenarioLabel: _tr(
-                          t,
-                          'tracking_scenario_label',
-                          'Tracking scenario',
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      TrackingCurrentStatusCard(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: contentMaxWidth),
+                child: Column(
+                  children: <Widget>[
+                    if (!isReturnFlow)
+                      TrackingTimelineHeader(
                         selected: selectedScenario,
                         primaryColor: colorScheme.primary,
                         shipmentStageLabel: (ShipmentStage stage) =>
                             _shipmentStageLabel(stage, t),
-                        formatDateTime: _formatDateTime,
-                        estimatedDeliveryLabel: _tr(
-                          t,
-                          'tracking_estimated_delivery',
-                          'Estimated delivery',
-                        ),
+                        orderIdLabel:
+                            _tr(t, 'tracking_order_id_label', 'Order ID'),
                       ),
-                      if (selectedScenario.returnExchangeStage !=
-                          ReturnExchangeStage.none) ...<Widget>[
-                        const SizedBox(height: 16),
-                        TrackingReturnExchangeCard(
-                          selected: selectedScenario,
-                          returnStageLabel: (ReturnExchangeStage stage) =>
-                              _returnStageLabel(stage, t),
-                          primaryColor: colorScheme.primary,
-                          title: _tr(
-                            t,
-                            'tracking_return_exchange_title',
-                            'Return / Exchange',
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 16),
-                      TrackingCarrierCard(
-                        selected: selectedScenario,
-                        primaryColor: colorScheme.primary,
-                        onOpenCarrierUrl: _openCarrierUrl,
-                        sectionTitle: _tr(
-                          t,
-                          'tracking_carrier_section_title',
-                          'Carrier information',
-                        ),
-                        carrierNameLabel: _tr(
-                          t,
-                          'tracking_carrier_name_label',
-                          'Carrier',
-                        ),
-                        trackingNumberLabel: _tr(
-                          t,
-                          'tracking_number_label',
-                          'Tracking number',
-                        ),
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        isWideLayout ? 20 : 16,
+                        20,
+                        isWideLayout ? 20 : 16,
+                        24,
                       ),
-                      const SizedBox(height: 16),
-                      if (selectedScenario.deliveryAlertType !=
-                          DeliveryAlertType.none) ...<Widget>[
-                        TrackingDeliveryAlertBanner(
-                          selected: selectedScenario,
-                          title: _tr(
-                            t,
-                            'tracking_delivery_notification_title',
-                            'Delivery notification',
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-                      if (!isReturnFlow)
-                        TrackingDetailedTimelineCard(
-                          selected: selectedScenario,
-                          shipmentStageLabel: (ShipmentStage stage) =>
-                              _shipmentStageLabel(stage, t),
-                          formatDateTime: _formatDateTime,
-                          timelineTitle: _tr(
-                            t,
-                            'tracking_timeline_title',
-                            'Shipment timeline',
-                          ),
-                          pendingLabel: _tr(
-                            t,
-                            'tracking_pending',
-                            'Pending',
-                          ),
-                        ),
-                    ],
-                  ),
+                      child: isWideLayout
+                          ? _buildWideContent(
+                              isCompact: isCompact,
+                              selectedScenario: selectedScenario,
+                              t: t,
+                              colorScheme: colorScheme,
+                              isReturnFlow: isReturnFlow,
+                            )
+                          : _buildNarrowContent(
+                              isCompact: isCompact,
+                              selectedScenario: selectedScenario,
+                              t: t,
+                              colorScheme: colorScheme,
+                              isReturnFlow: isReturnFlow,
+                            ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildNarrowContent({
+    required bool isCompact,
+    required OrderTrackingScenario selectedScenario,
+    required AppLocalizations t,
+    required ColorScheme colorScheme,
+    required bool isReturnFlow,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        TrackingScenarioSelector(
+          isCompact: isCompact,
+          scenarios: _scenarios,
+          selected: selectedScenario,
+          primaryColor: colorScheme.primary,
+          onChanged: _orderTrackingStore.selectScenario,
+          scenarioLabel: _tr(
+            t,
+            'tracking_scenario_label',
+            'Tracking scenario',
+          ),
+        ),
+        const SizedBox(height: 16),
+        TrackingCurrentStatusCard(
+          selected: selectedScenario,
+          primaryColor: colorScheme.primary,
+          shipmentStageLabel: (ShipmentStage stage) =>
+              _shipmentStageLabel(stage, t),
+          formatDateTime: _formatDateTime,
+          estimatedDeliveryLabel: _tr(
+            t,
+            'tracking_estimated_delivery',
+            'Estimated delivery',
+          ),
+          deliveredAtLabel: _tr(
+            t,
+            'tracking_delivered_at',
+            'Delivered at',
+          ),
+        ),
+        if (selectedScenario.returnExchangeStage !=
+            ReturnExchangeStage.none) ...<Widget>[
+          const SizedBox(height: 16),
+          TrackingReturnExchangeCard(
+            selected: selectedScenario,
+            returnStageLabel: (ReturnExchangeStage stage) =>
+                _returnStageLabel(stage, t),
+            primaryColor: colorScheme.primary,
+            title: _tr(
+              t,
+              'tracking_return_exchange_title',
+              'Return / Exchange',
+            ),
+          ),
+        ],
+        const SizedBox(height: 16),
+        TrackingCarrierCard(
+          selected: selectedScenario,
+          primaryColor: colorScheme.primary,
+          onOpenCarrierUrl: _openCarrierUrl,
+          sectionTitle: _tr(
+            t,
+            'tracking_carrier_section_title',
+            'Carrier information',
+          ),
+          carrierNameLabel: _tr(
+            t,
+            'tracking_carrier_name_label',
+            'Carrier',
+          ),
+          trackingNumberLabel: _tr(
+            t,
+            'tracking_number_label',
+            'Tracking number',
+          ),
+        ),
+        const SizedBox(height: 16),
+        if (selectedScenario.deliveryAlertType !=
+            DeliveryAlertType.none) ...<Widget>[
+          TrackingDeliveryAlertBanner(
+            selected: selectedScenario,
+            title: _tr(
+              t,
+              'tracking_delivery_notification_title',
+              'Delivery notification',
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+        if (!isReturnFlow)
+          TrackingDetailedTimelineCard(
+            selected: selectedScenario,
+            shipmentStageLabel: (ShipmentStage stage) =>
+                _shipmentStageLabel(stage, t),
+            formatDateTime: _formatDateTime,
+            timelineTitle: _tr(
+              t,
+              'tracking_timeline_title',
+              'Shipment timeline',
+            ),
+            pendingLabel: _tr(
+              t,
+              'tracking_pending',
+              'Pending',
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildWideContent({
+    required bool isCompact,
+    required OrderTrackingScenario selectedScenario,
+    required AppLocalizations t,
+    required ColorScheme colorScheme,
+    required bool isReturnFlow,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        TrackingScenarioSelector(
+          isCompact: isCompact,
+          scenarios: _scenarios,
+          selected: selectedScenario,
+          primaryColor: colorScheme.primary,
+          onChanged: _orderTrackingStore.selectScenario,
+          scenarioLabel: _tr(
+            t,
+            'tracking_scenario_label',
+            'Tracking scenario',
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Expanded(
+              flex: 7,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  if (selectedScenario.returnExchangeStage !=
+                      ReturnExchangeStage.none)
+                    TrackingReturnExchangeCard(
+                      selected: selectedScenario,
+                      returnStageLabel: (ReturnExchangeStage stage) =>
+                          _returnStageLabel(stage, t),
+                      primaryColor: colorScheme.primary,
+                      title: _tr(
+                        t,
+                        'tracking_return_exchange_title',
+                        'Return / Exchange',
+                      ),
+                    ),
+                  if (selectedScenario.returnExchangeStage !=
+                      ReturnExchangeStage.none)
+                    const SizedBox(height: 16),
+                  if (!isReturnFlow)
+                    TrackingDetailedTimelineCard(
+                      selected: selectedScenario,
+                      shipmentStageLabel: (ShipmentStage stage) =>
+                          _shipmentStageLabel(stage, t),
+                      formatDateTime: _formatDateTime,
+                      timelineTitle: _tr(
+                        t,
+                        'tracking_timeline_title',
+                        'Shipment timeline',
+                      ),
+                      pendingLabel: _tr(
+                        t,
+                        'tracking_pending',
+                        'Pending',
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              flex: 5,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  TrackingCurrentStatusCard(
+                    selected: selectedScenario,
+                    primaryColor: colorScheme.primary,
+                    shipmentStageLabel: (ShipmentStage stage) =>
+                        _shipmentStageLabel(stage, t),
+                    formatDateTime: _formatDateTime,
+                    estimatedDeliveryLabel: _tr(
+                      t,
+                      'tracking_estimated_delivery',
+                      'Estimated delivery',
+                    ),
+                    deliveredAtLabel: _tr(
+                      t,
+                      'tracking_delivered_at',
+                      'Delivered at',
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TrackingCarrierCard(
+                    selected: selectedScenario,
+                    primaryColor: colorScheme.primary,
+                    onOpenCarrierUrl: _openCarrierUrl,
+                    sectionTitle: _tr(
+                      t,
+                      'tracking_carrier_section_title',
+                      'Carrier information',
+                    ),
+                    carrierNameLabel: _tr(
+                      t,
+                      'tracking_carrier_name_label',
+                      'Carrier',
+                    ),
+                    trackingNumberLabel: _tr(
+                      t,
+                      'tracking_number_label',
+                      'Tracking number',
+                    ),
+                  ),
+                  if (selectedScenario.deliveryAlertType !=
+                      DeliveryAlertType.none) ...<Widget>[
+                    const SizedBox(height: 16),
+                    TrackingDeliveryAlertBanner(
+                      selected: selectedScenario,
+                      title: _tr(
+                        t,
+                        'tracking_delivery_notification_title',
+                        'Delivery notification',
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 

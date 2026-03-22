@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_ai_erp/domain/entity/order_tracking/order_tracking_scenario.dart';
+import 'package:mobile_ai_erp/presentation/order_tracking/widgets/tracking_shared_section.dart';
 
 class TrackingCurrentStatusCard extends StatelessWidget {
   const TrackingCurrentStatusCard({
@@ -9,6 +10,7 @@ class TrackingCurrentStatusCard extends StatelessWidget {
     required this.shipmentStageLabel,
     required this.formatDateTime,
     required this.estimatedDeliveryLabel,
+    required this.deliveredAtLabel,
   });
 
   final OrderTrackingScenario selected;
@@ -16,6 +18,7 @@ class TrackingCurrentStatusCard extends StatelessWidget {
   final String Function(ShipmentStage stage) shipmentStageLabel;
   final String Function(DateTime value) formatDateTime;
   final String estimatedDeliveryLabel;
+  final String deliveredAtLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +28,7 @@ class TrackingCurrentStatusCard extends StatelessWidget {
         ? _deliveredAt ?? selected.estimatedDeliveryDate
         : selected.estimatedDeliveryDate;
 
-    return _SectionCard(
+    return TrackingSectionCard(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -47,7 +50,7 @@ class TrackingCurrentStatusCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            isDelivered ? 'Delivered at' : estimatedDeliveryLabel,
+            isDelivered ? deliveredAtLabel : estimatedDeliveryLabel,
             style: TextStyle(
               fontSize: 12,
               color: colorScheme.onSurface.withValues(alpha: 0.65),
@@ -75,28 +78,5 @@ class TrackingCurrentStatusCard extends StatelessWidget {
     }
 
     return null;
-  }
-}
-
-class _SectionCard extends StatelessWidget {
-  const _SectionCard({required this.child, this.padding});
-
-  final Widget child;
-  final EdgeInsets? padding;
-
-  @override
-  Widget build(BuildContext context) {
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      width: double.infinity,
-      padding: padding ?? const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-            color: colorScheme.onSurface.withValues(alpha: 0.12), width: 1),
-      ),
-      child: child,
-    );
   }
 }
