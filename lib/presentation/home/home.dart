@@ -4,6 +4,7 @@ import 'package:mobile_ai_erp/presentation/customer_management/navigation/custom
 import 'package:mobile_ai_erp/presentation/home/store/language/language_store.dart';
 import 'package:mobile_ai_erp/presentation/home/store/theme/theme_store.dart';
 import 'package:mobile_ai_erp/presentation/post/post_list.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_navigator.dart';
 import 'package:mobile_ai_erp/utils/locale/app_localization.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
 import 'package:flutter/material.dart';
@@ -43,10 +44,21 @@ class _HomeScreenState extends State<HomeScreen> {
         icon: const Icon(Icons.people_outline),
         tooltip: 'Customer Management',
       ),
+      _buildProductMetadataButton(),
       _buildLanguageButton(),
       _buildThemeButton(),
       _buildLogoutButton(),
     ];
+  }
+
+  Widget _buildProductMetadataButton() {
+    return IconButton(
+      tooltip: 'Product metadata',
+      onPressed: () {
+        ProductMetadataNavigator.openProductMetadataHome(context);
+      },
+      icon: const Icon(Icons.dashboard_outlined),
+    );
   }
 
   Widget _buildThemeButton() {
