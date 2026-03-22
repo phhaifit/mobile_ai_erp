@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_ai_erp/domain/entity/order_tracking/order_tracking_scenario.dart';
+import 'package:mobile_ai_erp/presentation/order_tracking/widgets/tracking_shared_section.dart';
 
 class TrackingScenarioSelector extends StatelessWidget {
   const TrackingScenarioSelector({
@@ -26,12 +27,12 @@ class TrackingScenarioSelector extends StatelessWidget {
     );
     final OrderTrackingScenario? dropdownValue = hasSelected ? selected : null;
 
-    return _SectionCard(
+    return TrackingSectionCard(
       child: isCompact
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                _SectionTitle(
+                TrackingSectionTitle(
                   title: scenarioLabel,
                   icon: Icons.tune_rounded,
                   iconColor: primaryColor,
@@ -47,7 +48,7 @@ class TrackingScenarioSelector extends StatelessWidget {
           : Row(
               children: <Widget>[
                 Expanded(
-                  child: _SectionTitle(
+                  child: TrackingSectionTitle(
                     title: scenarioLabel,
                     icon: Icons.tune_rounded,
                     iconColor: primaryColor,
@@ -108,59 +109,6 @@ class _ScenarioDropdown extends StatelessWidget {
           }
         },
       ),
-    );
-  }
-}
-
-class _SectionCard extends StatelessWidget {
-  const _SectionCard({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-            color: colorScheme.onSurface.withValues(alpha: 0.12), width: 1),
-      ),
-      child: child,
-    );
-  }
-}
-
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle({
-    required this.title,
-    required this.icon,
-    required this.iconColor,
-  });
-
-  final String title;
-  final IconData icon;
-  final Color iconColor;
-
-  @override
-  Widget build(BuildContext context) {
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
-    return Row(
-      children: <Widget>[
-        Icon(icon, size: 18, color: iconColor),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-            color: colorScheme.onSurface,
-          ),
-        ),
-      ],
     );
   }
 }
