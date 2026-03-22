@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import '../../../../utils/routes/routes.dart'; 
+import '../../../../utils/routes/routes.dart';
 import '../store/profile_store.dart';
 import '../widgets/loyalty_point_card.dart';
-import '../../../../di/service_locator.dart'; 
+import '../../../../di/service_locator.dart';
 
 class ProfileDashboardScreen extends StatefulWidget {
   const ProfileDashboardScreen({Key? key}) : super(key: key);
@@ -60,23 +60,7 @@ class _ProfileDashboardScreenState extends State<ProfileDashboardScreen> {
               title: 'Order History',
               subtitle: 'Track, return, or buy again',
               onTap: () => Navigator.pushNamed(context, Routes.orderHistory),
-            ),
-            const SizedBox(height: 24),
-            // Placeholder for Logout (Handled by Auth Team / Feature 0)
-            _buildMenuOption(
-              context,
-              icon: Icons.logout,
-              title: 'Logout',
-              subtitle: 'Sign out of your account',
-              textColor: Colors.red,
-              iconColor: Colors.red,
-              onTap: () {
-                // Feature 0 will handle the real logout logic
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Mock: Logging out...')),
-                );
-              },
-            ),
+            )
           ],
         ),
       ),
@@ -93,10 +77,9 @@ class _ProfileDashboardScreenState extends State<ProfileDashboardScreen> {
             child: Text(
               _profileStore.userName.substring(0, 1).toUpperCase(),
               style: const TextStyle(
-                fontSize: 32, 
-                fontWeight: FontWeight.bold, 
-                color: Colors.blue
-              ),
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue),
             ),
           ),
           const SizedBox(width: 16),
@@ -106,7 +89,8 @@ class _ProfileDashboardScreenState extends State<ProfileDashboardScreen> {
               children: [
                 Text(
                   _profileStore.userName,
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      fontSize: 22, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -156,10 +140,8 @@ class _ProfileDashboardScreenState extends State<ProfileDashboardScreen> {
           title,
           style: TextStyle(fontWeight: FontWeight.w600, color: textColor),
         ),
-        subtitle: Text(
-          subtitle, 
-          style: TextStyle(fontSize: 12, color: Colors.grey.shade600)
-        ),
+        subtitle: Text(subtitle,
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
         trailing: const Icon(Icons.chevron_right, color: Colors.grey),
         onTap: onTap,
       ),

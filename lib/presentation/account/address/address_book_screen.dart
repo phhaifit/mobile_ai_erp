@@ -49,7 +49,8 @@ class _AddressBookScreenState extends State<AddressBookScreen> {
                 onSetDefault: () => _addressStore.setDefault(address.id),
                 onEdit: () {
                   // Pass the address object to the form so it knows we are editing
-                  Navigator.pushNamed(context, Routes.addressForm, arguments: address);
+                  Navigator.pushNamed(context, Routes.addressForm,
+                      arguments: address);
                 },
               );
             },

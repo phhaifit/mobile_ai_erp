@@ -10,7 +10,8 @@ class LoyaltyPointCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [Colors.orangeAccent, Colors.deepOrange]),
+        gradient: const LinearGradient(
+            colors: [Colors.orangeAccent, Colors.deepOrange]),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -18,11 +19,13 @@ class LoyaltyPointCard extends StatelessWidget {
         children: [
           const Text(
             'Loyalty Points',
-            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
           ),
           Text(
             '$points pts',
-            style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+                color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
           ),
         ],
       ),

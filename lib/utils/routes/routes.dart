@@ -4,6 +4,9 @@ import 'package:mobile_ai_erp/presentation/reports/reports_analytics.dart';
 import 'package:mobile_ai_erp/presentation/account/profile/profile_dashboard_screen.dart';
 import 'package:mobile_ai_erp/presentation/account/address/address_book_screen.dart';
 import 'package:mobile_ai_erp/presentation/account/address/address_form_screen.dart';
+import 'package:mobile_ai_erp/presentation/account/orders/order_history_screen.dart';
+import 'package:mobile_ai_erp/presentation/account/orders/order_detail_screen.dart';
+import 'package:mobile_ai_erp/presentation/account/orders/return_request_screen.dart';
 import 'package:flutter/material.dart';
 
 
@@ -31,7 +34,9 @@ class Routes {
     profileDashboard: (BuildContext context) => ProfileDashboardScreen(),
     addressBook: (BuildContext context) => const AddressBookScreen(),
     addressForm: (BuildContext context) => const AddressFormScreen(),
-    // orderHistory: (BuildContext context) => OrderHistoryScreen(),
+    orderHistory: (BuildContext context) => const OrderHistoryScreen(),
+    orderDetail: (BuildContext context) => const OrderDetailScreen(),
+    returnRequest: (BuildContext context) => const ReturnRequestScreen(),
   };
 
 }

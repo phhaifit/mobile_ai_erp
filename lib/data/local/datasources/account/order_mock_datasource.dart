@@ -11,7 +11,13 @@ class OrderMockDataSource {
       shippingAddress: '227 Nguyen Van Cu, HCM',
       paymentMethod: 'COD',
       items: [
-        OrderItem(id: 'item_1', productId: 'p_101', productName: 'Mechanical Keyboard', quantity: 1, price: 1250000, imageUrl: 'mock_url_here'),
+        OrderItem(
+            id: 'item_1',
+            productId: 'p_101',
+            productName: 'Mechanical Keyboard',
+            quantity: 1,
+            price: 1250000,
+            imageUrl: 'mock_url_here'),
       ],
     ),
     Order(
@@ -23,7 +29,13 @@ class OrderMockDataSource {
       shippingAddress: '227 Nguyen Van Cu, HCM',
       paymentMethod: 'Bank Transfer',
       items: [
-        OrderItem(id: 'item_2', productId: 'p_102', productName: 'Wireless Mouse', quantity: 1, price: 450000, imageUrl: 'mock_url_here'),
+        OrderItem(
+            id: 'item_2',
+            productId: 'p_102',
+            productName: 'Wireless Mouse',
+            quantity: 1,
+            price: 450000,
+            imageUrl: 'mock_url_here'),
       ],
     ),
   ];
