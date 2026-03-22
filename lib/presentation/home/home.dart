@@ -1,8 +1,9 @@
+import 'package:mobile_ai_erp/core/stores/supplier/supplier_store.dart';
 import 'package:mobile_ai_erp/data/sharedpref/constants/preferences.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/presentation/home/store/language/language_store.dart';
 import 'package:mobile_ai_erp/presentation/home/store/theme/theme_store.dart';
-import 'package:mobile_ai_erp/presentation/post/post_list.dart';
+import 'package:mobile_ai_erp/presentation/supplier/supplier_list/supplier_list_screen.dart';
 import 'package:mobile_ai_erp/utils/locale/app_localization.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
 import 'package:flutter/material.dart';
@@ -23,7 +24,28 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _buildAppBar(),
-      body: PostListScreen(),
+      body: ListView(
+        children: [
+          ListTile(
+            leading: Icon(Icons.store),
+            title: Text("Suppliers"),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => SupplierListScreen(
+                    store: getIt<SupplierStore>(),
+                  ),
+                ),
+              );
+            },
+          ),
+          ListTile(
+            title: Text("Posts"),
+            onTap: () {},
+          ),
+        ],
+      ),
     );
   }
 
