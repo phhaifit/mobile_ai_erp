@@ -30,6 +30,13 @@ class _HomeScreenState extends State<HomeScreen> {
           Expanded(child: PostListScreen()),
         ],
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.of(context).pushNamed(Routes.webBuilder);
+        },
+        icon: const Icon(Icons.web),
+        label: const Text('Web Builder'),
+      ),
     );
   }
 
