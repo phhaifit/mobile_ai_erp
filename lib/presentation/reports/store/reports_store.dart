@@ -3,52 +3,60 @@ import 'package:mobile_ai_erp/presentation/reports/data/reports_mock_repository.
 import 'package:mobile_ai_erp/presentation/reports/model/reports_models.dart';
 import 'package:mobx/mobx.dart';
 
-class ReportsStore {
-  ReportsStore(this._repository, this.errorStore);
+part 'reports_store.g.dart';
+
+class ReportsStore = _ReportsStore with _$ReportsStore;
+
+abstract class _ReportsStore with Store {
+  _ReportsStore(this._repository, this.errorStore);
 
   final ReportsMockRepository _repository;
   final ErrorStore errorStore;
 
-  final Observable<bool> _isLoading = Observable(false);
-  final Observable<ReportFilter> _selectedFilter = Observable(
-    const ReportFilter(
-      label: 'Last 30 days',
-      period: ReportPeriod.monthly,
-      dateRangeLabel: 'Feb 20 - Mar 21',
-    ),
+  int _requestId = 0;
+
+  @observable
+  bool isLoading = false;
+
+  @observable
+  ReportFilter selectedFilter = const ReportFilter(
+    label: 'Last 30 days',
+    period: ReportPeriod.monthly,
+    dateRangeLabel: 'Feb 20 - Mar 21',
   );
-  final Observable<ReportsDashboardData?> _dashboard = Observable(null);
 
-  bool get isLoading => _isLoading.value;
-  ReportFilter get selectedFilter => _selectedFilter.value;
-  ReportsDashboardData? get dashboard => _dashboard.value;
+  @observable
+  ReportsDashboardData? dashboard;
 
+  @action
   Future<void> loadDashboard() async {
-    final action = Action(() => _isLoading.value = true);
-    action();
+    final requestId = ++_requestId;
+    isLoading = true;
 
     try {
       final data = await _repository.loadDashboard(selectedFilter);
-      runInAction(() {
-        _dashboard.value = data;
-        errorStore.setErrorMessage('');
-      });
+      if (requestId != _requestId) {
+        return;
+      }
+
+      dashboard = data;
+      errorStore.setErrorMessage('');
     } catch (_) {
-      runInAction(() {
-        errorStore.setErrorMessage('Unable to load reports dashboard');
-      });
+      if (requestId != _requestId) {
+        return;
+      }
+
+      errorStore.setErrorMessage('Unable to load reports dashboard');
     } finally {
-      runInAction(() {
-        _isLoading.value = false;
-      });
+      if (requestId == _requestId) {
+        isLoading = false;
+      }
     }
   }
 
+  @action
   Future<void> changePeriod(ReportPeriod period) async {
-    final nextFilter = _filterFor(period);
-    runInAction(() {
-      _selectedFilter.value = nextFilter;
-    });
+    selectedFilter = _filterFor(period);
     await loadDashboard();
   }
 
@@ -56,6 +64,7 @@ class ReportsStore {
     await loadDashboard();
   }
 
+  @action
   Future<void> exportJob(int index) async {
     final currentDashboard = dashboard;
     if (currentDashboard == null ||
@@ -69,9 +78,7 @@ class ReportsStore {
       updatedAt: 'Generated just now',
     );
 
-    runInAction(() {
-      _dashboard.value = currentDashboard.copyWith(exportJobs: jobs);
-    });
+    dashboard = currentDashboard.copyWith(exportJobs: jobs);
   }
 
   ReportFilter _filterFor(ReportPeriod period) {
