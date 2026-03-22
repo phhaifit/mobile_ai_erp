@@ -3,7 +3,6 @@ import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/presentation/home/store/language/language_store.dart';
 import 'package:mobile_ai_erp/presentation/home/store/theme/theme_store.dart';
 import 'package:mobile_ai_erp/presentation/post/post_list.dart';
-import 'package:mobile_ai_erp/presentation/reports/reports_analytics.dart';
 import 'package:mobile_ai_erp/utils/locale/app_localization.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
 import 'package:flutter/material.dart';
@@ -11,8 +10,6 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
-
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
@@ -26,78 +23,25 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _buildAppBar(),
-      body: _buildBody(),
-    );
-  }
-
-  Widget _buildBody() {
-    return Column(
-      children: [
-        _buildReportsEntry(),
-        Expanded(child: PostListScreen()),
-      ],
+      body: Column(
+        children: [
+          _buildReportsEntry(),
+          Expanded(child: PostListScreen()),
+        ],
+      ),
     );
   }
 
   Widget _buildReportsEntry() {
-    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          gradient: LinearGradient(
-            colors: [
-              colorScheme.primary.withValues(alpha: 0.14),
-              colorScheme.secondary.withValues(alpha: 0.35),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          border: Border.all(
-            color: colorScheme.primary.withValues(alpha: 0.15),
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Reports & Analytics',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Track sales, inventory, product performance, and P&L with offline AI insights.',
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                FilledButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).pushNamed(Routes.reports);
-                  },
-                  icon: const Icon(Icons.analytics_outlined),
-                  label: const Text('Open Reports'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => ReportsAnalyticsScreen(),
-                      ),
-                    );
-                  },
-                  child: const Text('Preview dashboard'),
-                ),
-              ],
-            ),
-          ],
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      child: Card(
+        child: ListTile(
+          leading: Icon(Icons.insights_outlined),
+          title: Text('Reports & Analytics'),
+          subtitle: Text('Sales, inventory, product, and P&L (offline mock).'),
+          trailing: Icon(Icons.chevron_right),
+          onTap: () => Navigator.of(context).pushNamed(Routes.reports),
         ),
       ),
     );
@@ -136,13 +80,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildLogoutButton() {
     return IconButton(
-      onPressed: () async {
-        final preference = await SharedPreferences.getInstance();
-        await preference.setBool(Preferences.is_logged_in, false);
-        if (!mounted) {
-          return;
-        }
-        Navigator.of(context).pushReplacementNamed(Routes.login);
+      onPressed: () {
+        SharedPreferences.getInstance().then((preference) {
+          preference.setBool(Preferences.is_logged_in, false);
+          Navigator.of(context).pushReplacementNamed(Routes.login);
+        });
       },
       icon: Icon(
         Icons.power_settings_new,

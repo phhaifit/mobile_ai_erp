@@ -8,6 +8,8 @@ part 'theme_store.g.dart';
 class ThemeStore = _ThemeStore with _$ThemeStore;
 
 abstract class _ThemeStore with Store {
+  final String TAG = "_ThemeStore";
+
   // repository instance
   final SettingRepository _repository;
 
@@ -42,5 +44,6 @@ abstract class _ThemeStore with Store {
       MediaQuery.platformBrightnessOf(context) == Brightness.dark;
 
   // dispose:-------------------------------------------------------------------
+  @override
   dispose() {}
 }

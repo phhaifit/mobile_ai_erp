@@ -787,9 +787,9 @@ class _ProductPerformanceSection extends StatelessWidget {
             labels: topProducts.map((e) => e.name).toList(),
             values: topValues,
             colors: const [
-              Color(0xFF1666D3),
-              Color(0xFF4C8DF6),
-              Color(0xFF7DAAF8),
+              Color(0xFFd21e1d),
+              Color(0xFFf06a6a),
+              Color(0xFFffb3b3),
             ],
           ),
         ),
@@ -1659,9 +1659,9 @@ IconData _statusIcon(ExportJobStatus status) {
 Color _statusColor(ExportJobStatus status) {
   switch (status) {
     case ExportJobStatus.ready:
-      return const Color(0xFF1666D3);
+      return const Color(0xFFd21e1d);
     case ExportJobStatus.processing:
-      return const Color(0xFF5F8DFF);
+      return const Color(0xFF4D1F7C);
     case ExportJobStatus.completed:
       return const Color(0xFF1E8E5A);
   }
@@ -1697,8 +1697,8 @@ double _parseSignedCurrency(String value) {
 }
 
 const List<Color> _chartPalette = [
-  Color(0xFF1666D3),
-  Color(0xFF4C8DF6),
-  Color(0xFF7DAAF8),
-  Color(0xFF9BD4FF),
+  Color(0xFFd21e1d),
+  Color(0xFFf06a6a),
+  Color(0xFFffb3b3),
+  Color(0xFFffe0e0),
 ];
