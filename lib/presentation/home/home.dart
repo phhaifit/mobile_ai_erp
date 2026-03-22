@@ -4,8 +4,11 @@ import 'package:mobile_ai_erp/presentation/home/store/language/language_store.da
 import 'package:mobile_ai_erp/presentation/home/store/theme/theme_store.dart';
 import 'package:mobile_ai_erp/presentation/post/post_list.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_navigator.dart';
+import 'package:mobile_ai_erp/presentation/cart/store/cart_store.dart';
+import 'package:mobile_ai_erp/presentation/cart/widgets/mini_cart_drawer.dart';
 import 'package:mobile_ai_erp/utils/locale/app_localization.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
+import 'package:mobile_ai_erp/utils/routes/cart_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,6 +22,14 @@ class _HomeScreenState extends State<HomeScreen> {
   //stores:---------------------------------------------------------------------
   final ThemeStore _themeStore = getIt<ThemeStore>();
   final LanguageStore _languageStore = getIt<LanguageStore>();
+  late final CartStore _cartStore;
+
+  @override
+  void initState() {
+    super.initState();
+    _cartStore = getIt<CartStore>();
+    _cartStore.loadCart();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,11 +49,26 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<Widget> _buildActions(BuildContext context) {
     return <Widget>[
+      _buildCartButton(),
       _buildProductMetadataButton(),
       _buildLanguageButton(),
       _buildThemeButton(),
       _buildLogoutButton(),
     ];
+  }
+
+  Widget _buildCartButton() {
+    return Observer(
+      builder: (context) {
+        return MiniCartBadge(
+          itemCount: _cartStore.itemCount,
+          onTap: () {
+            CartRoutes.navigateToCart(context);
+          },
+          hasDiscount: _cartStore.hasCoupon,
+        );
+      },
+    );
   }
 
   Widget _buildProductMetadataButton() {
