@@ -16,12 +16,12 @@ class TrackingDeliveryAlertBanner extends StatelessWidget {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
 
     final Color bgColor = selected.deliveryAlertType == DeliveryAlertType.failed
-      ? colorScheme.errorContainer
-      : colorScheme.primaryContainer.withValues(alpha: 0.45);
+        ? colorScheme.errorContainer
+        : colorScheme.primaryContainer.withValues(alpha: 0.45);
     final Color borderColor =
         selected.deliveryAlertType == DeliveryAlertType.failed
-        ? colorScheme.error
-        : colorScheme.primary.withValues(alpha: 0.45);
+            ? colorScheme.error
+            : colorScheme.primary.withValues(alpha: 0.45);
 
     return Container(
       width: double.infinity,

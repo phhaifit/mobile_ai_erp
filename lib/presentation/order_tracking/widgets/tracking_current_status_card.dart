@@ -48,7 +48,9 @@ class TrackingCurrentStatusCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            isDelivered ? 'Delivered at' : t.translate('tracking_estimated_delivery'),
+            isDelivered
+                ? 'Delivered at'
+                : t.translate('tracking_estimated_delivery'),
             style: TextStyle(
               fontSize: 12,
               color: colorScheme.onSurface.withValues(alpha: 0.65),
@@ -94,7 +96,8 @@ class _SectionCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colorScheme.onSurface.withValues(alpha: 0.12), width: 1),
+        border: Border.all(
+            color: colorScheme.onSurface.withValues(alpha: 0.12), width: 1),
       ),
       child: child,
     );

@@ -61,7 +61,7 @@ class TrackingTimelineHeader extends StatelessWidget {
                         height: 2,
                         color: selected.currentStage.index > i
                             ? primaryColor
-                          : colorScheme.onSurface.withValues(alpha: 0.12),
+                            : colorScheme.onSurface.withValues(alpha: 0.12),
                       ),
                     ),
                 ],
@@ -120,8 +120,8 @@ class _TimelineStage extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: isDone
-              ? primaryColor
-              : colorScheme.onSurface.withValues(alpha: 0.12),
+                ? primaryColor
+                : colorScheme.onSurface.withValues(alpha: 0.12),
             boxShadow: isCurrent
                 ? <BoxShadow>[
                     BoxShadow(

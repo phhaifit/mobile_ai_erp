@@ -86,7 +86,8 @@ class _ScenarioDropdown extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.onSurface.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: colorScheme.onSurface.withValues(alpha: 0.12)),
+        border:
+            Border.all(color: colorScheme.onSurface.withValues(alpha: 0.12)),
       ),
       child: DropdownButton<OrderTrackingScenario>(
         isExpanded: true,
@@ -125,7 +126,8 @@ class _SectionCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colorScheme.onSurface.withValues(alpha: 0.12), width: 1),
+        border: Border.all(
+            color: colorScheme.onSurface.withValues(alpha: 0.12), width: 1),
       ),
       child: child,
     );

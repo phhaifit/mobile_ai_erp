@@ -56,7 +56,8 @@ class TrackingReturnExchangeCard extends StatelessWidget {
                 final int index = entry.key;
                 final ReturnExchangeStage stage = entry.value;
                 final bool isActive = stage == selected.returnExchangeStage;
-                final bool isDone = _isStageDone(stage, selected.returnExchangeStage);
+                final bool isDone =
+                    _isStageDone(stage, selected.returnExchangeStage);
                 final bool isLast = index == flowStages.length - 1;
 
                 return _ReturnStageStep(
@@ -139,9 +140,8 @@ class _ReturnStageStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
-    final Color markerColor = isDone
-        ? primaryColor
-        : colorScheme.onSurface.withValues(alpha: 0.28);
+    final Color markerColor =
+        isDone ? primaryColor : colorScheme.onSurface.withValues(alpha: 0.28);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -185,7 +185,8 @@ class _ReturnStageStep extends StatelessWidget {
                 fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
                 color: isActive
                     ? primaryColor
-                    : colorScheme.onSurface.withValues(alpha: isDone ? 0.9 : 0.6),
+                    : colorScheme.onSurface
+                        .withValues(alpha: isDone ? 0.9 : 0.6),
               ),
             ),
           ),
@@ -209,7 +210,8 @@ class _SectionCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colorScheme.onSurface.withValues(alpha: 0.12), width: 1),
+        border: Border.all(
+            color: colorScheme.onSurface.withValues(alpha: 0.12), width: 1),
       ),
       child: child,
     );
