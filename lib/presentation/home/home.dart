@@ -24,7 +24,27 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _buildAppBar(),
-      body: PostListScreen(),
+      body: Column(
+        children: [
+          _buildReportsEntry(),
+          Expanded(child: PostListScreen()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReportsEntry() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      child: Card(
+        child: ListTile(
+          leading: Icon(Icons.insights_outlined),
+          title: Text('Reports & Analytics'),
+          subtitle: Text('Sales, inventory, product, and P&L (offline mock).'),
+          trailing: Icon(Icons.chevron_right),
+          onTap: () => Navigator.of(context).pushNamed(Routes.reports),
+        ),
+      ),
     );
   }
 
