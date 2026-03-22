@@ -251,3 +251,4 @@ The goal is to give SMBs an accessible, intelligent operations platform that rep
 
 *(Add brainstorming notes below)*
 
+// flutter run -d chrome

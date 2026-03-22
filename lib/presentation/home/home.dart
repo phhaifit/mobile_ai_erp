@@ -33,6 +33,13 @@ class _HomeScreenState extends State<HomeScreen> {
           Expanded(child: PostListScreen()),
         ],
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.of(context).pushNamed(Routes.webBuilder);
+        },
+        icon: const Icon(Icons.web),
+        label: const Text('Web Builder'),
+      ),
     );
   }
 
@@ -85,6 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Widget> _buildActions(BuildContext context) {
     return <Widget>[
       _buildProductMetadataButton(),
+      _buildOrderTrackingButton(),
       _buildLanguageButton(),
       _buildThemeButton(),
       _buildLogoutButton(),
@@ -98,6 +106,18 @@ class _HomeScreenState extends State<HomeScreen> {
         ProductMetadataNavigator.openProductMetadataHome(context);
       },
       icon: const Icon(Icons.dashboard_outlined),
+    );
+  }
+
+  Widget _buildOrderTrackingButton() {
+    return IconButton(
+      tooltip: 'Track Order',
+      onPressed: () {
+        Navigator.of(context).pushNamed(Routes.orderTracking);
+      },
+      icon: Icon(
+        Icons.local_shipping_outlined,
+      ),
     );
   }
 
