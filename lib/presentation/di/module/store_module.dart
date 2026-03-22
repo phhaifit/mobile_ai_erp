@@ -3,11 +3,17 @@ import 'dart:async';
 import 'package:mobile_ai_erp/core/stores/error/error_store.dart';
 import 'package:mobile_ai_erp/core/stores/form/form_store.dart';
 import 'package:mobile_ai_erp/domain/repository/customer/customer_repository.dart';
-import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadata_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/setting/setting_repository.dart';
 import 'package:mobile_ai_erp/domain/usecase/order_tracking/find_order_tracking_scenario_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/order_tracking/get_order_tracking_scenarios_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/post/get_post_usecase.dart';
+import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadata_repository.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/add_package_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_fulfillment_order_detail_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_fulfillment_orders_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/update_fulfillment_status_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/update_package_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/update_picked_quantity_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/is_logged_in_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/login_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/save_login_in_status_usecase.dart';
@@ -32,6 +38,7 @@ import 'package:mobile_ai_erp/presentation/reports/store/reports_store.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/store/cms_page_store.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/store/store_settings_store.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/store/web_theme_store.dart';
+import 'package:mobile_ai_erp/presentation/order_fulfillment/store/fulfillment_store.dart';
 
 import '../../../di/service_locator.dart';
 
@@ -92,6 +99,13 @@ class StoreModule {
       ),
     );
 
+    getIt.registerSingleton<PostStore>(
+      PostStore(
+        getIt<GetPostUseCase>(),
+        getIt<ErrorStore>(),
+      ),
+    );
+
     getIt.registerSingleton<ThemeStore>(
       ThemeStore(
         getIt<SettingRepository>(),
@@ -130,6 +144,18 @@ class StoreModule {
       StoreSettingsStore(
         getIt<GetStoreSettingsUseCase>(),
         getIt<SaveStoreSettingsUseCase>(),
+        getIt<ErrorStore>(),
+      ),
+    );
+
+    getIt.registerSingleton<FulfillmentStore>(
+      FulfillmentStore(
+        getIt<GetFulfillmentOrdersUseCase>(),
+        getIt<GetFulfillmentOrderDetailUseCase>(),
+        getIt<UpdateFulfillmentStatusUseCase>(),
+        getIt<UpdatePickedQuantityUseCase>(),
+        getIt<AddPackageUseCase>(),
+        getIt<UpdatePackageUseCase>(),
         getIt<ErrorStore>(),
       ),
     );
