@@ -1,5 +1,5 @@
-import '../../domain/supplier/supplier.dart';
-import '../../domain/supplier/supplier_repository.dart';
+import '../../../domain/entity/supplier/supplier.dart';
+import '../../../domain/repository/supplier/supplier_repository.dart';
 
 class SupplierMockRepository implements SupplierRepository {
   final List<Supplier> _suppliers = _seedSuppliers();
