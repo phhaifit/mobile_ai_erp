@@ -61,13 +61,12 @@ class RepositoryModule {
         ProductMetadataRepositoryImpl(
       getIt<ProductMetadataDataSource>(),
     ));
-<<<<<<< HEAD
+    
     getIt.registerLazySingleton<AddressRepository>(
         () => AddressRepositoryImpl(getIt<AddressMockDataSource>()));
         
     getIt.registerLazySingleton<OrderRepository>(
         () => OrderRepositoryImpl(getIt<OrderMockDataSource>()));
-=======
 
     // web_builder:--------------------------------------------------------------
     getIt.registerLazySingleton<CmsPageRepository>(
@@ -82,6 +81,5 @@ class RepositoryModule {
     getIt.registerSingleton<FulfillmentRepository>(
       FulfillmentRepositoryImpl(),
     );
->>>>>>> main
   }
 }
