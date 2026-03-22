@@ -66,6 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Widget> _buildActions(BuildContext context) {
     return <Widget>[
       _buildProductMetadataButton(),
+      _buildOrderTrackingButton(),
       _buildLanguageButton(),
       _buildThemeButton(),
       _buildLogoutButton(),
@@ -79,6 +80,18 @@ class _HomeScreenState extends State<HomeScreen> {
         ProductMetadataNavigator.openProductMetadataHome(context);
       },
       icon: const Icon(Icons.dashboard_outlined),
+    );
+  }
+
+  Widget _buildOrderTrackingButton() {
+    return IconButton(
+      tooltip: 'Track Order',
+      onPressed: () {
+        Navigator.of(context).pushNamed(Routes.orderTracking);
+      },
+      icon: Icon(
+        Icons.local_shipping_outlined,
+      ),
     );
   }
 
