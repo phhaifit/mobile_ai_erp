@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_ai_erp/domain/entity/order_tracking/order_tracking_scenario.dart';
-import 'package:mobile_ai_erp/utils/locale/app_localization.dart';
 
 class TrackingTimelineHeader extends StatelessWidget {
   const TrackingTimelineHeader({
@@ -8,16 +7,16 @@ class TrackingTimelineHeader extends StatelessWidget {
     required this.selected,
     required this.primaryColor,
     required this.shipmentStageLabel,
+    required this.orderIdLabel,
   });
 
   final OrderTrackingScenario selected;
   final Color primaryColor;
-  final String Function(ShipmentStage stage, AppLocalizations t)
-      shipmentStageLabel;
+  final String Function(ShipmentStage stage) shipmentStageLabel;
+  final String orderIdLabel;
 
   @override
   Widget build(BuildContext context) {
-    final AppLocalizations t = AppLocalizations.of(context);
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     const List<ShipmentStage> stages = <ShipmentStage>[
       ShipmentStage.confirmed,
@@ -51,7 +50,7 @@ class TrackingTimelineHeader extends StatelessWidget {
                       index: i,
                       selected: selected,
                       primaryColor: primaryColor,
-                      label: shipmentStageLabel(stages[i], t),
+                      label: shipmentStageLabel(stages[i]),
                     ),
                   ),
                   if (i < stages.length - 1)
@@ -70,7 +69,7 @@ class TrackingTimelineHeader extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            t.translate('tracking_order_id_label'),
+            orderIdLabel,
             style: TextStyle(
               fontSize: 12,
               color: colorScheme.onSurface.withValues(alpha: 0.65),

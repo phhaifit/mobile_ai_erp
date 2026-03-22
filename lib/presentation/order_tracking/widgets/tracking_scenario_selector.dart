@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_ai_erp/domain/entity/order_tracking/order_tracking_scenario.dart';
-import 'package:mobile_ai_erp/utils/locale/app_localization.dart';
 
 class TrackingScenarioSelector extends StatelessWidget {
   const TrackingScenarioSelector({
@@ -10,6 +9,7 @@ class TrackingScenarioSelector extends StatelessWidget {
     required this.selected,
     required this.primaryColor,
     required this.onChanged,
+    required this.scenarioLabel,
   });
 
   final bool isCompact;
@@ -17,10 +17,10 @@ class TrackingScenarioSelector extends StatelessWidget {
   final OrderTrackingScenario selected;
   final Color primaryColor;
   final ValueChanged<OrderTrackingScenario> onChanged;
+  final String scenarioLabel;
 
   @override
   Widget build(BuildContext context) {
-    final AppLocalizations t = AppLocalizations.of(context);
     final bool hasSelected = scenarios.any(
       (OrderTrackingScenario item) => item.orderId == selected.orderId,
     );
@@ -32,7 +32,7 @@ class TrackingScenarioSelector extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 _SectionTitle(
-                  title: t.translate('tracking_scenario_label'),
+                  title: scenarioLabel,
                   icon: Icons.tune_rounded,
                   iconColor: primaryColor,
                 ),
@@ -48,7 +48,7 @@ class TrackingScenarioSelector extends StatelessWidget {
               children: <Widget>[
                 Expanded(
                   child: _SectionTitle(
-                    title: t.translate('tracking_scenario_label'),
+                    title: scenarioLabel,
                     icon: Icons.tune_rounded,
                     iconColor: primaryColor,
                   ),
