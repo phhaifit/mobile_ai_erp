@@ -6,6 +6,7 @@ import 'package:mobile_ai_erp/presentation/web_builder/theme_engine/theme_list_s
 import 'package:mobile_ai_erp/presentation/web_builder/theme_engine/theme_detail_screen.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/cms_pages/cms_page_list_screen.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/cms_pages/cms_page_editor_screen.dart';
+import 'package:mobile_ai_erp/presentation/order_tracking/order_tracking.dart';
 import 'package:mobile_ai_erp/presentation/reports/reports_analytics.dart';
 import 'package:flutter/material.dart';
 
@@ -22,6 +23,7 @@ class Routes {
   static const String themeDetail = '/web-builder/themes/detail';
   static const String cmsPageList = '/web-builder/cms-pages';
   static const String cmsPageEditor = '/web-builder/cms-pages/editor';
+  static const String orderTracking = OrderTrackingNavigation.routeName;
   static const String reports = '/reports';
 
   static final routes = <String, WidgetBuilder>{
@@ -33,6 +35,7 @@ class Routes {
     themeDetail: (BuildContext context) => const ThemeDetailScreen(),
     cmsPageList: (BuildContext context) => const CmsPageListScreen(),
     cmsPageEditor: (BuildContext context) => const CmsPageEditorScreen(),
+    orderTracking: OrderTrackingNavigation.buildScreen,
     reports: (BuildContext context) => ReportsAnalyticsScreen(),
   };
 }
