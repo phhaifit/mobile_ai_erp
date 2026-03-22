@@ -1,9 +1,12 @@
+import 'package:mobile_ai_erp/core/stores/supplier/supplier_store.dart';
 import 'package:mobile_ai_erp/data/sharedpref/constants/preferences.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
+import 'package:mobile_ai_erp/presentation/customer_management/navigation/customer_navigator.dart';
 import 'package:mobile_ai_erp/presentation/home/store/language/language_store.dart';
 import 'package:mobile_ai_erp/presentation/home/store/theme/theme_store.dart';
 import 'package:mobile_ai_erp/presentation/post/post_list.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_navigator.dart';
+import 'package:mobile_ai_erp/presentation/supplier/supplier_list/supplier_list_screen.dart';
 import 'package:mobile_ai_erp/utils/locale/app_localization.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
 import 'package:flutter/material.dart';
@@ -28,6 +31,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           _buildStorefrontPDPEntry(),
           _buildReportsEntry(),
+          _buildSuppliersEntry(),
           Expanded(child: PostListScreen()),
         ],
       ),
@@ -72,6 +76,29 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildSuppliersEntry() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      child: Card(
+        child: ListTile(
+          leading: Icon(Icons.store),
+          title: Text("Suppliers"),
+          trailing: Icon(Icons.chevron_right),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => SupplierListScreen(
+                  store: getIt<SupplierStore>(),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
   // app bar methods:-----------------------------------------------------------
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
@@ -82,6 +109,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<Widget> _buildActions(BuildContext context) {
     return <Widget>[
+      IconButton(
+        onPressed: () => CustomerNavigator.openHome(context),
+        icon: const Icon(Icons.people_outline),
+        tooltip: 'Customer Management',
+      ),
       _buildProductMetadataButton(),
       _buildOrderTrackingButton(),
       _buildFulfillmentButton(),
