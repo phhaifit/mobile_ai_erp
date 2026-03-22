@@ -9,14 +9,14 @@ class FulfillmentOrder {
   final String customerPhone;
   final String shippingAddress;
   final String channel;
-  FulfillmentStatus status;
+  final FulfillmentStatus status;
   final DateTime createdAt;
-  DateTime? updatedAt;
+  final DateTime? updatedAt;
   final List<FulfillmentItem> items;
   final List<PackageInfo> packages;
   final List<TrackingEvent> trackingEvents;
   final double totalAmount;
-  String? notes;
+  final String? notes;
 
   FulfillmentOrder({
     required this.id,
@@ -39,4 +39,36 @@ class FulfillmentOrder {
 
   bool get isFullyPicked => items.every((item) => item.isFullyPicked);
   bool get isFullyPacked => items.every((item) => item.isFullyPacked);
+
+  FulfillmentOrder copyWith({
+    String? id,
+    String? customerName,
+    String? customerPhone,
+    String? shippingAddress,
+    String? channel,
+    FulfillmentStatus? status,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    List<FulfillmentItem>? items,
+    List<PackageInfo>? packages,
+    List<TrackingEvent>? trackingEvents,
+    double? totalAmount,
+    String? notes,
+  }) {
+    return FulfillmentOrder(
+      id: id ?? this.id,
+      customerName: customerName ?? this.customerName,
+      customerPhone: customerPhone ?? this.customerPhone,
+      shippingAddress: shippingAddress ?? this.shippingAddress,
+      channel: channel ?? this.channel,
+      status: status ?? this.status,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      items: items ?? this.items,
+      packages: packages ?? this.packages,
+      trackingEvents: trackingEvents ?? this.trackingEvents,
+      totalAmount: totalAmount ?? this.totalAmount,
+      notes: notes ?? this.notes,
+    );
+  }
 }

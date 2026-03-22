@@ -6,12 +6,12 @@ import 'package:mobile_ai_erp/domain/entity/fulfillment/tracking_event.dart';
 import 'package:mobile_ai_erp/presentation/order_fulfillment/store/fulfillment_store.dart';
 import 'package:intl/intl.dart';
 
-class OrderTrackingScreen extends StatefulWidget {
+class FulfillmentTrackingScreen extends StatefulWidget {
   @override
-  State<OrderTrackingScreen> createState() => _OrderTrackingScreenState();
+  State<FulfillmentTrackingScreen> createState() => _FulfillmentTrackingScreenState();
 }
 
-class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
+class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
   final FulfillmentStore _store = getIt<FulfillmentStore>();
 
   @override

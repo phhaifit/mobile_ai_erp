@@ -50,7 +50,7 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
     return Observer(
       builder: (_) {
         final order = _store.selectedOrder;
-        if (_store.loading && order == null) {
+        if (_store.isLoadingDetail && order == null) {
           return Scaffold(
             appBar: AppBar(title: const Text('Order Detail')),
             body: const Center(child: CircularProgressIndicator()),

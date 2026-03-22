@@ -92,6 +92,7 @@ class UseCaseModule {
     );
     getIt.registerSingleton<SaveStoreSettingsUseCase>(
       SaveStoreSettingsUseCase(getIt<StoreSettingsRepository>()),
+    );
     // fulfillment:-------------------------------------------------------------
     getIt.registerSingleton<GetFulfillmentOrdersUseCase>(
       GetFulfillmentOrdersUseCase(getIt<FulfillmentRepository>()),

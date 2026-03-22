@@ -1,9 +1,9 @@
 class PackageItem {
   final String itemId;
   final String productName;
-  int quantity;
+  final int quantity;
 
-  PackageItem({
+  const PackageItem({
     required this.itemId,
     required this.productName,
     required this.quantity,

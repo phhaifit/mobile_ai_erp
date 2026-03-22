@@ -43,7 +43,10 @@ abstract class _FulfillmentStore with Store {
   FulfillmentStatus? statusFilter;
 
   @observable
-  bool loading = false;
+  bool isLoadingOrders = false;
+
+  @observable
+  bool isLoadingDetail = false;
 
   @observable
   bool success = false;
@@ -56,7 +59,7 @@ abstract class _FulfillmentStore with Store {
 
   @action
   Future<void> getOrders() async {
-    loading = true;
+    isLoadingOrders = true;
     try {
       final orders = await _getOrdersUseCase.call(params: null);
       orderList = ObservableList.of(orders);
@@ -64,22 +67,20 @@ abstract class _FulfillmentStore with Store {
     } catch (e) {
       errorStore.errorMessage = e.toString();
     } finally {
-      loading = false;
+      isLoadingOrders = false;
     }
   }
 
   @action
   Future<void> getOrderDetail(String orderId) async {
-    loading = true;
+    isLoadingDetail = true;
     try {
-      final order = await _getOrderDetailUseCase.call(params: orderId);
-      selectedOrder = null;
-      selectedOrder = order;
+      selectedOrder = await _getOrderDetailUseCase.call(params: orderId);
       success = true;
     } catch (e) {
       errorStore.errorMessage = e.toString();
     } finally {
-      loading = false;
+      isLoadingDetail = false;
     }
   }
 

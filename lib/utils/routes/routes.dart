@@ -48,7 +48,7 @@ class Routes {
     reports: (BuildContext context) => ReportsAnalyticsScreen(),
     fulfillment: (BuildContext context) => FulfillmentListScreen(),
     fulfillmentDetail: (BuildContext context) => FulfillmentDetailScreen(),
-    fulfillmentTracking: (BuildContext context) => OrderTrackingScreen(),
+    fulfillmentTracking: (BuildContext context) => FulfillmentTrackingScreen(),
     fulfillmentPackaging: (BuildContext context) => PackagingScreen(),
     fulfillmentPrintLabel: (BuildContext context) => PrintLabelScreen(),
   };
