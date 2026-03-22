@@ -50,7 +50,7 @@ class _ReturnRequestScreenState extends State<ReturnRequestScreen> {
                       fontWeight: FontWeight.bold, fontSize: 16)),
               const SizedBox(height: 24),
               DropdownButtonFormField<String>(
-                value: _selectedReason,
+                initialValue: _selectedReason,
                 decoration: const InputDecoration(
                     labelText: 'Reason for Return',
                     border: OutlineInputBorder()),
