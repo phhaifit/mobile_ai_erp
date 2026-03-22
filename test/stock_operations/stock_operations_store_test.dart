@@ -93,4 +93,30 @@ void main() {
     expect(types.contains(StockOperationType.transfer), isTrue);
     expect(types.contains(StockOperationType.damaged), isTrue);
   });
+
+  test('history filter returns only selected operation type', () async {
+    store.setTransferSourceWarehouse('wh-01');
+    store.setTransferDestinationWarehouse('wh-02');
+    store.setTransferProduct('p-01');
+    store.setTransferQuantity('2');
+    await store.submitTransfer();
+
+    store.setDisposalWarehouse('wh-01');
+    store.setDisposalProduct('p-02');
+    store.setDisposalType(StockOperationType.damaged);
+    store.setDisposalQuantity('1');
+    await store.submitDamagedOrExpired();
+
+    store.setHistoryFilter(StockOperationHistoryFilter.transfer);
+    expect(
+      store.filteredOperations.every((e) => e.type == StockOperationType.transfer),
+      isTrue,
+    );
+
+    store.setHistoryFilter(StockOperationHistoryFilter.damaged);
+    expect(
+      store.filteredOperations.every((e) => e.type == StockOperationType.damaged),
+      isTrue,
+    );
+  });
 }

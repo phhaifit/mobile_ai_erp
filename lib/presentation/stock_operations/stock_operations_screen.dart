@@ -108,38 +108,18 @@ class _StockOperationsScreenState extends State<StockOperationsScreen> {
               children: [
                 _DashboardSummary(store: _store),
                 const SizedBox(height: 16),
-                _MobileActionTile(
-                  title: 'Internal Transfer',
-                  subtitle: 'Move stock between warehouses.',
-                  icon: Icons.swap_horiz,
-                  onTap: () => _openMobileDetail(
-                    context,
-                    title: 'Internal Stock Transfer',
-                    child: _TransferPanel(store: _store, isDesktop: false),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _MobileActionTile(
-                  title: 'Damaged / Expired',
-                  subtitle: 'Record damaged and expired goods.',
-                  icon: Icons.report_problem,
-                  onTap: () => _openMobileDetail(
-                    context,
-                    title: 'Damaged / Expired Goods',
-                    child: _DamagedExpiredPanel(store: _store),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _MobileActionTile(
-                  title: 'Operation History',
-                  subtitle: 'Read-only local operation logs.',
-                  icon: Icons.history,
-                  onTap: () => _openMobileDetail(
-                    context,
-                    title: 'Operation History',
-                    child: _OperationHistoryPanel(
-                      store: _store,
-                      isDesktop: false,
+                ..._store.dashboardActions.map(
+                  (action) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _MobileActionTile(
+                      title: _mobileTitleForAction(action),
+                      subtitle: _mobileSubtitleForAction(action),
+                      icon: action.icon,
+                      onTap: () => _openMobileDetail(
+                        context,
+                        title: _mobileTitleForAction(action),
+                        child: _mobileChildForAction(action),
+                      ),
                     ),
                   ),
                 ),
@@ -236,26 +216,16 @@ class _StockDashboardPanel extends StatelessWidget {
             crossAxisCount: 3,
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
-            children: [
-              _DashboardActionCard(
-                title: 'Transfer',
-                subtitle: 'Move stock between warehouses',
-                icon: Icons.swap_horiz,
-                onTap: () => onNavigate(StockOperationsView.transfer),
-              ),
-              _DashboardActionCard(
-                title: 'Damaged / Expired',
-                subtitle: 'Record stock loss operation',
-                icon: Icons.report_problem,
-                onTap: () => onNavigate(StockOperationsView.damagedGoods),
-              ),
-              _DashboardActionCard(
-                title: 'History',
-                subtitle: 'Review all local operations',
-                icon: Icons.history,
-                onTap: () => onNavigate(StockOperationsView.history),
-              ),
-            ],
+            children: store.dashboardActions
+                .map(
+                  (action) => _DashboardActionCard(
+                    title: action.title,
+                    subtitle: action.subtitle,
+                    icon: action.icon,
+                    onTap: () => onNavigate(action.view),
+                  ),
+                )
+                .toList(growable: false),
           ),
         ),
       ],
@@ -303,31 +273,27 @@ class _TransferPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Observer(
-      builder: (_) {
-        if (isDesktop) {
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                flex: 2,
-                child: _TransferForm(store: store, isDesktop: true),
-              ),
-              const SizedBox(width: 16),
-              Expanded(flex: 1, child: _TransferPreview(store: store)),
-            ],
-          );
-        }
+    if (isDesktop) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 2,
+            child: _TransferForm(store: store, isDesktop: true),
+          ),
+          const SizedBox(width: 16),
+          Expanded(flex: 1, child: _TransferPreview(store: store)),
+        ],
+      );
+    }
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _TransferForm(store: store, isDesktop: false),
-            const SizedBox(height: 16),
-            _TransferPreview(store: store),
-          ],
-        );
-      },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _TransferForm(store: store, isDesktop: false),
+        const SizedBox(height: 16),
+        _TransferPreview(store: store),
+      ],
     );
   }
 }
@@ -340,84 +306,103 @@ class _TransferForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              isDesktop
-                  ? 'Internal Stock Transfer'
-                  : 'Step 1: Transfer Details',
-              style: Theme.of(context).textTheme.titleLarge,
+    return Observer(
+      builder: (_) {
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isDesktop
+                      ? 'Internal Stock Transfer'
+                      : 'Step 1: Transfer Details',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 12),
+                KeyedSubtree(
+                  key: const Key('transfer_source_dropdown'),
+                  child: _WarehouseDropdown(
+                    key: Key(
+                      'transfer_source_${store.transferSourceWarehouseId ?? 'none'}',
+                    ),
+                    label: 'Source Warehouse',
+                    value: store.transferSourceWarehouseId,
+                    warehouses: store.warehouses.toList(growable: false),
+                    onChanged: store.setTransferSourceWarehouse,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                KeyedSubtree(
+                  key: const Key('transfer_destination_dropdown'),
+                  child: _WarehouseDropdown(
+                    key: Key(
+                      'transfer_destination_${store.transferSourceWarehouseId ?? 'none'}_${store.transferDestinationWarehouseId ?? 'none'}',
+                    ),
+                    label: 'Destination Warehouse',
+                    value: store.transferDestinationWarehouseId,
+                    warehouses: store.warehouses
+                        .where(
+                          (warehouse) =>
+                              warehouse.id != store.transferSourceWarehouseId,
+                        )
+                        .toList(growable: false),
+                    onChanged: store.setTransferDestinationWarehouse,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _ProductDropdown(
+                  key: Key(
+                    'transfer_product_${store.transferSourceWarehouseId ?? 'none'}_${store.transferProductId ?? 'none'}',
+                  ),
+                  label: isDesktop ? 'Product' : 'Step 2: Product',
+                  value: store.transferProductId,
+                  products: store.availableTransferProducts,
+                  onChanged: store.setTransferProduct,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  key: const Key('transfer_quantity_field'),
+                  keyboardType: TextInputType.number,
+                  initialValue: store.transferQuantityInput,
+                  onChanged: store.setTransferQuantity,
+                  decoration: const InputDecoration(
+                    labelText: 'Step 3: Quantity',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                if (store.errorMessage.isNotEmpty)
+                  Text(
+                    store.errorMessage,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  onPressed: store.isSubmitting || !store.canSubmitTransfer
+                      ? null
+                      : () async {
+                          final success = await store.submitTransfer();
+                          if (!context.mounted) {
+                            return;
+                          }
+                          if (success) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Transfer submitted locally.'),
+                              ),
+                            );
+                          }
+                        },
+                  icon: const Icon(Icons.check_circle_outline),
+                  label: const Text('Submit Transfer'),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-            _WarehouseDropdown(
-              label: 'Source Warehouse',
-              value: store.transferSourceWarehouseId,
-              warehouses: store.warehouses.toList(growable: false),
-              onChanged: store.setTransferSourceWarehouse,
-            ),
-            const SizedBox(height: 12),
-            _WarehouseDropdown(
-              label: 'Destination Warehouse',
-              value: store.transferDestinationWarehouseId,
-              warehouses: store.warehouses
-                  .where(
-                    (warehouse) =>
-                        warehouse.id != store.transferSourceWarehouseId,
-                  )
-                  .toList(growable: false),
-              onChanged: store.setTransferDestinationWarehouse,
-            ),
-            const SizedBox(height: 12),
-            _ProductDropdown(
-              label: isDesktop ? 'Product' : 'Step 2: Product',
-              value: store.transferProductId,
-              products: store.availableTransferProducts,
-              onChanged: store.setTransferProduct,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              key: const Key('transfer_quantity_field'),
-              keyboardType: TextInputType.number,
-              initialValue: store.transferQuantityInput,
-              onChanged: store.setTransferQuantity,
-              decoration: const InputDecoration(
-                labelText: 'Step 3: Quantity',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            if (store.errorMessage.isNotEmpty)
-              Text(
-                store.errorMessage,
-                style: const TextStyle(color: Colors.red),
-              ),
-            const SizedBox(height: 12),
-            FilledButton.icon(
-              onPressed: store.isSubmitting || !store.canSubmitTransfer
-                  ? null
-                  : () async {
-                      final success = await store.submitTransfer();
-                      if (!context.mounted) {
-                        return;
-                      }
-                      if (success) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Transfer submitted locally.'),
-                          ),
-                        );
-                      }
-                    },
-              icon: const Icon(Icons.check_circle_outline),
-              label: const Text('Submit Transfer'),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
@@ -429,33 +414,37 @@ class _TransferPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final selected = store.selectedTransferStock;
+    return Observer(
+      builder: (_) {
+        final selected = store.selectedTransferStock;
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Stock Preview',
-              style: Theme.of(context).textTheme.titleLarge,
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Stock Preview',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 8),
+                if (selected == null)
+                  const Text(
+                    'Select source warehouse and product to view available stock.',
+                  )
+                else ...[
+                  Text('Product: ${selected.productName}'),
+                  Text(
+                    'Warehouse: ${store.getWarehouseName(selected.warehouseId)}',
+                  ),
+                  Text('Available: ${selected.availableQuantity} ${selected.unit}'),
+                ],
+              ],
             ),
-            const SizedBox(height: 8),
-            if (selected == null)
-              const Text(
-                'Select source warehouse and product to view available stock.',
-              )
-            else ...[
-              Text('Product: ${selected.productName}'),
-              Text(
-                'Warehouse: ${store.getWarehouseName(selected.warehouseId)}',
-              ),
-              Text('Available: ${selected.availableQuantity} ${selected.unit}'),
-            ],
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
@@ -582,15 +571,48 @@ class _OperationHistoryPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Observer(
       builder: (_) {
-        if (store.filteredOperations.isEmpty) {
-          return const Center(child: Text('No operations yet.'));
-        }
-
-        return isDesktop
-            ? _DesktopHistoryTable(operations: store.filteredOperations)
-            : _MobileHistoryList(operations: store.filteredOperations);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: StockOperationHistoryFilter.values
+                  .map(
+                    (filter) => ChoiceChip(
+                      key: Key('history_filter_$filter'),
+                      label: Text(_filterLabel(filter)),
+                      selected: store.historyFilter == filter,
+                      onSelected: (_) => store.setHistoryFilter(filter),
+                    ),
+                  )
+                  .toList(growable: false),
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: store.filteredOperations.isEmpty
+                  ? const Center(child: Text('No operations yet.'))
+                  : (isDesktop
+                        ? _DesktopHistoryTable(operations: store.filteredOperations)
+                        : _MobileHistoryList(operations: store.filteredOperations)),
+            ),
+          ],
+        );
       },
     );
+  }
+
+  String _filterLabel(StockOperationHistoryFilter filter) {
+    switch (filter) {
+      case StockOperationHistoryFilter.all:
+        return 'All';
+      case StockOperationHistoryFilter.transfer:
+        return 'Transfer';
+      case StockOperationHistoryFilter.damaged:
+        return 'Damaged';
+      case StockOperationHistoryFilter.expired:
+        return 'Expired';
+    }
   }
 }
 
@@ -738,6 +760,7 @@ class _MobileHistoryList extends StatelessWidget {
 
 class _WarehouseDropdown extends StatelessWidget {
   const _WarehouseDropdown({
+    super.key,
     required this.label,
     required this.value,
     required this.warehouses,
@@ -772,6 +795,7 @@ class _WarehouseDropdown extends StatelessWidget {
 
 class _ProductDropdown extends StatelessWidget {
   const _ProductDropdown({
+    super.key,
     required this.label,
     required this.value,
     required this.products,
@@ -930,5 +954,46 @@ String _formatDateTime(DateTime dateTime) {
   final hour = dateTime.hour.toString().padLeft(2, '0');
   final minute = dateTime.minute.toString().padLeft(2, '0');
   return '${dateTime.year}-$month-$day $hour:$minute';
+}
+
+extension on _StockOperationsScreenState {
+  String _mobileTitleForAction(StockDashboardAction action) {
+    switch (action.view) {
+      case StockOperationsView.dashboard:
+        return 'Stock Operations Dashboard';
+      case StockOperationsView.transfer:
+        return 'Internal Stock Transfer';
+      case StockOperationsView.damagedGoods:
+        return 'Damaged / Expired Goods';
+      case StockOperationsView.history:
+        return 'Operation History';
+    }
+  }
+
+  String _mobileSubtitleForAction(StockDashboardAction action) {
+    switch (action.view) {
+      case StockOperationsView.dashboard:
+        return 'Stock operations overview.';
+      case StockOperationsView.transfer:
+        return 'Move stock between warehouses.';
+      case StockOperationsView.damagedGoods:
+        return 'Record damaged and expired goods.';
+      case StockOperationsView.history:
+        return 'Read-only local operation logs.';
+    }
+  }
+
+  Widget _mobileChildForAction(StockDashboardAction action) {
+    switch (action.view) {
+      case StockOperationsView.dashboard:
+        return _StockDashboardPanel(store: _store, onNavigate: _store.setCurrentView);
+      case StockOperationsView.transfer:
+        return _TransferPanel(store: _store, isDesktop: false);
+      case StockOperationsView.damagedGoods:
+        return _DamagedExpiredPanel(store: _store);
+      case StockOperationsView.history:
+        return _OperationHistoryPanel(store: _store, isDesktop: false);
+    }
+  }
 }
 
