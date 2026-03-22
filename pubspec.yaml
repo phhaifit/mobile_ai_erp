@@ -28,9 +28,9 @@ dependencies:
   flutter_mobx: ^2.0.6+5
   # G
   get_it: ^7.2.0
-  google_fonts: ^4.0.3
+  google_fonts: ^8.0.2
   # H
-  http: ^0.13.5
+  http: ^1.0.0
   # I
   intl: ^0.20.2
   # J
@@ -54,11 +54,15 @@ dependencies:
   # U
   # V
   validators: ^3.0.0
+  url_launcher: ^6.3.1
   # W
   # X
   xxtea: ^2.1.0
   # Y
   # Z
+
+dependency_overrides:
+  path_provider_foundation: 2.4.4
 
 dev_dependencies:
   flutter_test:
