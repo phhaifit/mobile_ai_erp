@@ -29,6 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: _buildAppBar(),
       body: Column(
         children: [
+          _buildStorefrontPDPEntry(),
           _buildReportsEntry(),
           _buildSuppliersEntry(),
           Expanded(child: PostListScreen()),
@@ -40,6 +41,22 @@ class _HomeScreenState extends State<HomeScreen> {
         },
         icon: const Icon(Icons.web),
         label: const Text('Web Builder'),
+      ),
+    );
+  }
+
+  Widget _buildStorefrontPDPEntry() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      child: Card(
+        child: ListTile(
+          leading: Icon(Icons.storefront_outlined),
+          title: Text('Product Detail Page'),
+          subtitle:
+              Text('Storefront PDP - View sample product (offline mock).'),
+          trailing: Icon(Icons.chevron_right),
+          onTap: () => Navigator.of(context).pushNamed(Routes.productDetail),
+        ),
       ),
     );
   }
