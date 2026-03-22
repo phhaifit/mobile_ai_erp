@@ -111,7 +111,7 @@ class _LoginScreenState extends State<LoginScreen> {
             _buildUserIdField(),
             _buildPasswordField(),
             _buildForgotPasswordButton(),
-            _buildSignInButton(),
+            _buildSignInButton()
           ],
         ),
       ),
