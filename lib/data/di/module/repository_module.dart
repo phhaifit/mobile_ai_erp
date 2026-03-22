@@ -12,6 +12,12 @@ import 'package:mobile_ai_erp/domain/repository/post/post_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadata_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/setting/setting_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/user_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/account/address_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/account/order_repository.dart';
+import 'package:mobile_ai_erp/data/repository/account/address_repository_impl.dart';
+import 'package:mobile_ai_erp/data/repository/account/order_repository_impl.dart';
+import 'package:mobile_ai_erp/data/local/datasources/account/address_mock_datasource.dart';
+import 'package:mobile_ai_erp/data/local/datasources/account/order_mock_datasource.dart';
 
 import '../../../di/service_locator.dart';
 
@@ -37,5 +43,10 @@ class RepositoryModule {
         ProductMetadataRepositoryImpl(
       getIt<ProductMetadataDataSource>(),
     ));
+    getIt.registerLazySingleton<AddressRepository>(
+        () => AddressRepositoryImpl(getIt<AddressMockDataSource>()));
+        
+    getIt.registerLazySingleton<OrderRepository>(
+        () => OrderRepositoryImpl(getIt<OrderMockDataSource>()));
   }
 }
