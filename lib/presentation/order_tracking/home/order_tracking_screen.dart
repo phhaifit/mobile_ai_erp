@@ -68,7 +68,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         final OrderTrackingScenario? selected =
             _orderTrackingStore.selectedScenario;
         final bool isReturnFlow =
-          selected?.returnExchangeStage != ReturnExchangeStage.none;
+            selected?.returnExchangeStage != ReturnExchangeStage.none;
 
         return Scaffold(
           backgroundColor: colorScheme.surface,

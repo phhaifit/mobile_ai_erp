@@ -19,10 +19,12 @@ class TimelineItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
-    final Color markerColor =
-      isDone ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.35);
-    final Color titleColor =
-      isActive ? colorScheme.onSurface : colorScheme.onSurface.withValues(alpha: 0.8);
+    final Color markerColor = isDone
+        ? colorScheme.primary
+        : colorScheme.onSurface.withValues(alpha: 0.35);
+    final Color titleColor = isActive
+        ? colorScheme.onSurface
+        : colorScheme.onSurface.withValues(alpha: 0.8);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
