@@ -21,6 +21,10 @@ class TrackingScenarioSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppLocalizations t = AppLocalizations.of(context);
+    final bool hasSelected = scenarios.any(
+      (OrderTrackingScenario item) => item.orderId == selected.orderId,
+    );
+    final OrderTrackingScenario? dropdownValue = hasSelected ? selected : null;
 
     return _SectionCard(
       child: isCompact
@@ -35,7 +39,7 @@ class TrackingScenarioSelector extends StatelessWidget {
                 const SizedBox(height: 12),
                 _ScenarioDropdown(
                   scenarios: scenarios,
-                  selected: selected,
+                  selected: dropdownValue,
                   onChanged: onChanged,
                 ),
               ],
@@ -53,7 +57,7 @@ class TrackingScenarioSelector extends StatelessWidget {
                 Expanded(
                   child: _ScenarioDropdown(
                     scenarios: scenarios,
-                    selected: selected,
+                    selected: dropdownValue,
                     onChanged: onChanged,
                   ),
                 ),
@@ -71,17 +75,18 @@ class _ScenarioDropdown extends StatelessWidget {
   });
 
   final List<OrderTrackingScenario> scenarios;
-  final OrderTrackingScenario selected;
+  final OrderTrackingScenario? selected;
   final ValueChanged<OrderTrackingScenario> onChanged;
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
+        color: colorScheme.onSurface.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: colorScheme.onSurface.withValues(alpha: 0.12)),
       ),
       child: DropdownButton<OrderTrackingScenario>(
         isExpanded: true,
@@ -113,13 +118,14 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+        border: Border.all(color: colorScheme.onSurface.withValues(alpha: 0.12), width: 1),
       ),
       child: child,
     );
@@ -139,16 +145,17 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
     return Row(
       children: <Widget>[
         Icon(icon, size: 18, color: iconColor),
         const SizedBox(width: 8),
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF1F2937),
+            color: colorScheme.onSurface,
           ),
         ),
       ],

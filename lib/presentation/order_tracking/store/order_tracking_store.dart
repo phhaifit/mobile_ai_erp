@@ -28,13 +28,27 @@ abstract class _OrderTrackingStore with Store {
 
   @action
   void loadScenarios({DateTime? now}) {
+    final String? previousSelectedOrderId = selectedScenario?.orderId;
+
     scenarios = ObservableList<OrderTrackingScenario>.of(
       _getOrderTrackingScenariosUseCase.call(params: now),
     );
 
-    if (selectedScenario == null && scenarios.isNotEmpty) {
-      selectedScenario = scenarios.first;
+    if (scenarios.isEmpty) {
+      selectedScenario = null;
+      return;
     }
+
+    if (previousSelectedOrderId == null) {
+      selectedScenario = scenarios.first;
+      return;
+    }
+
+    selectedScenario = scenarios.firstWhere(
+      (OrderTrackingScenario item) =>
+          item.orderId.toLowerCase() == previousSelectedOrderId.toLowerCase(),
+      orElse: () => scenarios.first,
+    );
   }
 
   @action
