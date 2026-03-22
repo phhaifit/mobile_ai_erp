@@ -5,9 +5,7 @@ import 'package:mobile_ai_erp/presentation/stock_operations/stock_operations_scr
 import 'package:mobile_ai_erp/presentation/stock_operations/store/stock_operations_store.dart';
 
 void main() {
-  testWidgets('stock operations screen smoke test', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('stock operations screen smoke test', (WidgetTester tester) async {
     final store = StockOperationsStore(MockStockOperationsRepository());
 
     await tester.pumpWidget(

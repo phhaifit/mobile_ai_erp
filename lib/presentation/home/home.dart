@@ -5,6 +5,7 @@ import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/presentation/home/store/language/language_store.dart';
 import 'package:mobile_ai_erp/presentation/home/store/theme/theme_store.dart';
 import 'package:mobile_ai_erp/presentation/post/post_list.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_navigator.dart';
 import 'package:mobile_ai_erp/utils/locale/app_localization.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -20,7 +21,37 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(appBar: _buildAppBar(), body: PostListScreen());
+    return Scaffold(
+      appBar: _buildAppBar(),
+      body: Column(
+        children: [
+          _buildReportsEntry(),
+          Expanded(child: PostListScreen()),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.of(context).pushNamed(Routes.webBuilder);
+        },
+        icon: const Icon(Icons.web),
+        label: const Text('Web Builder'),
+      ),
+    );
+  }
+
+  Widget _buildReportsEntry() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      child: Card(
+        child: ListTile(
+          leading: Icon(Icons.insights_outlined),
+          title: Text('Reports & Analytics'),
+          subtitle: Text('Sales, inventory, product, and P&L (offline mock).'),
+          trailing: Icon(Icons.chevron_right),
+          onTap: () => Navigator.of(context).pushNamed(Routes.reports),
+        ),
+      ),
+    );
   }
 
   PreferredSizeWidget _buildAppBar() {
@@ -33,6 +64,8 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Widget> _buildActions(BuildContext context) {
     return <Widget>[
       _buildStockOperationsButton(),
+      _buildProductMetadataButton(),
+      _buildOrderTrackingButton(),
       _buildLanguageButton(),
       _buildThemeButton(),
       _buildLogoutButton(),
@@ -46,6 +79,28 @@ class _HomeScreenState extends State<HomeScreen> {
         Navigator.of(context).pushNamed(Routes.stockOperations);
       },
       icon: const Icon(Icons.inventory_2_outlined),
+    );
+  }
+
+  Widget _buildProductMetadataButton() {
+    return IconButton(
+      tooltip: 'Product metadata',
+      onPressed: () {
+        ProductMetadataNavigator.openProductMetadataHome(context);
+      },
+      icon: const Icon(Icons.dashboard_outlined),
+    );
+  }
+
+  Widget _buildOrderTrackingButton() {
+    return IconButton(
+      tooltip: 'Track Order',
+      onPressed: () {
+        Navigator.of(context).pushNamed(Routes.orderTracking);
+      },
+      icon: Icon(
+        Icons.local_shipping_outlined,
+      ),
     );
   }
 
