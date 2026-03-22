@@ -37,7 +37,7 @@ class OrderStatusBadge extends StatelessWidget {
     return Chip(
       label: Text(text,
           style: TextStyle(
-              color: bgColor.withOpacity(1.0).withBlue(150), fontSize: 12)),
+              color: bgColor.withValues(alpha: 1.0).withBlue(150), fontSize: 12)),
       backgroundColor: bgColor,
       visualDensity: VisualDensity.compact,
     );

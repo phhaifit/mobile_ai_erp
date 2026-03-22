@@ -131,7 +131,7 @@ class _ProfileDashboardScreenState extends State<ProfileDashboardScreen> {
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: (iconColor ?? Colors.blue).withOpacity(0.1),
+            color: (iconColor ?? Colors.blue).withValues(alpha: 0.2),
             shape: BoxShape.circle,
           ),
           child: Icon(icon, color: iconColor ?? Colors.blue.shade700),
