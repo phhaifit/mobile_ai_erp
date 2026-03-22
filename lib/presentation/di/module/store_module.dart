@@ -13,6 +13,11 @@ import 'package:mobile_ai_erp/presentation/login/store/login_store.dart';
 import 'package:mobile_ai_erp/presentation/reports/data/reports_mock_repository.dart';
 import 'package:mobile_ai_erp/presentation/reports/store/reports_store.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
+import 'package:mobile_ai_erp/presentation/account/store/profile_store.dart';
+import 'package:mobile_ai_erp/presentation/account/store/address_store.dart';
+import 'package:mobile_ai_erp/presentation/account/store/order_store.dart';
+import 'package:mobile_ai_erp/domain/repository/account/address_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/account/order_repository.dart';
 
 import '../../../di/service_locator.dart';
 
@@ -24,6 +29,14 @@ class StoreModule {
     getIt.registerFactory(
       () => FormStore(getIt<FormErrorStore>(), getIt<ErrorStore>()),
     );
+    getIt.registerFactory<ProfileStore>(() => ProfileStore());
+    
+    getIt.registerFactory<AddressStore>(
+        () => AddressStore(getIt<AddressRepository>()));
+        
+    getIt.registerFactory<OrderStore>(
+        () => OrderStore(getIt<OrderRepository>()));
+
     getIt.registerLazySingleton(() => ReportsMockRepository());
 
     // stores:------------------------------------------------------------------
