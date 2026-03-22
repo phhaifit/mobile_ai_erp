@@ -9,8 +9,11 @@ class PostApi {
   // dio instance
   final DioClient _dioClient;
 
+  // rest-client instance
+  final RestClient _restClient;
+
   // injecting dio instance
-  PostApi(this._dioClient, RestClient restClient);
+  PostApi(this._dioClient, this._restClient);
 
   /// Returns list of post in response
   Future<PostList> getPosts() async {
