@@ -11,7 +11,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import '../../../core/stores/supplier/supplier_store.dart';
-import '../../../domain/supplier/supplier.dart';
+import '../../../domain/entity/supplier/supplier.dart';
 import '../widgets/supplier_widgets.dart';
 
 class ProductSupplierSection extends StatefulWidget {
@@ -61,7 +61,7 @@ class _ProductSupplierSectionState extends State<ProductSupplierSection> {
                   OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
             ),
             hint: const Text('Choose a supplier'),
-            value: selected,
+            initialValue: selected,
             items: unlinked
                 .map((s) => DropdownMenuItem(
                       value: s,

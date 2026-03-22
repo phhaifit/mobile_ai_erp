@@ -1,4 +1,4 @@
-import 'supplier.dart';
+import '../../entity/supplier/supplier.dart';
 
 abstract class SupplierRepository {
   Future<List<Supplier>> getAll();

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../domain/supplier/supplier.dart';
+import '../../../domain/entity/supplier/supplier.dart';
 import '../../../core/stores/supplier/supplier_store.dart';
 
 class SupplierFormScreen extends StatefulWidget {

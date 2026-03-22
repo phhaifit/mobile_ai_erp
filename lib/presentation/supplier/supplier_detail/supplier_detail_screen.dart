@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import '../../../domain/supplier/supplier.dart';
+import '../../../domain/entity/supplier/supplier.dart';
 import '../../../core/stores/supplier/supplier_store.dart';
 import '../supplier_form/supplier_form_screen.dart';
 import '../widgets/supplier_widgets.dart';
@@ -80,7 +80,7 @@ class _SupplierDetailScreenState extends State<SupplierDetailScreen> {
                   OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
             ),
             hint: const Text('Choose a product'),
-            value: selected,
+            initialValue: selected,
             items: unlinked
                 .map((entry) => DropdownMenuItem(
                       value: entry,
