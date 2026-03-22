@@ -1,14 +1,14 @@
 class FulfillmentItem {
-  String id;
-  String productName;
-  String sku;
-  int quantity;
-  int pickedQuantity;
-  int packedQuantity;
-  int shippedQuantity;
-  double unitPrice;
+  final String id;
+  final String productName;
+  final String sku;
+  final int quantity;
+  final int pickedQuantity;
+  final int packedQuantity;
+  final int shippedQuantity;
+  final double unitPrice;
 
-  FulfillmentItem({
+  const FulfillmentItem({
     required this.id,
     required this.productName,
     required this.sku,

@@ -73,7 +73,7 @@ class _FulfillmentListScreenState extends State<FulfillmentListScreen> {
   Widget _buildOrderList() {
     return Observer(
       builder: (_) {
-        if (_store.loading) {
+        if (_store.isLoadingOrders) {
           return const Center(child: CircularProgressIndicator());
         }
 

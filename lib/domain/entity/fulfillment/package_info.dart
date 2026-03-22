@@ -1,15 +1,15 @@
 import 'package:mobile_ai_erp/domain/entity/fulfillment/package_item.dart';
 
 class PackageInfo {
-  String id;
-  String orderId;
-  String label;
-  double? weight;
-  double? length;
-  double? width;
-  double? height;
-  List<PackageItem> items;
-  String? trackingNumber;
+  final String id;
+  final String orderId;
+  final String label;
+  final double? weight;
+  final double? length;
+  final double? width;
+  final double? height;
+  final List<PackageItem> items;
+  final String? trackingNumber;
 
   PackageInfo({
     required this.id,

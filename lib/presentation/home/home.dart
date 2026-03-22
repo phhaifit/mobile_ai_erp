@@ -90,7 +90,7 @@ class _HomeScreenState extends State<HomeScreen> {
       onPressed: () {
         Navigator.of(context).pushNamed(Routes.fulfillment);
       },
-      icon: const Icon(Icons.local_shipping_outlined),
+      icon: const Icon(Icons.inventory_2_outlined),
     );
   }
 

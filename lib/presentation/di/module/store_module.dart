@@ -83,6 +83,13 @@ class StoreModule {
       ),
     );
 
+    getIt.registerSingleton<PostStore>(
+      PostStore(
+        getIt<GetPostUseCase>(),
+        getIt<ErrorStore>(),
+      ),
+    );
+
     getIt.registerSingleton<ThemeStore>(
       ThemeStore(
         getIt<SettingRepository>(),
@@ -121,6 +128,7 @@ class StoreModule {
       StoreSettingsStore(
         getIt<GetStoreSettingsUseCase>(),
         getIt<SaveStoreSettingsUseCase>(),
+        getIt<ErrorStore>(),
       ),
     );
 

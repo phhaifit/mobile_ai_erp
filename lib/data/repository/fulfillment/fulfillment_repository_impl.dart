@@ -11,6 +11,12 @@ import 'package:mobile_ai_erp/domain/repository/fulfillment/fulfillment_reposito
 class FulfillmentRepositoryImpl extends FulfillmentRepository {
   final List<FulfillmentOrder> _orders = _generateMockOrders();
 
+  int _findOrderIndex(String id) {
+    final idx = _orders.indexWhere((o) => o.id == id);
+    if (idx == -1) throw Exception('Order not found: $id');
+    return idx;
+  }
+
   @override
   Future<List<FulfillmentOrder>> getOrders() async {
     await Future.delayed(const Duration(milliseconds: 500));
@@ -20,92 +26,97 @@ class FulfillmentRepositoryImpl extends FulfillmentRepository {
   @override
   Future<FulfillmentOrder?> getOrderById(String id) async {
     await Future.delayed(const Duration(milliseconds: 300));
-    try {
-      return _orders.firstWhere((o) => o.id == id);
-    } catch (_) {
-      return null;
-    }
+    final idx = _orders.indexWhere((o) => o.id == id);
+    return idx != -1 ? _orders[idx] : null;
   }
 
   @override
   Future<void> updateOrderStatus(String id, FulfillmentStatus status) async {
     await Future.delayed(const Duration(milliseconds: 300));
-    final order = _orders.firstWhere((o) => o.id == id);
+    final idx = _findOrderIndex(id);
+    final order = _orders[idx];
 
-    _validateStatusTransition(order, status);
+    final updatedItems = status == FulfillmentStatus.shipped
+        ? order.items
+            .map((item) =>
+                item.copyWith(shippedQuantity: item.packedQuantity))
+            .toList()
+        : order.items;
 
-    if (status == FulfillmentStatus.shipped) {
-      for (final item in order.items) {
-        item.shippedQuantity = item.packedQuantity;
-      }
-    }
-
-    order.status = status;
-    order.updatedAt = DateTime.now();
-    order.trackingEvents.add(TrackingEvent(
-      id: 'evt-${DateTime.now().millisecondsSinceEpoch}',
+    _orders[idx] = order.copyWith(
       status: status,
-      description: 'Order status updated to ${status.displayName}',
-      timestamp: DateTime.now(),
-      updatedBy: 'System',
-    ));
-  }
-
-  void _validateStatusTransition(
-      FulfillmentOrder order, FulfillmentStatus target) {
-    switch (target) {
-      case FulfillmentStatus.packing:
-        if (!order.isFullyPicked) {
-          throw Exception('All items must be picked before packing');
-        }
-        break;
-      case FulfillmentStatus.packed:
-        if (!order.isFullyPacked) {
-          throw Exception(
-              'All items must be packed into packages before marking as packed');
-        }
-        break;
-      case FulfillmentStatus.shipped:
-        if (!order.isFullyPacked) {
-          throw Exception('All items must be packed before shipping');
-        }
-        break;
-      default:
-        break;
-    }
+      updatedAt: DateTime.now(),
+      items: updatedItems,
+      trackingEvents: [
+        ...order.trackingEvents,
+        TrackingEvent(
+          id: 'evt-${DateTime.now().millisecondsSinceEpoch}',
+          status: status,
+          description: 'Order status updated to ${status.displayName}',
+          timestamp: DateTime.now(),
+          updatedBy: 'System',
+        ),
+      ],
+    );
   }
 
   @override
   Future<void> updateItemPickedQty(
       String orderId, String itemId, int qty) async {
     await Future.delayed(const Duration(milliseconds: 200));
-    final order = _orders.firstWhere((o) => o.id == orderId);
-    final item = order.items.firstWhere((i) => i.id == itemId);
-    item.pickedQuantity = qty;
-    order.updatedAt = DateTime.now();
+    final orderIdx = _findOrderIndex(orderId);
+    final order = _orders[orderIdx];
+
+    final itemIdx = order.items.indexWhere((i) => i.id == itemId);
+    if (itemIdx == -1) throw Exception('Item not found: $itemId');
+
+    final updatedItems = List<FulfillmentItem>.from(order.items);
+    updatedItems[itemIdx] = updatedItems[itemIdx].copyWith(pickedQuantity: qty);
+
+    _orders[orderIdx] = order.copyWith(
+      items: updatedItems,
+      updatedAt: DateTime.now(),
+    );
   }
 
   @override
   Future<void> addPackage(String orderId, PackageInfo package) async {
     await Future.delayed(const Duration(milliseconds: 300));
-    final order = _orders.firstWhere((o) => o.id == orderId);
-    order.packages.add(package);
+    final orderIdx = _findOrderIndex(orderId);
+    final order = _orders[orderIdx];
+
+    final updatedItems = List<FulfillmentItem>.from(order.items);
     for (final pkgItem in package.items) {
-      final item = order.items.firstWhere((i) => i.id == pkgItem.itemId);
-      item.packedQuantity += pkgItem.quantity;
+      final itemIdx = updatedItems.indexWhere((i) => i.id == pkgItem.itemId);
+      if (itemIdx == -1) continue;
+      updatedItems[itemIdx] = updatedItems[itemIdx].copyWith(
+        packedQuantity: updatedItems[itemIdx].packedQuantity + pkgItem.quantity,
+      );
     }
-    order.updatedAt = DateTime.now();
+
+    _orders[orderIdx] = order.copyWith(
+      packages: [...order.packages, package],
+      items: updatedItems,
+      updatedAt: DateTime.now(),
+    );
   }
 
   @override
   Future<void> updatePackage(String orderId, PackageInfo package) async {
     await Future.delayed(const Duration(milliseconds: 300));
-    final order = _orders.firstWhere((o) => o.id == orderId);
-    final idx = order.packages.indexWhere((p) => p.id == package.id);
-    if (idx != -1) {
-      order.packages[idx] = package;
-    }
-    order.updatedAt = DateTime.now();
+    final orderIdx = _findOrderIndex(orderId);
+    final order = _orders[orderIdx];
+
+    final pkgIdx = order.packages.indexWhere((p) => p.id == package.id);
+    if (pkgIdx == -1) return;
+
+    final updatedPackages = List<PackageInfo>.from(order.packages);
+    updatedPackages[pkgIdx] = package;
+
+    _orders[orderIdx] = order.copyWith(
+      packages: updatedPackages,
+      updatedAt: DateTime.now(),
+    );
   }
 
   static List<FulfillmentOrder> _generateMockOrders() {
