@@ -18,10 +18,11 @@ class TimelineItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final Color markerColor =
-        isDone ? Theme.of(context).colorScheme.primary : Colors.grey.shade400;
+      isDone ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.35);
     final Color titleColor =
-        isActive ? const Color(0xFF0F172A) : const Color(0xFF334155);
+      isActive ? colorScheme.onSurface : colorScheme.onSurface.withValues(alpha: 0.8);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -35,11 +36,11 @@ class TimelineItem extends StatelessWidget {
                 width: 20,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: isDone ? markerColor : Colors.white,
+                  color: isDone ? markerColor : colorScheme.surface,
                   border: Border.all(color: markerColor, width: 2),
                 ),
                 child: isDone
-                    ? const Icon(Icons.check, size: 12, color: Colors.white)
+                    ? Icon(Icons.check, size: 12, color: colorScheme.onPrimary)
                     : null,
               ),
               if (showLine)
@@ -47,7 +48,7 @@ class TimelineItem extends StatelessWidget {
                   width: 2,
                   height: 34,
                   margin: const EdgeInsets.symmetric(vertical: 2),
-                  color: Colors.grey.shade300,
+                  color: colorScheme.onSurface.withValues(alpha: 0.18),
                 ),
             ],
           ),
@@ -58,13 +59,14 @@ class TimelineItem extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(12, 9, 12, 10),
             margin: const EdgeInsets.only(bottom: 8),
             decoration: BoxDecoration(
-              color:
-                  isActive ? const Color(0xFFF1F8F7) : const Color(0xFFF8FAFA),
+              color: isActive
+                  ? colorScheme.primary.withValues(alpha: 0.08)
+                  : colorScheme.surface,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isActive
-                    ? const Color(0xFF99D5CE)
-                    : const Color(0xFFE5E7EB),
+                    ? colorScheme.primary.withValues(alpha: 0.35)
+                    : colorScheme.onSurface.withValues(alpha: 0.12),
               ),
             ),
             child: Column(
@@ -82,7 +84,7 @@ class TimelineItem extends StatelessWidget {
                 Text(
                   dateText,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF64748B),
+                        color: colorScheme.onSurface.withValues(alpha: 0.65),
                       ),
                 ),
               ],

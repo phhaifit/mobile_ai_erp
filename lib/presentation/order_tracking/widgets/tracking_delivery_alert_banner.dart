@@ -13,14 +13,15 @@ class TrackingDeliveryAlertBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppLocalizations t = AppLocalizations.of(context);
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
 
     final Color bgColor = selected.deliveryAlertType == DeliveryAlertType.failed
-        ? const Color(0xFFFEE2E2)
-        : const Color(0xFFFEF3C7);
+      ? colorScheme.errorContainer
+      : colorScheme.primaryContainer.withValues(alpha: 0.45);
     final Color borderColor =
         selected.deliveryAlertType == DeliveryAlertType.failed
-            ? const Color(0xFFFCA5A5)
-            : const Color(0xFFFCD34D);
+        ? colorScheme.error
+        : colorScheme.primary.withValues(alpha: 0.45);
 
     return Container(
       width: double.infinity,
@@ -33,7 +34,13 @@ class TrackingDeliveryAlertBanner extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Icon(Icons.warning_rounded, size: 20, color: Color(0xFFD97706)),
+          Icon(
+            Icons.warning_rounded,
+            size: 20,
+            color: selected.deliveryAlertType == DeliveryAlertType.failed
+                ? colorScheme.error
+                : colorScheme.primary,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -41,18 +48,18 @@ class TrackingDeliveryAlertBanner extends StatelessWidget {
               children: <Widget>[
                 Text(
                   t.translate('tracking_delivery_notification_title'),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
-                    color: Color(0xFF1F2937),
+                    color: colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   selected.deliveryAlertMessage,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: Color(0xFF6B7280),
+                    color: colorScheme.onSurface.withValues(alpha: 0.7),
                     height: 1.4,
                   ),
                 ),

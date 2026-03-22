@@ -124,7 +124,38 @@ class OrderTrackingRepositoryImpl extends OrderTrackingRepository {
         currentStage: ShipmentStage.delivered,
         deliveryAlertType: DeliveryAlertType.none,
         deliveryAlertMessage: '',
-        returnExchangeStage: ReturnExchangeStage.inTransitBack,
+        returnExchangeStage: ReturnExchangeStage.approved,
+      ),
+      OrderTrackingScenario(
+        scenarioName: 'Return Completed - Refunded',
+        orderId: 'ORD-10005',
+        trackingNumber: 'TRK-RTN-900222',
+        carrierName: 'ReturnShip',
+        carrierTrackingUrl: 'https://example.com/carrier/TRK-RTN-900222',
+        estimatedDeliveryDate: clock.subtract(const Duration(days: 12)),
+        lastUpdatedAt: clock.subtract(const Duration(hours: 5)),
+        timelineSteps: <TrackingTimelineStep>[
+          TrackingTimelineStep(
+            stage: ShipmentStage.confirmed,
+            timestamp: clock.subtract(const Duration(days: 17)),
+          ),
+          TrackingTimelineStep(
+            stage: ShipmentStage.packed,
+            timestamp: clock.subtract(const Duration(days: 16, hours: 19)),
+          ),
+          TrackingTimelineStep(
+            stage: ShipmentStage.shipped,
+            timestamp: clock.subtract(const Duration(days: 15, hours: 14)),
+          ),
+          TrackingTimelineStep(
+            stage: ShipmentStage.delivered,
+            timestamp: clock.subtract(const Duration(days: 12, hours: 10)),
+          ),
+        ],
+        currentStage: ShipmentStage.delivered,
+        deliveryAlertType: DeliveryAlertType.none,
+        deliveryAlertMessage: '',
+        returnExchangeStage: ReturnExchangeStage.refunded,
       ),
     ];
   }

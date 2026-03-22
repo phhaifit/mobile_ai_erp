@@ -20,6 +20,11 @@ class TrackingCurrentStatusCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppLocalizations t = AppLocalizations.of(context);
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final bool isDelivered = selected.currentStage == ShipmentStage.delivered;
+    final DateTime displayDateTime = isDelivered
+        ? _deliveredAt ?? selected.estimatedDeliveryDate
+        : selected.estimatedDeliveryDate;
 
     return _SectionCard(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
@@ -43,24 +48,34 @@ class TrackingCurrentStatusCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            t.translate('tracking_estimated_delivery'),
-            style: const TextStyle(
+            isDelivered ? 'Delivered at' : t.translate('tracking_estimated_delivery'),
+            style: TextStyle(
               fontSize: 12,
-              color: Color(0xFF6B7280),
+              color: colorScheme.onSurface.withValues(alpha: 0.65),
             ),
           ),
           const SizedBox(height: 4),
           Text(
-            formatDateTime(selected.estimatedDeliveryDate),
-            style: const TextStyle(
+            formatDateTime(displayDateTime),
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF1F2937),
+              color: colorScheme.onSurface,
             ),
           ),
         ],
       ),
     );
+  }
+
+  DateTime? get _deliveredAt {
+    for (final TrackingTimelineStep step in selected.timelineSteps) {
+      if (step.stage == ShipmentStage.delivered) {
+        return step.timestamp;
+      }
+    }
+
+    return null;
   }
 }
 
@@ -72,13 +87,14 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       padding: padding ?? const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+        border: Border.all(color: colorScheme.onSurface.withValues(alpha: 0.12), width: 1),
       ),
       child: child,
     );

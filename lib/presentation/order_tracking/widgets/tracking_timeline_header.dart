@@ -18,6 +18,7 @@ class TrackingTimelineHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppLocalizations t = AppLocalizations.of(context);
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
     const List<ShipmentStage> stages = <ShipmentStage>[
       ShipmentStage.confirmed,
       ShipmentStage.packed,
@@ -28,10 +29,13 @@ class TrackingTimelineHeader extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
         border: Border(
-          bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1),
+          bottom: BorderSide(
+            color: colorScheme.onSurface.withValues(alpha: 0.12),
+            width: 1,
+          ),
         ),
       ),
       child: Column(
@@ -57,7 +61,7 @@ class TrackingTimelineHeader extends StatelessWidget {
                         height: 2,
                         color: selected.currentStage.index > i
                             ? primaryColor
-                            : const Color(0xFFE5E7EB),
+                          : colorScheme.onSurface.withValues(alpha: 0.12),
                       ),
                     ),
                 ],
@@ -67,17 +71,17 @@ class TrackingTimelineHeader extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             t.translate('tracking_order_id_label'),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: Color(0xFF9CA3AF),
+              color: colorScheme.onSurface.withValues(alpha: 0.65),
             ),
           ),
           Text(
             selected.orderId,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF1F2937),
+              color: colorScheme.onSurface,
             ),
           ),
         ],
@@ -103,6 +107,7 @@ class _TimelineStage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final bool isDone = selected.currentStage.index >= stage.index;
     final bool isCurrent = selected.currentStage == stage;
 
@@ -114,7 +119,9 @@ class _TimelineStage extends StatelessWidget {
           height: 44,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: isDone ? primaryColor : const Color(0xFFE5E7EB),
+            color: isDone
+              ? primaryColor
+              : colorScheme.onSurface.withValues(alpha: 0.12),
             boxShadow: isCurrent
                 ? <BoxShadow>[
                     BoxShadow(
@@ -127,11 +134,11 @@ class _TimelineStage extends StatelessWidget {
           ),
           child: Center(
             child: isDone
-                ? const Icon(Icons.check, color: Colors.white, size: 22)
+                ? Icon(Icons.check, color: colorScheme.onPrimary, size: 22)
                 : Text(
                     '${index + 1}',
-                    style: const TextStyle(
-                      color: Color(0xFF9CA3AF),
+                    style: TextStyle(
+                      color: colorScheme.onSurface.withValues(alpha: 0.55),
                       fontWeight: FontWeight.w700,
                       fontSize: 14,
                     ),
@@ -147,7 +154,9 @@ class _TimelineStage extends StatelessWidget {
             style: TextStyle(
               fontSize: 11,
               fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
-              color: isDone ? primaryColor : const Color(0xFF9CA3AF),
+              color: isDone
+                  ? primaryColor
+                  : colorScheme.onSurface.withValues(alpha: 0.6),
               height: 1.2,
             ),
           ),
