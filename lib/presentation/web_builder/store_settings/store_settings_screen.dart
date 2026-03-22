@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:mobile_ai_erp/di/service_locator.dart';
+import 'package:mobile_ai_erp/domain/entity/web_builder/store_settings.dart';
+import 'package:mobile_ai_erp/presentation/web_builder/store/store_settings_store.dart';
 
 class StoreSettingsScreen extends StatefulWidget {
   const StoreSettingsScreen({super.key});
@@ -8,10 +12,11 @@ class StoreSettingsScreen extends StatefulWidget {
 }
 
 class _StoreSettingsScreenState extends State<StoreSettingsScreen> {
+  final StoreSettingsStore _store = getIt<StoreSettingsStore>();
   final _formKey = GlobalKey<FormState>();
   bool _isSaving = false;
+  bool _loaded = false;
 
-  // Mock data pre-filled in controllers
   late final TextEditingController _storeNameController;
   late final TextEditingController _taglineController;
   late final TextEditingController _emailController;
@@ -23,17 +28,31 @@ class _StoreSettingsScreenState extends State<StoreSettingsScreen> {
   @override
   void initState() {
     super.initState();
-    _storeNameController = TextEditingController(text: 'Jarvis Store');
-    _taglineController = TextEditingController(text: 'Smart Shopping, Simplified');
-    _emailController = TextEditingController(text: 'contact@jarvisstore.com');
-    _phoneController = TextEditingController(text: '+84 123 456 789');
-    _addressController =
-        TextEditingController(text: '227 Nguyen Van Cu, District 5, HCMC');
-    _currencyController = TextEditingController(text: 'VND');
-    _descriptionController = TextEditingController(
-      text:
-          'Your one-stop shop for electronics, accessories, and smart home devices.',
-    );
+    _storeNameController = TextEditingController();
+    _taglineController = TextEditingController();
+    _emailController = TextEditingController();
+    _phoneController = TextEditingController();
+    _addressController = TextEditingController();
+    _currencyController = TextEditingController();
+    _descriptionController = TextEditingController();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    await _store.getSettings();
+    final settings = _store.settings;
+    if (settings != null && mounted) {
+      setState(() {
+        _storeNameController.text = settings.storeName ?? '';
+        _taglineController.text = settings.tagline ?? '';
+        _emailController.text = settings.email ?? '';
+        _phoneController.text = settings.phone ?? '';
+        _addressController.text = settings.address ?? '';
+        _currencyController.text = settings.currency ?? '';
+        _descriptionController.text = settings.description ?? '';
+        _loaded = true;
+      });
+    }
   }
 
   @override
@@ -56,105 +75,104 @@ class _StoreSettingsScreenState extends State<StoreSettingsScreen> {
       appBar: AppBar(
         title: const Text('Store Settings'),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Store Logo section
-              _buildLogoSection(theme),
-              const SizedBox(height: 28),
+      body: Observer(
+        builder: (_) {
+          if (_store.loading && !_loaded) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-              // General Info
-              _buildSectionTitle(theme, 'General Information'),
-              const SizedBox(height: 12),
-              _buildTextField(
-                controller: _storeNameController,
-                label: 'Store Name',
-                icon: Icons.store_outlined,
-                validator: (v) =>
-                    v == null || v.isEmpty ? 'Store name is required' : null,
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildLogoSection(theme),
+                  const SizedBox(height: 28),
+                  _buildSectionTitle(theme, 'General Information'),
+                  const SizedBox(height: 12),
+                  _buildTextField(
+                    controller: _storeNameController,
+                    label: 'Store Name',
+                    icon: Icons.store_outlined,
+                    validator: (v) =>
+                        v == null || v.isEmpty ? 'Store name is required' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    controller: _taglineController,
+                    label: 'Tagline',
+                    icon: Icons.format_quote_outlined,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    controller: _descriptionController,
+                    label: 'Description',
+                    icon: Icons.description_outlined,
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 28),
+                  _buildSectionTitle(theme, 'Contact Information'),
+                  const SizedBox(height: 12),
+                  _buildTextField(
+                    controller: _emailController,
+                    label: 'Email',
+                    icon: Icons.email_outlined,
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return 'Email is required';
+                      if (!v.contains('@')) return 'Enter a valid email';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    controller: _phoneController,
+                    label: 'Phone',
+                    icon: Icons.phone_outlined,
+                    keyboardType: TextInputType.phone,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    controller: _addressController,
+                    label: 'Address',
+                    icon: Icons.location_on_outlined,
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 28),
+                  _buildSectionTitle(theme, 'Business Settings'),
+                  const SizedBox(height: 12),
+                  _buildTextField(
+                    controller: _currencyController,
+                    label: 'Currency',
+                    icon: Icons.attach_money_outlined,
+                  ),
+                  const SizedBox(height: 32),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: FilledButton.icon(
+                      onPressed: _isSaving ? null : _handleSave,
+                      icon: _isSaving
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.save_outlined),
+                      label: Text(_isSaving ? 'Saving...' : 'Save Settings'),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
               ),
-              const SizedBox(height: 16),
-              _buildTextField(
-                controller: _taglineController,
-                label: 'Tagline',
-                icon: Icons.format_quote_outlined,
-              ),
-              const SizedBox(height: 16),
-              _buildTextField(
-                controller: _descriptionController,
-                label: 'Description',
-                icon: Icons.description_outlined,
-                maxLines: 3,
-              ),
-              const SizedBox(height: 28),
-
-              // Contact Info
-              _buildSectionTitle(theme, 'Contact Information'),
-              const SizedBox(height: 12),
-              _buildTextField(
-                controller: _emailController,
-                label: 'Email',
-                icon: Icons.email_outlined,
-                keyboardType: TextInputType.emailAddress,
-                validator: (v) {
-                  if (v == null || v.isEmpty) return 'Email is required';
-                  if (!v.contains('@')) return 'Enter a valid email';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              _buildTextField(
-                controller: _phoneController,
-                label: 'Phone',
-                icon: Icons.phone_outlined,
-                keyboardType: TextInputType.phone,
-              ),
-              const SizedBox(height: 16),
-              _buildTextField(
-                controller: _addressController,
-                label: 'Address',
-                icon: Icons.location_on_outlined,
-                maxLines: 2,
-              ),
-              const SizedBox(height: 28),
-
-              // Business Settings
-              _buildSectionTitle(theme, 'Business Settings'),
-              const SizedBox(height: 12),
-              _buildTextField(
-                controller: _currencyController,
-                label: 'Currency',
-                icon: Icons.attach_money_outlined,
-              ),
-              const SizedBox(height: 32),
-
-              // Save button
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: FilledButton.icon(
-                  onPressed: _isSaving ? null : _handleSave,
-                  icon: _isSaving
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Icon(Icons.save_outlined),
-                  label: Text(_isSaving ? 'Saving...' : 'Save Settings'),
-                ),
-              ),
-              const SizedBox(height: 20),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -163,7 +181,6 @@ class _StoreSettingsScreenState extends State<StoreSettingsScreen> {
     return Center(
       child: Column(
         children: [
-          // Logo placeholder
           Container(
             width: 100,
             height: 100,
@@ -233,8 +250,17 @@ class _StoreSettingsScreenState extends State<StoreSettingsScreen> {
 
     setState(() => _isSaving = true);
 
-    // Simulate network delay (mock)
-    await Future.delayed(const Duration(seconds: 1));
+    final settings = StoreSettings(
+      storeName: _storeNameController.text,
+      tagline: _taglineController.text,
+      email: _emailController.text,
+      phone: _phoneController.text,
+      address: _addressController.text,
+      currency: _currencyController.text,
+      description: _descriptionController.text,
+    );
+
+    await _store.saveSettings(settings);
 
     if (!mounted) return;
     setState(() => _isSaving = false);

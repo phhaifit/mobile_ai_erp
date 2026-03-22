@@ -1,66 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:mobile_ai_erp/di/service_locator.dart';
+import 'package:mobile_ai_erp/domain/entity/web_builder/cms_page.dart';
+import 'package:mobile_ai_erp/presentation/web_builder/store/cms_page_store.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
-
-class _MockCmsPage {
-  final String id;
-  final String title;
-  final String description;
-  final String type;
-  final String status;
-  final DateTime lastModified;
-
-  const _MockCmsPage({
-    required this.id,
-    required this.title,
-    required this.description,
-    required this.type,
-    required this.status,
-    required this.lastModified,
-  });
-}
-
-final _mockPages = <_MockCmsPage>[
-  _MockCmsPage(
-    id: '1',
-    title: 'Home Page',
-    description: 'Main landing page with hero banner, featured products, and promotions',
-    type: 'Landing',
-    status: 'Published',
-    lastModified: DateTime(2026, 3, 15),
-  ),
-  _MockCmsPage(
-    id: '2',
-    title: 'About Us',
-    description: 'Company story, mission, and team introduction',
-    type: 'Info',
-    status: 'Published',
-    lastModified: DateTime(2026, 3, 10),
-  ),
-  _MockCmsPage(
-    id: '3',
-    title: 'Contact',
-    description: 'Contact form, store locations, and business hours',
-    type: 'Info',
-    status: 'Draft',
-    lastModified: DateTime(2026, 3, 18),
-  ),
-  _MockCmsPage(
-    id: '4',
-    title: 'Spring Sale 2026',
-    description: 'Seasonal promotion page with countdown timer and featured deals',
-    type: 'Marketing',
-    status: 'Published',
-    lastModified: DateTime(2026, 3, 20),
-  ),
-  _MockCmsPage(
-    id: '5',
-    title: 'FAQ',
-    description: 'Frequently asked questions about shipping, returns, and payments',
-    type: 'Support',
-    status: 'Draft',
-    lastModified: DateTime(2026, 3, 12),
-  ),
-];
 
 class CmsPageListScreen extends StatefulWidget {
   const CmsPageListScreen({super.key});
@@ -70,13 +13,21 @@ class CmsPageListScreen extends StatefulWidget {
 }
 
 class _CmsPageListScreenState extends State<CmsPageListScreen> {
+  final CmsPageStore _store = getIt<CmsPageStore>();
   String _selectedFilter = 'All';
 
   static const _filters = ['All', 'Published', 'Draft'];
 
-  List<_MockCmsPage> get _filteredPages {
-    if (_selectedFilter == 'All') return _mockPages;
-    return _mockPages.where((p) => p.status == _selectedFilter).toList();
+  @override
+  void initState() {
+    super.initState();
+    _store.getPages();
+  }
+
+  List<CmsPage> get _filteredPages {
+    final pages = _store.pageList?.pages ?? [];
+    if (_selectedFilter == 'All') return pages;
+    return pages.where((p) => p.status == _selectedFilter).toList();
   }
 
   @override
@@ -93,22 +44,30 @@ class _CmsPageListScreenState extends State<CmsPageListScreen> {
         },
         child: const Icon(Icons.add),
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildFilterChips(theme),
-          Expanded(
-            child: _filteredPages.isEmpty
-                ? _buildEmptyState(theme)
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: _filteredPages.length,
-                    itemBuilder: (context, index) {
-                      return _buildPageCard(context, _filteredPages[index]);
-                    },
-                  ),
-          ),
-        ],
+      body: Observer(
+        builder: (_) {
+          if (_store.loading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildFilterChips(theme),
+              Expanded(
+                child: _filteredPages.isEmpty
+                    ? _buildEmptyState(theme)
+                    : ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: _filteredPages.length,
+                        itemBuilder: (context, index) {
+                          return _buildPageCard(context, _filteredPages[index]);
+                        },
+                      ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -135,7 +94,7 @@ class _CmsPageListScreenState extends State<CmsPageListScreen> {
     );
   }
 
-  Widget _buildPageCard(BuildContext context, _MockCmsPage page) {
+  Widget _buildPageCard(BuildContext context, CmsPage page) {
     final theme = Theme.of(context);
     final isPublished = page.status == 'Published';
 
@@ -159,12 +118,11 @@ class _CmsPageListScreenState extends State<CmsPageListScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Title row with status badge and menu
               Row(
                 children: [
                   Expanded(
                     child: Text(
-                      page.title,
+                      page.title ?? '',
                       style: theme.textTheme.titleMedium,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -176,9 +134,8 @@ class _CmsPageListScreenState extends State<CmsPageListScreen> {
                 ],
               ),
               const SizedBox(height: 8),
-              // Description
               Text(
-                page.description,
+                page.description ?? '',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.textTheme.bodyMedium?.color
                       ?.withValues(alpha: 0.6),
@@ -187,10 +144,9 @@ class _CmsPageListScreenState extends State<CmsPageListScreen> {
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 12),
-              // Type badge + last modified
               Row(
                 children: [
-                  _buildTypeBadge(theme, page.type),
+                  _buildTypeBadge(theme, page.type ?? ''),
                   const Spacer(),
                   Icon(
                     Icons.schedule,
@@ -200,7 +156,7 @@ class _CmsPageListScreenState extends State<CmsPageListScreen> {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    _formatDate(page.lastModified),
+                    _formatDate(page.lastModified ?? DateTime.now()),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.textTheme.bodySmall?.color
                           ?.withValues(alpha: 0.5),
@@ -268,7 +224,7 @@ class _CmsPageListScreenState extends State<CmsPageListScreen> {
     );
   }
 
-  Widget _buildPopupMenu(BuildContext context, _MockCmsPage page) {
+  Widget _buildPopupMenu(BuildContext context, CmsPage page) {
     return PopupMenuButton<String>(
       icon: const Icon(Icons.more_vert, size: 20),
       onSelected: (value) {
@@ -280,6 +236,20 @@ class _CmsPageListScreenState extends State<CmsPageListScreen> {
             );
             break;
           case 'duplicate':
+            final duplicated = CmsPage(
+              id: DateTime.now().millisecondsSinceEpoch.toString(),
+              title: '${page.title} (Copy)',
+              description: page.description,
+              type: page.type,
+              status: 'Draft',
+              lastModified: DateTime.now(),
+              isPublished: false,
+              blocks: page.blocks,
+              metaTitle: page.metaTitle,
+              metaDescription: page.metaDescription,
+              slug: page.slug != null ? '${page.slug}-copy' : null,
+            );
+            _store.savePage(duplicated);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('"${page.title}" duplicated'),
@@ -303,7 +273,7 @@ class _CmsPageListScreenState extends State<CmsPageListScreen> {
     );
   }
 
-  void _showDeleteDialog(BuildContext context, _MockCmsPage page) {
+  void _showDeleteDialog(BuildContext context, CmsPage page) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -317,6 +287,7 @@ class _CmsPageListScreenState extends State<CmsPageListScreen> {
           TextButton(
             onPressed: () {
               Navigator.of(ctx).pop();
+              _store.deletePage(page.id!);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text('"${page.title}" deleted'),
