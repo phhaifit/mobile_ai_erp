@@ -5,6 +5,7 @@ import 'package:mobile_ai_erp/core/stores/form/form_store.dart';
 import 'package:mobile_ai_erp/domain/repository/customer/customer_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/setting/setting_repository.dart';
 import 'package:mobile_ai_erp/presentation/customer_management/store/customer_store.dart';
+import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadata_repository.dart';
 import 'package:mobile_ai_erp/domain/usecase/post/get_post_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/is_logged_in_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/login_usecase.dart';
@@ -13,6 +14,7 @@ import 'package:mobile_ai_erp/presentation/home/store/language/language_store.da
 import 'package:mobile_ai_erp/presentation/home/store/theme/theme_store.dart';
 import 'package:mobile_ai_erp/presentation/login/store/login_store.dart';
 import 'package:mobile_ai_erp/presentation/post/store/post_store.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
 
 import '../../../di/service_locator.dart';
 
@@ -39,6 +41,13 @@ class StoreModule {
     getIt.registerSingleton<PostStore>(
       PostStore(
         getIt<GetPostUseCase>(),
+        getIt<ErrorStore>(),
+      ),
+    );
+
+    getIt.registerSingleton<ProductMetadataStore>(
+      ProductMetadataStore(
+        getIt<ProductMetadataRepository>(),
         getIt<ErrorStore>(),
       ),
     );
