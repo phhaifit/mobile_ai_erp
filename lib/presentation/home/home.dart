@@ -93,6 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return <Widget>[
       _buildProductMetadataButton(),
       _buildOrderTrackingButton(),
+      _buildFulfillmentButton(),
       _buildLanguageButton(),
       _buildThemeButton(),
       _buildLogoutButton(),
@@ -106,6 +107,16 @@ class _HomeScreenState extends State<HomeScreen> {
         ProductMetadataNavigator.openProductMetadataHome(context);
       },
       icon: const Icon(Icons.dashboard_outlined),
+    );
+  }
+
+  Widget _buildFulfillmentButton() {
+    return IconButton(
+      tooltip: 'Order Fulfillment',
+      onPressed: () {
+        Navigator.of(context).pushNamed(Routes.fulfillment);
+      },
+      icon: const Icon(Icons.inventory_2_outlined),
     );
   }
 

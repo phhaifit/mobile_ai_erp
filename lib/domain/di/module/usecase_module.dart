@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:mobile_ai_erp/domain/repository/fulfillment/fulfillment_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/post/post_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/order_tracking/order_tracking_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/user_repository.dart';
@@ -8,6 +9,12 @@ import 'package:mobile_ai_erp/domain/repository/web_builder/store_settings_repos
 import 'package:mobile_ai_erp/domain/repository/web_builder/web_theme_repository.dart';
 import 'package:mobile_ai_erp/domain/usecase/order_tracking/find_order_tracking_scenario_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/order_tracking/get_order_tracking_scenarios_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/add_package_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_fulfillment_order_detail_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_fulfillment_orders_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/update_fulfillment_status_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/update_package_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/update_picked_quantity_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/post/delete_post_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/post/find_post_by_id_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/post/get_post_usecase.dart';
@@ -85,6 +92,25 @@ class UseCaseModule {
     );
     getIt.registerSingleton<SaveStoreSettingsUseCase>(
       SaveStoreSettingsUseCase(getIt<StoreSettingsRepository>()),
+    );
+    // fulfillment:-------------------------------------------------------------
+    getIt.registerSingleton<GetFulfillmentOrdersUseCase>(
+      GetFulfillmentOrdersUseCase(getIt<FulfillmentRepository>()),
+    );
+    getIt.registerSingleton<GetFulfillmentOrderDetailUseCase>(
+      GetFulfillmentOrderDetailUseCase(getIt<FulfillmentRepository>()),
+    );
+    getIt.registerSingleton<UpdateFulfillmentStatusUseCase>(
+      UpdateFulfillmentStatusUseCase(getIt<FulfillmentRepository>()),
+    );
+    getIt.registerSingleton<UpdatePickedQuantityUseCase>(
+      UpdatePickedQuantityUseCase(getIt<FulfillmentRepository>()),
+    );
+    getIt.registerSingleton<AddPackageUseCase>(
+      AddPackageUseCase(getIt<FulfillmentRepository>()),
+    );
+    getIt.registerSingleton<UpdatePackageUseCase>(
+      UpdatePackageUseCase(getIt<FulfillmentRepository>()),
     );
 
     // order tracking:----------------------------------------------------------

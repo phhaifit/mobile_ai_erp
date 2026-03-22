@@ -8,12 +8,16 @@ import 'package:mobile_ai_erp/presentation/web_builder/cms_pages/cms_page_list_s
 import 'package:mobile_ai_erp/presentation/web_builder/cms_pages/cms_page_editor_screen.dart';
 import 'package:mobile_ai_erp/presentation/order_tracking/order_tracking.dart';
 import 'package:mobile_ai_erp/presentation/reports/reports_analytics.dart';
+import 'package:mobile_ai_erp/presentation/order_fulfillment/fulfillment_detail.dart';
+import 'package:mobile_ai_erp/presentation/order_fulfillment/fulfillment_list.dart';
+import 'package:mobile_ai_erp/presentation/order_fulfillment/order_tracking.dart';
+import 'package:mobile_ai_erp/presentation/order_fulfillment/packaging.dart';
+import 'package:mobile_ai_erp/presentation/order_fulfillment/print_label.dart';
 import 'package:flutter/material.dart';
 
 class Routes {
   Routes._();
 
-  //static variables
   static const String splash = '/splash';
   static const String login = '/login';
   static const String home = '/post';
@@ -25,6 +29,11 @@ class Routes {
   static const String cmsPageEditor = '/web-builder/cms-pages/editor';
   static const String orderTracking = OrderTrackingNavigation.routeName;
   static const String reports = '/reports';
+  static const String fulfillment = '/fulfillment';
+  static const String fulfillmentDetail = '/fulfillment/detail';
+  static const String fulfillmentTracking = '/fulfillment/tracking';
+  static const String fulfillmentPackaging = '/fulfillment/packaging';
+  static const String fulfillmentPrintLabel = '/fulfillment/print-label';
 
   static final routes = <String, WidgetBuilder>{
     login: (BuildContext context) => LoginScreen(),
@@ -37,5 +46,10 @@ class Routes {
     cmsPageEditor: (BuildContext context) => const CmsPageEditorScreen(),
     orderTracking: OrderTrackingNavigation.buildScreen,
     reports: (BuildContext context) => ReportsAnalyticsScreen(),
+    fulfillment: (BuildContext context) => FulfillmentListScreen(),
+    fulfillmentDetail: (BuildContext context) => FulfillmentDetailScreen(),
+    fulfillmentTracking: (BuildContext context) => FulfillmentTrackingScreen(),
+    fulfillmentPackaging: (BuildContext context) => PackagingScreen(),
+    fulfillmentPrintLabel: (BuildContext context) => PrintLabelScreen(),
   };
 }
