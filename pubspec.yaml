@@ -52,6 +52,7 @@ dependencies:
   sembast: ^3.4.4
   # T
   # U
+  uuid: ^4.3.3
   # V
   validators: ^3.0.0
   url_launcher: ^6.3.1
