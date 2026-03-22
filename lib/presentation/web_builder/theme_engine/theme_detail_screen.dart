@@ -1,100 +1,7 @@
 import 'package:flutter/material.dart';
-
-/// Mock theme data used for detail preview.
-/// In Phase 2 this will come from the domain layer.
-class _ThemeData {
-  final String id;
-  final String name;
-  final String description;
-  final Color primaryColor;
-  final Color accentColor;
-  final Color backgroundColor;
-  final String category;
-  final List<String> fonts;
-  final bool isActive;
-
-  const _ThemeData({
-    required this.id,
-    required this.name,
-    required this.description,
-    required this.primaryColor,
-    required this.accentColor,
-    required this.backgroundColor,
-    required this.category,
-    required this.fonts,
-    this.isActive = false,
-  });
-}
-
-const _allThemes = <String, _ThemeData>{
-  '1': _ThemeData(
-    id: '1',
-    name: 'Modern Minimal',
-    description: 'Clean and minimalist design with focus on content. '
-        'Perfect for stores that want a professional, distraction-free look.',
-    primaryColor: Color(0xFF1A1A2E),
-    accentColor: Color(0xFFE94560),
-    backgroundColor: Color(0xFFF5F5F5),
-    category: 'Minimal',
-    fonts: ['Inter', 'Roboto'],
-    isActive: true,
-  ),
-  '2': _ThemeData(
-    id: '2',
-    name: 'Ocean Breeze',
-    description: 'Fresh blue tones inspired by the sea. '
-        'Great for lifestyle, travel, and wellness brands.',
-    primaryColor: Color(0xFF0077B6),
-    accentColor: Color(0xFF00B4D8),
-    backgroundColor: Color(0xFFCAF0F8),
-    category: 'Nature',
-    fonts: ['Poppins', 'Open Sans'],
-  ),
-  '3': _ThemeData(
-    id: '3',
-    name: 'Sunset Glow',
-    description: 'Warm gradient colors for a vibrant storefront. '
-        'Ideal for food, fashion, and creative businesses.',
-    primaryColor: Color(0xFFFF6B35),
-    accentColor: Color(0xFFFFC045),
-    backgroundColor: Color(0xFFFFF8F0),
-    category: 'Vibrant',
-    fonts: ['Montserrat', 'Lato'],
-  ),
-  '4': _ThemeData(
-    id: '4',
-    name: 'Dark Elegance',
-    description: 'Sophisticated dark theme with gold accents. '
-        'Perfect for luxury goods, jewelry, and premium brands.',
-    primaryColor: Color(0xFF2D2D2D),
-    accentColor: Color(0xFFD4AF37),
-    backgroundColor: Color(0xFF1A1A1A),
-    category: 'Dark',
-    fonts: ['Playfair Display', 'Cormorant'],
-  ),
-  '5': _ThemeData(
-    id: '5',
-    name: 'Forest Green',
-    description: 'Natural earthy tones for eco-friendly brands. '
-        'Ideal for organic, sustainable, and outdoor products.',
-    primaryColor: Color(0xFF2D6A4F),
-    accentColor: Color(0xFF95D5B2),
-    backgroundColor: Color(0xFFF0FFF4),
-    category: 'Nature',
-    fonts: ['Nunito', 'Source Sans Pro'],
-  ),
-  '6': _ThemeData(
-    id: '6',
-    name: 'Tech Purple',
-    description: 'Modern tech-inspired purple and neon palette. '
-        'Great for SaaS, gadgets, and digital products.',
-    primaryColor: Color(0xFF7B2CBF),
-    accentColor: Color(0xFFC77DFF),
-    backgroundColor: Color(0xFFF8F0FF),
-    category: 'Vibrant',
-    fonts: ['Space Grotesk', 'JetBrains Mono'],
-  ),
-};
+import 'package:mobile_ai_erp/di/service_locator.dart';
+import 'package:mobile_ai_erp/domain/entity/web_builder/web_theme.dart';
+import 'package:mobile_ai_erp/presentation/web_builder/store/web_theme_store.dart';
 
 class ThemeDetailScreen extends StatefulWidget {
   const ThemeDetailScreen({super.key});
@@ -104,10 +11,10 @@ class ThemeDetailScreen extends StatefulWidget {
 }
 
 class _ThemeDetailScreenState extends State<ThemeDetailScreen> {
-  late _ThemeData _themeData;
+  final WebThemeStore _store = getIt<WebThemeStore>();
+  WebTheme? _themeData;
   bool _loaded = false;
 
-  // Customizable colors (user can tweak)
   late Color _customPrimary;
   late Color _customAccent;
 
@@ -117,10 +24,19 @@ class _ThemeDetailScreenState extends State<ThemeDetailScreen> {
     if (!_loaded) {
       final themeId =
           ModalRoute.of(context)?.settings.arguments as String? ?? '1';
-      _themeData = _allThemes[themeId] ?? _allThemes['1']!;
-      _customPrimary = _themeData.primaryColor;
-      _customAccent = _themeData.accentColor;
+      _loadTheme(themeId);
       _loaded = true;
+    }
+  }
+
+  Future<void> _loadTheme(String id) async {
+    await _store.getThemeById(id);
+    if (_store.selectedTheme != null && mounted) {
+      setState(() {
+        _themeData = _store.selectedTheme;
+        _customPrimary = Color(_themeData!.primaryColor ?? 0xFF000000);
+        _customAccent = Color(_themeData!.accentColor ?? 0xFFCCCCCC);
+      });
     }
   }
 
@@ -128,11 +44,20 @@ class _ThemeDetailScreenState extends State<ThemeDetailScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    if (_themeData == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Theme')),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final bgColor = Color(_themeData!.backgroundColor ?? 0xFFFFFFFF);
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(_themeData.name),
+        title: Text(_themeData!.name ?? ''),
         actions: [
-          if (_themeData.isActive)
+          if (_themeData!.isActive == true)
             const Padding(
               padding: EdgeInsets.only(right: 12),
               child: Chip(
@@ -146,32 +71,23 @@ class _ThemeDetailScreenState extends State<ThemeDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Live preview
-            _buildLivePreview(),
-            // Theme info & customization
+            _buildLivePreview(bgColor),
             Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Description
                   Text('About this theme', style: theme.textTheme.titleLarge),
                   const SizedBox(height: 8),
                   Text(
-                    _themeData.description,
+                    _themeData!.description ?? '',
                     style: theme.textTheme.bodyLarge,
                   ),
                   const SizedBox(height: 24),
-
-                  // Theme details
                   _buildDetailsSection(theme),
                   const SizedBox(height: 24),
-
-                  // Color customization
                   _buildColorCustomization(theme),
                   const SizedBox(height: 32),
-
-                  // Action buttons
                   _buildActionButtons(theme),
                 ],
               ),
@@ -182,17 +98,16 @@ class _ThemeDetailScreenState extends State<ThemeDetailScreen> {
     );
   }
 
-  Widget _buildLivePreview() {
+  Widget _buildLivePreview(Color bgColor) {
     return Container(
       width: double.infinity,
       height: 280,
-      color: _themeData.backgroundColor,
+      color: bgColor,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Mock nav bar
             Container(
               height: 36,
               decoration: BoxDecoration(
@@ -227,7 +142,6 @@ class _ThemeDetailScreenState extends State<ThemeDetailScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            // Hero section
             Expanded(
               flex: 2,
               child: Container(
@@ -276,7 +190,6 @@ class _ThemeDetailScreenState extends State<ThemeDetailScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            // Product grid mock
             Expanded(
               flex: 2,
               child: Row(
@@ -357,12 +270,12 @@ class _ThemeDetailScreenState extends State<ThemeDetailScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            _buildDetailRow(theme, 'Category', _themeData.category),
+            _buildDetailRow(theme, 'Category', _themeData!.category ?? ''),
             const Divider(height: 20),
-            _buildDetailRow(theme, 'Fonts', _themeData.fonts.join(', ')),
+            _buildDetailRow(theme, 'Fonts', (_themeData!.fonts ?? []).join(', ')),
             const Divider(height: 20),
             _buildDetailRow(
-                theme, 'Status', _themeData.isActive ? 'Active' : 'Inactive'),
+                theme, 'Status', _themeData!.isActive == true ? 'Active' : 'Inactive'),
           ],
         ),
       ),
@@ -382,6 +295,9 @@ class _ThemeDetailScreenState extends State<ThemeDetailScreen> {
   }
 
   Widget _buildColorCustomization(ThemeData theme) {
+    final origPrimary = Color(_themeData!.primaryColor ?? 0xFF000000);
+    final origAccent = Color(_themeData!.accentColor ?? 0xFFCCCCCC);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -394,7 +310,6 @@ class _ThemeDetailScreenState extends State<ThemeDetailScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        // Primary color picker
         _buildColorRow(
           theme,
           label: 'Primary Color',
@@ -412,7 +327,6 @@ class _ThemeDetailScreenState extends State<ThemeDetailScreen> {
           },
         ),
         const SizedBox(height: 16),
-        // Accent color picker
         _buildColorRow(
           theme,
           label: 'Accent Color',
@@ -430,14 +344,12 @@ class _ThemeDetailScreenState extends State<ThemeDetailScreen> {
           },
         ),
         const SizedBox(height: 12),
-        // Reset button
-        if (_customPrimary != _themeData.primaryColor ||
-            _customAccent != _themeData.accentColor)
+        if (_customPrimary != origPrimary || _customAccent != origAccent)
           TextButton.icon(
             onPressed: () {
               setState(() {
-                _customPrimary = _themeData.primaryColor;
-                _customAccent = _themeData.accentColor;
+                _customPrimary = origPrimary;
+                _customAccent = origAccent;
               });
             },
             icon: const Icon(Icons.restore, size: 18),
@@ -500,14 +412,17 @@ class _ThemeDetailScreenState extends State<ThemeDetailScreen> {
   }
 
   Widget _buildActionButtons(ThemeData theme) {
+    final origPrimary = Color(_themeData!.primaryColor ?? 0xFF000000);
+    final origAccent = Color(_themeData!.accentColor ?? 0xFFCCCCCC);
+
     return Row(
       children: [
         Expanded(
           child: OutlinedButton.icon(
             onPressed: () {
               setState(() {
-                _customPrimary = _themeData.primaryColor;
-                _customAccent = _themeData.accentColor;
+                _customPrimary = origPrimary;
+                _customAccent = origAccent;
               });
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -530,13 +445,19 @@ class _ThemeDetailScreenState extends State<ThemeDetailScreen> {
         Expanded(
           flex: 2,
           child: FilledButton.icon(
-            onPressed: () {
+            onPressed: () async {
+              await _store.applyTheme(
+                _themeData!.id!,
+                primaryColor: _customPrimary.toARGB32(),
+                accentColor: _customAccent.toARGB32(),
+              );
+              if (!mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
-                    _themeData.isActive
+                    _themeData!.isActive == true
                         ? 'Theme settings updated!'
-                        : 'Theme "${_themeData.name}" activated!',
+                        : 'Theme "${_themeData!.name}" activated!',
                   ),
                   behavior: SnackBarBehavior.floating,
                 ),
@@ -544,8 +465,8 @@ class _ThemeDetailScreenState extends State<ThemeDetailScreen> {
               Navigator.of(context).pop();
             },
             icon: Icon(
-                _themeData.isActive ? Icons.save : Icons.check_circle_outline),
-            label: Text(_themeData.isActive ? 'Save Changes' : 'Apply Theme'),
+                _themeData!.isActive == true ? Icons.save : Icons.check_circle_outline),
+            label: Text(_themeData!.isActive == true ? 'Save Changes' : 'Apply Theme'),
             style: FilledButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(

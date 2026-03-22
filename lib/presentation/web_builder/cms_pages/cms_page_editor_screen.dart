@@ -1,148 +1,8 @@
 import 'package:flutter/material.dart';
-
-class _ContentBlock {
-  final String type;
-  final String title;
-  final IconData icon;
-
-  const _ContentBlock({
-    required this.type,
-    required this.title,
-    required this.icon,
-  });
-}
-
-class _MockPageData {
-  final String id;
-  final String title;
-  final String description;
-  final String type;
-  final bool isPublished;
-  final List<_ContentBlock> blocks;
-  final String metaTitle;
-  final String metaDescription;
-  final String slug;
-
-  const _MockPageData({
-    required this.id,
-    required this.title,
-    required this.description,
-    required this.type,
-    required this.isPublished,
-    required this.blocks,
-    this.metaTitle = '',
-    this.metaDescription = '',
-    this.slug = '',
-  });
-}
-
-const _defaultBlocks = <_ContentBlock>[
-  _ContentBlock(type: 'hero', title: 'Hero Banner', icon: Icons.panorama),
-  _ContentBlock(type: 'text', title: 'Text Block', icon: Icons.text_fields),
-  _ContentBlock(
-      type: 'gallery', title: 'Image Gallery', icon: Icons.photo_library),
-];
-
-final _mockPageDataMap = <String, _MockPageData>{
-  '1': _MockPageData(
-    id: '1',
-    title: 'Home Page',
-    description:
-        'Main landing page with hero banner, featured products, and promotions',
-    type: 'Landing',
-    isPublished: true,
-    blocks: const [
-      _ContentBlock(type: 'hero', title: 'Hero Banner', icon: Icons.panorama),
-      _ContentBlock(
-          type: 'products',
-          title: 'Product Showcase',
-          icon: Icons.shopping_bag_outlined),
-      _ContentBlock(
-          type: 'cta',
-          title: 'Call to Action',
-          icon: Icons.touch_app_outlined),
-    ],
-    metaTitle: 'Jarvis Store — Smart Shopping',
-    metaDescription: 'Welcome to Jarvis Store. Discover the best products.',
-    slug: 'home',
-  ),
-  '2': _MockPageData(
-    id: '2',
-    title: 'About Us',
-    description: 'Company story, mission, and team introduction',
-    type: 'Info',
-    isPublished: true,
-    blocks: const [
-      _ContentBlock(type: 'hero', title: 'Hero Banner', icon: Icons.panorama),
-      _ContentBlock(
-          type: 'text', title: 'Our Story', icon: Icons.text_fields),
-      _ContentBlock(
-          type: 'gallery', title: 'Team Photos', icon: Icons.photo_library),
-    ],
-    metaTitle: 'About Us — Jarvis Store',
-    metaDescription: 'Learn about our mission and team.',
-    slug: 'about-us',
-  ),
-  '3': _MockPageData(
-    id: '3',
-    title: 'Contact',
-    description: 'Contact form, store locations, and business hours',
-    type: 'Info',
-    isPublished: false,
-    blocks: const [
-      _ContentBlock(
-          type: 'text', title: 'Contact Info', icon: Icons.text_fields),
-      _ContentBlock(
-          type: 'cta',
-          title: 'Send Message',
-          icon: Icons.touch_app_outlined),
-    ],
-    metaTitle: 'Contact Us — Jarvis Store',
-    metaDescription: 'Get in touch with our team.',
-    slug: 'contact',
-  ),
-  '4': _MockPageData(
-    id: '4',
-    title: 'Spring Sale 2026',
-    description:
-        'Seasonal promotion page with countdown timer and featured deals',
-    type: 'Marketing',
-    isPublished: true,
-    blocks: const [
-      _ContentBlock(type: 'hero', title: 'Sale Banner', icon: Icons.panorama),
-      _ContentBlock(
-          type: 'products',
-          title: 'Featured Deals',
-          icon: Icons.shopping_bag_outlined),
-      _ContentBlock(
-          type: 'cta', title: 'Shop Now', icon: Icons.touch_app_outlined),
-    ],
-    metaTitle: 'Spring Sale 2026 — Up to 50% Off',
-    metaDescription: 'Don\'t miss our biggest sale of the season!',
-    slug: 'spring-sale-2026',
-  ),
-  '5': _MockPageData(
-    id: '5',
-    title: 'FAQ',
-    description:
-        'Frequently asked questions about shipping, returns, and payments',
-    type: 'Support',
-    isPublished: false,
-    blocks: const [
-      _ContentBlock(
-          type: 'text',
-          title: 'Shipping Questions',
-          icon: Icons.text_fields),
-      _ContentBlock(
-          type: 'text', title: 'Return Policy', icon: Icons.text_fields),
-      _ContentBlock(
-          type: 'text', title: 'Payment Methods', icon: Icons.text_fields),
-    ],
-    metaTitle: 'FAQ — Jarvis Store',
-    metaDescription: 'Find answers to common questions.',
-    slug: 'faq',
-  ),
-};
+import 'package:mobile_ai_erp/di/service_locator.dart';
+import 'package:mobile_ai_erp/domain/entity/web_builder/cms_page.dart';
+import 'package:mobile_ai_erp/domain/entity/web_builder/content_block.dart';
+import 'package:mobile_ai_erp/presentation/web_builder/store/cms_page_store.dart';
 
 class CmsPageEditorScreen extends StatefulWidget {
   const CmsPageEditorScreen({super.key});
@@ -152,10 +12,12 @@ class CmsPageEditorScreen extends StatefulWidget {
 }
 
 class _CmsPageEditorScreenState extends State<CmsPageEditorScreen> {
+  final CmsPageStore _store = getIt<CmsPageStore>();
   final _formKey = GlobalKey<FormState>();
   bool _loaded = false;
   bool _isSaving = false;
   bool _isEditMode = false;
+  String? _pageId;
 
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
@@ -165,26 +27,29 @@ class _CmsPageEditorScreenState extends State<CmsPageEditorScreen> {
 
   String _selectedType = 'Landing';
   bool _isPublished = false;
-  late List<_ContentBlock> _blocks;
+  late List<ContentBlock> _blocks;
   bool _seoExpanded = false;
 
   static const _pageTypes = ['Landing', 'Info', 'Marketing', 'Support'];
 
-  static const _availableBlocks = <_ContentBlock>[
-    _ContentBlock(type: 'hero', title: 'Hero Banner', icon: Icons.panorama),
-    _ContentBlock(
-        type: 'text', title: 'Text Block', icon: Icons.text_fields),
-    _ContentBlock(
-        type: 'gallery', title: 'Image Gallery', icon: Icons.photo_library),
-    _ContentBlock(
-        type: 'products',
-        title: 'Product Showcase',
-        icon: Icons.shopping_bag_outlined),
-    _ContentBlock(
-        type: 'cta',
-        title: 'Call to Action',
-        icon: Icons.touch_app_outlined),
+  static const _availableBlockTypes = <Map<String, dynamic>>[
+    {'type': 'hero', 'title': 'Hero Banner', 'icon': Icons.panorama},
+    {'type': 'text', 'title': 'Text Block', 'icon': Icons.text_fields},
+    {'type': 'gallery', 'title': 'Image Gallery', 'icon': Icons.photo_library},
+    {'type': 'products', 'title': 'Product Showcase', 'icon': Icons.shopping_bag_outlined},
+    {'type': 'cta', 'title': 'Call to Action', 'icon': Icons.touch_app_outlined},
   ];
+
+  IconData _iconForBlockType(String? type) {
+    switch (type) {
+      case 'hero': return Icons.panorama;
+      case 'text': return Icons.text_fields;
+      case 'gallery': return Icons.photo_library;
+      case 'products': return Icons.shopping_bag_outlined;
+      case 'cta': return Icons.touch_app_outlined;
+      default: return Icons.extension;
+    }
+  }
 
   @override
   void initState() {
@@ -194,28 +59,40 @@ class _CmsPageEditorScreenState extends State<CmsPageEditorScreen> {
     _metaTitleController = TextEditingController();
     _metaDescriptionController = TextEditingController();
     _slugController = TextEditingController();
-    _blocks = List.from(_defaultBlocks);
+    _blocks = [
+      ContentBlock(type: 'hero', title: 'Hero Banner'),
+      ContentBlock(type: 'text', title: 'Text Block'),
+      ContentBlock(type: 'gallery', title: 'Image Gallery'),
+    ];
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_loaded) {
-      final pageId =
-          ModalRoute.of(context)?.settings.arguments as String?;
-      if (pageId != null && _mockPageDataMap.containsKey(pageId)) {
-        final data = _mockPageDataMap[pageId]!;
-        _isEditMode = true;
-        _titleController.text = data.title;
-        _descriptionController.text = data.description;
-        _selectedType = data.type;
-        _isPublished = data.isPublished;
-        _blocks = List.from(data.blocks);
-        _metaTitleController.text = data.metaTitle;
-        _metaDescriptionController.text = data.metaDescription;
-        _slugController.text = data.slug;
+      _pageId = ModalRoute.of(context)?.settings.arguments as String?;
+      if (_pageId != null) {
+        _loadPage(_pageId!);
       }
       _loaded = true;
+    }
+  }
+
+  Future<void> _loadPage(String id) async {
+    await _store.getPageById(id);
+    final data = _store.selectedPage;
+    if (data != null && mounted) {
+      setState(() {
+        _isEditMode = true;
+        _titleController.text = data.title ?? '';
+        _descriptionController.text = data.description ?? '';
+        _selectedType = data.type ?? 'Landing';
+        _isPublished = data.isPublished ?? false;
+        _blocks = List.from(data.blocks ?? []);
+        _metaTitleController.text = data.metaTitle ?? '';
+        _metaDescriptionController.text = data.metaDescription ?? '';
+        _slugController.text = data.slug ?? '';
+      });
     }
   }
 
@@ -272,8 +149,6 @@ class _CmsPageEditorScreenState extends State<CmsPageEditorScreen> {
       bottomNavigationBar: _buildBottomBar(theme),
     );
   }
-
-  // ── Page Info Section ──────────────────────────────────────────────
 
   Widget _buildPageInfoSection(ThemeData theme) {
     return Card(
@@ -345,8 +220,6 @@ class _CmsPageEditorScreenState extends State<CmsPageEditorScreen> {
     );
   }
 
-  // ── Content Blocks Section ─────────────────────────────────────────
-
   Widget _buildContentBlocksSection(ThemeData theme) {
     return Card(
       elevation: Theme.of(context).brightness == Brightness.dark ? 2 : 1,
@@ -409,7 +282,7 @@ class _CmsPageEditorScreenState extends State<CmsPageEditorScreen> {
     );
   }
 
-  Widget _buildBlockTile(ThemeData theme, _ContentBlock block, int index) {
+  Widget _buildBlockTile(ThemeData theme, ContentBlock block, int index) {
     return Container(
       key: ValueKey('${block.type}_$index'),
       margin: const EdgeInsets.only(bottom: 8),
@@ -420,10 +293,10 @@ class _CmsPageEditorScreenState extends State<CmsPageEditorScreen> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(
-        leading: Icon(block.icon, color: theme.colorScheme.primary),
-        title: Text(block.title),
+        leading: Icon(_iconForBlockType(block.type), color: theme.colorScheme.primary),
+        title: Text(block.title ?? ''),
         subtitle: Text(
-          block.type.toUpperCase(),
+          (block.type ?? '').toUpperCase(),
           style: theme.textTheme.labelSmall?.copyWith(
             color: theme.colorScheme.primary.withValues(alpha: 0.6),
           ),
@@ -466,15 +339,18 @@ class _CmsPageEditorScreenState extends State<CmsPageEditorScreen> {
               Text('Add Content Section',
                   style: theme.textTheme.titleMedium),
               const SizedBox(height: 16),
-              ..._availableBlocks.map((block) {
+              ..._availableBlockTypes.map((blockData) {
                 return ListTile(
-                  leading: Icon(block.icon, color: theme.colorScheme.primary),
-                  title: Text(block.title),
+                  leading: Icon(blockData['icon'] as IconData, color: theme.colorScheme.primary),
+                  title: Text(blockData['title'] as String),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                   onTap: () {
-                    setState(() => _blocks.add(block));
+                    setState(() => _blocks.add(ContentBlock(
+                      type: blockData['type'] as String,
+                      title: blockData['title'] as String,
+                    )));
                     Navigator.of(ctx).pop();
                   },
                 );
@@ -486,8 +362,6 @@ class _CmsPageEditorScreenState extends State<CmsPageEditorScreen> {
       },
     );
   }
-
-  // ── SEO Section ────────────────────────────────────────────────────
 
   Widget _buildSeoSection(ThemeData theme) {
     return Card(
@@ -541,8 +415,6 @@ class _CmsPageEditorScreenState extends State<CmsPageEditorScreen> {
       ),
     );
   }
-
-  // ── Bottom Bar ─────────────────────────────────────────────────────
 
   Widget _buildBottomBar(ThemeData theme) {
     return SafeArea(
@@ -598,8 +470,6 @@ class _CmsPageEditorScreenState extends State<CmsPageEditorScreen> {
     );
   }
 
-  // ── Handlers ───────────────────────────────────────────────────────
-
   void _handlePreview() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -613,7 +483,22 @@ class _CmsPageEditorScreenState extends State<CmsPageEditorScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isSaving = true);
-    await Future.delayed(const Duration(seconds: 1));
+
+    final page = CmsPage(
+      id: _pageId ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      title: _titleController.text,
+      description: _descriptionController.text,
+      type: _selectedType,
+      status: _isPublished ? 'Published' : 'Draft',
+      lastModified: DateTime.now(),
+      isPublished: _isPublished,
+      blocks: _blocks,
+      metaTitle: _metaTitleController.text,
+      metaDescription: _metaDescriptionController.text,
+      slug: _slugController.text,
+    );
+
+    await _store.savePage(page);
 
     if (!mounted) return;
     setState(() => _isSaving = false);

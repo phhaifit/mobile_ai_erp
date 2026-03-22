@@ -1,85 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:mobile_ai_erp/di/service_locator.dart';
+import 'package:mobile_ai_erp/domain/entity/web_builder/web_theme.dart';
+import 'package:mobile_ai_erp/presentation/web_builder/store/web_theme_store.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
-
-class _MockTheme {
-  final String id;
-  final String name;
-  final String description;
-  final Color primaryColor;
-  final Color accentColor;
-  final Color backgroundColor;
-  final String category;
-  final bool isActive;
-
-  const _MockTheme({
-    required this.id,
-    required this.name,
-    required this.description,
-    required this.primaryColor,
-    required this.accentColor,
-    required this.backgroundColor,
-    required this.category,
-    this.isActive = false,
-  });
-}
-
-const _mockThemes = <_MockTheme>[
-  _MockTheme(
-    id: '1',
-    name: 'Modern Minimal',
-    description: 'Clean and minimalist design with focus on content',
-    primaryColor: Color(0xFF1A1A2E),
-    accentColor: Color(0xFFE94560),
-    backgroundColor: Color(0xFFF5F5F5),
-    category: 'Minimal',
-    isActive: true,
-  ),
-  _MockTheme(
-    id: '2',
-    name: 'Ocean Breeze',
-    description: 'Fresh blue tones inspired by the sea',
-    primaryColor: Color(0xFF0077B6),
-    accentColor: Color(0xFF00B4D8),
-    backgroundColor: Color(0xFFCAF0F8),
-    category: 'Nature',
-  ),
-  _MockTheme(
-    id: '3',
-    name: 'Sunset Glow',
-    description: 'Warm gradient colors for a vibrant storefront',
-    primaryColor: Color(0xFFFF6B35),
-    accentColor: Color(0xFFFFC045),
-    backgroundColor: Color(0xFFFFF8F0),
-    category: 'Vibrant',
-  ),
-  _MockTheme(
-    id: '4',
-    name: 'Dark Elegance',
-    description: 'Sophisticated dark theme with gold accents',
-    primaryColor: Color(0xFF2D2D2D),
-    accentColor: Color(0xFFD4AF37),
-    backgroundColor: Color(0xFF1A1A1A),
-    category: 'Dark',
-  ),
-  _MockTheme(
-    id: '5',
-    name: 'Forest Green',
-    description: 'Natural earthy tones for eco-friendly brands',
-    primaryColor: Color(0xFF2D6A4F),
-    accentColor: Color(0xFF95D5B2),
-    backgroundColor: Color(0xFFF0FFF4),
-    category: 'Nature',
-  ),
-  _MockTheme(
-    id: '6',
-    name: 'Tech Purple',
-    description: 'Modern tech-inspired purple and neon palette',
-    primaryColor: Color(0xFF7B2CBF),
-    accentColor: Color(0xFFC77DFF),
-    backgroundColor: Color(0xFFF8F0FF),
-    category: 'Vibrant',
-  ),
-];
 
 class ThemeListScreen extends StatefulWidget {
   const ThemeListScreen({super.key});
@@ -89,15 +13,21 @@ class ThemeListScreen extends StatefulWidget {
 }
 
 class _ThemeListScreenState extends State<ThemeListScreen> {
+  final WebThemeStore _store = getIt<WebThemeStore>();
   String _selectedCategory = 'All';
 
   static const _categories = ['All', 'Minimal', 'Nature', 'Vibrant', 'Dark'];
 
-  List<_MockTheme> get _filteredThemes {
-    if (_selectedCategory == 'All') return _mockThemes;
-    return _mockThemes
-        .where((t) => t.category == _selectedCategory)
-        .toList();
+  @override
+  void initState() {
+    super.initState();
+    _store.getThemes();
+  }
+
+  List<WebTheme> get _filteredThemes {
+    final themes = _store.themeList?.themes ?? [];
+    if (_selectedCategory == 'All') return themes;
+    return themes.where((t) => t.category == _selectedCategory).toList();
   }
 
   @override
@@ -108,39 +38,45 @@ class _ThemeListScreenState extends State<ThemeListScreen> {
       appBar: AppBar(
         title: const Text('Themes'),
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Category filter chips
-          _buildCategoryFilter(theme),
-          // Theme grid
-          Expanded(
-            child: _filteredThemes.isEmpty
-                ? _buildEmptyState(theme)
-                : LayoutBuilder(
-              builder: (context, constraints) {
-                final crossAxisCount = constraints.maxWidth > 800
-                    ? 3
-                    : constraints.maxWidth > 500
-                        ? 2
-                        : 1;
-                return GridView.builder(
-                  padding: const EdgeInsets.all(16),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: crossAxisCount,
-                    mainAxisExtent: 260,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                  ),
-                  itemCount: _filteredThemes.length,
-                  itemBuilder: (context, index) {
-                    return _buildThemeCard(context, _filteredThemes[index]);
+      body: Observer(
+        builder: (_) {
+          if (_store.loading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildCategoryFilter(theme),
+              Expanded(
+                child: _filteredThemes.isEmpty
+                    ? _buildEmptyState(theme)
+                    : LayoutBuilder(
+                  builder: (context, constraints) {
+                    final crossAxisCount = constraints.maxWidth > 800
+                        ? 3
+                        : constraints.maxWidth > 500
+                            ? 2
+                            : 1;
+                    return GridView.builder(
+                      padding: const EdgeInsets.all(16),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        mainAxisExtent: 260,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                      ),
+                      itemCount: _filteredThemes.length,
+                      itemBuilder: (context, index) {
+                        return _buildThemeCard(context, _filteredThemes[index]);
+                      },
+                    );
                   },
-                );
-              },
-            ),
-          ),
-        ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -196,8 +132,11 @@ class _ThemeListScreenState extends State<ThemeListScreen> {
     );
   }
 
-  Widget _buildThemeCard(BuildContext context, _MockTheme mockTheme) {
+  Widget _buildThemeCard(BuildContext context, WebTheme webTheme) {
     final theme = Theme.of(context);
+    final primaryColor = Color(webTheme.primaryColor ?? 0xFF000000);
+    final accentColor = Color(webTheme.accentColor ?? 0xFFCCCCCC);
+    final bgColor = Color(webTheme.backgroundColor ?? 0xFFFFFFFF);
 
     return Card(
       elevation: Theme.of(context).brightness == Brightness.dark ? 2 : 1,
@@ -209,15 +148,13 @@ class _ThemeListScreenState extends State<ThemeListScreen> {
         onTap: () {
           Navigator.of(context).pushNamed(
             Routes.themeDetail,
-            arguments: mockTheme.id,
+            arguments: webTheme.id,
           );
         },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Theme color preview
-            _buildThemePreview(mockTheme),
-            // Theme info
+            _buildThemePreview(webTheme, primaryColor, accentColor, bgColor),
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(14),
@@ -228,13 +165,13 @@ class _ThemeListScreenState extends State<ThemeListScreen> {
                       children: [
                         Expanded(
                           child: Text(
-                            mockTheme.name,
+                            webTheme.name ?? '',
                             style: theme.textTheme.titleMedium,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        if (mockTheme.isActive)
+                        if (webTheme.isActive == true)
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 8,
@@ -256,7 +193,7 @@ class _ThemeListScreenState extends State<ThemeListScreen> {
                     const SizedBox(height: 4),
                     Expanded(
                       child: Text(
-                        mockTheme.description,
+                        webTheme.description ?? '',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.textTheme.bodyMedium?.color
                               ?.withValues(alpha: 0.6),
@@ -275,32 +212,29 @@ class _ThemeListScreenState extends State<ThemeListScreen> {
     );
   }
 
-  Widget _buildThemePreview(_MockTheme mockTheme) {
+  Widget _buildThemePreview(WebTheme webTheme, Color primaryColor, Color accentColor, Color bgColor) {
     return Container(
       height: 140,
-      color: mockTheme.backgroundColor,
+      color: bgColor,
       child: Stack(
         children: [
-          // Mock storefront layout
           Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Nav bar mock
                 Container(
                   height: 24,
                   decoration: BoxDecoration(
-                    color: mockTheme.primaryColor,
+                    color: primaryColor,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
                 const SizedBox(height: 8),
-                // Hero banner mock
                 Container(
                   height: 40,
                   decoration: BoxDecoration(
-                    color: mockTheme.accentColor.withValues(alpha: 0.3),
+                    color: accentColor.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Center(
@@ -308,14 +242,13 @@ class _ThemeListScreenState extends State<ThemeListScreen> {
                       width: 60,
                       height: 12,
                       decoration: BoxDecoration(
-                        color: mockTheme.accentColor,
+                        color: accentColor,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 8),
-                // Product cards mock
                 Row(
                   children: List.generate(
                     3,
@@ -324,11 +257,10 @@ class _ThemeListScreenState extends State<ThemeListScreen> {
                         height: 36,
                         margin: EdgeInsets.only(right: i < 2 ? 6 : 0),
                         decoration: BoxDecoration(
-                          color: mockTheme.primaryColor.withValues(alpha: 0.1),
+                          color: primaryColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(4),
                           border: Border.all(
-                            color:
-                                mockTheme.primaryColor.withValues(alpha: 0.2),
+                            color: primaryColor.withValues(alpha: 0.2),
                           ),
                         ),
                       ),
@@ -338,18 +270,17 @@ class _ThemeListScreenState extends State<ThemeListScreen> {
               ],
             ),
           ),
-          // Category badge
           Positioned(
             top: 8,
             right: 8,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: mockTheme.primaryColor,
+                color: primaryColor,
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
-                mockTheme.category,
+                webTheme.category ?? '',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 10,
