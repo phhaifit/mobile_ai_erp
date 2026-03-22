@@ -39,4 +39,28 @@ abstract class _OrderStore with Store {
     print('Mock: Return request submitted for $orderId - Reason: $reason');
     isLoading = false;
   }
+
+  @action
+  Future<void> cancelOrder(String orderId) async {
+    isLoading = true;
+    await Future.delayed(const Duration(seconds: 1)); // Mock API delay
+
+    // Find the order and update its status locally for the mock UI
+    final index = orders.indexWhere((o) => o.id == orderId);
+    if (index != -1) {
+      final oldOrder = orders[index];
+      // Create a new order object with the canceled status
+      orders[index] = Order(
+        id: oldOrder.id,
+        status: OrderStatus.canceled,
+        date: oldOrder.date,
+        totalAmount: oldOrder.totalAmount,
+        shippingFee: oldOrder.shippingFee,
+        shippingAddress: oldOrder.shippingAddress,
+        paymentMethod: oldOrder.paymentMethod,
+        items: oldOrder.items,
+      );
+    }
+    isLoading = false;
+  }
 }

@@ -29,7 +29,7 @@ abstract class _AddressStore with Store {
   Future<void> setDefault(String id) async {
     isLoading = true;
     await _repository.setDefault(id); // Use _repository here
-    await fetchAddresses(); 
+    await fetchAddresses();
   }
 
   @action

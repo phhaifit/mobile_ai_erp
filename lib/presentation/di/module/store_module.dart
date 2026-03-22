@@ -29,14 +29,10 @@ class StoreModule {
     getIt.registerFactory(
       () => FormStore(getIt<FormErrorStore>(), getIt<ErrorStore>()),
     );
-    getIt.registerFactory<ProfileStore>(() => ProfileStore());
     
-    getIt.registerFactory<AddressStore>(
-        () => AddressStore(getIt<AddressRepository>()));
-        
-    getIt.registerFactory<OrderStore>(
-        () => OrderStore(getIt<OrderRepository>()));
-
+    getIt.registerLazySingleton<ProfileStore>(() => ProfileStore());
+    getIt.registerLazySingleton<AddressStore>(() => AddressStore(getIt<AddressRepository>()));
+    getIt.registerLazySingleton<OrderStore>(() => OrderStore(getIt<OrderRepository>()));
     getIt.registerLazySingleton(() => ReportsMockRepository());
 
     // stores:------------------------------------------------------------------

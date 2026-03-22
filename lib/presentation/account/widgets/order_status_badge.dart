@@ -28,10 +28,16 @@ class OrderStatusBadge extends StatelessWidget {
         bgColor = Colors.red.shade100;
         text = 'Canceled';
         break;
+      case OrderStatus.returned:
+        bgColor = Colors.purple.shade100;
+        text = 'Returned';
+        break;
     }
 
     return Chip(
-      label: Text(text, style: TextStyle(color: bgColor.withOpacity(1.0).withBlue(150), fontSize: 12)),
+      label: Text(text,
+          style: TextStyle(
+              color: bgColor.withOpacity(1.0).withBlue(150), fontSize: 12)),
       backgroundColor: bgColor,
       visualDensity: VisualDensity.compact,
     );

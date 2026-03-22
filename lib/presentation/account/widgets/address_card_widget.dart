@@ -22,9 +22,8 @@ class AddressCardWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         // Highlight the border in blue if it is the default address
         side: BorderSide(
-          color: address.isDefault ? Colors.blue : Colors.grey.shade300, 
-          width: address.isDefault ? 2 : 1
-        ),
+            color: address.isDefault ? Colors.blue : Colors.grey.shade300,
+            width: address.isDefault ? 2 : 1),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -36,26 +35,30 @@ class AddressCardWidget extends StatelessWidget {
               children: [
                 Text(
                   address.fullName,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 if (address.isDefault)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.blue.shade50,
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: const Text(
-                      'Default', 
-                      style: TextStyle(color: Colors.blue, fontSize: 12, fontWeight: FontWeight.bold)
-                    ),
+                    child: const Text('Default',
+                        style: TextStyle(
+                            color: Colors.blue,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold)),
                   ),
               ],
             ),
             const SizedBox(height: 8),
             Text(address.phone, style: TextStyle(color: Colors.grey.shade700)),
             const SizedBox(height: 4),
-            Text('${address.street}, ${address.city}', style: TextStyle(color: Colors.grey.shade700)),
+            Text('${address.street}, ${address.city}',
+                style: TextStyle(color: Colors.grey.shade700)),
             const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -70,7 +73,8 @@ class AddressCardWidget extends StatelessWidget {
                   onPressed: onEdit,
                   style: OutlinedButton.styleFrom(
                     visualDensity: VisualDensity.compact,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
                   ),
                   child: const Text('Edit'),
                 ),

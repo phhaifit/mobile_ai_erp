@@ -7,7 +7,7 @@ class ProfileStore = _ProfileStore with _$ProfileStore;
 abstract class _ProfileStore with Store {
   // Assuming logged-in state per Feature 0 boundaries
   @observable
-  String userName = "Khang"; 
+  String userName = "Khang";
 
   @observable
   String userEmail = "khang@gmail.com";
@@ -16,5 +16,5 @@ abstract class _ProfileStore with Store {
   String userPhone = "0901234567";
 
   @observable
-  int loyaltyPoints = 1250; 
+  int loyaltyPoints = 1250;
 }
