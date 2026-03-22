@@ -28,6 +28,7 @@ import 'package:mobile_ai_erp/domain/usecase/web_builder/get_web_theme_by_id_use
 import 'package:mobile_ai_erp/domain/usecase/web_builder/get_web_themes_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/save_cms_page_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/save_store_settings_usecase.dart';
+import 'package:mobile_ai_erp/presentation/product_detail/store/product_detail_store.dart';
 import 'package:mobile_ai_erp/presentation/customer_management/store/customer_store.dart';
 import 'package:mobile_ai_erp/presentation/home/store/language/language_store.dart';
 import 'package:mobile_ai_erp/presentation/home/store/theme/theme_store.dart';
@@ -145,6 +146,10 @@ class StoreModule {
         getIt<SaveStoreSettingsUseCase>(),
         getIt<ErrorStore>(),
       ),
+    );
+
+    getIt.registerFactory<ProductDetailStore>(
+      () => ProductDetailStore(getIt<ErrorStore>()),
     );
 
     getIt.registerSingleton<FulfillmentStore>(

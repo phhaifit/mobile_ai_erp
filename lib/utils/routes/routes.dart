@@ -6,6 +6,7 @@ import 'package:mobile_ai_erp/presentation/web_builder/theme_engine/theme_list_s
 import 'package:mobile_ai_erp/presentation/web_builder/theme_engine/theme_detail_screen.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/cms_pages/cms_page_list_screen.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/cms_pages/cms_page_editor_screen.dart';
+import 'package:mobile_ai_erp/presentation/product_detail/product_detail_screen.dart';
 import 'package:mobile_ai_erp/presentation/order_tracking/order_tracking.dart';
 import 'package:mobile_ai_erp/presentation/reports/reports_analytics.dart';
 import 'package:mobile_ai_erp/presentation/order_fulfillment/fulfillment_detail.dart';
@@ -29,6 +30,7 @@ class Routes {
   static const String cmsPageEditor = '/web-builder/cms-pages/editor';
   static const String orderTracking = OrderTrackingNavigation.routeName;
   static const String reports = '/reports';
+  static const String productDetail = '/product-detail';
   static const String fulfillment = '/fulfillment';
   static const String fulfillmentDetail = '/fulfillment/detail';
   static const String fulfillmentTracking = '/fulfillment/tracking';
@@ -46,6 +48,7 @@ class Routes {
     cmsPageEditor: (BuildContext context) => const CmsPageEditorScreen(),
     orderTracking: OrderTrackingNavigation.buildScreen,
     reports: (BuildContext context) => ReportsAnalyticsScreen(),
+    productDetail: (BuildContext context) => const ProductDetailScreen(),
     fulfillment: (BuildContext context) => FulfillmentListScreen(),
     fulfillmentDetail: (BuildContext context) => FulfillmentDetailScreen(),
     fulfillmentTracking: (BuildContext context) => FulfillmentTrackingScreen(),
