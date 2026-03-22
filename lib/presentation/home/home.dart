@@ -3,6 +3,7 @@ import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/presentation/home/store/language/language_store.dart';
 import 'package:mobile_ai_erp/presentation/home/store/theme/theme_store.dart';
 import 'package:mobile_ai_erp/presentation/post/post_list.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_navigator.dart';
 import 'package:mobile_ai_erp/utils/locale/app_localization.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
 import 'package:flutter/material.dart';
@@ -23,7 +24,27 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _buildAppBar(),
-      body: PostListScreen(),
+      body: Column(
+        children: [
+          _buildReportsEntry(),
+          Expanded(child: PostListScreen()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReportsEntry() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      child: Card(
+        child: ListTile(
+          leading: Icon(Icons.insights_outlined),
+          title: Text('Reports & Analytics'),
+          subtitle: Text('Sales, inventory, product, and P&L (offline mock).'),
+          trailing: Icon(Icons.chevron_right),
+          onTap: () => Navigator.of(context).pushNamed(Routes.reports),
+        ),
+      ),
     );
   }
 
@@ -37,23 +58,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<Widget> _buildActions(BuildContext context) {
     return <Widget>[
+      _buildProductMetadataButton(),
       _buildOrderTrackingButton(),
       _buildLanguageButton(),
       _buildThemeButton(),
       _buildLogoutButton(),
     ];
-  }
-
-  Widget _buildOrderTrackingButton() {
-    return IconButton(
-      tooltip: 'Track Order',
-      onPressed: () {
-        Navigator.of(context).pushNamed(Routes.orderTracking);
-      },
-      icon: Icon(
-        Icons.local_shipping_outlined,
-      ),
-    );
   }
 
   Widget _buildThemeButton() {
