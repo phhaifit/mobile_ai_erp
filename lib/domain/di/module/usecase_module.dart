@@ -1,10 +1,13 @@
 import 'dart:async';
 
 import 'package:mobile_ai_erp/domain/repository/post/post_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/order_tracking/order_tracking_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/user_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/web_builder/cms_page_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/web_builder/store_settings_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/web_builder/web_theme_repository.dart';
+import 'package:mobile_ai_erp/domain/usecase/order_tracking/find_order_tracking_scenario_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/order_tracking/get_order_tracking_scenarios_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/post/delete_post_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/post/find_post_by_id_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/post/get_post_usecase.dart';
@@ -82,6 +85,14 @@ class UseCaseModule {
     );
     getIt.registerSingleton<SaveStoreSettingsUseCase>(
       SaveStoreSettingsUseCase(getIt<StoreSettingsRepository>()),
+    );
+
+    // order tracking:----------------------------------------------------------
+    getIt.registerSingleton<GetOrderTrackingScenariosUseCase>(
+      GetOrderTrackingScenariosUseCase(getIt<OrderTrackingRepository>()),
+    );
+    getIt.registerSingleton<FindOrderTrackingScenarioUseCase>(
+      FindOrderTrackingScenarioUseCase(getIt<OrderTrackingRepository>()),
     );
   }
 }
