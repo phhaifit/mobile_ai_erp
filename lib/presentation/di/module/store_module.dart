@@ -41,6 +41,14 @@ class StoreModule {
         getIt<ErrorStore>(),
       ),
     );
+
+    getIt.registerSingleton<PostStore>(
+      PostStore(
+        getIt<GetPostUseCase>(),
+        getIt<ErrorStore>(),
+      ),
+    );
+
     getIt.registerSingleton<ReportsStore>(
       ReportsStore(
         getIt<ReportsMockRepository>(),
