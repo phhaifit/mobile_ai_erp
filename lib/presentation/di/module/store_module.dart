@@ -80,6 +80,10 @@ class StoreModule {
     getIt.registerSingleton<CustomerStore>(
       CustomerStore(
         getIt<CustomerRepository>(),
+        getIt<ErrorStore>(),
+      ),
+    );
+
     getIt.registerSingleton<OrderTrackingStore>(
       OrderTrackingStore(
         getIt<GetOrderTrackingScenariosUseCase>(),
