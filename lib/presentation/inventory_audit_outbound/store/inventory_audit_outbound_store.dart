@@ -1,285 +1,314 @@
+import 'package:mobx/mobx.dart';
 import 'package:mobile_ai_erp/domain/entity/inventory_audit_outbound/audit_line.dart';
 import 'package:mobile_ai_erp/domain/entity/inventory_audit_outbound/audit_record.dart';
 import 'package:mobile_ai_erp/domain/entity/inventory_audit_outbound/inventory_item.dart';
 import 'package:mobile_ai_erp/domain/entity/inventory_audit_outbound/inventory_warehouse.dart';
 import 'package:mobile_ai_erp/domain/entity/inventory_audit_outbound/outbound_record.dart';
-import 'package:mobile_ai_erp/domain/repository/inventory_audit_outbound/inventory_audit_outbound_repository.dart';
-import 'package:mobx/mobx.dart';
+import 'package:mobile_ai_erp/domain/usecase/inventory_audit_outbound/get_inventory_audit_records_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/inventory_audit_outbound/get_inventory_by_warehouse_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/inventory_audit_outbound/get_inventory_outbound_records_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/inventory_audit_outbound/get_inventory_warehouses_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/inventory_audit_outbound/save_inventory_audit_session_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/inventory_audit_outbound/submit_inventory_outbound_usecase.dart';
 
-class InventoryAuditOutboundStore {
-  InventoryAuditOutboundStore(this._repository)
-      : _auditLines = Computed<List<AuditLine>>(() => const []),
-        _mismatchCount = Computed<int>(() => 0),
-        _totalAbsoluteDiscrepancy = Computed<int>(() => 0),
-        _availableProductsForOutbound = Computed<List<InventoryItem>>(
-          () => const [],
-        ),
-        _selectedOutboundItem = Computed<InventoryItem?>(() => null),
-        _canSubmitOutbound = Computed<bool>(() => false),
-        _canSaveAudit = Computed<bool>(() => false) {
-    _auditLines = Computed<List<AuditLine>>(_computeAuditLines);
-    _mismatchCount = Computed<int>(
-      () => auditLines.where((line) => line.discrepancy != 0).length,
-    );
-    _totalAbsoluteDiscrepancy = Computed<int>(
-      () => auditLines.fold<int>(
+part 'inventory_audit_outbound_store.g.dart';
+
+class InventoryAuditOutboundStore = _InventoryAuditOutboundStore
+    with _$InventoryAuditOutboundStore;
+
+abstract class _InventoryAuditOutboundStore with Store {
+  _InventoryAuditOutboundStore(
+    this._getInventoryWarehousesUseCase,
+    this._getInventoryByWarehouseUseCase,
+    this._saveInventoryAuditSessionUseCase,
+    this._getInventoryAuditRecordsUseCase,
+    this._submitInventoryOutboundUseCase,
+    this._getInventoryOutboundRecordsUseCase,
+  );
+
+  final GetInventoryWarehousesUseCase _getInventoryWarehousesUseCase;
+  final GetInventoryByWarehouseUseCase _getInventoryByWarehouseUseCase;
+  final SaveInventoryAuditSessionUseCase _saveInventoryAuditSessionUseCase;
+  final GetInventoryAuditRecordsUseCase _getInventoryAuditRecordsUseCase;
+  final SubmitInventoryOutboundUseCase _submitInventoryOutboundUseCase;
+  final GetInventoryOutboundRecordsUseCase _getInventoryOutboundRecordsUseCase;
+
+  @observable
+  bool isLoading = false;
+
+  @observable
+  bool isSubmitting = false;
+
+  @observable
+  String errorMessage = '';
+
+  @observable
+  ObservableList<InventoryWarehouse> warehouses =
+      ObservableList<InventoryWarehouse>();
+
+  @observable
+  ObservableList<InventoryItem> inventoryItems = ObservableList<InventoryItem>();
+
+  @observable
+  ObservableList<AuditRecord> auditRecords = ObservableList<AuditRecord>();
+
+  @observable
+  ObservableList<OutboundRecord> outboundRecords =
+      ObservableList<OutboundRecord>();
+
+  @observable
+  ObservableList<InventoryItem> outboundInventoryItems =
+      ObservableList<InventoryItem>();
+
+  @observable
+  String? selectedWarehouseId;
+
+  @observable
+  String? selectedAuditProductId;
+
+  @observable
+  ObservableMap<String, String> physicalCountInputs = ObservableMap<String, String>();
+
+  @observable
+  String? outboundWarehouseId;
+
+  @observable
+  String? outboundProductId;
+
+  @observable
+  String outboundQuantityInput = '';
+
+  @observable
+  String outboundNote = '';
+
+  @computed
+  int? get outboundQuantity => int.tryParse(outboundQuantityInput);
+
+  @computed
+  List<AuditLine> get auditLines => inventoryItems
+      .map(
+        (item) {
+          final physical = getResolvedPhysicalCount(item);
+          return AuditLine(
+            productId: item.productId,
+            productName: item.productName,
+            systemQty: item.systemQty,
+            physicalQty: physical,
+            discrepancy: physical - item.systemQty,
+            unit: item.unit,
+          );
+        },
+      )
+      .toList(growable: false);
+
+  @computed
+  int get mismatchCount => auditLines.where((line) => line.discrepancy != 0).length;
+
+  @computed
+  int get totalAbsoluteDiscrepancy => auditLines.fold<int>(
         0,
         (sum, line) => sum + line.discrepancy.abs(),
-      ),
-    );
-    _availableProductsForOutbound = Computed<List<InventoryItem>>(
-      _computeAvailableProductsForOutbound,
-    );
-    _selectedOutboundItem = Computed<InventoryItem?>(_computeSelectedOutboundItem);
-    _canSubmitOutbound = Computed<bool>(_computeCanSubmitOutbound);
-    _canSaveAudit = Computed<bool>(
-      () => selectedWarehouseId != null && inventoryItems.isNotEmpty,
-    );
+      );
+
+  @computed
+  List<InventoryItem> get availableProductsForOutbound {
+    final warehouseId = outboundWarehouseId;
+    if (warehouseId == null) {
+      return const <InventoryItem>[];
+    }
+    return outboundInventoryItems
+        .where((item) => item.warehouseId == warehouseId)
+        .toList(growable: false);
   }
 
-  final InventoryAuditOutboundRepository _repository;
+  @computed
+  InventoryItem? get selectedOutboundItem {
+    final productId = outboundProductId;
+    if (productId == null) {
+      return null;
+    }
+    for (final item in availableProductsForOutbound) {
+      if (item.productId == productId) {
+        return item;
+      }
+    }
+    return null;
+  }
 
-  final ObservableList<InventoryWarehouse> warehouses =
-      ObservableList<InventoryWarehouse>();
-  final ObservableList<InventoryItem> inventoryItems =
-      ObservableList<InventoryItem>();
-  final ObservableList<AuditRecord> auditRecords = ObservableList<AuditRecord>();
-  final ObservableList<OutboundRecord> outboundRecords =
-      ObservableList<OutboundRecord>();
-  final ObservableList<InventoryItem> outboundInventoryItems =
-      ObservableList<InventoryItem>();
+  @computed
+  bool get canSaveAudit => selectedWarehouseId != null && inventoryItems.isNotEmpty;
 
-  final Observable<bool> _isLoading = Observable(false);
-  final Observable<bool> _isSubmitting = Observable(false);
-  final Observable<String> _errorMessage = Observable('');
+  @computed
+  bool get canSubmitOutbound {
+    final warehouseId = outboundWarehouseId;
+    final productId = outboundProductId;
+    final qty = outboundQuantity;
+    final selectedItem = selectedOutboundItem;
 
-  final Observable<String?> _selectedWarehouseId = Observable(null);
-  final Observable<String?> _selectedAuditProductId = Observable(null);
-  final ObservableMap<String, String> _physicalCountInputs =
-      ObservableMap<String, String>();
+    if (warehouseId == null || productId == null || qty == null || qty <= 0) {
+      return false;
+    }
+    if (selectedItem == null) {
+      return false;
+    }
+    return qty <= selectedItem.systemQty;
+  }
 
-  final Observable<String?> _outboundWarehouseId = Observable(null);
-  final Observable<String?> _outboundProductId = Observable(null);
-  final Observable<String> _outboundQuantityInput = Observable('');
-  final Observable<String> _outboundNote = Observable('');
-
-  late Computed<List<AuditLine>> _auditLines;
-  late Computed<int> _mismatchCount;
-  late Computed<int> _totalAbsoluteDiscrepancy;
-  late Computed<List<InventoryItem>> _availableProductsForOutbound;
-  late Computed<InventoryItem?> _selectedOutboundItem;
-  late Computed<bool> _canSubmitOutbound;
-  late Computed<bool> _canSaveAudit;
-
-  bool get isLoading => _isLoading.value;
-  bool get isSubmitting => _isSubmitting.value;
-  String get errorMessage => _errorMessage.value;
-
-  String? get selectedWarehouseId => _selectedWarehouseId.value;
-  String? get selectedAuditProductId => _selectedAuditProductId.value;
-
-  String? get outboundWarehouseId => _outboundWarehouseId.value;
-  String? get outboundProductId => _outboundProductId.value;
-  String get outboundQuantityInput => _outboundQuantityInput.value;
-  String get outboundNote => _outboundNote.value;
-
-  List<AuditLine> get auditLines => _auditLines.value;
-  int get mismatchCount => _mismatchCount.value;
-  int get totalAbsoluteDiscrepancy => _totalAbsoluteDiscrepancy.value;
-  List<InventoryItem> get availableProductsForOutbound =>
-      _availableProductsForOutbound.value;
-  InventoryItem? get selectedOutboundItem => _selectedOutboundItem.value;
-  bool get canSubmitOutbound => _canSubmitOutbound.value;
-  bool get canSaveAudit => _canSaveAudit.value;
-
-  int? get outboundQuantity => int.tryParse(_outboundQuantityInput.value);
-
+  @action
   Future<void> loadInitialData() async {
-    _setLoading(true);
+    isLoading = true;
     clearError();
 
     try {
-      final loadedWarehouses = await _repository.getWarehouses();
-      final loadedAuditRecords = await _repository.getAuditRecords();
-      final loadedOutboundRecords = await _repository.getOutboundRecords();
+      final loadedWarehouses = await _getInventoryWarehousesUseCase.call(params: null);
+      final loadedAuditRecords = await _getInventoryAuditRecordsUseCase.call(params: null);
+      final loadedOutboundRecords =
+          await _getInventoryOutboundRecordsUseCase.call(params: null);
 
-      runInAction(() {
-        warehouses
-          ..clear()
-          ..addAll(loadedWarehouses);
-
-        auditRecords
-          ..clear()
-          ..addAll(loadedAuditRecords);
-
-        outboundRecords
-          ..clear()
-          ..addAll(loadedOutboundRecords);
-      });
+      warehouses = ObservableList<InventoryWarehouse>.of(loadedWarehouses);
+      auditRecords = ObservableList<AuditRecord>.of(loadedAuditRecords);
+      outboundRecords = ObservableList<OutboundRecord>.of(loadedOutboundRecords);
 
       if (loadedWarehouses.isNotEmpty) {
         await setSelectedWarehouse(loadedWarehouses.first.id);
         await setOutboundWarehouse(loadedWarehouses.first.id);
       }
     } catch (error) {
-      _setError(error.toString());
+      errorMessage = error.toString();
     } finally {
-      _setLoading(false);
+      isLoading = false;
     }
   }
 
+  @action
   Future<void> setSelectedWarehouse(String? warehouseId) async {
-    runInAction(() {
-      _selectedWarehouseId.value = warehouseId;
-      _selectedAuditProductId.value = null;
-      _physicalCountInputs.clear();
-    });
+    selectedWarehouseId = warehouseId;
+    selectedAuditProductId = null;
+    physicalCountInputs.clear();
 
     if (warehouseId == null) {
-      runInAction(() {
-        inventoryItems.clear();
-      });
+      inventoryItems.clear();
       return;
     }
 
-    final loadedInventory = await _repository.getInventoryByWarehouse(warehouseId);
-
-    runInAction(() {
-      inventoryItems
-        ..clear()
-        ..addAll(loadedInventory);
-      if (loadedInventory.isNotEmpty) {
-        _selectedAuditProductId.value = loadedInventory.first.productId;
-      }
-    });
+    final loadedInventory =
+        await _getInventoryByWarehouseUseCase.call(params: warehouseId);
+    inventoryItems = ObservableList<InventoryItem>.of(loadedInventory);
+    if (loadedInventory.isNotEmpty) {
+      selectedAuditProductId = loadedInventory.first.productId;
+    }
   }
 
+  @action
   void setSelectedAuditProduct(String? productId) {
-    runInAction(() {
-      _selectedAuditProductId.value = productId;
-    });
+    selectedAuditProductId = productId;
   }
 
+  @action
   void setPhysicalCount(String productId, String input) {
-    runInAction(() {
-      _physicalCountInputs[productId] = input;
-    });
+    physicalCountInputs[productId] = input;
   }
 
-  String getPhysicalCountInput(String productId) {
-    return _physicalCountInputs[productId] ?? '';
-  }
+  String getPhysicalCountInput(String productId) => physicalCountInputs[productId] ?? '';
 
   int getResolvedPhysicalCount(InventoryItem item) {
-    final input = _physicalCountInputs[item.productId];
+    final input = physicalCountInputs[item.productId];
     final parsed = int.tryParse(input ?? '');
     return parsed ?? item.systemQty;
   }
 
+  @action
   Future<bool> saveAuditSession() async {
     if (!canSaveAudit || selectedWarehouseId == null) {
-      _setError('Select a warehouse to save audit.');
+      errorMessage = 'Select a warehouse to save audit.';
       return false;
     }
 
-    _setSubmitting(true);
+    isSubmitting = true;
     clearError();
 
     try {
-      final record = await _repository.saveAuditSession(
-        warehouseId: selectedWarehouseId!,
-        lines: auditLines,
+      final record = await _saveInventoryAuditSessionUseCase.call(
+        params: SaveInventoryAuditSessionParams(
+          warehouseId: selectedWarehouseId!,
+          lines: auditLines,
+        ),
       );
 
-      runInAction(() {
-        auditRecords.insert(0, record);
-      });
-
+      auditRecords.insert(0, record);
       await _reloadInventoryForSelectedWarehouse();
-      runInAction(() {
-        _physicalCountInputs.clear();
-      });
+      physicalCountInputs.clear();
       return true;
     } catch (error) {
-      _setError(error.toString());
+      errorMessage = error.toString();
       return false;
     } finally {
-      _setSubmitting(false);
+      isSubmitting = false;
     }
   }
 
+  @action
   Future<void> setOutboundWarehouse(String? warehouseId) async {
-    runInAction(() {
-      _outboundWarehouseId.value = warehouseId;
-      _outboundProductId.value = null;
-    });
+    outboundWarehouseId = warehouseId;
+    outboundProductId = null;
 
     if (warehouseId == null) {
-      runInAction(() {
-        outboundInventoryItems.clear();
-      });
+      outboundInventoryItems.clear();
       return;
     }
 
-    final loadedInventory = await _repository.getInventoryByWarehouse(warehouseId);
-    runInAction(() {
-      outboundInventoryItems
-        ..clear()
-        ..addAll(loadedInventory);
-    });
+    final loadedInventory =
+        await _getInventoryByWarehouseUseCase.call(params: warehouseId);
+    outboundInventoryItems = ObservableList<InventoryItem>.of(loadedInventory);
   }
 
+  @action
   void setOutboundProduct(String? productId) {
-    runInAction(() {
-      _outboundProductId.value = productId;
-    });
+    outboundProductId = productId;
   }
 
+  @action
   void setOutboundQuantity(String value) {
-    runInAction(() {
-      _outboundQuantityInput.value = value;
-    });
+    outboundQuantityInput = value;
   }
 
+  @action
   void setOutboundNote(String value) {
-    runInAction(() {
-      _outboundNote.value = value;
-    });
+    outboundNote = value;
   }
 
+  @action
   Future<bool> submitOutbound() async {
     if (!canSubmitOutbound) {
-      _setError('Outbound form has invalid values.');
+      errorMessage = 'Outbound form has invalid values.';
       return false;
     }
 
-    _setSubmitting(true);
+    isSubmitting = true;
     clearError();
 
     try {
-      final record = await _repository.submitOutbound(
-        warehouseId: outboundWarehouseId!,
-        productId: outboundProductId!,
-        quantity: outboundQuantity!,
-        note: outboundNote.isEmpty ? null : outboundNote,
+      final record = await _submitInventoryOutboundUseCase.call(
+        params: SubmitInventoryOutboundParams(
+          warehouseId: outboundWarehouseId!,
+          productId: outboundProductId!,
+          quantity: outboundQuantity!,
+          note: outboundNote.isEmpty ? null : outboundNote,
+        ),
       );
-
-      runInAction(() {
-        outboundRecords.insert(0, record);
-      });
+      outboundRecords.insert(0, record);
 
       if (selectedWarehouseId == outboundWarehouseId) {
         await _reloadInventoryForSelectedWarehouse();
       }
       await _reloadOutboundInventory();
-
       _resetOutboundForm();
       return true;
     } catch (error) {
-      _setError(error.toString());
+      errorMessage = error.toString();
       return false;
     } finally {
-      _setSubmitting(false);
+      isSubmitting = false;
     }
   }
 
@@ -287,7 +316,6 @@ class InventoryAuditOutboundStore {
     if (warehouseId == null) {
       return '-';
     }
-
     for (final warehouse in warehouses) {
       if (warehouse.id == warehouseId) {
         return warehouse.name;
@@ -301,7 +329,6 @@ class InventoryAuditOutboundStore {
     if (selectedProductId == null) {
       return null;
     }
-
     for (final item in inventoryItems) {
       if (item.productId == selectedProductId) {
         return item;
@@ -310,70 +337,9 @@ class InventoryAuditOutboundStore {
     return null;
   }
 
+  @action
   void clearError() {
-    runInAction(() {
-      _errorMessage.value = '';
-    });
-  }
-
-  List<AuditLine> _computeAuditLines() {
-    return inventoryItems
-        .map(
-          (item) {
-            final physical = getResolvedPhysicalCount(item);
-            return AuditLine(
-              productId: item.productId,
-              productName: item.productName,
-              systemQty: item.systemQty,
-              physicalQty: physical,
-              discrepancy: physical - item.systemQty,
-              unit: item.unit,
-            );
-          },
-        )
-        .toList(growable: false);
-  }
-
-  List<InventoryItem> _computeAvailableProductsForOutbound() {
-    final warehouseId = outboundWarehouseId;
-    if (warehouseId == null) {
-      return const [];
-    }
-
-    return outboundInventoryItems
-        .where((item) => item.warehouseId == warehouseId)
-        .toList(growable: false);
-  }
-
-  InventoryItem? _computeSelectedOutboundItem() {
-    final productId = outboundProductId;
-    if (productId == null) {
-      return null;
-    }
-
-    for (final item in availableProductsForOutbound) {
-      if (item.productId == productId) {
-        return item;
-      }
-    }
-    return null;
-  }
-
-  bool _computeCanSubmitOutbound() {
-    final warehouseId = outboundWarehouseId;
-    final productId = outboundProductId;
-    final qty = outboundQuantity;
-    final selectedItem = selectedOutboundItem;
-
-    if (warehouseId == null || productId == null || qty == null || qty <= 0) {
-      return false;
-    }
-
-    if (selectedItem == null) {
-      return false;
-    }
-
-    return qty <= selectedItem.systemQty;
+    errorMessage = '';
   }
 
   Future<void> _reloadInventoryForSelectedWarehouse() async {
@@ -381,13 +347,9 @@ class InventoryAuditOutboundStore {
     if (warehouseId == null) {
       return;
     }
-
-    final loadedInventory = await _repository.getInventoryByWarehouse(warehouseId);
-    runInAction(() {
-      inventoryItems
-        ..clear()
-        ..addAll(loadedInventory);
-    });
+    final loadedInventory =
+        await _getInventoryByWarehouseUseCase.call(params: warehouseId);
+    inventoryItems = ObservableList<InventoryItem>.of(loadedInventory);
   }
 
   Future<void> _reloadOutboundInventory() async {
@@ -395,39 +357,15 @@ class InventoryAuditOutboundStore {
     if (warehouseId == null) {
       return;
     }
-
-    final loadedInventory = await _repository.getInventoryByWarehouse(warehouseId);
-    runInAction(() {
-      outboundInventoryItems
-        ..clear()
-        ..addAll(loadedInventory);
-    });
+    final loadedInventory =
+        await _getInventoryByWarehouseUseCase.call(params: warehouseId);
+    outboundInventoryItems = ObservableList<InventoryItem>.of(loadedInventory);
   }
 
+  @action
   void _resetOutboundForm() {
-    runInAction(() {
-      _outboundProductId.value = null;
-      _outboundQuantityInput.value = '';
-      _outboundNote.value = '';
-    });
-  }
-
-  void _setLoading(bool value) {
-    runInAction(() {
-      _isLoading.value = value;
-    });
-  }
-
-  void _setSubmitting(bool value) {
-    runInAction(() {
-      _isSubmitting.value = value;
-    });
-  }
-
-  void _setError(String message) {
-    runInAction(() {
-      _errorMessage.value = message;
-    });
+    outboundProductId = null;
+    outboundQuantityInput = '';
+    outboundNote = '';
   }
 }
-

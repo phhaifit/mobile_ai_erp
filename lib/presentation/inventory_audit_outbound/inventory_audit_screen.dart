@@ -34,6 +34,7 @@ class _InventoryAuditScreenState extends State<InventoryAuditScreen> {
         title: const Text('Inventory Audit'),
         actions: [
           IconButton(
+            key: const Key('open_audit_summary_button'),
             tooltip: 'Audit Summary',
             onPressed: () {
               Navigator.of(context).push(
@@ -45,6 +46,7 @@ class _InventoryAuditScreenState extends State<InventoryAuditScreen> {
             icon: const Icon(Icons.summarize_outlined),
           ),
           IconButton(
+            key: const Key('open_outbound_button'),
             tooltip: 'Outbound',
             onPressed: () {
               Navigator.of(context).push(
@@ -85,54 +87,58 @@ class _AuditDesktopBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          _AuditTopBar(store: store),
-          const SizedBox(height: 12),
-          if (store.errorMessage.isNotEmpty)
-            Text(store.errorMessage, style: const TextStyle(color: Colors.red)),
-          Expanded(
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: InventorySectionCard(
-                    title: 'System Quantities',
-                    child: _ProductSystemList(store: store, compact: false),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 2,
-                  child: InventorySectionCard(
-                    title: 'Physical Count & Discrepancy',
-                    trailing: FilledButton(
-                      key: const Key('audit_save_button_desktop'),
-                      onPressed: store.isSubmitting || !store.canSaveAudit
-                          ? null
-                          : () async {
-                              final success = await store.saveAuditSession();
-                              if (!context.mounted) {
-                                return;
-                              }
-                              if (success) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Audit session saved locally.')),
-                                );
-                              }
-                            },
-                      child: const Text('Save Audit'),
+    return Observer(
+      builder: (_) {
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              _AuditTopBar(store: store),
+              const SizedBox(height: 12),
+              if (store.errorMessage.isNotEmpty)
+                Text(store.errorMessage, style: const TextStyle(color: Colors.red)),
+              Expanded(
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: InventorySectionCard(
+                        title: 'System Quantities',
+                        child: _ProductSystemList(store: store, compact: false),
+                      ),
                     ),
-                    child: _AuditDetailPanel(store: store),
-                  ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 2,
+                      child: InventorySectionCard(
+                        title: 'Physical Count & Discrepancy',
+                        trailing: FilledButton(
+                          key: const Key('audit_save_button_desktop'),
+                          onPressed: store.isSubmitting || !store.canSaveAudit
+                              ? null
+                              : () async {
+                                  final success = await store.saveAuditSession();
+                                  if (!context.mounted) {
+                                    return;
+                                  }
+                                  if (success) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Audit session saved locally.')),
+                                    );
+                                  }
+                                },
+                          child: const Text('Save Audit'),
+                        ),
+                        child: _AuditDetailPanel(store: store),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -144,44 +150,48 @@ class _AuditMobileBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          _AuditTopBar(store: store),
-          const SizedBox(height: 12),
-          if (store.errorMessage.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Text(store.errorMessage, style: const TextStyle(color: Colors.red)),
-            ),
-          InventorySectionCard(
-            title: 'Audit Items',
-            child: _ProductSystemList(store: store, compact: true),
+    return Observer(
+      builder: (_) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              _AuditTopBar(store: store),
+              const SizedBox(height: 12),
+              if (store.errorMessage.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(store.errorMessage, style: const TextStyle(color: Colors.red)),
+                ),
+              InventorySectionCard(
+                title: 'Audit Items',
+                child: _ProductSystemList(store: store, compact: true),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  key: const Key('audit_save_button_mobile'),
+                  onPressed: store.isSubmitting || !store.canSaveAudit
+                      ? null
+                      : () async {
+                          final success = await store.saveAuditSession();
+                          if (!context.mounted) {
+                            return;
+                          }
+                          if (success) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Audit session saved locally.')),
+                            );
+                          }
+                        },
+                  child: const Text('Save Audit Session'),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              key: const Key('audit_save_button_mobile'),
-              onPressed: store.isSubmitting || !store.canSaveAudit
-                  ? null
-                  : () async {
-                      final success = await store.saveAuditSession();
-                      if (!context.mounted) {
-                        return;
-                      }
-                      if (success) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Audit session saved locally.')),
-                        );
-                      }
-                    },
-              child: const Text('Save Audit Session'),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -265,7 +275,9 @@ class _ProductSystemList extends StatelessWidget {
                       SizedBox(
                         width: 70,
                         child: TextFormField(
-                          key: Key('mobile_input_${item.productId}'),
+                          key: Key(
+                            'mobile_input_${store.selectedWarehouseId ?? 'none'}_${item.productId}',
+                          ),
                           initialValue: store.getPhysicalCountInput(item.productId),
                           keyboardType: TextInputType.number,
                           decoration: const InputDecoration(labelText: 'Count'),
@@ -324,7 +336,9 @@ class _AuditDetailPanel extends StatelessWidget {
         Text('System Quantity: ${selectedItem.systemQty} ${selectedItem.unit}'),
         const SizedBox(height: 8),
         TextFormField(
-          key: Key('desktop_input_${selectedItem.productId}'),
+          key: Key(
+            'desktop_input_${selectedItem.warehouseId}_${selectedItem.productId}',
+          ),
           initialValue: store.getPhysicalCountInput(selectedItem.productId),
           keyboardType: TextInputType.number,
           decoration: const InputDecoration(
