@@ -1,296 +1,126 @@
+import 'package:flutter/material.dart';
+import 'package:mobx/mobx.dart';
 import 'package:mobile_ai_erp/domain/entity/stock_operations/product_stock.dart';
 import 'package:mobile_ai_erp/domain/entity/stock_operations/stock_operation.dart';
 import 'package:mobile_ai_erp/domain/entity/stock_operations/warehouse.dart';
 import 'package:mobile_ai_erp/domain/repository/stock_operations/stock_operations_repository.dart';
-import 'package:mobx/mobx.dart';
+
+part 'stock_operations_store.g.dart';
 
 enum StockOperationsView { dashboard, transfer, damagedGoods, history }
 
-class StockOperationsStore {
-  StockOperationsStore(this._repository)
-    : _availableTransferProducts = Computed<List<ProductStock>>(() => const []),
-      _selectedTransferStock = Computed<ProductStock?>(() => null),
-      _transferSubmitEnabled = Computed<bool>(() => false),
-      _damagedSubmitEnabled = Computed<bool>(() => false),
-      _totalOperationsCount = Computed<int>(() => 0),
-      _damagedOperationsCount = Computed<int>(() => 0),
-      _expiredOperationsCount = Computed<int>(() => 0) {
-    _availableTransferProducts = Computed<List<ProductStock>>(
-      _computeAvailableTransferProducts,
-    );
-    _selectedTransferStock = Computed<ProductStock?>(
-      _computeSelectedTransferStock,
-    );
-    _transferSubmitEnabled = Computed<bool>(_computeTransferSubmitEnabled);
-    _damagedSubmitEnabled = Computed<bool>(_computeDamagedSubmitEnabled);
-    _totalOperationsCount = Computed<int>(() => operations.length);
-    _damagedOperationsCount = Computed<int>(
-      () => operations
-          .where((operation) => operation.type == StockOperationType.damaged)
-          .length,
-    );
-    _expiredOperationsCount = Computed<int>(
-      () => operations
-          .where((operation) => operation.type == StockOperationType.expired)
-          .length,
-    );
-  }
+enum StockOperationHistoryFilter { all, transfer, damaged, expired }
+
+class StockDashboardAction {
+  const StockDashboardAction({
+    required this.view,
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+  });
+
+  final StockOperationsView view;
+  final String title;
+  final String subtitle;
+  final IconData icon;
+}
+
+class StockOperationsStore = _StockOperationsStore with _$StockOperationsStore;
+
+abstract class _StockOperationsStore with Store {
+  _StockOperationsStore(this._repository);
 
   final StockOperationsRepository _repository;
 
-  final ObservableList<Warehouse> warehouses = ObservableList<Warehouse>();
-  final ObservableList<ProductStock> productStocks =
-      ObservableList<ProductStock>();
-  final ObservableList<StockOperation> operations =
-      ObservableList<StockOperation>();
+  @observable
+  ObservableList<Warehouse> warehouses = ObservableList<Warehouse>();
 
-  final Observable<bool> _isLoading = Observable(false);
-  final Observable<bool> _isSubmitting = Observable(false);
-  final Observable<String> _errorMessage = Observable('');
-  final Observable<StockOperationsView> _currentView = Observable(
-    StockOperationsView.dashboard,
-  );
+  @observable
+  ObservableList<ProductStock> productStocks = ObservableList<ProductStock>();
 
-  final Observable<String?> _transferSourceWarehouseId = Observable(null);
-  final Observable<String?> _transferDestinationWarehouseId = Observable(null);
-  final Observable<String?> _transferProductId = Observable(null);
-  final Observable<String> _transferQuantityInput = Observable('');
+  @observable
+  ObservableList<StockOperation> operations = ObservableList<StockOperation>();
 
-  final Observable<String?> _disposalWarehouseId = Observable(null);
-  final Observable<String?> _disposalProductId = Observable(null);
-  final Observable<String> _disposalQuantityInput = Observable('');
-  final Observable<StockOperationType> _disposalType = Observable(
-    StockOperationType.damaged,
-  );
-  final Observable<String> _disposalNote = Observable('');
+  @observable
+  bool isLoading = false;
 
-  late Computed<List<ProductStock>> _availableTransferProducts;
-  late Computed<ProductStock?> _selectedTransferStock;
-  late Computed<bool> _transferSubmitEnabled;
-  late Computed<bool> _damagedSubmitEnabled;
-  late Computed<int> _totalOperationsCount;
-  late Computed<int> _damagedOperationsCount;
-  late Computed<int> _expiredOperationsCount;
+  @observable
+  bool isSubmitting = false;
 
-  bool get isLoading => _isLoading.value;
-  bool get isSubmitting => _isSubmitting.value;
-  String get errorMessage => _errorMessage.value;
-  StockOperationsView get currentView => _currentView.value;
+  @observable
+  String errorMessage = '';
 
-  String? get transferSourceWarehouseId => _transferSourceWarehouseId.value;
-  String? get transferDestinationWarehouseId =>
-      _transferDestinationWarehouseId.value;
-  String? get transferProductId => _transferProductId.value;
-  String get transferQuantityInput => _transferQuantityInput.value;
+  @observable
+  StockOperationsView currentView = StockOperationsView.dashboard;
 
-  String? get disposalWarehouseId => _disposalWarehouseId.value;
-  String? get disposalProductId => _disposalProductId.value;
-  String get disposalQuantityInput => _disposalQuantityInput.value;
-  StockOperationType get disposalType => _disposalType.value;
-  String get disposalNote => _disposalNote.value;
+  @observable
+  StockOperationHistoryFilter historyFilter = StockOperationHistoryFilter.all;
 
-  List<ProductStock> get availableTransferProducts =>
-      _availableTransferProducts.value;
-  ProductStock? get selectedTransferStock => _selectedTransferStock.value;
-  bool get canSubmitTransfer => _transferSubmitEnabled.value;
-  bool get canSubmitDamagedOrExpired => _damagedSubmitEnabled.value;
-  int get totalOperationsCount => _totalOperationsCount.value;
-  int get damagedOperationsCount => _damagedOperationsCount.value;
-  int get expiredOperationsCount => _expiredOperationsCount.value;
+  @observable
+  String? transferSourceWarehouseId;
 
-  int? get transferQuantity => int.tryParse(_transferQuantityInput.value);
-  int? get disposalQuantity => int.tryParse(_disposalQuantityInput.value);
+  @observable
+  String? transferDestinationWarehouseId;
 
-  Future<void> loadInitialData() async {
-    _setLoading(true);
-    clearError();
+  @observable
+  String? transferProductId;
 
-    try {
-      final loadedWarehouses = await _repository.getWarehouses();
-      final loadedStocks = await _repository.getProductStocks();
-      final loadedOperations = await _repository.getOperations();
+  @observable
+  String transferQuantityInput = '';
 
-      runInAction(() {
-        warehouses
-          ..clear()
-          ..addAll(loadedWarehouses);
+  @observable
+  String? disposalWarehouseId;
 
-        productStocks
-          ..clear()
-          ..addAll(loadedStocks);
+  @observable
+  String? disposalProductId;
 
-        operations
-          ..clear()
-          ..addAll(loadedOperations);
+  @observable
+  String disposalQuantityInput = '';
 
-        if (loadedWarehouses.isNotEmpty) {
-          _transferSourceWarehouseId.value = loadedWarehouses.first.id;
-          _disposalWarehouseId.value = loadedWarehouses.first.id;
-        }
-      });
-    } catch (error) {
-      _setError(error.toString());
-    } finally {
-      _setLoading(false);
-    }
-  }
+  @observable
+  StockOperationType disposalType = StockOperationType.damaged;
 
-  void setCurrentView(StockOperationsView view) {
-    runInAction(() {
-      _currentView.value = view;
-    });
-  }
+  @observable
+  String disposalNote = '';
 
-  void setTransferSourceWarehouse(String? warehouseId) {
-    runInAction(() {
-      _transferSourceWarehouseId.value = warehouseId;
-      _transferProductId.value = null;
-    });
-  }
+  @computed
+  int? get transferQuantity => int.tryParse(transferQuantityInput);
 
-  void setTransferDestinationWarehouse(String? warehouseId) {
-    runInAction(() {
-      _transferDestinationWarehouseId.value = warehouseId;
-    });
-  }
+  @computed
+  int? get disposalQuantity => int.tryParse(disposalQuantityInput);
 
-  void setTransferProduct(String? productId) {
-    runInAction(() {
-      _transferProductId.value = productId;
-    });
-  }
+  @computed
+  List<StockDashboardAction> get dashboardActions => const [
+    StockDashboardAction(
+      view: StockOperationsView.transfer,
+      title: 'Transfer',
+      subtitle: 'Move stock between warehouses',
+      icon: Icons.swap_horiz,
+    ),
+    StockDashboardAction(
+      view: StockOperationsView.damagedGoods,
+      title: 'Damaged / Expired',
+      subtitle: 'Record stock loss operation',
+      icon: Icons.report_problem,
+    ),
+    StockDashboardAction(
+      view: StockOperationsView.history,
+      title: 'History',
+      subtitle: 'Review all local operations',
+      icon: Icons.history,
+    ),
+  ];
 
-  void setTransferQuantity(String value) {
-    runInAction(() {
-      _transferQuantityInput.value = value;
-    });
-  }
-
-  void setDisposalWarehouse(String? warehouseId) {
-    runInAction(() {
-      _disposalWarehouseId.value = warehouseId;
-      _disposalProductId.value = null;
-    });
-  }
-
-  void setDisposalProduct(String? productId) {
-    runInAction(() {
-      _disposalProductId.value = productId;
-    });
-  }
-
-  void setDisposalQuantity(String value) {
-    runInAction(() {
-      _disposalQuantityInput.value = value;
-    });
-  }
-
-  void setDisposalType(StockOperationType type) {
-    runInAction(() {
-      _disposalType.value = type;
-    });
-  }
-
-  void setDisposalNote(String note) {
-    runInAction(() {
-      _disposalNote.value = note;
-    });
-  }
-
-  Future<bool> submitTransfer() async {
-    if (!canSubmitTransfer) {
-      _setError('Please complete transfer fields with valid values.');
-      return false;
-    }
-
-    _setSubmitting(true);
-    clearError();
-
-    try {
-      await _repository.submitTransfer(
-        sourceWarehouseId: transferSourceWarehouseId!,
-        destinationWarehouseId: transferDestinationWarehouseId!,
-        productId: transferProductId!,
-        quantity: transferQuantity!,
-      );
-      await _reloadOperationalData();
-      _resetTransferForm();
-      return true;
-    } catch (error) {
-      _setError(error.toString());
-      return false;
-    } finally {
-      _setSubmitting(false);
-    }
-  }
-
-  Future<bool> submitDamagedOrExpired() async {
-    if (!canSubmitDamagedOrExpired) {
-      _setError('Please complete damaged/expired fields with valid values.');
-      return false;
-    }
-
-    _setSubmitting(true);
-    clearError();
-
-    try {
-      await _repository.submitDamagedOrExpired(
-        warehouseId: disposalWarehouseId!,
-        productId: disposalProductId!,
-        quantity: disposalQuantity!,
-        type: disposalType,
-        note: disposalNote.isEmpty ? null : disposalNote,
-      );
-      await _reloadOperationalData();
-      _resetDisposalForm();
-      return true;
-    } catch (error) {
-      _setError(error.toString());
-      return false;
-    } finally {
-      _setSubmitting(false);
-    }
-  }
-
-  void clearError() {
-    runInAction(() {
-      _errorMessage.value = '';
-    });
-  }
-
-  String getWarehouseName(String? warehouseId) {
-    if (warehouseId == null) {
-      return '-';
-    }
-    return warehouses
-        .firstWhere(
-          (warehouse) => warehouse.id == warehouseId,
-          orElse: () => const Warehouse(id: '', name: '-', location: ''),
-        )
-        .name;
-  }
-
-  List<ProductStock> getProductsByWarehouse(String? warehouseId) {
-    if (warehouseId == null) {
-      return const [];
-    }
-
-    return productStocks
-        .where((stock) => stock.warehouseId == warehouseId)
-        .toList(growable: false);
-  }
-
-  List<StockOperation> get filteredOperations =>
-      operations.toList(growable: false);
-
-  List<ProductStock> _computeAvailableTransferProducts() {
+  @computed
+  List<ProductStock> get availableTransferProducts {
     if (transferSourceWarehouseId == null) {
       return const [];
     }
     return getProductsByWarehouse(transferSourceWarehouseId);
   }
 
-  ProductStock? _computeSelectedTransferStock() {
+  @computed
+  ProductStock? get selectedTransferStock {
     final productId = transferProductId;
     if (productId == null || transferSourceWarehouseId == null) {
       return null;
@@ -305,7 +135,8 @@ class StockOperationsStore {
     return null;
   }
 
-  bool _computeTransferSubmitEnabled() {
+  @computed
+  bool get canSubmitTransfer {
     final source = transferSourceWarehouseId;
     final destination = transferDestinationWarehouseId;
     final productId = transferProductId;
@@ -326,7 +157,8 @@ class StockOperationsStore {
     return quantity <= stock.availableQuantity;
   }
 
-  bool _computeDamagedSubmitEnabled() {
+  @computed
+  bool get canSubmitDamagedOrExpired {
     final warehouseId = disposalWarehouseId;
     final productId = disposalProductId;
     final quantity = disposalQuantity;
@@ -354,53 +186,226 @@ class StockOperationsStore {
     return quantity <= target.availableQuantity;
   }
 
+  @computed
+  int get totalOperationsCount => operations.length;
+
+  @computed
+  int get damagedOperationsCount => operations
+      .where((operation) => operation.type == StockOperationType.damaged)
+      .length;
+
+  @computed
+  int get expiredOperationsCount => operations
+      .where((operation) => operation.type == StockOperationType.expired)
+      .length;
+
+  @computed
+  List<StockOperation> get filteredOperations {
+    switch (historyFilter) {
+      case StockOperationHistoryFilter.all:
+        return operations.toList(growable: false);
+      case StockOperationHistoryFilter.transfer:
+        return operations
+            .where((op) => op.type == StockOperationType.transfer)
+            .toList(growable: false);
+      case StockOperationHistoryFilter.damaged:
+        return operations
+            .where((op) => op.type == StockOperationType.damaged)
+            .toList(growable: false);
+      case StockOperationHistoryFilter.expired:
+        return operations
+            .where((op) => op.type == StockOperationType.expired)
+            .toList(growable: false);
+    }
+  }
+
+  @action
+  Future<void> loadInitialData() async {
+    isLoading = true;
+    clearError();
+
+    try {
+      final loadedWarehouses = await _repository.getWarehouses();
+      final loadedStocks = await _repository.getProductStocks();
+      final loadedOperations = await _repository.getOperations();
+
+      warehouses = ObservableList<Warehouse>.of(loadedWarehouses);
+      productStocks = ObservableList<ProductStock>.of(loadedStocks);
+      operations = ObservableList<StockOperation>.of(loadedOperations);
+
+      if (loadedWarehouses.isNotEmpty) {
+        transferSourceWarehouseId = loadedWarehouses.first.id;
+        disposalWarehouseId = loadedWarehouses.first.id;
+      }
+    } catch (error) {
+      errorMessage = error.toString();
+    } finally {
+      isLoading = false;
+    }
+  }
+
+  @action
+  void setCurrentView(StockOperationsView view) {
+    currentView = view;
+  }
+
+  @action
+  void setHistoryFilter(StockOperationHistoryFilter filter) {
+    historyFilter = filter;
+  }
+
+  @action
+  void setTransferSourceWarehouse(String? warehouseId) {
+    transferSourceWarehouseId = warehouseId;
+    transferDestinationWarehouseId = null;
+    transferProductId = null;
+  }
+
+  @action
+  void setTransferDestinationWarehouse(String? warehouseId) {
+    transferDestinationWarehouseId = warehouseId;
+  }
+
+  @action
+  void setTransferProduct(String? productId) {
+    transferProductId = productId;
+  }
+
+  @action
+  void setTransferQuantity(String value) {
+    transferQuantityInput = value;
+  }
+
+  @action
+  void setDisposalWarehouse(String? warehouseId) {
+    disposalWarehouseId = warehouseId;
+    disposalProductId = null;
+  }
+
+  @action
+  void setDisposalProduct(String? productId) {
+    disposalProductId = productId;
+  }
+
+  @action
+  void setDisposalQuantity(String value) {
+    disposalQuantityInput = value;
+  }
+
+  @action
+  void setDisposalType(StockOperationType type) {
+    disposalType = type;
+  }
+
+  @action
+  void setDisposalNote(String note) {
+    disposalNote = note;
+  }
+
+  @action
+  Future<bool> submitTransfer() async {
+    if (!canSubmitTransfer) {
+      errorMessage = 'Please complete transfer fields with valid values.';
+      return false;
+    }
+
+    isSubmitting = true;
+    clearError();
+
+    try {
+      await _repository.submitTransfer(
+        sourceWarehouseId: transferSourceWarehouseId!,
+        destinationWarehouseId: transferDestinationWarehouseId!,
+        productId: transferProductId!,
+        quantity: transferQuantity!,
+      );
+      await _reloadOperationalData();
+      _resetTransferForm();
+      return true;
+    } catch (error) {
+      errorMessage = error.toString();
+      return false;
+    } finally {
+      isSubmitting = false;
+    }
+  }
+
+  @action
+  Future<bool> submitDamagedOrExpired() async {
+    if (!canSubmitDamagedOrExpired) {
+      errorMessage = 'Please complete damaged/expired fields with valid values.';
+      return false;
+    }
+
+    isSubmitting = true;
+    clearError();
+
+    try {
+      await _repository.submitDamagedOrExpired(
+        warehouseId: disposalWarehouseId!,
+        productId: disposalProductId!,
+        quantity: disposalQuantity!,
+        type: disposalType,
+        note: disposalNote.isEmpty ? null : disposalNote,
+      );
+      await _reloadOperationalData();
+      _resetDisposalForm();
+      return true;
+    } catch (error) {
+      errorMessage = error.toString();
+      return false;
+    } finally {
+      isSubmitting = false;
+    }
+  }
+
+  @action
+  void clearError() {
+    errorMessage = '';
+  }
+
+  String getWarehouseName(String? warehouseId) {
+    if (warehouseId == null) {
+      return '-';
+    }
+    return warehouses
+        .firstWhere(
+          (warehouse) => warehouse.id == warehouseId,
+          orElse: () => const Warehouse(id: '', name: '-', location: ''),
+        )
+        .name;
+  }
+
+  List<ProductStock> getProductsByWarehouse(String? warehouseId) {
+    if (warehouseId == null) {
+      return const [];
+    }
+
+    return productStocks
+        .where((stock) => stock.warehouseId == warehouseId)
+        .toList(growable: false);
+  }
+
   Future<void> _reloadOperationalData() async {
     final loadedStocks = await _repository.getProductStocks();
     final loadedOperations = await _repository.getOperations();
 
-    runInAction(() {
-      productStocks
-        ..clear()
-        ..addAll(loadedStocks);
-      operations
-        ..clear()
-        ..addAll(loadedOperations);
-    });
+    productStocks = ObservableList<ProductStock>.of(loadedStocks);
+    operations = ObservableList<StockOperation>.of(loadedOperations);
   }
 
+  @action
   void _resetTransferForm() {
-    runInAction(() {
-      _transferDestinationWarehouseId.value = null;
-      _transferProductId.value = null;
-      _transferQuantityInput.value = '';
-    });
+    transferDestinationWarehouseId = null;
+    transferProductId = null;
+    transferQuantityInput = '';
   }
 
+  @action
   void _resetDisposalForm() {
-    runInAction(() {
-      _disposalProductId.value = null;
-      _disposalQuantityInput.value = '';
-      _disposalNote.value = '';
-      _disposalType.value = StockOperationType.damaged;
-    });
-  }
-
-  void _setLoading(bool value) {
-    runInAction(() {
-      _isLoading.value = value;
-    });
-  }
-
-  void _setSubmitting(bool value) {
-    runInAction(() {
-      _isSubmitting.value = value;
-    });
-  }
-
-  void _setError(String message) {
-    runInAction(() {
-      _errorMessage.value = message;
-    });
+    disposalProductId = null;
+    disposalQuantityInput = '';
+    disposalNote = '';
+    disposalType = StockOperationType.damaged;
   }
 }
-
