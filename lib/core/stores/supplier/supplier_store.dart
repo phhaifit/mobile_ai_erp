@@ -1,7 +1,7 @@
 import 'package:mobx/mobx.dart';
 import 'package:uuid/uuid.dart';
-import '../../../domain/supplier/supplier.dart';
-import '../../../domain/supplier/supplier_repository.dart';
+import '../../../domain/entity/supplier/supplier.dart';
+import '../../../domain/repository/supplier/supplier_repository.dart';
 
 part 'supplier_store.g.dart';
 
