@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:mobile_ai_erp/data/local/datasources/order_tracking/order_tracking_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/post/post_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/product_metadata/product_metadata_datasource.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
@@ -33,8 +34,11 @@ class RepositoryModule {
       getIt<PostDataSource>(),
     ));
 
+    getIt.registerSingleton<OrderTrackingDataSource>(
+      OrderTrackingDataSource(),
+    );
     getIt.registerSingleton<OrderTrackingRepository>(
-      OrderTrackingRepositoryImpl(),
+      OrderTrackingRepositoryImpl(getIt<OrderTrackingDataSource>()),
     );
 
     getIt.registerSingleton<ProductMetadataDataSource>(
