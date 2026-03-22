@@ -6,6 +6,7 @@ import 'package:mobile_ai_erp/presentation/web_builder/theme_engine/theme_list_s
 import 'package:mobile_ai_erp/presentation/web_builder/theme_engine/theme_detail_screen.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/cms_pages/cms_page_list_screen.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/cms_pages/cms_page_editor_screen.dart';
+import 'package:mobile_ai_erp/presentation/product_detail/product_detail_screen.dart';
 import 'package:mobile_ai_erp/presentation/reports/reports_analytics.dart';
 import 'package:flutter/material.dart';
 
@@ -23,6 +24,7 @@ class Routes {
   static const String cmsPageList = '/web-builder/cms-pages';
   static const String cmsPageEditor = '/web-builder/cms-pages/editor';
   static const String reports = '/reports';
+  static const String productDetail = '/product-detail';
 
   static final routes = <String, WidgetBuilder>{
     login: (BuildContext context) => LoginScreen(),
@@ -34,5 +36,6 @@ class Routes {
     cmsPageList: (BuildContext context) => const CmsPageListScreen(),
     cmsPageEditor: (BuildContext context) => const CmsPageEditorScreen(),
     reports: (BuildContext context) => ReportsAnalyticsScreen(),
+    productDetail: (BuildContext context) => const ProductDetailScreen(),
   };
 }
