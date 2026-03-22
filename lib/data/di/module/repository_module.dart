@@ -9,6 +9,7 @@ import 'package:mobile_ai_erp/data/repository/fulfillment/fulfillment_repository
 import 'package:mobile_ai_erp/data/repository/post/post_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/product_metadata/product_metadata_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/setting/setting_repository_impl.dart';
+import 'package:mobile_ai_erp/data/repository/supplier/supplier_mock_repository.dart';
 import 'package:mobile_ai_erp/data/repository/user/user_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/web_builder/cms_page_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/web_builder/store_settings_repository_impl.dart';
@@ -19,6 +20,7 @@ import 'package:mobile_ai_erp/domain/repository/fulfillment/fulfillment_reposito
 import 'package:mobile_ai_erp/domain/repository/post/post_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadata_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/setting/setting_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/supplier/supplier_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/user_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/web_builder/cms_page_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/web_builder/store_settings_repository.dart';
@@ -65,6 +67,9 @@ class RepositoryModule {
     );
     getIt.registerLazySingleton<StoreSettingsRepository>(
       () => StoreSettingsRepositoryImpl(),
+    );
+    getIt.registerLazySingleton<SupplierRepository>(
+      () => SupplierMockRepository(),
     );
     getIt.registerSingleton<FulfillmentRepository>(
       FulfillmentRepositoryImpl(),
