@@ -40,6 +40,7 @@ class _InventoryOutboundScreenState extends State<InventoryOutboundScreen> {
 
               if (isDesktop) {
                 return Padding(
+                  key: const Key('outbound_desktop_layout'),
                   padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
@@ -52,6 +53,7 @@ class _InventoryOutboundScreenState extends State<InventoryOutboundScreen> {
               }
 
               return ListView(
+                key: const Key('outbound_mobile_layout'),
                 padding: const EdgeInsets.all(16),
                 children: [
                   _OutboundForm(store: _store),
