@@ -145,10 +145,12 @@ class _TimelineStage extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        SizedBox(
-          width: 60,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2),
           child: Text(
             label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 11,

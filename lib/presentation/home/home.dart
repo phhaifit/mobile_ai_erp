@@ -66,6 +66,28 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
   }
 
+  Widget _buildProductMetadataButton() {
+    return IconButton(
+      tooltip: 'Product metadata',
+      onPressed: () {
+        ProductMetadataNavigator.openProductMetadataHome(context);
+      },
+      icon: const Icon(Icons.dashboard_outlined),
+    );
+  }
+
+  Widget _buildOrderTrackingButton() {
+    return IconButton(
+      tooltip: 'Track Order',
+      onPressed: () {
+        Navigator.of(context).pushNamed(Routes.orderTracking);
+      },
+      icon: Icon(
+        Icons.local_shipping_outlined,
+      ),
+    );
+  }
+
   Widget _buildThemeButton() {
     return Observer(
       builder: (context) {
