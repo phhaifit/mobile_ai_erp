@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_ai_erp/domain/entity/order_tracking/order_tracking_scenario.dart';
 import 'package:mobile_ai_erp/presentation/order_tracking/widgets/timeline_item.dart';
-import 'package:mobile_ai_erp/utils/locale/app_localization.dart';
 
 class TrackingDetailedTimelineCard extends StatelessWidget {
   const TrackingDetailedTimelineCard({
@@ -9,23 +8,24 @@ class TrackingDetailedTimelineCard extends StatelessWidget {
     required this.selected,
     required this.shipmentStageLabel,
     required this.formatDateTime,
+    required this.timelineTitle,
+    required this.pendingLabel,
   });
 
   final OrderTrackingScenario selected;
-  final String Function(ShipmentStage stage, AppLocalizations t)
-      shipmentStageLabel;
+  final String Function(ShipmentStage stage) shipmentStageLabel;
   final String Function(DateTime value) formatDateTime;
+  final String timelineTitle;
+  final String pendingLabel;
 
   @override
   Widget build(BuildContext context) {
-    final AppLocalizations t = AppLocalizations.of(context);
-
     return _SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           _SectionTitle(
-            title: t.translate('tracking_timeline_title'),
+            title: timelineTitle,
             icon: Icons.route_outlined,
           ),
           const SizedBox(height: 14),
@@ -36,9 +36,9 @@ class TrackingDetailedTimelineCard extends StatelessWidget {
             final bool isLast = index == selected.timelineSteps.length - 1;
 
             return TimelineItem(
-              label: shipmentStageLabel(step.stage, t),
+              label: shipmentStageLabel(step.stage),
               dateText: step.timestamp == null
-                  ? t.translate('tracking_pending')
+                  ? pendingLabel
                   : formatDateTime(step.timestamp!),
               isActive: selected.currentStage == step.stage,
               isDone: isDone,

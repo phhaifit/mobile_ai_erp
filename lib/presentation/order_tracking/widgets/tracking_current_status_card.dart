@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_ai_erp/domain/entity/order_tracking/order_tracking_scenario.dart';
-import 'package:mobile_ai_erp/utils/locale/app_localization.dart';
 
 class TrackingCurrentStatusCard extends StatelessWidget {
   const TrackingCurrentStatusCard({
@@ -9,17 +8,17 @@ class TrackingCurrentStatusCard extends StatelessWidget {
     required this.primaryColor,
     required this.shipmentStageLabel,
     required this.formatDateTime,
+    required this.estimatedDeliveryLabel,
   });
 
   final OrderTrackingScenario selected;
   final Color primaryColor;
-  final String Function(ShipmentStage stage, AppLocalizations t)
-      shipmentStageLabel;
+  final String Function(ShipmentStage stage) shipmentStageLabel;
   final String Function(DateTime value) formatDateTime;
+  final String estimatedDeliveryLabel;
 
   @override
   Widget build(BuildContext context) {
-    final AppLocalizations t = AppLocalizations.of(context);
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final bool isDelivered = selected.currentStage == ShipmentStage.delivered;
     final DateTime displayDateTime = isDelivered
@@ -38,7 +37,7 @@ class TrackingCurrentStatusCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              shipmentStageLabel(selected.currentStage, t),
+              shipmentStageLabel(selected.currentStage),
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
@@ -48,9 +47,7 @@ class TrackingCurrentStatusCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            isDelivered
-                ? 'Delivered at'
-                : t.translate('tracking_estimated_delivery'),
+            isDelivered ? 'Delivered at' : estimatedDeliveryLabel,
             style: TextStyle(
               fontSize: 12,
               color: colorScheme.onSurface.withValues(alpha: 0.65),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_ai_erp/domain/entity/order_tracking/order_tracking_scenario.dart';
-import 'package:mobile_ai_erp/utils/locale/app_localization.dart';
 
 class TrackingCarrierCard extends StatelessWidget {
   const TrackingCarrierCard({
@@ -8,33 +7,37 @@ class TrackingCarrierCard extends StatelessWidget {
     required this.selected,
     required this.primaryColor,
     required this.onOpenCarrierUrl,
+    required this.sectionTitle,
+    required this.carrierNameLabel,
+    required this.trackingNumberLabel,
   });
 
   final OrderTrackingScenario selected;
   final Color primaryColor;
   final ValueChanged<String> onOpenCarrierUrl;
+  final String sectionTitle;
+  final String carrierNameLabel;
+  final String trackingNumberLabel;
 
   @override
   Widget build(BuildContext context) {
-    final AppLocalizations t = AppLocalizations.of(context);
-
     return _SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           _SectionTitle(
-            title: t.translate('tracking_carrier_section_title'),
+            title: sectionTitle,
             icon: Icons.local_shipping_outlined,
             iconColor: primaryColor,
           ),
           const SizedBox(height: 14),
           _CarrierInfo(
-            label: '${t.translate('tracking_carrier_name_label')}:',
+            label: '$carrierNameLabel:',
             value: selected.carrierName,
           ),
           const SizedBox(height: 10),
           _CarrierInfo(
-            label: '${t.translate('tracking_number_label')}:',
+            label: '$trackingNumberLabel:',
             value: selected.trackingNumber,
             onTap: () => onOpenCarrierUrl(selected.carrierTrackingUrl),
             primaryColor: primaryColor,

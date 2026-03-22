@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_ai_erp/domain/entity/order_tracking/order_tracking_scenario.dart';
-import 'package:mobile_ai_erp/utils/locale/app_localization.dart';
 
 class TrackingDeliveryAlertBanner extends StatelessWidget {
   const TrackingDeliveryAlertBanner({
     super.key,
     required this.selected,
+    required this.title,
   });
 
   final OrderTrackingScenario selected;
+  final String title;
 
   @override
   Widget build(BuildContext context) {
-    final AppLocalizations t = AppLocalizations.of(context);
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
 
     final Color bgColor = selected.deliveryAlertType == DeliveryAlertType.failed
@@ -47,7 +47,7 @@ class TrackingDeliveryAlertBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  t.translate('tracking_delivery_notification_title'),
+                  title,
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 13,

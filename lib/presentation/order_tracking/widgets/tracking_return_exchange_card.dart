@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_ai_erp/domain/entity/order_tracking/order_tracking_scenario.dart';
-import 'package:mobile_ai_erp/utils/locale/app_localization.dart';
 
 class TrackingReturnExchangeCard extends StatelessWidget {
   const TrackingReturnExchangeCard({
@@ -8,16 +7,16 @@ class TrackingReturnExchangeCard extends StatelessWidget {
     required this.selected,
     required this.returnStageLabel,
     required this.primaryColor,
+    required this.title,
   });
 
   final OrderTrackingScenario selected;
-  final String Function(ReturnExchangeStage stage, AppLocalizations t)
-      returnStageLabel;
+  final String Function(ReturnExchangeStage stage) returnStageLabel;
   final Color primaryColor;
+  final String title;
 
   @override
   Widget build(BuildContext context) {
-    final AppLocalizations t = AppLocalizations.of(context);
     final List<ReturnExchangeStage> flowStages =
         _buildReturnFlow(selected.returnExchangeStage);
 
@@ -26,13 +25,13 @@ class TrackingReturnExchangeCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           _SectionTitle(
-            title: t.translate('tracking_return_exchange_title'),
+            title: title,
             icon: Icons.swap_horiz_rounded,
             iconColor: primaryColor,
           ),
           const SizedBox(height: 12),
           Text(
-            returnStageLabel(selected.returnExchangeStage, t),
+            returnStageLabel(selected.returnExchangeStage),
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,
@@ -61,7 +60,7 @@ class TrackingReturnExchangeCard extends StatelessWidget {
                 final bool isLast = index == flowStages.length - 1;
 
                 return _ReturnStageStep(
-                  label: returnStageLabel(stage, t),
+                  label: returnStageLabel(stage),
                   isDone: isDone,
                   isActive: isActive,
                   isLast: isLast,

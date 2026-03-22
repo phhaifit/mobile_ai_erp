@@ -67,8 +67,27 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         final bool isCompact = MediaQuery.sizeOf(context).width < 420;
         final OrderTrackingScenario? selected =
             _orderTrackingStore.selectedScenario;
+        final String title = _tr(t, 'tracking_title', 'Order Tracking');
+
+        if (selected == null) {
+          return Scaffold(
+            backgroundColor: colorScheme.surface,
+            appBar: AppBar(
+              elevation: 0,
+              backgroundColor: colorScheme.surface,
+              foregroundColor: colorScheme.onSurface,
+              title: Text(
+                title,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+            body: const Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final OrderTrackingScenario selectedScenario = selected;
         final bool isReturnFlow =
-            selected?.returnExchangeStage != ReturnExchangeStage.none;
+            selectedScenario.returnExchangeStage != ReturnExchangeStage.none;
 
         return Scaffold(
           backgroundColor: colorScheme.surface,
@@ -77,81 +96,129 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             backgroundColor: colorScheme.surface,
             foregroundColor: colorScheme.onSurface,
             title: Text(
-              t.translate('tracking_title'),
+              title,
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
-          body: selected == null
-              ? const Center(child: CircularProgressIndicator())
-              : SingleChildScrollView(
+          body: SingleChildScrollView(
+            child: Column(
+              children: <Widget>[
+                if (!isReturnFlow)
+                  TrackingTimelineHeader(
+                    selected: selectedScenario,
+                    primaryColor: colorScheme.primary,
+                    shipmentStageLabel: (ShipmentStage stage) =>
+                        _shipmentStageLabel(stage, t),
+                    orderIdLabel: _tr(t, 'tracking_order_id_label', 'Order ID'),
+                  ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      if (!isReturnFlow)
-                        TrackingTimelineHeader(
-                          selected: _selected,
-                          primaryColor: colorScheme.primary,
-                          shipmentStageLabel: _shipmentStageLabel,
-                        ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            TrackingScenarioSelector(
-                              isCompact: isCompact,
-                              scenarios: _scenarios,
-                              selected: _selected,
-                              primaryColor: colorScheme.primary,
-                              onChanged: _orderTrackingStore.selectScenario,
-                            ),
-                            const SizedBox(height: 16),
-                            TrackingCurrentStatusCard(
-                              selected: _selected,
-                              primaryColor: colorScheme.primary,
-                              shipmentStageLabel: _shipmentStageLabel,
-                              formatDateTime: _formatDateTime,
-                            ),
-                            if (_selected.returnExchangeStage !=
-                                ReturnExchangeStage.none) ...<Widget>[
-                              const SizedBox(height: 16),
-                              TrackingReturnExchangeCard(
-                                selected: _selected,
-                                returnStageLabel: _returnStageLabel,
-                                primaryColor: colorScheme.primary,
-                              ),
-                            ],
-                            const SizedBox(height: 16),
-                            TrackingCarrierCard(
-                              selected: _selected,
-                              primaryColor: colorScheme.primary,
-                              onOpenCarrierUrl: _openCarrierUrl,
-                            ),
-                            const SizedBox(height: 16),
-                            if (_selected.deliveryAlertType !=
-                                DeliveryAlertType.none) ...<Widget>[
-                              TrackingDeliveryAlertBanner(selected: _selected),
-                              const SizedBox(height: 16),
-                            ],
-                            if (!isReturnFlow)
-                              TrackingDetailedTimelineCard(
-                                selected: _selected,
-                                shipmentStageLabel: _shipmentStageLabel,
-                                formatDateTime: _formatDateTime,
-                              ),
-                          ],
+                      TrackingScenarioSelector(
+                        isCompact: isCompact,
+                        scenarios: _scenarios,
+                        selected: selectedScenario,
+                        primaryColor: colorScheme.primary,
+                        onChanged: _orderTrackingStore.selectScenario,
+                        scenarioLabel: _tr(
+                          t,
+                          'tracking_scenario_label',
+                          'Tracking scenario',
                         ),
                       ),
+                      const SizedBox(height: 16),
+                      TrackingCurrentStatusCard(
+                        selected: selectedScenario,
+                        primaryColor: colorScheme.primary,
+                        shipmentStageLabel: (ShipmentStage stage) =>
+                            _shipmentStageLabel(stage, t),
+                        formatDateTime: _formatDateTime,
+                        estimatedDeliveryLabel: _tr(
+                          t,
+                          'tracking_estimated_delivery',
+                          'Estimated delivery',
+                        ),
+                      ),
+                      if (selectedScenario.returnExchangeStage !=
+                          ReturnExchangeStage.none) ...<Widget>[
+                        const SizedBox(height: 16),
+                        TrackingReturnExchangeCard(
+                          selected: selectedScenario,
+                          returnStageLabel: (ReturnExchangeStage stage) =>
+                              _returnStageLabel(stage, t),
+                          primaryColor: colorScheme.primary,
+                          title: _tr(
+                            t,
+                            'tracking_return_exchange_title',
+                            'Return / Exchange',
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 16),
+                      TrackingCarrierCard(
+                        selected: selectedScenario,
+                        primaryColor: colorScheme.primary,
+                        onOpenCarrierUrl: _openCarrierUrl,
+                        sectionTitle: _tr(
+                          t,
+                          'tracking_carrier_section_title',
+                          'Carrier information',
+                        ),
+                        carrierNameLabel: _tr(
+                          t,
+                          'tracking_carrier_name_label',
+                          'Carrier',
+                        ),
+                        trackingNumberLabel: _tr(
+                          t,
+                          'tracking_number_label',
+                          'Tracking number',
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      if (selectedScenario.deliveryAlertType !=
+                          DeliveryAlertType.none) ...<Widget>[
+                        TrackingDeliveryAlertBanner(
+                          selected: selectedScenario,
+                          title: _tr(
+                            t,
+                            'tracking_delivery_notification_title',
+                            'Delivery notification',
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                      if (!isReturnFlow)
+                        TrackingDetailedTimelineCard(
+                          selected: selectedScenario,
+                          shipmentStageLabel: (ShipmentStage stage) =>
+                              _shipmentStageLabel(stage, t),
+                          formatDateTime: _formatDateTime,
+                          timelineTitle: _tr(
+                            t,
+                            'tracking_timeline_title',
+                            'Shipment timeline',
+                          ),
+                          pendingLabel: _tr(
+                            t,
+                            'tracking_pending',
+                            'Pending',
+                          ),
+                        ),
                     ],
                   ),
                 ),
+              ],
+            ),
+          ),
         );
       },
     );
   }
 
   List<OrderTrackingScenario> get _scenarios => _orderTrackingStore.scenarios;
-
-  OrderTrackingScenario get _selected => _orderTrackingStore.selectedScenario!;
 
   Future<void> _openCarrierUrl(String url) async {
     final Uri uri = Uri.parse(url);
@@ -160,7 +227,13 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
     if (!launched && mounted) {
       final AppLocalizations t = AppLocalizations.of(context);
-      _showSnackBar(t.translate('tracking_error_open_carrier_link'));
+      _showSnackBar(
+        _tr(
+          t,
+          'tracking_error_open_carrier_link',
+          'Unable to open carrier link.',
+        ),
+      );
     }
   }
 
@@ -173,32 +246,44 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   String _shipmentStageLabel(ShipmentStage stage, AppLocalizations t) {
     switch (stage) {
       case ShipmentStage.confirmed:
-        return t.translate('tracking_stage_confirmed');
+        return _tr(t, 'tracking_stage_confirmed', 'Confirmed');
       case ShipmentStage.packed:
-        return t.translate('tracking_stage_packed');
+        return _tr(t, 'tracking_stage_packed', 'Packed');
       case ShipmentStage.shipped:
-        return t.translate('tracking_stage_shipped');
+        return _tr(t, 'tracking_stage_shipped', 'Shipped');
       case ShipmentStage.delivered:
-        return t.translate('tracking_stage_delivered');
+        return _tr(t, 'tracking_stage_delivered', 'Delivered');
     }
   }
 
   String _returnStageLabel(ReturnExchangeStage stage, AppLocalizations t) {
     switch (stage) {
       case ReturnExchangeStage.none:
-        return t.translate('tracking_return_none');
+        return _tr(t, 'tracking_return_none', 'No return request');
       case ReturnExchangeStage.requested:
-        return t.translate('tracking_return_requested');
+        return _tr(t, 'tracking_return_requested', 'Requested');
       case ReturnExchangeStage.approved:
-        return t.translate('tracking_return_approved');
+        return _tr(t, 'tracking_return_approved', 'Approved');
       case ReturnExchangeStage.inTransitBack:
-        return t.translate('tracking_return_in_transit_back');
+        return _tr(
+          t,
+          'tracking_return_in_transit_back',
+          'In transit back',
+        );
       case ReturnExchangeStage.received:
-        return t.translate('tracking_return_received');
+        return _tr(t, 'tracking_return_received', 'Received');
       case ReturnExchangeStage.refunded:
-        return t.translate('tracking_return_refunded');
+        return _tr(t, 'tracking_return_refunded', 'Refunded');
       case ReturnExchangeStage.exchanged:
-        return t.translate('tracking_return_exchanged');
+        return _tr(t, 'tracking_return_exchanged', 'Exchanged');
+    }
+  }
+
+  String _tr(AppLocalizations t, String key, String fallback) {
+    try {
+      return t.translate(key);
+    } catch (_) {
+      return fallback;
     }
   }
 
