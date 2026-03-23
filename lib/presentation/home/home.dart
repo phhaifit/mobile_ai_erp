@@ -27,6 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Column(
         children: [
           _buildReportsEntry(),
+          _buildProductListingEntry(),
           Expanded(child: PostListScreen()),
         ],
       ),
@@ -50,6 +51,21 @@ class _HomeScreenState extends State<HomeScreen> {
           subtitle: Text('Sales, inventory, product, and P&L (offline mock).'),
           trailing: Icon(Icons.chevron_right),
           onTap: () => Navigator.of(context).pushNamed(Routes.reports),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProductListingEntry() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      child: Card(
+        child: ListTile(
+          leading: Icon(Icons.shopping_cart),
+          title: Text('Product Listing'),
+          subtitle: Text('View all available products.'),
+          trailing: Icon(Icons.chevron_right),
+          onTap: () => Navigator.of(context).pushNamed(Routes.storefrontProductListing),
         ),
       ),
     );

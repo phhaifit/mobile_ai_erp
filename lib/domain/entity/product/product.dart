@@ -8,18 +8,18 @@ import 'package:mobile_ai_erp/domain/entity/product_metadata/tag.dart';
 /// Currently only used in storefront.
 class Product {
   // Core product details
-  final String id;
-  final String productName;
-  final double price; // same as unit price?
-  final String currency;
-  final double rating;
-  final String? imageSource;
+  final String id; // product ID
+  final String productName; // name of the product
+  final double price; // price for sale //// same as unit price?
+  final String currency; // currency display, e.g. USD, CNY
+  final double rating; // average rating from customers, between 0 and 5
+  final String? imageSource; // URL or local path to product image, can be null if no image available
 
   // Metadata
-  final Category category; // can this be null?
-  final Brand brand; // can this be null?
-  final List<Tag> tags;
-  final List<Attribute> attributes;
+  final Category category; // product category //// can this be null?
+  final Brand brand; // product brand //// can this be null?
+  final List<Tag> tags; // list of tags, can be empty
+  final List<Attribute> attributes; // list of attributes, can be empty
 
   Product({
     required this.id,
