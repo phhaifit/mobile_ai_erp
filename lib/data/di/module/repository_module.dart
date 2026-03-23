@@ -4,6 +4,8 @@ import 'package:mobile_ai_erp/data/local/datasources/customer/customer_datasourc
 import 'package:mobile_ai_erp/data/local/datasources/order_tracking/order_tracking_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/post/post_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/product_metadata/product_metadata_datasource.dart';
+import 'package:mobile_ai_erp/data/local/datasources/user/role_datasource.dart';
+import 'package:mobile_ai_erp/data/local/datasources/user/user_datasource.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
 import 'package:mobile_ai_erp/data/repository/customer/customer_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/fulfillment/fulfillment_repository_impl.dart';
@@ -12,6 +14,7 @@ import 'package:mobile_ai_erp/data/repository/order_tracking/order_tracking_repo
 import 'package:mobile_ai_erp/data/repository/post/post_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/product_metadata/product_metadata_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/setting/setting_repository_impl.dart';
+import 'package:mobile_ai_erp/data/repository/user/role_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/supplier/supplier_mock_repository.dart';
 import 'package:mobile_ai_erp/data/repository/user/user_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/web_builder/cms_page_repository_impl.dart';
@@ -25,6 +28,7 @@ import 'package:mobile_ai_erp/domain/repository/order_tracking/order_tracking_re
 import 'package:mobile_ai_erp/domain/repository/post/post_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadata_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/setting/setting_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/user/role_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/supplier/supplier_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/user_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/web_builder/cms_page_repository.dart';
@@ -44,10 +48,6 @@ class RepositoryModule {
 
     getIt.registerSingleton<SettingRepository>(
       SettingRepositoryImpl(getIt<SharedPreferenceHelper>()),
-    );
-
-    getIt.registerSingleton<UserRepository>(
-      UserRepositoryImpl(getIt<SharedPreferenceHelper>()),
     );
 
     getIt.registerSingleton<PostRepository>(
@@ -73,6 +73,16 @@ class RepositoryModule {
         getIt<ProductMetadataDataSource>(),
       ),
     );
+
+    // user:--------------------------------------------------------------
+    getIt.registerSingleton<UserDataSource>(UserDataSource());
+    getIt.registerSingleton<RoleDataSource>(RoleDataSource());
+
+    getIt.registerSingleton<UserRepository>(
+        UserRepositoryImpl(getIt<UserDataSource>()));
+
+    getIt.registerSingleton<RoleRepository>(
+        RoleRepositoryImpl(getIt<RoleDataSource>()));
 
     // web_builder:--------------------------------------------------------------
     getIt.registerLazySingleton<CmsPageRepository>(

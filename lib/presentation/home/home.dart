@@ -30,8 +30,8 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           _buildStorefrontPDPEntry(),
           _buildReportsEntry(),
-          _buildSuppliersEntry(),
-          Expanded(child: PostListScreen()),
+          _buildUsersManagementEntry(),
+          // Expanded(child: PostListScreen()),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -70,6 +70,21 @@ class _HomeScreenState extends State<HomeScreen> {
           subtitle: Text('Sales, inventory, product, and P&L (offline mock).'),
           trailing: Icon(Icons.chevron_right),
           onTap: () => Navigator.of(context).pushNamed(Routes.reports),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUsersManagementEntry() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      child: Card(
+        child: ListTile(
+          leading: Icon(Icons.insights_outlined),
+          title: Text('User Management'),
+          subtitle: Text('User & Roles Managements (offline mock).'),
+          trailing: Icon(Icons.chevron_right),
+          onTap: () => Navigator.of(context).pushNamed(Routes.users),
         ),
       ),
     );
