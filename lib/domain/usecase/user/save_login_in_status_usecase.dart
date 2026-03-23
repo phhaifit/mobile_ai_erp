@@ -8,6 +8,6 @@ class SaveLoginStatusUseCase implements UseCase<void, bool> {
 
   @override
   Future<void> call({required bool params}) async {
-    return _userRepository.saveIsLoggedIn(params);
+    // return _userRepository.saveIsLoggedIn(params);
   }
 }
