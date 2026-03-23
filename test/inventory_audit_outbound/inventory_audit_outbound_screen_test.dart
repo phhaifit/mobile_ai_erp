@@ -214,6 +214,46 @@ void main() {
   );
 
   testWidgets(
+    'warehouse dropdown switch removes old rows immediately and shows new rows after load',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      final store = _buildStore();
+      await tester.pumpWidget(MaterialApp(home: InventoryAuditScreen(store: store)));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('audit_item_wh-01_p-01')), findsOneWidget);
+      expect(find.byKey(const Key('audit_item_wh-01_p-02')), findsOneWidget);
+      expect(find.byKey(const Key('audit_item_wh-01_p-03')), findsOneWidget);
+      expect(find.byKey(const Key('audit_mobile_list_view_wh-01')), findsOneWidget);
+
+      await tester.tap(find.byType(DropdownButtonFormField<String>).first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('North Warehouse (District 7)').last);
+      await tester.pump();
+
+      expect(find.byKey(const Key('audit_mobile_list_view_wh-01')), findsNothing);
+      expect(find.byKey(const Key('audit_item_wh-01_p-01')), findsNothing);
+      expect(find.byKey(const Key('audit_item_wh-01_p-02')), findsNothing);
+      expect(find.byKey(const Key('audit_item_wh-01_p-03')), findsNothing);
+
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('audit_mobile_list_view_wh-02')), findsOneWidget);
+      expect(find.byKey(const Key('audit_item_wh-02_p-01')), findsOneWidget);
+      expect(find.byKey(const Key('audit_item_wh-02_p-03')), findsOneWidget);
+      expect(find.byKey(const Key('audit_item_wh-02_p-02')), findsNothing);
+      expect(find.byKey(const Key('mobile_input_wh-02_p-01')), findsOneWidget);
+      expect(find.byKey(const Key('mobile_input_wh-01_p-01')), findsNothing);
+    },
+  );
+
+  testWidgets(
     'save audit button is disabled until all count fields are filled with valid values',
     (tester) async {
       tester.view.physicalSize = const Size(390, 844);
