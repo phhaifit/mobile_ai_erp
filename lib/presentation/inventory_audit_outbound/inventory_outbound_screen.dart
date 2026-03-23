@@ -76,90 +76,97 @@ class _OutboundForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final warehouseItems = store.warehouses
-        .map(
-          (warehouse) => DropdownMenuItem<String>(
-            value: warehouse.id,
-            child: Text('${warehouse.name} (${warehouse.location})'),
-          ),
-        )
-        .toList(growable: false);
+    return Observer(
+      builder: (_) {
+        final warehouseItems = store.warehouses
+            .map(
+              (warehouse) => DropdownMenuItem<String>(
+                value: warehouse.id,
+                child: Text('${warehouse.name} (${warehouse.location})'),
+              ),
+            )
+            .toList(growable: false);
 
-    final productItems = store.availableProductsForOutbound
-        .map(
-          (item) => DropdownMenuItem<String>(
-            value: item.productId,
-            child: Text('${item.productName} (${item.systemQty})'),
-          ),
-        )
-        .toList(growable: false);
+        final productItems = store.availableProductsForOutbound
+            .map(
+              (item) => DropdownMenuItem<String>(
+                value: item.productId,
+                child: Text('${item.productName} (${item.systemQty})'),
+              ),
+            )
+            .toList(growable: false);
 
-    return InventorySectionCard(
-      title: 'Issue Goods',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          WarehouseSelector(
-            value: store.outboundWarehouseId,
-            items: warehouseItems,
-            onChanged: store.setOutboundWarehouse,
+        final warehouseKey = store.outboundWarehouseId ?? 'none';
+
+        return InventorySectionCard(
+          title: 'Issue Goods',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              WarehouseSelector(
+                value: store.outboundWarehouseId,
+                items: warehouseItems,
+                onChanged: store.setOutboundWarehouse,
+              ),
+              const SizedBox(height: 10),
+              DropdownButtonFormField<String>(
+                key: Key('outbound_product_dropdown_$warehouseKey'),
+                initialValue: store.outboundProductId,
+                items: productItems,
+                onChanged: store.setOutboundProduct,
+                decoration: const InputDecoration(
+                  labelText: 'Product',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                key: Key('outbound_qty_field_$warehouseKey'),
+                initialValue: store.outboundQuantityInput,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Quantity',
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: store.setOutboundQuantity,
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                key: Key('outbound_note_field_$warehouseKey'),
+                initialValue: store.outboundNote,
+                decoration: const InputDecoration(
+                  labelText: 'Note (optional)',
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: store.setOutboundNote,
+              ),
+              if (store.errorMessage.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Text(store.errorMessage, style: const TextStyle(color: Colors.red)),
+              ],
+              const SizedBox(height: 12),
+              FilledButton.icon(
+                key: const Key('outbound_submit_button'),
+                onPressed: store.isSubmitting || !store.canSubmitOutbound
+                    ? null
+                    : () async {
+                        final success = await store.submitOutbound();
+                        if (!context.mounted) {
+                          return;
+                        }
+                        if (success) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Outbound issue saved locally.')),
+                          );
+                        }
+                      },
+                icon: const Icon(Icons.check_circle_outline),
+                label: const Text('Submit Outbound'),
+              ),
+            ],
           ),
-          const SizedBox(height: 10),
-          DropdownButtonFormField<String>(
-            key: const Key('outbound_product_dropdown'),
-            initialValue: store.outboundProductId,
-            items: productItems,
-            onChanged: store.setOutboundProduct,
-            decoration: const InputDecoration(
-              labelText: 'Product',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 10),
-          TextFormField(
-            key: const Key('outbound_qty_field'),
-            initialValue: store.outboundQuantityInput,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              labelText: 'Quantity',
-              border: OutlineInputBorder(),
-            ),
-            onChanged: store.setOutboundQuantity,
-          ),
-          const SizedBox(height: 10),
-          TextFormField(
-            initialValue: store.outboundNote,
-            decoration: const InputDecoration(
-              labelText: 'Note (optional)',
-              border: OutlineInputBorder(),
-            ),
-            onChanged: store.setOutboundNote,
-          ),
-          if (store.errorMessage.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            Text(store.errorMessage, style: const TextStyle(color: Colors.red)),
-          ],
-          const SizedBox(height: 12),
-          FilledButton.icon(
-            key: const Key('outbound_submit_button'),
-            onPressed: store.isSubmitting || !store.canSubmitOutbound
-                ? null
-                : () async {
-                    final success = await store.submitOutbound();
-                    if (!context.mounted) {
-                      return;
-                    }
-                    if (success) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Outbound issue saved locally.')),
-                      );
-                    }
-                  },
-            icon: const Icon(Icons.check_circle_outline),
-            label: const Text('Submit Outbound'),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -171,36 +178,40 @@ class _OutboundPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final InventoryItem? selected = store.selectedOutboundItem;
+    return Observer(
+      builder: (_) {
+        final InventoryItem? selected = store.selectedOutboundItem;
 
-    return InventorySectionCard(
-      title: 'Stock Preview',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (selected == null)
-            const Text('Select warehouse and product to preview available stock.')
-          else ...[
-            Text('Product: ${selected.productName}'),
-            Text('Available: ${selected.systemQty} ${selected.unit}'),
-            Text('Warehouse: ${store.getWarehouseName(selected.warehouseId)}'),
-          ],
-          const SizedBox(height: 14),
-          Text('Recent Outbound', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          if (store.outboundRecords.isEmpty)
-            const Text('No outbound records yet.')
-          else
-            ...store.outboundRecords.take(5).map(
-              (record) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Text(
-                  '${formatDateTime(record.createdAt)} - ${record.productName} x${record.quantity}',
+        return InventorySectionCard(
+          title: 'Stock Preview',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (selected == null)
+                const Text('Select warehouse and product to preview available stock.')
+              else ...[
+                Text('Product: ${selected.productName}'),
+                Text('Available: ${selected.systemQty} ${selected.unit}'),
+                Text('Warehouse: ${store.getWarehouseName(selected.warehouseId)}'),
+              ],
+              const SizedBox(height: 14),
+              Text('Recent Outbound', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 8),
+              if (store.outboundRecords.isEmpty)
+                const Text('No outbound records yet.')
+              else
+                ...store.outboundRecords.take(5).map(
+                  (record) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(
+                      '${formatDateTime(record.createdAt)} - ${record.productName} x${record.quantity}',
+                    ),
+                  ),
                 ),
-              ),
-            ),
-        ],
-      ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

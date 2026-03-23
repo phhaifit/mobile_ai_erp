@@ -33,6 +33,7 @@ abstract class _InventoryAuditOutboundStore with Store {
   final SubmitInventoryOutboundUseCase _submitInventoryOutboundUseCase;
   final GetInventoryOutboundRecordsUseCase _getInventoryOutboundRecordsUseCase;
   int _selectedWarehouseRequestId = 0;
+  int _outboundWarehouseRequestId = 0;
 
   @observable
   bool isLoading = false;
@@ -288,17 +289,41 @@ abstract class _InventoryAuditOutboundStore with Store {
 
   @action
   Future<void> setOutboundWarehouse(String? warehouseId) async {
+    final requestId = ++_outboundWarehouseRequestId;
     outboundWarehouseId = warehouseId;
     outboundProductId = null;
+    outboundQuantityInput = '';
+    outboundNote = '';
+    outboundInventoryItems = ObservableList<InventoryItem>();
+    clearError();
+
+    if (warehouseId != null && warehouseId == selectedWarehouseId && inventoryItems.isNotEmpty) {
+      outboundInventoryItems = ObservableList<InventoryItem>.of(
+        inventoryItems.where((item) => item.warehouseId == warehouseId),
+      );
+    }
 
     if (warehouseId == null) {
-      outboundInventoryItems.clear();
       return;
     }
 
-    final loadedInventory =
-        await _getInventoryByWarehouseUseCase.call(params: warehouseId);
-    outboundInventoryItems = ObservableList<InventoryItem>.of(loadedInventory);
+    try {
+      final loadedInventory =
+          await _getInventoryByWarehouseUseCase.call(params: warehouseId);
+      if (requestId != _outboundWarehouseRequestId || outboundWarehouseId != warehouseId) {
+        return;
+      }
+      runInAction(() {
+        outboundInventoryItems = ObservableList<InventoryItem>.of(loadedInventory);
+      });
+    } catch (error) {
+      if (requestId != _outboundWarehouseRequestId || outboundWarehouseId != warehouseId) {
+        return;
+      }
+      runInAction(() {
+        errorMessage = error.toString();
+      });
+    }
   }
 
   @action

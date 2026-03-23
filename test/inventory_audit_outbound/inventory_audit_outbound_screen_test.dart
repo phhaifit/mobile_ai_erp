@@ -139,6 +139,98 @@ void main() {
     expect(button.onPressed, isNull);
   });
 
+  testWidgets(
+    'outbound warehouse change updates product options and stock preview immediately',
+    (tester) async {
+      tester.view.physicalSize = const Size(500, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      final store = _buildStore();
+      await tester.pumpWidget(MaterialApp(home: InventoryOutboundScreen(store: store)));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('outbound_product_dropdown_wh-01')), findsOneWidget);
+      expect(find.byKey(const Key('outbound_qty_field_wh-01')), findsOneWidget);
+      expect(find.byKey(const Key('outbound_note_field_wh-01')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('outbound_product_dropdown_wh-01')));
+      await tester.pumpAndSettle();
+      expect(find.text('Ink Cartridge (40)'), findsWidgets);
+      await tester.tap(find.text('Ink Cartridge (40)').last);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Product: Ink Cartridge'), findsOneWidget);
+      expect(find.text('Warehouse: Main Warehouse'), findsOneWidget);
+
+      await tester.tap(find.byType(DropdownButtonFormField<String>).first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('North Warehouse (District 7)').last);
+      await tester.pump();
+
+      expect(find.byKey(const Key('outbound_product_dropdown_wh-01')), findsNothing);
+      expect(find.byKey(const Key('outbound_qty_field_wh-01')), findsNothing);
+      expect(find.byKey(const Key('outbound_note_field_wh-01')), findsNothing);
+
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('outbound_product_dropdown_wh-02')), findsOneWidget);
+      expect(find.byKey(const Key('outbound_qty_field_wh-02')), findsOneWidget);
+      expect(find.byKey(const Key('outbound_note_field_wh-02')), findsOneWidget);
+      expect(find.text('Product: Ink Cartridge'), findsNothing);
+      expect(
+        find.text('Select warehouse and product to preview available stock.'),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'outbound switch clears stale product and recalculates submit state',
+    (tester) async {
+      tester.view.physicalSize = const Size(500, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      final store = _buildStore();
+      await tester.pumpWidget(MaterialApp(home: InventoryOutboundScreen(store: store)));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('outbound_product_dropdown_wh-01')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('A4 Paper Box (120)').last);
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byKey(const Key('outbound_qty_field_wh-01')), '5');
+      await tester.enterText(find.byKey(const Key('outbound_note_field_wh-01')), 'urgent');
+      await tester.pumpAndSettle();
+
+      FilledButton button = tester.widget<FilledButton>(
+        find.byKey(const Key('outbound_submit_button')),
+      );
+      expect(button.onPressed, isNotNull);
+
+      await tester.tap(find.byType(DropdownButtonFormField<String>).first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Outlet Warehouse (Thu Duc)').last);
+      await tester.pumpAndSettle();
+
+      expect(store.outboundWarehouseId, 'wh-03');
+      expect(store.outboundProductId, isNull);
+      expect(store.outboundQuantityInput, isEmpty);
+      expect(store.outboundNote, isEmpty);
+
+      button = tester.widget<FilledButton>(find.byKey(const Key('outbound_submit_button')));
+      expect(button.onPressed, isNull);
+    },
+  );
+
   testWidgets('outbound screen switches layout by breakpoint', (tester) async {
     final store = _buildStore();
 
