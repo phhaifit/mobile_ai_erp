@@ -46,16 +46,13 @@ import 'package:mobile_ai_erp/presentation/order_tracking/store/order_tracking_s
 import 'package:mobile_ai_erp/presentation/reports/data/reports_mock_repository.dart';
 import 'package:mobile_ai_erp/presentation/reports/store/reports_store.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
-<<<<<<< HEAD
 import 'package:mobile_ai_erp/presentation/account/store/profile_store.dart';
 import 'package:mobile_ai_erp/presentation/account/store/address_store.dart';
 import 'package:mobile_ai_erp/presentation/account/store/order_store.dart';
 import 'package:mobile_ai_erp/domain/repository/account/address_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/account/order_repository.dart';
-=======
 import 'package:mobile_ai_erp/presentation/user/store/role_store.dart';
 import 'package:mobile_ai_erp/presentation/user/store/user_store.dart';
->>>>>>> main
 import 'package:mobile_ai_erp/presentation/web_builder/store/cms_page_store.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/store/store_settings_store.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/store/web_theme_store.dart';
