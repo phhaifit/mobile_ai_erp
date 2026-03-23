@@ -13,6 +13,7 @@ import 'package:mobile_ai_erp/data/repository/fulfillment/fulfillment_repository
 import 'package:mobile_ai_erp/data/repository/post/post_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/product_metadata/product_metadata_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/setting/setting_repository_impl.dart';
+import 'package:mobile_ai_erp/data/repository/stock_operations/mock_stock_operations_repository.dart';
 import 'package:mobile_ai_erp/data/repository/user/role_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/supplier/supplier_mock_repository.dart';
 import 'package:mobile_ai_erp/data/repository/user/user_repository_impl.dart';
@@ -26,6 +27,7 @@ import 'package:mobile_ai_erp/domain/repository/fulfillment/fulfillment_reposito
 import 'package:mobile_ai_erp/domain/repository/post/post_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadata_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/setting/setting_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/stock_operations/stock_operations_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/role_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/supplier/supplier_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/user_repository.dart';
@@ -43,35 +45,32 @@ import '../../../di/service_locator.dart';
 
 class RepositoryModule {
   static Future<void> configureRepositoryModuleInjection() async {
-    // repository:--------------------------------------------------------------
     getIt.registerSingleton<CustomerDataSource>(CustomerDataSource());
 
     getIt.registerSingleton<CustomerRepository>(
       CustomerRepositoryImpl(getIt<CustomerDataSource>()),
     );
 
-    getIt.registerSingleton<SettingRepository>(SettingRepositoryImpl(
-      getIt<SharedPreferenceHelper>(),
-    ));
-
-    // getIt.registerSingleton<UserRepository>(UserRepositoryImpl(
-    //   getIt<SharedPreferenceHelper>(),
-    // ));
-
-    getIt.registerSingleton<PostRepository>(PostRepositoryImpl(
-      getIt<PostApi>(),
-      getIt<PostDataSource>(),
-    ));
-
-    getIt.registerSingleton<OrderTrackingDataSource>(
-      OrderTrackingDataSource(),
+    getIt.registerSingleton<SettingRepository>(
+      SettingRepositoryImpl(getIt<SharedPreferenceHelper>()),
     );
+
+    getIt.registerSingleton<PostRepository>(
+      PostRepositoryImpl(getIt<PostApi>(), getIt<PostDataSource>()),
+    );
+
+    getIt.registerSingleton<StockOperationsRepository>(
+      MockStockOperationsRepository(),
+    );
+
+    getIt.registerSingleton<OrderTrackingDataSource>(OrderTrackingDataSource());
     getIt.registerSingleton<OrderTrackingRepository>(
       OrderTrackingRepositoryImpl(getIt<OrderTrackingDataSource>()),
     );
 
     getIt.registerSingleton<ProductMetadataDataSource>(
-        ProductMetadataDataSource());
+      ProductMetadataDataSource(),
+    );
     getIt.registerSingleton<ProductMetadataRepository>(
         ProductMetadataRepositoryImpl(
       getIt<ProductMetadataDataSource>(),
@@ -82,16 +81,19 @@ class RepositoryModule {
         
     getIt.registerLazySingleton<OrderRepository>(
         () => OrderRepositoryImpl(getIt<OrderMockDataSource>()));
+      ProductMetadataRepositoryImpl(getIt<ProductMetadataDataSource>());
 
     // user:--------------------------------------------------------------
     getIt.registerSingleton<UserDataSource>(UserDataSource());
     getIt.registerSingleton<RoleDataSource>(RoleDataSource());
 
     getIt.registerSingleton<UserRepository>(
-        UserRepositoryImpl(getIt<UserDataSource>()));
+      UserRepositoryImpl(getIt<UserDataSource>()),
+    );
 
     getIt.registerSingleton<RoleRepository>(
-        RoleRepositoryImpl(getIt<RoleDataSource>()));
+      RoleRepositoryImpl(getIt<RoleDataSource>()),
+    );
 
     // web_builder:--------------------------------------------------------------
     getIt.registerLazySingleton<CmsPageRepository>(
@@ -106,8 +108,6 @@ class RepositoryModule {
     getIt.registerLazySingleton<SupplierRepository>(
       () => SupplierMockRepository(),
     );
-    getIt.registerSingleton<FulfillmentRepository>(
-      FulfillmentRepositoryImpl(),
-    );
+    getIt.registerSingleton<FulfillmentRepository>(FulfillmentRepositoryImpl());
   }
 }
