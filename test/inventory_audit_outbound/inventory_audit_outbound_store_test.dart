@@ -38,7 +38,12 @@ void main() {
     final first = store.inventoryItems.first;
     final before = first.systemQty;
 
-    store.setPhysicalCount(first.productId, '${before - 4}');
+    for (final item in store.inventoryItems) {
+      final value = item.productId == first.productId
+          ? '${before - 4}'
+          : '${item.systemQty}';
+      store.setPhysicalCount(item.productId, value);
+    }
     final saved = await store.saveAuditSession();
 
     expect(saved, isTrue);
@@ -92,5 +97,29 @@ void main() {
 
     final line = store.auditLines.firstWhere((line) => line.productId == first.productId);
     expect(line.systemQty, first.systemQty - 2);
+  });
+
+  test('canSaveAudit is false when any count is missing', () {
+    final first = store.inventoryItems.first;
+    store.setPhysicalCount(first.productId, '${first.systemQty}');
+
+    expect(store.canSaveAudit, isFalse);
+  });
+
+  test('canSaveAudit is false when any count is invalid', () {
+    for (final item in store.inventoryItems) {
+      store.setPhysicalCount(item.productId, '${item.systemQty}');
+    }
+    store.setPhysicalCount(store.inventoryItems.first.productId, '-1');
+
+    expect(store.canSaveAudit, isFalse);
+  });
+
+  test('canSaveAudit is true only when all counts are valid', () {
+    for (final item in store.inventoryItems) {
+      store.setPhysicalCount(item.productId, '${item.systemQty}');
+    }
+
+    expect(store.canSaveAudit, isTrue);
   });
 }
