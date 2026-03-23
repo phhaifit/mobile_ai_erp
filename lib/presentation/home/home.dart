@@ -51,8 +51,9 @@ class _HomeScreenState extends State<HomeScreen> {
         child: ListTile(
           leading: Icon(Icons.storefront_outlined),
           title: Text('Product Detail Page'),
-          subtitle:
-              Text('Storefront PDP - View sample product (offline mock).'),
+          subtitle: Text(
+            'Storefront PDP - View sample product (offline mock).',
+          ),
           trailing: Icon(Icons.chevron_right),
           onTap: () => Navigator.of(context).pushNamed(Routes.productDetail),
         ),
@@ -87,9 +88,8 @@ class _HomeScreenState extends State<HomeScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => SupplierListScreen(
-                  store: getIt<SupplierStore>(),
-                ),
+                builder: (_) =>
+                    SupplierListScreen(store: getIt<SupplierStore>()),
               ),
             );
           },
@@ -128,7 +128,7 @@ class _HomeScreenState extends State<HomeScreen> {
       onPressed: () {
         Navigator.of(context).pushNamed(Routes.stockOperations);
       },
-      icon: const Icon(Icons.inventory_2_outlined),
+      icon: const Icon(Icons.warehouse_outlined),
     );
   }
 
@@ -158,9 +158,7 @@ class _HomeScreenState extends State<HomeScreen> {
       onPressed: () {
         Navigator.of(context).pushNamed(Routes.orderTracking);
       },
-      icon: Icon(
-        Icons.local_shipping_outlined,
-      ),
+      icon: Icon(Icons.local_shipping_outlined),
     );
   }
 

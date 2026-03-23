@@ -242,7 +242,6 @@ class MockStockOperationsRepository extends StockOperationsRepository {
                 )
               : stock,
         )
-        .where((stock) => stock.availableQuantity > 0)
         .toList();
   }
 }
