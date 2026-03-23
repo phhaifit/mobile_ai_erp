@@ -1,5 +1,7 @@
+import 'package:flutter/material.dart';
 import 'package:mobile_ai_erp/presentation/home/home.dart';
 import 'package:mobile_ai_erp/presentation/login/login.dart';
+import 'package:mobile_ai_erp/presentation/stock_operations/stock_operations_screen.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/web_builder_dashboard.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/store_settings/store_settings_screen.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/theme_engine/theme_list_screen.dart';
@@ -14,7 +16,6 @@ import 'package:mobile_ai_erp/presentation/order_fulfillment/fulfillment_list.da
 import 'package:mobile_ai_erp/presentation/order_fulfillment/order_tracking.dart';
 import 'package:mobile_ai_erp/presentation/order_fulfillment/packaging.dart';
 import 'package:mobile_ai_erp/presentation/order_fulfillment/print_label.dart';
-import 'package:flutter/material.dart';
 import 'package:mobile_ai_erp/presentation/user/home/user_home.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/presentation/user/store/role_store.dart';
@@ -26,6 +27,7 @@ class Routes {
   static const String splash = '/splash';
   static const String login = '/login';
   static const String home = '/post';
+  static const String stockOperations = '/stock-operations';
   static const String webBuilder = '/web-builder';
   static const String storeSettings = '/web-builder/store-settings';
   static const String themeList = '/web-builder/themes';
@@ -45,6 +47,7 @@ class Routes {
   static final routes = <String, WidgetBuilder>{
     login: (BuildContext context) => LoginScreen(),
     home: (BuildContext context) => HomeScreen(),
+    stockOperations: (BuildContext context) => const StockOperationsScreen(),
     webBuilder: (BuildContext context) => const WebBuilderDashboard(),
     storeSettings: (BuildContext context) => const StoreSettingsScreen(),
     themeList: (BuildContext context) => const ThemeListScreen(),
@@ -54,9 +57,9 @@ class Routes {
     orderTracking: OrderTrackingNavigation.buildScreen,
     reports: (BuildContext context) => ReportsAnalyticsScreen(),
     users: (BuildContext context) => UserManagementScreen(
-          userStore: getIt<UserStore>(),
-          roleStore: getIt<RoleStore>(),
-        ),
+      userStore: getIt<UserStore>(),
+      roleStore: getIt<RoleStore>(),
+    ),
     productDetail: (BuildContext context) => const ProductDetailScreen(),
     fulfillment: (BuildContext context) => FulfillmentListScreen(),
     fulfillmentDetail: (BuildContext context) => FulfillmentDetailScreen(),
