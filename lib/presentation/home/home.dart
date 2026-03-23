@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:mobile_ai_erp/core/stores/supplier/supplier_store.dart';
 import 'package:mobile_ai_erp/data/sharedpref/constants/preferences.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
+import 'package:mobile_ai_erp/presentation/customer_management/navigation/customer_navigator.dart';
 import 'package:mobile_ai_erp/presentation/home/store/language/language_store.dart';
 import 'package:mobile_ai_erp/presentation/home/store/theme/theme_store.dart';
 import 'package:mobile_ai_erp/presentation/post/post_list.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_navigator.dart';
+import 'package:mobile_ai_erp/presentation/supplier/supplier_list/supplier_list_screen.dart';
 import 'package:mobile_ai_erp/utils/locale/app_localization.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -25,7 +28,9 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: _buildAppBar(),
       body: Column(
         children: [
+          _buildStorefrontPDPEntry(),
           _buildReportsEntry(),
+          _buildSuppliersEntry(),
           Expanded(child: PostListScreen()),
         ],
       ),
@@ -35,6 +40,22 @@ class _HomeScreenState extends State<HomeScreen> {
         },
         icon: const Icon(Icons.web),
         label: const Text('Web Builder'),
+      ),
+    );
+  }
+
+  Widget _buildStorefrontPDPEntry() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      child: Card(
+        child: ListTile(
+          leading: Icon(Icons.storefront_outlined),
+          title: Text('Product Detail Page'),
+          subtitle:
+              Text('Storefront PDP - View sample product (offline mock).'),
+          trailing: Icon(Icons.chevron_right),
+          onTap: () => Navigator.of(context).pushNamed(Routes.productDetail),
+        ),
       ),
     );
   }
@@ -54,6 +75,29 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildSuppliersEntry() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      child: Card(
+        child: ListTile(
+          leading: Icon(Icons.store),
+          title: Text("Suppliers"),
+          trailing: Icon(Icons.chevron_right),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => SupplierListScreen(
+                  store: getIt<SupplierStore>(),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
       title: Text(AppLocalizations.of(context).translate('home_tv_posts')),
@@ -64,8 +108,14 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Widget> _buildActions(BuildContext context) {
     return <Widget>[
       _buildStockOperationsButton(),
+      IconButton(
+        onPressed: () => CustomerNavigator.openHome(context),
+        icon: const Icon(Icons.people_outline),
+        tooltip: 'Customer Management',
+      ),
       _buildProductMetadataButton(),
       _buildOrderTrackingButton(),
+      _buildFulfillmentButton(),
       _buildLanguageButton(),
       _buildThemeButton(),
       _buildLogoutButton(),
@@ -89,6 +139,16 @@ class _HomeScreenState extends State<HomeScreen> {
         ProductMetadataNavigator.openProductMetadataHome(context);
       },
       icon: const Icon(Icons.dashboard_outlined),
+    );
+  }
+
+  Widget _buildFulfillmentButton() {
+    return IconButton(
+      tooltip: 'Order Fulfillment',
+      onPressed: () {
+        Navigator.of(context).pushNamed(Routes.fulfillment);
+      },
+      icon: const Icon(Icons.inventory_2_outlined),
     );
   }
 
