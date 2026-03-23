@@ -24,9 +24,9 @@ abstract class _UserStore with Store {
     _setupDisposers();
 
     // checking if user is logged in
-    _isLoggedInUseCase.call(params: null).then((value) async {
-      isLoggedIn = value;
-    });
+    // _isLoggedInUseCase.call(params: null).then((value) async {
+    //   isLoggedIn = value;
+    // });
   }
 
   // use cases:-----------------------------------------------------------------
