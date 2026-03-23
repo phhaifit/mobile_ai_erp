@@ -114,8 +114,9 @@ class WarehouseSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<String>(
+      key: ValueKey<String?>(value),
       isExpanded: true,
-      initialValue: value,
+      value: value,
       items: items,
       onChanged: onChanged,
       decoration: InputDecoration(

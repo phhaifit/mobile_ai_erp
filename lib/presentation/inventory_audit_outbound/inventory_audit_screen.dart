@@ -251,49 +251,54 @@ class _ProductSystemList extends StatelessWidget {
       return const Center(child: Text('No inventory found for selected warehouse.'));
     }
 
-    return ListView.separated(
+    return KeyedSubtree(
       key: Key(compact ? 'audit_mobile_list' : 'audit_desktop_list'),
-      shrinkWrap: true,
-      physics: compact ? const NeverScrollableScrollPhysics() : null,
-      itemCount: store.inventoryItems.length,
-      separatorBuilder: (_, __) => const Divider(height: 1),
-      itemBuilder: (_, index) {
-        final item = store.inventoryItems[index];
-        final line = _lineForItem(store, item);
+      child: ListView.separated(
+        key: Key(
+          '${compact ? 'audit_mobile_list_view' : 'audit_desktop_list_view'}_${store.selectedWarehouseId ?? 'none'}',
+        ),
+        shrinkWrap: true,
+        physics: compact ? const NeverScrollableScrollPhysics() : null,
+        itemCount: store.inventoryItems.length,
+        separatorBuilder: (_, __) => const Divider(height: 1),
+        itemBuilder: (_, index) {
+          final item = store.inventoryItems[index];
+          final line = _lineForItem(store, item);
 
-        return ListTile(
-          onTap: compact ? null : () => store.setSelectedAuditProduct(item.productId),
-          selected: !compact && item.productId == store.selectedAuditProductId,
-          title: Text(item.productName),
-          subtitle: Text('System: ${item.systemQty} ${item.unit}'),
-          trailing: compact
-              ? SizedBox(
-                  width: 190,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: 70,
-                        child: TextFormField(
-                          key: Key(
-                            'mobile_input_${store.selectedWarehouseId ?? 'none'}_${item.productId}',
+          return ListTile(
+            onTap: compact ? null : () => store.setSelectedAuditProduct(item.productId),
+            selected: !compact && item.productId == store.selectedAuditProductId,
+            title: Text(item.productName),
+            subtitle: Text('System: ${item.systemQty} ${item.unit}'),
+            trailing: compact
+                ? SizedBox(
+                    width: 190,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 70,
+                          child: TextFormField(
+                            key: Key(
+                              'mobile_input_${store.selectedWarehouseId ?? 'none'}_${item.productId}',
+                            ),
+                            initialValue: store.getPhysicalCountInput(item.productId),
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(labelText: 'Count'),
+                            onChanged: (value) {
+                              store.setPhysicalCount(item.productId, value);
+                            },
                           ),
-                          initialValue: store.getPhysicalCountInput(item.productId),
-                          keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(labelText: 'Count'),
-                          onChanged: (value) {
-                            store.setPhysicalCount(item.productId, value);
-                          },
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      DiscrepancyBadge(discrepancy: line.discrepancy),
-                    ],
-                  ),
-                )
-              : DiscrepancyBadge(discrepancy: line.discrepancy),
-        );
-      },
+                        const SizedBox(width: 8),
+                        DiscrepancyBadge(discrepancy: line.discrepancy),
+                      ],
+                    ),
+                  )
+                : DiscrepancyBadge(discrepancy: line.discrepancy),
+          );
+        },
+      ),
     );
   }
 

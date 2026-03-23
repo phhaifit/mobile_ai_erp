@@ -26,6 +26,25 @@ InventoryAuditOutboundStore _buildStore() {
   );
 }
 
+Future<void> _fillAllMainWarehouseCounts(
+  WidgetTester tester,
+  Map<String, String> values,
+) async {
+  await tester.enterText(
+    find.byKey(const Key('mobile_input_wh-01_p-01')),
+    values['p-01'] ?? '120',
+  );
+  await tester.enterText(
+    find.byKey(const Key('mobile_input_wh-01_p-02')),
+    values['p-02'] ?? '40',
+  );
+  await tester.enterText(
+    find.byKey(const Key('mobile_input_wh-01_p-03')),
+    values['p-03'] ?? '65',
+  );
+  await tester.pump();
+}
+
 void main() {
   testWidgets('audit screen renders mobile list under 600px', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
@@ -70,7 +89,10 @@ void main() {
 
     final store = _buildStore();
     await store.loadInitialData();
-    store.setPhysicalCount(store.inventoryItems.first.productId, '99');
+    for (final item in store.inventoryItems) {
+      final value = item.productId == 'p-01' ? '99' : '${item.systemQty}';
+      store.setPhysicalCount(item.productId, value);
+    }
     await store.saveAuditSession();
 
     await tester.pumpWidget(
@@ -91,7 +113,10 @@ void main() {
 
     final store = _buildStore();
     await store.loadInitialData();
-    store.setPhysicalCount(store.inventoryItems.first.productId, '99');
+    for (final item in store.inventoryItems) {
+      final value = item.productId == 'p-01' ? '99' : '${item.systemQty}';
+      store.setPhysicalCount(item.productId, value);
+    }
     await store.saveAuditSession();
 
     await tester.pumpWidget(
@@ -159,4 +184,67 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Outbound / Goods Issue'), findsOneWidget);
   });
+
+  testWidgets(
+    'changing warehouse updates audit items immediately without count field interaction',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      final store = _buildStore();
+      await tester.pumpWidget(MaterialApp(home: InventoryAuditScreen(store: store)));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('mobile_input_wh-01_p-01')), findsOneWidget);
+
+      await store.setSelectedWarehouse('wh-02');
+      await tester.pumpAndSettle();
+
+      expect(store.selectedWarehouseId, 'wh-02');
+      expect(
+        store.inventoryItems.every((item) => item.warehouseId == 'wh-02'),
+        isTrue,
+      );
+      expect(find.byKey(const Key('audit_mobile_list')), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'save audit button is disabled until all count fields are filled with valid values',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      final store = _buildStore();
+      await tester.pumpWidget(MaterialApp(home: InventoryAuditScreen(store: store)));
+      await tester.pumpAndSettle();
+
+      FilledButton button = tester.widget<FilledButton>(
+        find.byKey(const Key('audit_save_button_mobile')),
+      );
+      expect(button.onPressed, isNull);
+
+      await tester.enterText(find.byKey(const Key('mobile_input_wh-01_p-01')), '120');
+      await tester.pump();
+      button = tester.widget<FilledButton>(find.byKey(const Key('audit_save_button_mobile')));
+      expect(button.onPressed, isNull);
+
+      await _fillAllMainWarehouseCounts(tester, const {
+        'p-01': '120',
+        'p-02': '40',
+        'p-03': '65',
+      });
+
+      button = tester.widget<FilledButton>(find.byKey(const Key('audit_save_button_mobile')));
+      expect(button.onPressed, isNotNull);
+    },
+  );
 }

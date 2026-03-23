@@ -32,6 +32,7 @@ abstract class _InventoryAuditOutboundStore with Store {
   final GetInventoryAuditRecordsUseCase _getInventoryAuditRecordsUseCase;
   final SubmitInventoryOutboundUseCase _submitInventoryOutboundUseCase;
   final GetInventoryOutboundRecordsUseCase _getInventoryOutboundRecordsUseCase;
+  int _selectedWarehouseRequestId = 0;
 
   @observable
   bool isLoading = false;
@@ -136,7 +137,29 @@ abstract class _InventoryAuditOutboundStore with Store {
   }
 
   @computed
-  bool get canSaveAudit => selectedWarehouseId != null && inventoryItems.isNotEmpty;
+  bool get allCountsFilledAndValid {
+    if (inventoryItems.isEmpty) {
+      return false;
+    }
+
+    for (final item in inventoryItems) {
+      final raw = physicalCountInputs[item.productId];
+      if (raw == null || raw.trim().isEmpty) {
+        return false;
+      }
+      final parsed = int.tryParse(raw.trim());
+      if (parsed == null || parsed < 0) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @computed
+  bool get canSaveAudit =>
+      selectedWarehouseId != null &&
+      inventoryItems.isNotEmpty &&
+      allCountsFilledAndValid;
 
   @computed
   bool get canSubmitOutbound {
@@ -182,21 +205,27 @@ abstract class _InventoryAuditOutboundStore with Store {
 
   @action
   Future<void> setSelectedWarehouse(String? warehouseId) async {
+    final requestId = ++_selectedWarehouseRequestId;
     selectedWarehouseId = warehouseId;
     selectedAuditProductId = null;
     physicalCountInputs.clear();
+    inventoryItems = ObservableList<InventoryItem>();
 
     if (warehouseId == null) {
-      inventoryItems.clear();
       return;
     }
 
     final loadedInventory =
         await _getInventoryByWarehouseUseCase.call(params: warehouseId);
-    inventoryItems = ObservableList<InventoryItem>.of(loadedInventory);
-    if (loadedInventory.isNotEmpty) {
-      selectedAuditProductId = loadedInventory.first.productId;
+    if (requestId != _selectedWarehouseRequestId || selectedWarehouseId != warehouseId) {
+      return;
     }
+
+    runInAction(() {
+      inventoryItems = ObservableList<InventoryItem>.of(loadedInventory);
+      selectedAuditProductId =
+          loadedInventory.isNotEmpty ? loadedInventory.first.productId : null;
+    });
   }
 
   @action
