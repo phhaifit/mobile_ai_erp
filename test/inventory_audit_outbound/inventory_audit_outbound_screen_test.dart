@@ -10,6 +10,7 @@ import 'package:mobile_ai_erp/domain/usecase/inventory_audit_outbound/save_inven
 import 'package:mobile_ai_erp/domain/usecase/inventory_audit_outbound/submit_inventory_outbound_usecase.dart';
 import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/inventory_audit_screen.dart';
 import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/inventory_audit_summary_screen.dart';
+import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/inventory_outbound_history_screen.dart';
 import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/inventory_outbound_screen.dart';
 import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/store/inventory_audit_outbound_store.dart';
 
@@ -230,6 +231,33 @@ void main() {
       expect(button.onPressed, isNull);
     },
   );
+
+  testWidgets('outbound preview opens detailed outbound history page', (tester) async {
+    tester.view.physicalSize = const Size(500, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final store = _buildStore();
+    await store.loadInitialData();
+    store.setOutboundWarehouse(store.selectedWarehouseId);
+    store.setOutboundProduct('p-01');
+    store.setOutboundQuantity('3');
+    await store.submitOutbound();
+
+    await tester.pumpWidget(MaterialApp(home: InventoryOutboundScreen(store: store)));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('open_outbound_history_button')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(InventoryOutboundHistoryScreen), findsOneWidget);
+    expect(find.text('Outbound History'), findsOneWidget);
+    expect(find.text('Warehouse: Main Warehouse'), findsOneWidget);
+    expect(find.text('Quantity: 3'), findsOneWidget);
+  });
 
   testWidgets('outbound screen switches layout by breakpoint', (tester) async {
     final store = _buildStore();

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/entity/inventory_audit_outbound/inventory_item.dart';
+import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/inventory_outbound_history_screen.dart';
 import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/inventory_shared_widgets.dart';
 import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/store/inventory_audit_outbound_store.dart';
 
@@ -195,7 +196,27 @@ class _OutboundPreview extends StatelessWidget {
                 Text('Warehouse: ${store.getWarehouseName(selected.warehouseId)}'),
               ],
               const SizedBox(height: 14),
-              Text('Recent Outbound', style: Theme.of(context).textTheme.titleMedium),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Recent Outbound',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                  TextButton(
+                    key: const Key('open_outbound_history_button'),
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => InventoryOutboundHistoryScreen(store: store),
+                        ),
+                      );
+                    },
+                    child: const Text('View all'),
+                  ),
+                ],
+              ),
               const SizedBox(height: 8),
               if (store.outboundRecords.isEmpty)
                 const Text('No outbound records yet.')
