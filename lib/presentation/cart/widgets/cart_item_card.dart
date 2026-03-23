@@ -24,158 +24,245 @@ class CartItemCard extends StatelessWidget {
     this.onSelectChanged,
   }) : super(key: key);
 
+  static const Color _accentRed = Color(0xFFC63D2F);
+
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 1,
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: isSelected
-                ? Border.all(color: Colors.blue[600]!, width: 2)
-                : null,
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Checkbox (optional)
-                if (onSelectChanged != null)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 12),
-                    child: Checkbox(
-                      value: isSelected,
-                      onChanged: (value) => onSelectChanged!(value ?? false),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                  ),
-                // Product image
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    color: Colors.grey[100],
-                  ),
-                  child: item.imageUrl.isNotEmpty
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            item.imageUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                _buildImagePlaceholder(),
-                          ),
-                        )
-                      : _buildImagePlaceholder(),
-                ),
-                const SizedBox(width: 12),
-                // Product details
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Product name
-                      Text(
-                        item.displayName,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      // Customization info
-                      if (item.hasCustomization)
-                        Text(
-                          item.customizationLabel,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      const SizedBox(height: 8),
-                      // Stock warning badge
-                      if (showStockWarning)
-                        StockWarningBadge(
-                          isOutOfStock: item.isOutOfStock,
-                          isLowStock: item.isLowStock,
-                          availableStock: item.availableStock,
-                          size: 12,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 0,
-                            vertical: 0,
-                          ),
-                        ),
-                      const SizedBox(height: 8),
-                      // Price and quantity row
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          // Price
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                item.formattedTotalPrice,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.blue,
-                                ),
-                              ),
-                              if (item.itemDiscount != null &&
-                                  item.itemDiscount! > 0)
-                                Text(
-                                  '-${item.formattedDiscountAmount}',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.green[600],
-                                    decoration: TextDecoration.lineThrough,
-                                  ),
-                                ),
-                            ],
-                          ),
-                          // Quantity selector
-                          QuantitySelector(
-                            currentQuantity: item.quantity,
-                            maxQuantity: item.availableStock,
-                            onQuantityChanged: onQuantityChanged,
-                            size: 28,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // Remove button
-                Column(
-                  children: [
-                    IconButton(
-                      onPressed: onRemove,
-                      icon: Icon(
-                        Icons.delete_outline,
-                        color: Colors.red[600],
-                        size: 20,
-                      ),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                  ],
-                ),
-              ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 700;
+
+        return Card(
+          elevation: 1,
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: GestureDetector(
+            onTap: onTap,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: isSelected
+                    ? Border.all(color: Colors.blue[600]!, width: 2)
+                    : null,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: isCompact
+                    ? _buildCompactContent(context)
+                    : _buildWideContent(context),
+              ),
             ),
           ),
+        );
+      },
+    );
+  }
+
+  Widget _buildWideContent(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (onSelectChanged != null)
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: Checkbox(
+              value: isSelected,
+              onChanged: (value) => onSelectChanged!(value ?? false),
+              activeColor: _accentRed,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ),
+        _buildImage(80),
+        const SizedBox(width: 12),
+        Expanded(child: _buildInfoContent(compact: false)),
+        const SizedBox(width: 12),
+        Column(
+          children: [
+            _buildRemoveButton(),
+            const SizedBox(height: 10),
+            QuantitySelector(
+              currentQuantity: item.quantity,
+              maxQuantity: item.availableStock,
+              onQuantityChanged: onQuantityChanged,
+              size: 28,
+            ),
+          ],
         ),
+      ],
+    );
+  }
+
+  Widget _buildCompactContent(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (onSelectChanged != null)
+              Padding(
+                padding: const EdgeInsets.only(right: 8, top: 2),
+                child: Checkbox(
+                  value: isSelected,
+                  onChanged: (value) => onSelectChanged!(value ?? false),
+                  activeColor: _accentRed,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  visualDensity: VisualDensity.compact,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+            _buildImage(72),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: _buildInfoContent(compact: true)),
+                  const SizedBox(width: 8),
+                  _buildRemoveButton(),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        /// Bottom action row on mobile:
+        /// price on left, quantity on right
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(child: _buildPriceSection(compact: true)),
+            const SizedBox(width: 12),
+            Flexible(
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: QuantitySelector(
+                    currentQuantity: item.quantity,
+                    maxQuantity: item.availableStock,
+                    onQuantityChanged: onQuantityChanged,
+                    size: 26,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildImage(double size) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        color: Colors.grey[100],
+      ),
+      child: item.imageUrl.isNotEmpty
+          ? ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                item.imageUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                    _buildImagePlaceholder(),
+              ),
+            )
+          : _buildImagePlaceholder(),
+    );
+  }
+
+  Widget _buildInfoContent({required bool compact}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          item.displayName,
+          style: TextStyle(
+            fontSize: compact ? 13 : 14,
+            fontWeight: FontWeight.w600,
+          ),
+          maxLines: compact ? 2 : 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: 4),
+        if (item.hasCustomization)
+          Text(
+            item.customizationLabel,
+            style: TextStyle(
+              fontSize: compact ? 11.5 : 12,
+              color: Colors.grey[600],
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        const SizedBox(height: 8),
+        if (showStockWarning)
+          StockWarningBadge(
+            isOutOfStock: item.isOutOfStock,
+            isLowStock: item.isLowStock,
+            availableStock: item.availableStock,
+            size: compact ? 11 : 12,
+          ),
+        if (!compact) ...[
+          const SizedBox(height: 8),
+          _buildPriceSection(compact: false),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildPriceSection({required bool compact}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          item.formattedTotalPrice,
+          style: TextStyle(
+            fontSize: compact ? 13 : 14,
+            fontWeight: FontWeight.bold,
+            color: Colors.blue,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        if (item.itemDiscount != null && item.itemDiscount! > 0)
+          Text(
+            '-${item.formattedDiscountAmount}',
+            style: TextStyle(
+              fontSize: compact ? 11 : 12,
+              color: Colors.green[600],
+              decoration: TextDecoration.lineThrough,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+      ],
+    );
+  }
+
+  Widget _buildRemoveButton() {
+    return Tooltip(
+      message: 'Xóa khỏi giỏ hàng',
+      child: IconButton(
+        onPressed: onRemove,
+        icon: const Icon(
+          Icons.delete_outline,
+          color: _accentRed,
+          size: 20,
+        ),
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(),
+        visualDensity: VisualDensity.compact,
       ),
     );
   }
@@ -203,6 +290,8 @@ class CompactCartItemCard extends StatelessWidget {
     required this.onRemove,
     required this.onQuantityChanged,
   }) : super(key: key);
+
+  static const Color _accentRed = Color(0xFFC63D2F);
 
   @override
   Widget build(BuildContext context) {
@@ -243,7 +332,7 @@ class CompactCartItemCard extends StatelessWidget {
           ),
           IconButton(
             onPressed: onRemove,
-            icon: Icon(Icons.close, color: Colors.red[600], size: 20),
+            icon: const Icon(Icons.close, color: _accentRed, size: 20),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
           ),

@@ -207,15 +207,16 @@ class CartItemUIModel {
       productId: item.productId,
       name: item.productName,
       description: '', // CartItem doesn't have description
-      price: item.unitPrice,
+      price: item.effectivePrice,
       quantity: item.quantity,
       availableStock: item.stockAvailable ?? 0,
       imageUrl: item.imageUrl ?? '',
-      categories: item.category != null ? [item.category!] : [],
+      categories: const [], // CartItem mới không còn category
       rating: 0.0, // CartItem doesn't have rating
       size: item.selectedSize ?? '',
-      color: item.selectedColor ?? '',
-      itemDiscount: item.itemDiscount,
+      color: item.selectedColorName ?? '',
+      itemDiscount:
+          item.hasDiscount ? item.discountPercentage.toDouble() : null,
       addedAt: item.dateAdded,
       isLowStock: item.isLowStock,
       isOutOfStock: item.isOutOfStock,

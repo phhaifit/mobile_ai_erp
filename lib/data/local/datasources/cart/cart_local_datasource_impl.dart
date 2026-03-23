@@ -118,7 +118,6 @@ class CartLocalDataSourceImpl implements CartDataSource {
           dateModified: DateTime.now(),
         );
 
-    print('DS GET CART: userId=$userId, items=${cart.items.length}');
     return cart;
   }
 
@@ -131,13 +130,10 @@ class CartLocalDataSourceImpl implements CartDataSource {
   @override
   Future<void> addItemToCart(String userId, CartItem item) async {
     final cart = await getCart(userId);
-    print('DS BEFORE ADD: ${cart.items.length}');
 
     final updatedCart = cart.addItem(item);
-    print('DS AFTER addItem(): ${updatedCart.items.length}');
 
     await saveCart(updatedCart);
-    print('DS AFTER SAVE: ${_carts[userId]?.items.length}');
   }
 
   @override
@@ -376,12 +372,18 @@ class CartLocalDataSourceImpl implements CartDataSource {
       id: 'item_${productId}_${DateTime.now().millisecondsSinceEpoch}',
       productId: productId,
       productName: product['name'],
-      unitPrice: product['price'],
-      quantity: 1,
       imageUrl: product['image'],
+      variantId: product['variantId'] ?? 'variant_$productId',
+      sku: product['sku'] ?? '',
+      selectedSize: product['size'],
+      selectedColorName: product['colorName'],
+      selectedColorValue: product['colorValue'],
+      price: (product['price'] as num).toDouble(),
+      salePrice: product['salePrice'] != null
+          ? (product['salePrice'] as num).toDouble()
+          : null,
       stockAvailable: product['stock'],
-      category: product['category'],
-      sku: product['sku'],
+      quantity: 1,
       dateAdded: DateTime.now(),
     );
   }

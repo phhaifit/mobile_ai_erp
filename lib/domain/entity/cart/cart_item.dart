@@ -1,48 +1,84 @@
+import 'package:flutter/material.dart';
 import 'package:mobile_ai_erp/domain/entity/cart/cart_exception.dart';
+import 'package:mobile_ai_erp/domain/entity/product_detail/product_detail.dart';
 
 class CartItem {
   final String id;
   final String productId;
   final String productName;
-  final double unitPrice;
-  int quantity;
   final String? imageUrl;
-  final int? stockAvailable;
-  final String? category;
-  final String? sku;
+
+  /// Reference to selected variant
+  final String variantId;
+  final String sku;
+
+  /// Variant attributes
   final String? selectedSize;
-  final String? selectedColor;
-  final Map<String, dynamic>? customAttributes;
-  final DateTime dateAdded;
-  final double? itemDiscount;
-  final String? promotionCode;
+  final String? selectedColorName;
+  final Color? selectedColorValue;
+
+  /// Pricing from variant
+  final double price;
+  final double? salePrice;
+
+  /// Stock from variant
+  final int? stockAvailable;
+
+  /// Cart state
+  int quantity;
   bool isSelected;
+  final DateTime dateAdded;
 
   CartItem({
     required this.id,
     required this.productId,
     required this.productName,
-    required this.unitPrice,
-    required this.quantity,
     this.imageUrl,
-    this.stockAvailable,
-    this.category,
-    this.sku,
+    required this.variantId,
+    required this.sku,
     this.selectedSize,
-    this.selectedColor,
-    this.customAttributes,
-    DateTime? dateAdded,
-    this.itemDiscount,
-    this.promotionCode,
+    this.selectedColorName,
+    this.selectedColorValue,
+    required this.price,
+    this.salePrice,
+    this.stockAvailable,
+    required this.quantity,
     this.isSelected = false,
+    DateTime? dateAdded,
   }) : dateAdded = dateAdded ?? DateTime.now() {
     _validateQuantity();
+  }
+
+  /// Factory: create cart item directly from ProductVariant
+  factory CartItem.fromVariant({
+    required String productId,
+    required String productName,
+    required ProductVariant variant,
+    String? imageUrl,
+    int quantity = 1,
+  }) {
+    return CartItem(
+      id: '${productId}_${variant.id}',
+      productId: productId,
+      productName: productName,
+      imageUrl: imageUrl,
+      variantId: variant.id,
+      sku: variant.sku,
+      selectedSize: variant.size,
+      selectedColorName: variant.color?.name,
+      selectedColorValue: variant.color?.color,
+      price: variant.price,
+      salePrice: variant.salePrice,
+      stockAvailable: variant.stockQuantity,
+      quantity: quantity,
+    );
   }
 
   void _validateQuantity() {
     if (quantity <= 0) {
       throw InvalidCartItemException(
-          message: 'Quantity must be greater than 0');
+        message: 'Quantity must be greater than 0',
+      );
     }
 
     if (stockAvailable != null && quantity > stockAvailable!) {
@@ -53,18 +89,37 @@ class CartItem {
     }
   }
 
-  double get subtotal => unitPrice * quantity;
+  /// Base price before discount
+  double get originalUnitPrice => price;
 
-  double get itemDiscountAmount {
-    if (itemDiscount == null) return 0;
-    return (subtotal * itemDiscount!) / 100;
+  /// Actual price user pays
+  double get effectivePrice => salePrice ?? price;
+
+  /// Has variant sale
+  bool get hasDiscount => salePrice != null && salePrice! < price;
+
+  /// Discount percentage of this variant
+  int get discountPercentage {
+    if (!hasDiscount) return 0;
+    return (((price - salePrice!) / price) * 100).round();
   }
 
-  double get totalBeforeCartDiscount => subtotal - itemDiscountAmount;
+  /// Total before variant discount
+  double get subtotalBeforeDiscount => originalUnitPrice * quantity;
+
+  /// Total variant discount amount
+  double get variantDiscountAmount =>
+      (originalUnitPrice - effectivePrice) * quantity;
+
+  /// Actual subtotal after variant discount
+  double get subtotal => effectivePrice * quantity;
+
+  /// Keep compatibility with existing Cart.subtotal logic
+  double get totalBeforeCartDiscount => subtotal;
 
   bool get isLowStock {
     if (stockAvailable == null) return false;
-    return stockAvailable! < 5;
+    return stockAvailable! > 0 && stockAvailable! <= 5;
   }
 
   bool get isOutOfStock {
@@ -72,19 +127,15 @@ class CartItem {
     return stockAvailable! <= 0;
   }
 
-  bool get hasCustomization {
-    return selectedSize != null ||
-        selectedColor != null ||
-        (customAttributes?.isNotEmpty ?? false);
-  }
+  bool get hasCustomization =>
+      selectedSize != null || selectedColorName != null;
 
   /// Update quantity with validation
-  /// Throws [InvalidCartItemException] if quantity is invalid
-  /// Throws [InsufficientStockException] if quantity exceeds stock
   void updateQuantity(int newQuantity) {
     if (newQuantity <= 0) {
       throw InvalidCartItemException(
-          message: 'Quantity must be greater than 0');
+        message: 'Quantity must be greater than 0',
+      );
     }
 
     if (stockAvailable != null && newQuantity > stockAvailable!) {
@@ -98,13 +149,11 @@ class CartItem {
   }
 
   /// Increment quantity by 1
-  /// Throws [InsufficientStockException] if incrementing exceeds stock
   void incrementQuantity() {
     updateQuantity(quantity + 1);
   }
 
   /// Decrement quantity by 1
-  /// Throws [InvalidCartItemException] if quantity becomes 0
   void decrementQuantity() {
     if (quantity <= 1) {
       throw InvalidCartItemException(
@@ -114,54 +163,54 @@ class CartItem {
     updateQuantity(quantity - 1);
   }
 
-  /// Create a copy with modified fields
   CartItem copyWith({
     String? id,
     String? productId,
     String? productName,
-    double? unitPrice,
-    int? quantity,
     String? imageUrl,
-    int? stockAvailable,
-    String? category,
+    String? variantId,
     String? sku,
     String? selectedSize,
-    String? selectedColor,
-    Map<String, dynamic>? customAttributes,
-    DateTime? dateAdded,
-    double? itemDiscount,
-    String? promotionCode,
+    String? selectedColorName,
+    Color? selectedColorValue,
+    double? price,
+    double? salePrice,
+    int? stockAvailable,
+    int? quantity,
     bool? isSelected,
+    DateTime? dateAdded,
   }) {
     return CartItem(
       id: id ?? this.id,
       productId: productId ?? this.productId,
       productName: productName ?? this.productName,
-      unitPrice: unitPrice ?? this.unitPrice,
-      quantity: quantity ?? this.quantity,
       imageUrl: imageUrl ?? this.imageUrl,
-      stockAvailable: stockAvailable ?? this.stockAvailable,
-      category: category ?? this.category,
+      variantId: variantId ?? this.variantId,
       sku: sku ?? this.sku,
       selectedSize: selectedSize ?? this.selectedSize,
-      selectedColor: selectedColor ?? this.selectedColor,
-      customAttributes: customAttributes ?? this.customAttributes,
-      dateAdded: dateAdded ?? this.dateAdded,
-      itemDiscount: itemDiscount ?? this.itemDiscount,
-      promotionCode: promotionCode ?? this.promotionCode,
+      selectedColorName: selectedColorName ?? this.selectedColorName,
+      selectedColorValue: selectedColorValue ?? this.selectedColorValue,
+      price: price ?? this.price,
+      salePrice: salePrice ?? this.salePrice,
+      stockAvailable: stockAvailable ?? this.stockAvailable,
+      quantity: quantity ?? this.quantity,
       isSelected: isSelected ?? this.isSelected,
+      dateAdded: dateAdded ?? this.dateAdded,
     );
   }
 
   @override
   String toString() =>
-      'CartItem(id: $id, productName: $productName, qty: $quantity, subtotal: ${subtotal.toStringAsFixed(2)})';
+      'CartItem(id: $id, productName: $productName, variantId: $variantId, qty: $quantity, subtotal: ${subtotal.toStringAsFixed(2)})';
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is CartItem && runtimeType == other.runtimeType && id == other.id;
+      other is CartItem &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          variantId == other.variantId;
 
   @override
-  int get hashCode => id.hashCode;
+  int get hashCode => Object.hash(id, variantId);
 }
