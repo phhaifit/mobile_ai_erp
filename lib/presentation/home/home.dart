@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:mobile_ai_erp/core/stores/supplier/supplier_store.dart';
 import 'package:mobile_ai_erp/data/sharedpref/constants/preferences.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
@@ -6,14 +8,12 @@ import 'package:mobile_ai_erp/presentation/home/store/language/language_store.da
 import 'package:mobile_ai_erp/presentation/home/store/theme/theme_store.dart';
 import 'package:mobile_ai_erp/presentation/post/post_list.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_navigator.dart';
+import 'package:mobile_ai_erp/presentation/supplier/supplier_list/supplier_list_screen.dart';
 import 'package:mobile_ai_erp/presentation/cart/store/cart_store.dart';
 import 'package:mobile_ai_erp/presentation/cart/widgets/mini_cart_drawer.dart';
-import 'package:mobile_ai_erp/presentation/supplier/supplier_list/supplier_list_screen.dart';
+import 'package:mobile_ai_erp/utils/routes/cart_routes.dart';
 import 'package:mobile_ai_erp/utils/locale/app_localization.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
-import 'package:mobile_ai_erp/utils/routes/cart_routes.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -22,7 +22,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  //stores:---------------------------------------------------------------------
   final ThemeStore _themeStore = getIt<ThemeStore>();
   final LanguageStore _languageStore = getIt<LanguageStore>();
   late final CartStore _cartStore;
@@ -42,8 +41,8 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           _buildStorefrontPDPEntry(),
           _buildReportsEntry(),
-          _buildSuppliersEntry(),
-          Expanded(child: PostListScreen()),
+          _buildUsersManagementEntry(),
+          // Expanded(child: PostListScreen()),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -56,6 +55,20 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildCartButton() {
+    return Observer(
+      builder: (context) {
+        return MiniCartBadge(
+          itemCount: _cartStore.itemCount,
+          onTap: () {
+            CartRoutes.navigateToCart(context);
+          },
+          hasDiscount: _cartStore.hasCoupon,
+        );
+      },
+    );
+  }
+
   Widget _buildStorefrontPDPEntry() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
@@ -63,8 +76,9 @@ class _HomeScreenState extends State<HomeScreen> {
         child: ListTile(
           leading: Icon(Icons.storefront_outlined),
           title: Text('Product Detail Page'),
-          subtitle:
-              Text('Storefront PDP - View sample product (offline mock).'),
+          subtitle: Text(
+            'Storefront PDP - View sample product (offline mock).',
+          ),
           trailing: Icon(Icons.chevron_right),
           onTap: () => Navigator.of(context).pushNamed(Routes.productDetail),
         ),
@@ -87,6 +101,21 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildUsersManagementEntry() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      child: Card(
+        child: ListTile(
+          leading: Icon(Icons.insights_outlined),
+          title: Text('User Management'),
+          subtitle: Text('User & Roles Managements (offline mock).'),
+          trailing: Icon(Icons.chevron_right),
+          onTap: () => Navigator.of(context).pushNamed(Routes.users),
+        ),
+      ),
+    );
+  }
+
   Widget _buildSuppliersEntry() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
@@ -99,9 +128,8 @@ class _HomeScreenState extends State<HomeScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => SupplierListScreen(
-                  store: getIt<SupplierStore>(),
-                ),
+                builder: (_) =>
+                    SupplierListScreen(store: getIt<SupplierStore>()),
               ),
             );
           },
@@ -110,7 +138,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // app bar methods:-----------------------------------------------------------
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
       title: Text(AppLocalizations.of(context).translate('home_tv_posts')),
@@ -120,6 +147,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<Widget> _buildActions(BuildContext context) {
     return <Widget>[
+      _buildStockOperationsButton(),
       _buildCartButton(),
       IconButton(
         onPressed: () => CustomerNavigator.openHome(context),
@@ -135,17 +163,13 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
   }
 
-  Widget _buildCartButton() {
-    return Observer(
-      builder: (context) {
-        return MiniCartBadge(
-          itemCount: _cartStore.itemCount,
-          onTap: () {
-            CartRoutes.navigateToCart(context);
-          },
-          hasDiscount: _cartStore.hasCoupon,
-        );
+  Widget _buildStockOperationsButton() {
+    return IconButton(
+      tooltip: 'Stock Operations',
+      onPressed: () {
+        Navigator.of(context).pushNamed(Routes.stockOperations);
       },
+      icon: const Icon(Icons.warehouse_outlined),
     );
   }
 
@@ -175,9 +199,7 @@ class _HomeScreenState extends State<HomeScreen> {
       onPressed: () {
         Navigator.of(context).pushNamed(Routes.orderTracking);
       },
-      icon: Icon(
-        Icons.local_shipping_outlined,
-      ),
+      icon: Icon(Icons.local_shipping_outlined),
     );
   }
 
@@ -204,60 +226,42 @@ class _HomeScreenState extends State<HomeScreen> {
           Navigator.of(context).pushReplacementNamed(Routes.login);
         });
       },
-      icon: Icon(
-        Icons.power_settings_new,
-      ),
+      icon: const Icon(Icons.power_settings_new),
     );
   }
 
   Widget _buildLanguageButton() {
     return IconButton(
-      onPressed: () {
-        _buildLanguageDialog();
-      },
-      icon: Icon(
-        Icons.language,
-      ),
+      onPressed: _buildLanguageDialog,
+      icon: const Icon(Icons.language),
     );
   }
 
-  _buildLanguageDialog() {
+  void _buildLanguageDialog() {
     _showDialog<String>(
       context: context,
       child: AlertDialog(
-        // borderRadius: 5.0,
-        // enableFullWidth: true,
-
         title: Text(
           AppLocalizations.of(context).translate('home_tv_choose_language'),
         ),
-        // headerColor: Theme.of(context).primaryColor,
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        // closeButtonColor: Colors.white,
-        // enableCloseButton: true,
-        // enableBackButton: false,
-        // onCloseButtonClicked: () {
-        //   Navigator.of(context).pop();
-        // },
         actions: _languageStore.supportedLanguages
-            // children: _languageStore.supportedLanguages
             .map(
               (object) => ListTile(
                 dense: true,
-                contentPadding: EdgeInsets.all(0.0),
+                contentPadding: const EdgeInsets.all(0.0),
                 title: Text(
                   object.language,
                   style: TextStyle(
                     color: _languageStore.locale == object.locale
                         ? Theme.of(context).primaryColor
                         : _themeStore.darkMode
-                            ? Colors.white
-                            : Colors.black,
+                        ? Colors.white
+                        : Colors.black,
                   ),
                 ),
                 onTap: () {
                   Navigator.of(context).pop();
-                  // change user language based on selected locale
                   _languageStore.changeLanguage(object.locale);
                 },
               ),
@@ -267,12 +271,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  _showDialog<T>({required BuildContext context, required Widget child}) {
+  void _showDialog<T>({required BuildContext context, required Widget child}) {
     showDialog<T>(
       context: context,
       builder: (BuildContext context) => child,
-    ).then<void>((T? value) {
-      // The value passed to Navigator.pop() or null.
-    });
+    ).then<void>((T? value) {});
   }
 }
