@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_ai_erp/presentation/home/home.dart';
 import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/inventory_audit_screen.dart';
 import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/inventory_audit_summary_screen.dart';
+import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/inventory_outbound_history_screen.dart';
 import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/inventory_outbound_screen.dart';
 import 'package:mobile_ai_erp/presentation/login/login.dart';
 
@@ -22,6 +23,7 @@ class Routes {
   static const String inventoryAudit = '/inventory-audit';
   static const String inventoryAuditSummary = '/inventory-audit-summary';
   static const String inventoryOutbound = '/inventory-outbound';
+  static const String inventoryOutboundHistory = '/inventory-outbound-history';
   static const String webBuilder = '/web-builder';
   static const String storeSettings = '/web-builder/store-settings';
   static const String themeList = '/web-builder/themes';
@@ -38,6 +40,8 @@ class Routes {
     inventoryAuditSummary: (BuildContext context) =>
         const InventoryAuditSummaryScreen(),
     inventoryOutbound: (BuildContext context) => const InventoryOutboundScreen(),
+    inventoryOutboundHistory: (BuildContext context) =>
+        const InventoryOutboundHistoryScreen(),
     webBuilder: (BuildContext context) => const WebBuilderDashboard(),
     storeSettings: (BuildContext context) => const StoreSettingsScreen(),
     themeList: (BuildContext context) => const ThemeListScreen(),
