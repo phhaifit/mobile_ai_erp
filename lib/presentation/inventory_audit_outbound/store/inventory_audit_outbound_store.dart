@@ -39,7 +39,10 @@ abstract class _InventoryAuditOutboundStore with Store {
   bool isLoading = false;
 
   @observable
-  bool isSubmitting = false;
+  bool isSubmittingAudit = false;
+
+  @observable
+  bool isSubmittingOutbound = false;
 
   @observable
   String errorMessage = '';
@@ -264,7 +267,7 @@ abstract class _InventoryAuditOutboundStore with Store {
       return false;
     }
 
-    isSubmitting = true;
+    isSubmittingAudit = true;
     clearError();
 
     try {
@@ -283,7 +286,7 @@ abstract class _InventoryAuditOutboundStore with Store {
       errorMessage = error.toString();
       return false;
     } finally {
-      isSubmitting = false;
+      isSubmittingAudit = false;
     }
   }
 
@@ -348,7 +351,7 @@ abstract class _InventoryAuditOutboundStore with Store {
       return false;
     }
 
-    isSubmitting = true;
+    isSubmittingOutbound = true;
     clearError();
 
     try {
@@ -372,7 +375,7 @@ abstract class _InventoryAuditOutboundStore with Store {
       errorMessage = error.toString();
       return false;
     } finally {
-      isSubmitting = false;
+      isSubmittingOutbound = false;
     }
   }
 

@@ -13,7 +13,7 @@ class MockInventoryAuditOutboundRepository
     InventoryWarehouse(id: 'wh-03', name: 'Outlet Warehouse', location: 'Thu Duc'),
   ];
 
-  List<InventoryItem> _inventory = const [
+  List<InventoryItem> _inventory = <InventoryItem>[
     InventoryItem(
       warehouseId: 'wh-01',
       productId: 'p-01',
