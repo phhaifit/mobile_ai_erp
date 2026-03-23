@@ -1,8 +1,10 @@
+import 'package:mobile_ai_erp/data/repository/product/product_repository.dart';
+import 'package:mobile_ai_erp/domain/entity/product_detail/product_detail.dart';
 import 'package:mobx/mobx.dart';
+import 'package:mobile_ai_erp/data/repository/cart/cart_repository.dart';
 import 'package:mobile_ai_erp/domain/entity/cart/cart.dart';
 import 'package:mobile_ai_erp/domain/entity/cart/cart_item.dart';
 import 'package:mobile_ai_erp/domain/entity/cart/coupon.dart';
-import 'package:mobile_ai_erp/data/repository/cart/cart_repository.dart';
 import 'package:uuid/uuid.dart';
 
 part 'cart_store.g.dart';
@@ -11,19 +13,23 @@ class CartStore = CartStoreBase with _$CartStore;
 
 abstract class CartStoreBase with Store {
   final CartRepository _cartRepository;
+  final ProductRepository _productRepository;
   final String userId;
+  final Uuid _uuid = const Uuid();
 
   @observable
   late Cart cart;
 
   CartStoreBase({
     required CartRepository cartRepository,
+    required ProductRepository productRepository,
     required this.userId,
-  }) : _cartRepository = cartRepository {
+  })  : _cartRepository = cartRepository,
+        _productRepository = productRepository {
     cart = Cart(
       id: 'cart_$userId',
       userId: userId,
-      items: [],
+      items: const [],
     );
     loadCart();
   }
@@ -44,7 +50,7 @@ abstract class CartStoreBase with Store {
   String searchQuery = '';
 
   @observable
-  List<String> selectedItemIds = [];
+  ObservableList<String> selectedItemIds = ObservableList<String>();
 
   @computed
   int get itemCount => cart.itemCount;
@@ -97,22 +103,147 @@ abstract class CartStoreBase with Store {
   @computed
   int get selectedItemsCount => selectedItemIds.length;
 
+  /// Selected items for checkout.
+  /// If user has not selected anything, fallback to all cart items.
+  @computed
+  List<CartItem> get checkoutItems {
+    return cart.items
+        .where((item) => selectedItemIds.contains(item.id))
+        .toList();
+  }
+
+  /// Disable checkout if any checkout item exceeds available stock.
+  @computed
+  bool get isCartValid {
+    if (checkoutItems.isEmpty) return false;
+
+    return checkoutItems.every((item) {
+      if (item.stockAvailable == null) return true;
+      return item.quantity <= item.stockAvailable!;
+    });
+  }
+
+  @computed
+  double get selectedSubtotal {
+    return checkoutItems.fold<double>(
+      0,
+      (sum, item) => sum + item.subtotal,
+    );
+  }
+
+  @computed
+  double get selectedDiscountAmount {
+    if (!hasCoupon || cart.subtotal <= 0 || selectedSubtotal <= 0) return 0.0;
+    return (selectedSubtotal / cart.subtotal) * cart.cartLevelDiscount;
+  }
+
+  @computed
+  double get selectedTaxAmount {
+    final taxableAmount = selectedSubtotal - selectedDiscountAmount;
+    if (cart.taxPercentage == null || cart.taxPercentage == 0) return 0.0;
+    return (taxableAmount * cart.taxPercentage!) / 100;
+  }
+
+  @computed
+  double get selectedShippingAmount {
+    if (checkoutItems.isEmpty) return 0.0;
+
+    final allSelected = selectedItemIds.isNotEmpty &&
+        selectedItemIds.length == cart.items.length;
+
+    return allSelected ? cart.shippingAmount : 0.0;
+  }
+
+  @computed
+  double get selectedTotal {
+    return selectedSubtotal -
+        selectedDiscountAmount +
+        selectedTaxAmount +
+        selectedShippingAmount;
+  }
+
+  /// Clean payload for Checkout team
+  @computed
+  Map<String, dynamic> get checkoutData {
+    final items = checkoutItems
+        .map(
+          (item) => {
+            'cartItemId': item.id,
+            'productId': item.productId,
+            'productName': item.productName,
+            'variantId': item.variantId,
+            'sku': item.sku,
+            'size': item.selectedSize,
+            'colorName': item.selectedColorName,
+            'unitPrice': item.effectivePrice,
+            'originalUnitPrice': item.price,
+            'quantity': item.quantity,
+            'availableStock': item.stockAvailable,
+            'lineTotal': item.subtotal,
+            'imageUrl': item.imageUrl,
+          },
+        )
+        .toList();
+
+    final checkoutSubtotal = checkoutItems.fold<double>(
+      0,
+      (sum, item) => sum + item.subtotal,
+    );
+
+    final couponDiscount = hasCoupon && cart.subtotal > 0
+        ? (checkoutSubtotal / cart.subtotal) * cart.cartLevelDiscount
+        : 0.0;
+
+    final taxableAmount = checkoutSubtotal - couponDiscount;
+    final checkoutTax = (cart.taxPercentage == null || cart.taxPercentage == 0)
+        ? 0.0
+        : (taxableAmount * cart.taxPercentage!) / 100;
+
+    final checkoutShipping =
+        selectedItemIds.isEmpty || selectedItemIds.length == cart.items.length
+            ? cart.shippingAmount
+            : 0.0;
+
+    final checkoutTotal =
+        checkoutSubtotal - couponDiscount + checkoutTax + checkoutShipping;
+
+    return {
+      'cartId': cart.id,
+      'userId': cart.userId,
+      'isValid': isCartValid,
+      'itemCount':
+          checkoutItems.fold<int>(0, (sum, item) => sum + item.quantity),
+      'uniqueItemCount': checkoutItems.length,
+      'couponCode': cart.appliedCoupon?.code,
+      'pricing': {
+        'subtotal': selectedSubtotal,
+        'discount': selectedDiscountAmount,
+        'tax': selectedTaxAmount,
+        'shipping': selectedShippingAmount,
+        'total': selectedTotal,
+      },
+      'items': items,
+    };
+  }
+
   @computed
   List<CartItem> get filteredItems {
     var filtered = cart.items;
 
     if (searchQuery.isNotEmpty) {
       filtered = filtered
-          .where((item) => item.productName
-              .toLowerCase()
-              .contains(searchQuery.toLowerCase()))
+          .where(
+            (item) => item.productName
+                .toLowerCase()
+                .contains(searchQuery.toLowerCase()),
+          )
           .toList();
     }
 
     if (cartFilterBy == 'low-stock') {
       filtered = filtered.where((item) => item.isLowStock).toList();
     } else if (cartFilterBy == 'on-sale') {
-      filtered = filtered.where((item) => item.itemDiscount != null).toList();
+      filtered = filtered.where((item) => item.hasDiscount).toList();
     }
 
     return filtered;
@@ -121,6 +252,8 @@ abstract class CartStoreBase with Store {
   @action
   Future<void> loadCart() async {
     isLoading = true;
+    errorMessage = null;
+
     try {
       final result = await _cartRepository.getCart(userId);
       cart = result;
@@ -131,27 +264,37 @@ abstract class CartStoreBase with Store {
     }
   }
 
+  /// New flow:
+  /// addToCart(variantId, qty)
+  /// -> get variant detail from ProductRepository
+  /// -> build CartItem from ProductVariant
+  /// -> save to cart
   @action
-  Future<void> addItemToCart(CartItem item) async {
+  Future<void> addToCart(String variantId, int qty) async {
+    if (qty <= 0) {
+      errorMessage = 'Quantity must be greater than 0';
+      return;
+    }
+
     isLoading = true;
     errorMessage = null;
 
     try {
-      print('1. Bắt đầu thêm sản phẩm: ${item.productName}');
+      final variantDetail =
+          await _productRepository.getVariantDetail(variantId);
+
+      final item = CartItem.fromVariant(
+        productId: variantDetail.productId,
+        productName: variantDetail.productName,
+        variant: variantDetail.variant,
+        imageUrl: variantDetail.imageUrl,
+        quantity: qty,
+      ).copyWith(
+        id: 'item_${_uuid.v4()}',
+      );
+
       await _cartRepository.addItemToCart(userId, item);
-      print('2. Repository đã báo lưu xong');
-
-      // --- SỬA/THÊM DÒNG NÀY ---
-      final updatedCart = await _cartRepository.getCart(userId);
-      cart = updatedCart;
-      // -------------------------
-
-      print('STORE items.length = ${cart.items.length}');
-      for (final e in cart.items) {
-        print('STORE item: ${e.productName}, qty=${e.quantity}');
-      }
-      print('STORE itemCount = ${cart.itemCount}');
-      print('STORE isEmpty = ${cart.isEmpty}');
+      cart = await _cartRepository.getCart(userId);
     } catch (e) {
       errorMessage = e.toString();
     } finally {
@@ -159,7 +302,61 @@ abstract class CartStoreBase with Store {
     }
   }
 
-  /// Add multiple items to cart
+  @action
+  Future<void> addVariantToCart({
+    required String productId,
+    required String productName,
+    required ProductVariant variant,
+    String? imageUrl,
+    int qty = 1,
+  }) async {
+    if (qty <= 0) {
+      errorMessage = 'Quantity must be greater than 0';
+      return;
+    }
+
+    isLoading = true;
+    errorMessage = null;
+
+    try {
+      final item = CartItem.fromVariant(
+        productId: productId,
+        productName: productName,
+        variant: variant,
+        imageUrl: imageUrl,
+        quantity: qty,
+      ).copyWith(
+        id: 'item_${_uuid.v4()}',
+      );
+
+      await _cartRepository.addItemToCart(userId, item);
+      cart = await _cartRepository.getCart(userId);
+    } catch (e) {
+      errorMessage = e.toString();
+    } finally {
+      isLoading = false;
+    }
+  }
+
+  /// Keep this method in case some screen already builds CartItem manually
+  @action
+  Future<void> addItemToCart(CartItem item) async {
+    isLoading = true;
+    errorMessage = null;
+
+    try {
+      final normalizedItem =
+          item.id.isEmpty ? item.copyWith(id: 'item_${_uuid.v4()}') : item;
+
+      await _cartRepository.addItemToCart(userId, normalizedItem);
+      cart = await _cartRepository.getCart(userId);
+    } catch (e) {
+      errorMessage = e.toString();
+    } finally {
+      isLoading = false;
+    }
+  }
+
   @action
   Future<void> addMultipleItemsToCart(List<CartItem> items) async {
     isLoading = true;
@@ -167,9 +364,11 @@ abstract class CartStoreBase with Store {
 
     try {
       final itemsWithIds = items
-          .map((item) => item.id.isEmpty
-              ? item.copyWith(id: 'item_${const Uuid().v4()}')
-              : item)
+          .map(
+            (item) => item.id.isEmpty
+                ? item.copyWith(id: 'item_${_uuid.v4()}')
+                : item,
+          )
           .toList();
 
       await _cartRepository.addMultipleItemsToCart(userId, itemsWithIds);
@@ -181,7 +380,6 @@ abstract class CartStoreBase with Store {
     }
   }
 
-  /// Remove item from cart
   @action
   Future<void> removeItemFromCart(String itemId) async {
     isLoading = true;
@@ -190,7 +388,7 @@ abstract class CartStoreBase with Store {
     try {
       await _cartRepository.removeItemFromCart(userId, itemId);
       await loadCart();
-      selectedItemIds.remove(itemId); // Remove from selected if was selected
+      selectedItemIds.remove(itemId);
     } catch (e) {
       errorMessage = e.toString();
     } finally {
@@ -198,7 +396,6 @@ abstract class CartStoreBase with Store {
     }
   }
 
-  /// Remove multiple items from cart
   @action
   Future<void> removeMultipleItemsFromCart(List<String> itemIds) async {
     isLoading = true;
@@ -215,14 +412,12 @@ abstract class CartStoreBase with Store {
     }
   }
 
-  /// Remove all selected items
   @action
   Future<void> removeSelectedItems() async {
     if (selectedItemIds.isEmpty) return;
     await removeMultipleItemsFromCart(List.from(selectedItemIds));
   }
 
-  /// Update item quantity
   @action
   Future<void> updateItemQuantity(String itemId, int newQuantity) async {
     isLoading = true;
@@ -238,7 +433,6 @@ abstract class CartStoreBase with Store {
     }
   }
 
-  /// Increment item quantity
   @action
   Future<void> incrementItemQuantity(String itemId) async {
     final item = cart.items.firstWhere(
@@ -248,7 +442,6 @@ abstract class CartStoreBase with Store {
     await updateItemQuantity(itemId, item.quantity + 1);
   }
 
-  /// Decrement item quantity
   @action
   Future<void> decrementItemQuantity(String itemId) async {
     final item = cart.items.firstWhere(
@@ -263,7 +456,6 @@ abstract class CartStoreBase with Store {
     }
   }
 
-  /// Apply coupon code
   @action
   Future<void> applyCoupon(String couponCode) async {
     isLoading = true;
@@ -279,7 +471,6 @@ abstract class CartStoreBase with Store {
     }
   }
 
-  /// Remove applied coupon
   @action
   Future<void> removeCoupon() async {
     isLoading = true;
@@ -295,7 +486,6 @@ abstract class CartStoreBase with Store {
     }
   }
 
-  /// Clear entire cart
   @action
   Future<void> clearCart() async {
     isLoading = true;
@@ -312,25 +502,21 @@ abstract class CartStoreBase with Store {
     }
   }
 
-  /// Toggle cart drawer open/close
   @action
   void toggleCartDrawer() {
     isCartDrawerOpen = !isCartDrawerOpen;
   }
 
-  /// Open cart drawer
   @action
   void openCartDrawer() {
     isCartDrawerOpen = true;
   }
 
-  /// Close cart drawer
   @action
   void closeCartDrawer() {
     isCartDrawerOpen = false;
   }
 
-  /// Toggle item selection
   @action
   void toggleItemSelection(String itemId) {
     if (selectedItemIds.contains(itemId)) {
@@ -340,31 +526,28 @@ abstract class CartStoreBase with Store {
     }
   }
 
-  /// Select all items
   @action
   void selectAllItems() {
-    selectedItemIds = cart.items.map((item) => item.id).toList();
+    selectedItemIds
+      ..clear()
+      ..addAll(cart.items.map((item) => item.id));
   }
 
-  /// Clear selection
   @action
   void clearSelection() {
     selectedItemIds.clear();
   }
 
-  /// Update search query
   @action
   void updateSearchQuery(String query) {
     searchQuery = query;
   }
 
-  /// Update filter
   @action
   void updateFilter(String filter) {
     cartFilterBy = filter;
   }
 
-  /// Validate cart before checkout
   @action
   Future<List<String>> validateCartForCheckout() async {
     try {
@@ -375,18 +558,16 @@ abstract class CartStoreBase with Store {
     }
   }
 
-  /// Get available coupons
   @action
   Future<List<Coupon>> getAvailableCoupons() async {
     try {
-      return await _cartRepository.getAvailableCoupons();
+      return await _cartRepository.getAvailableCoupons(userId: userId);
     } catch (e) {
       errorMessage = e.toString();
       return [];
     }
   }
 
-  /// Sync cart with server
   @action
   Future<void> syncCart() async {
     isLoading = true;
@@ -402,7 +583,6 @@ abstract class CartStoreBase with Store {
     }
   }
 
-  /// Get cart statistics
   @action
   Future<Map<String, dynamic>> getCartStats() async {
     try {
@@ -413,19 +593,16 @@ abstract class CartStoreBase with Store {
     }
   }
 
-  /// Clear error message
   @action
   void clearError() {
     errorMessage = null;
   }
 
-  /// Initialize/reset store - call in initState
   @action
   Future<void> initialize() async {
     await loadCart();
   }
 
-  /// Dispose/cleanup - call in dispose
   @action
   void dispose() {
     clearSelection();

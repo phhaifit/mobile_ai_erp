@@ -1,5 +1,6 @@
 import 'package:get_it/get_it.dart';
 import 'package:mobile_ai_erp/data/repository/cart/cart_repository.dart';
+import 'package:mobile_ai_erp/data/repository/product/product_repository.dart';
 import 'package:mobile_ai_erp/presentation/cart/store/cart_store.dart';
 import 'package:mobile_ai_erp/presentation/cart/store/wishlist_store.dart';
 
@@ -10,24 +11,22 @@ class CartPresentationModule {
 
   /// Setup cart presentation layer dependencies
   static void setup(GetIt getIt, {required String userId}) {
-    // Register stores
     _setupStores(getIt, userId: userId);
   }
 
   /// Register CartStore and WishlistStore as singletons
   static void _setupStores(GetIt getIt, {required String userId}) {
-    // Get CartRepository (should already be registered in data layer)
     final cartRepository = getIt<CartRepository>();
+    final productRepository = getIt<ProductRepository>();
 
-    // Register CartStore as singleton
     getIt.registerSingleton<CartStore>(
       CartStore(
         cartRepository: cartRepository,
+        productRepository: productRepository,
         userId: userId,
       ),
     );
 
-    // Register WishlistStore as singleton
     getIt.registerSingleton<WishlistStore>(
       WishlistStore(
         cartRepository: cartRepository,
@@ -54,17 +53,12 @@ class CartPresentationModule {
   }
 
   /// Reinitialize stores (useful after user login)
-  /// Call this when switching users or after authentication
   static void reinitialize(GetIt getIt, {required String newUserId}) {
-    // Reset old stores
     reset(getIt);
-
-    // Setup new stores with new user ID
     setup(getIt, userId: newUserId);
   }
 
   /// Initialize stores on app start
-  /// Call this in main() or after successful authentication
   static Future<void> initializeStores(GetIt getIt) async {
     if (getIt.isRegistered<CartStore>()) {
       final cartStore = getIt<CartStore>();
@@ -78,7 +72,6 @@ class CartPresentationModule {
   }
 
   /// Dispose stores on app exit
-  /// Call this in main() cleanup or on user logout
   static void disposeStores(GetIt getIt) {
     if (getIt.isRegistered<CartStore>()) {
       getIt<CartStore>().dispose();

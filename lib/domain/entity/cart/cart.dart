@@ -121,8 +121,7 @@ class Cart {
     final existingItemIndex = items.indexWhere(
       (item) =>
           item.productId == newItem.productId &&
-          item.selectedSize == newItem.selectedSize &&
-          item.selectedColor == newItem.selectedColor,
+          item.variantId == newItem.variantId,
     );
 
     if (existingItemIndex != -1) {

@@ -1,17 +1,22 @@
+import 'package:mobile_ai_erp/data/local/datasources/cart/cart_datasource.dart';
+import 'package:mobile_ai_erp/data/repository/cart/cart_repository.dart';
+import './cart_external_mock_service.dart';
 import 'package:mobile_ai_erp/domain/entity/cart/cart.dart';
 import 'package:mobile_ai_erp/domain/entity/cart/cart_item.dart';
 import 'package:mobile_ai_erp/domain/entity/cart/coupon.dart';
 import 'package:mobile_ai_erp/domain/entity/cart/wishlist_item.dart';
-import 'package:mobile_ai_erp/data/local/datasources/cart/cart_datasource.dart';
-import 'package:mobile_ai_erp/data/repository/cart/cart_repository.dart';
 
 /// Implementation of CartRepository using CartDataSource
 /// This layer adds business logic and orchestration on top of data source
 class CartRepositoryImpl implements CartRepository {
   final CartDataSource _dataSource;
+  final CartExternalMockService _externalMockService;
 
-  CartRepositoryImpl({required CartDataSource dataSource})
-      : _dataSource = dataSource;
+  CartRepositoryImpl({
+    required CartDataSource dataSource,
+    CartExternalMockService? externalMockService,
+  })  : _dataSource = dataSource,
+        _externalMockService = externalMockService ?? CartExternalMockService();
 
   @override
   Future<Cart> getCart(String userId) async {
@@ -30,8 +35,9 @@ class CartRepositoryImpl implements CartRepository {
 
   @override
   Future<void> addMultipleItemsToCart(
-      String userId, List<CartItem> items) async {
-    // Add items one by one (or could be optimized)
+    String userId,
+    List<CartItem> items,
+  ) async {
     for (final item in items) {
       await _dataSource.addItemToCart(userId, item);
     }
@@ -44,12 +50,13 @@ class CartRepositoryImpl implements CartRepository {
 
   @override
   Future<void> removeMultipleItemsFromCart(
-      String userId, List<String> itemIds) async {
+    String userId,
+    List<String> itemIds,
+  ) async {
     for (final itemId in itemIds) {
       try {
         await _dataSource.removeItemFromCart(userId, itemId);
-      } catch (e) {
-        // Continue removing other items even if one fails
+      } catch (_) {
         continue;
       }
     }
@@ -57,7 +64,10 @@ class CartRepositoryImpl implements CartRepository {
 
   @override
   Future<void> updateItemQuantity(
-      String userId, String itemId, int newQuantity) async {
+    String userId,
+    String itemId,
+    int newQuantity,
+  ) async {
     return await _dataSource.updateItemQuantity(userId, itemId, newQuantity);
   }
 
@@ -74,28 +84,22 @@ class CartRepositoryImpl implements CartRepository {
 
   @override
   Future<void> applyCoupon(String userId, String couponCode) async {
-    // Validate coupon exists and is active
-    final coupon = await _dataSource.getCouponByCode(couponCode);
-    if (coupon == null) {
-      throw Exception('Coupon not found: $couponCode');
-    }
+    final coupon = await validateCoupon(couponCode);
 
-    // Validate coupon is valid
-    if (!coupon.isValid) {
-      throw Exception('Coupon is invalid or expired: $couponCode');
-    }
-
-    // Get current cart
     final cart = await getCart(userId);
 
-    // Check minimum cart value
     if (coupon.minCartValue != null && cart.subtotal < coupon.minCartValue!) {
       throw Exception(
-        'Coupon requires minimum cart value of \$${coupon.minCartValue}. Current: \$${cart.subtotal.toStringAsFixed(2)}',
+        'Coupon requires minimum cart value of \$${coupon.minCartValue}. '
+        'Current: \$${cart.subtotal.toStringAsFixed(2)}',
       );
     }
 
-    return await _dataSource.applyCoupon(userId, couponCode);
+    final updatedCart = cart.copyWith(
+      appliedCoupon: coupon,
+    );
+
+    await _dataSource.saveCart(updatedCart);
   }
 
   @override
@@ -109,28 +113,26 @@ class CartRepositoryImpl implements CartRepository {
   }
 
   @override
-  Future<bool> validateCoupon(String couponCode, double cartValue) async {
-    try {
-      final isValid = await _dataSource.validateCoupon(couponCode);
-      if (!isValid) return false;
-
-      // Check minimum value if applicable
-      final coupon = await _dataSource.getCouponByCode(couponCode);
-      if (coupon == null) return false;
-
-      if (coupon.minCartValue != null && cartValue < coupon.minCartValue!) {
-        return false;
-      }
-
-      return true;
-    } catch (e) {
-      return false;
+  Future<Coupon> validateCoupon(String code) async {
+    final coupon = await _externalMockService.validateCoupon(code);
+    if (!coupon.isValid) {
+      throw Exception('Coupon is invalid or expired: $code');
     }
+    return coupon;
   }
 
   @override
   Future<Coupon?> getCouponByCode(String couponCode) async {
-    return await _dataSource.getCouponByCode(couponCode);
+    try {
+      return await validateCoupon(couponCode);
+    } catch (_) {
+      return await _dataSource.getCouponByCode(couponCode);
+    }
+  }
+
+  @override
+  Future<int> getRealtimeStock(String variantId) async {
+    return await _externalMockService.getRealtimeStock(variantId);
   }
 
   @override
@@ -155,11 +157,13 @@ class CartRepositoryImpl implements CartRepository {
 
   @override
   Future<void> removeMultipleFromWishlist(
-      String userId, List<String> productIds) async {
+    String userId,
+    List<String> productIds,
+  ) async {
     for (final productId in productIds) {
       try {
         await _dataSource.removeFromWishlist(userId, productId);
-      } catch (e) {
+      } catch (_) {
         continue;
       }
     }
@@ -177,61 +181,63 @@ class CartRepositoryImpl implements CartRepository {
 
   @override
   Future<void> moveWishlistToCart(String userId) async {
-    // Get wishlist
     final wishlistItems = await getWishlist(userId);
 
     if (wishlistItems.isEmpty) return;
 
-    // Convert wishlist items to cart items
     final cartItems = wishlistItems.map((wish) {
+      final fallbackVariantId = 'variant_${wish.productId}';
+      final fallbackSku = 'SKU_${wish.productId}';
+
       return CartItem(
         id: 'item_${wish.productId}_${DateTime.now().millisecondsSinceEpoch}',
         productId: wish.productId,
         productName: wish.productName,
-        unitPrice: wish.effectivePrice,
-        quantity: 1,
         imageUrl: wish.imageUrl,
+        variantId: fallbackVariantId,
+        sku: fallbackSku,
+        selectedSize: null,
+        selectedColorName: null,
+        selectedColorValue: null,
+        price: wish.effectivePrice,
+        salePrice: null,
         stockAvailable: wish.stockAvailable,
-        category: wish.category,
+        quantity: 1,
         dateAdded: DateTime.now(),
       );
     }).toList();
 
-    // Add all to cart
     await addMultipleItemsToCart(userId, cartItems);
-
-    // Clear wishlist
     await clearWishlist(userId);
   }
 
   @override
   Future<void> moveWishlistItemToCart(String userId, String productId) async {
-    // Get wishlist
     final wishlistItems = await getWishlist(userId);
 
-    // Find item
     final wishItem = wishlistItems.firstWhere(
       (item) => item.productId == productId,
       orElse: () => throw Exception('Item not in wishlist'),
     );
 
-    // Convert to cart item
     final cartItem = CartItem(
       id: 'item_${wishItem.productId}_${DateTime.now().millisecondsSinceEpoch}',
       productId: wishItem.productId,
       productName: wishItem.productName,
-      unitPrice: wishItem.effectivePrice,
-      quantity: 1,
       imageUrl: wishItem.imageUrl,
+      variantId: 'variant_${wishItem.productId}',
+      sku: 'SKU_${wishItem.productId}',
+      selectedSize: null,
+      selectedColorName: null,
+      selectedColorValue: null,
+      price: wishItem.effectivePrice,
+      salePrice: null,
       stockAvailable: wishItem.stockAvailable,
-      category: wishItem.category,
+      quantity: 1,
       dateAdded: DateTime.now(),
     );
 
-    // Add to cart
     await addItemToCart(userId, cartItem);
-
-    // Remove from wishlist
     await removeFromWishlist(userId, productId);
   }
 
@@ -276,11 +282,12 @@ class CartRepositoryImpl implements CartRepository {
   Future<Map<String, dynamic>> getCartStatistics(String userId) async {
     final cart = await getCart(userId);
 
-    // Calculate average item price
     double avgPrice = 0;
     if (cart.items.isNotEmpty) {
-      final totalPrice =
-          cart.items.fold<double>(0, (sum, item) => sum + item.unitPrice);
+      final totalPrice = cart.items.fold<double>(
+        0,
+        (sum, item) => sum + item.effectivePrice,
+      );
       avgPrice = totalPrice / cart.items.length;
     }
 
@@ -316,15 +323,36 @@ class CartRepositoryImpl implements CartRepository {
   Future<void> validateCartStock(String userId) async {
     final cart = await getCart(userId);
 
-    // Check if any items are out of stock
-    final outOfStockItems = cart.outOfStockItems;
-    if (outOfStockItems.isNotEmpty) {
-      final itemNames =
-          outOfStockItems.map((item) => item.productName).join(', ');
-      throw Exception('The following items are out of stock: $itemNames');
+    if (cart.items.isEmpty) return;
+
+    final outOfStockNames = <String>[];
+    final insufficientStockMessages = <String>[];
+
+    for (final item in cart.items) {
+      final realtimeStock = await getRealtimeStock(item.variantId);
+
+      if (realtimeStock <= 0) {
+        outOfStockNames.add(item.productName);
+        continue;
+      }
+
+      if (item.quantity > realtimeStock) {
+        insufficientStockMessages.add(
+          '${item.productName} (requested: ${item.quantity}, available: $realtimeStock)',
+        );
+      }
     }
 
-    // Optionally check server for updated stock (in real app)
-    // For mock, this just validates locally
+    if (outOfStockNames.isNotEmpty) {
+      throw Exception(
+        'The following items are out of stock: ${outOfStockNames.join(', ')}',
+      );
+    }
+
+    if (insufficientStockMessages.isNotEmpty) {
+      throw Exception(
+        'Some items exceed realtime stock: ${insufficientStockMessages.join('; ')}',
+      );
+    }
   }
 }

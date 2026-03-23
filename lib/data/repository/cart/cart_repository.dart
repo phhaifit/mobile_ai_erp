@@ -14,7 +14,7 @@ abstract class CartRepository {
   Future<void> saveCart(Cart cart);
 
   /// Add item to cart
-  /// Automatically increments quantity if item with same customization exists
+  /// Automatically increments quantity if item with same variant exists
   /// Throws [InsufficientStockException] if quantity exceeds stock
   Future<void> addItemToCart(String userId, CartItem item);
 
@@ -33,7 +33,10 @@ abstract class CartRepository {
   /// Throws [CartItemNotFoundException] if item not found
   /// Throws [InsufficientStockException] if new quantity exceeds stock
   Future<void> updateItemQuantity(
-      String userId, String itemId, int newQuantity);
+    String userId,
+    String itemId,
+    int newQuantity,
+  );
 
   /// Clear all items from cart
   Future<void> clearCart(String userId);
@@ -44,23 +47,24 @@ abstract class CartRepository {
 
   /// Apply coupon/promotion code to cart
   /// Validates coupon before applying
-  /// Throws [InvalidCouponException] if coupon is invalid/expired
-  /// Throws [CouponMinimumValueException] if cart value below minimum
   Future<void> applyCoupon(String userId, String couponCode);
 
   /// Remove applied coupon from cart
   Future<void> removeCoupon(String userId);
 
   /// Get list of available coupons/promotions
-  /// Can filter by user for personalized offers
   Future<List<Coupon>> getAvailableCoupons({String? userId});
 
-  /// Validate if coupon code can be applied
-  /// Checks expiry, usage limit, minimum cart value, etc
-  Future<bool> validateCoupon(String couponCode, double cartValue);
+  /// Validate coupon with Marketing service
+  /// Mocked for now until Epic 17 is integrated
+  Future<Coupon> validateCoupon(String code);
 
   /// Get coupon details by code
   Future<Coupon?> getCouponByCode(String couponCode);
+
+  /// Get realtime stock from Warehouse service
+  /// Mocked for now until Epic 4 is integrated
+  Future<int> getRealtimeStock(String variantId);
 
   /// Save wishlist items for user
   Future<void> saveWishlist(String userId, List<WishlistItem> items);
@@ -69,7 +73,6 @@ abstract class CartRepository {
   Future<List<WishlistItem>> getWishlist(String userId);
 
   /// Add product to wishlist
-  /// Creates WishlistItem from product data
   Future<void> addToWishlist(String userId, WishlistItem item);
 
   /// Remove product from wishlist by product ID
@@ -77,7 +80,9 @@ abstract class CartRepository {
 
   /// Remove multiple items from wishlist
   Future<void> removeMultipleFromWishlist(
-      String userId, List<String> productIds);
+    String userId,
+    List<String> productIds,
+  );
 
   /// Clear entire wishlist
   Future<void> clearWishlist(String userId);
@@ -91,45 +96,36 @@ abstract class CartRepository {
   /// Move specific wishlist item to cart
   Future<void> moveWishlistItemToCart(String userId, String productId);
 
-  /// Get cart history for user (previous/abandoned carts)
-  /// Limit parameter controls how many carts to return
+  /// Get cart history for user
   Future<List<Cart>> getCartHistory(String userId, {int limit = 10});
 
-  /// Get total number of carts user has created (for analytics)
+  /// Get total number of carts user has created
   Future<int> getCartCount(String userId);
 
-  /// Mark cart as abandoned (hasn't been modified for 24+ hours)
-  /// Used for abandoned cart reminders
+  /// Mark cart as abandoned
   Future<void> markCartAsAbandoned(String userId);
 
   /// Get all abandoned carts system-wide
-  /// hoursThreshold: carts not modified in last N hours
   Future<List<Cart>> getAbandonedCarts({int hoursThreshold = 24});
 
   /// Validate cart before checkout
-  /// Returns list of validation errors (empty = valid)
   Future<List<String>> validateCartForCheckout(String userId);
 
-  /// Sync cart with remote server (when integrated)
-  /// For mock implementation, updates last sync timestamp
+  /// Sync cart with remote server
   Future<void> syncCartWithServer(String userId);
 
   /// Migrate guest cart to logged-in user cart
-  /// Called after user login to merge guest cart items
   Future<void> migrateGuestCartToUser(String guestCartId, String userId);
 
   /// Get cart statistics for user
-  /// Returns: {itemCount, uniqueItems, cartValue, averageItemPrice}
   Future<Map<String, dynamic>> getCartStatistics(String userId);
 
   /// Check if any items in cart have low stock
-  /// Returns true if stock < 5 for any item
   Future<bool> hasLowStockItems(String userId);
 
   /// Get items with low/no stock
   Future<List<CartItem>> getLowStockItems(String userId);
 
   /// Validate all items in cart have sufficient stock
-  /// Throws exception if any item stock updated on server
   Future<void> validateCartStock(String userId);
 }

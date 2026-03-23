@@ -25,6 +25,8 @@ class MiniCartDrawer extends StatelessWidget {
     required this.onDrawerToggle,
   }) : super(key: key);
 
+  static const Color _accentRed = Color(0xFFC63D2F);
+
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -32,19 +34,13 @@ class MiniCartDrawer extends StatelessWidget {
       child: SafeArea(
         child: Column(
           children: [
-            // Header
             _buildDrawerHeader(context),
-            // Divider
             Divider(color: Colors.grey[200]),
-            // Cart items list
             Expanded(
               child: _buildCartItemsList(context),
             ),
-            // Divider
             Divider(color: Colors.grey[200]),
-            // Price summary
             _buildPriceSummary(context),
-            // Checkout button
             _buildCheckoutSection(context),
           ],
         ),
@@ -73,9 +69,13 @@ class MiniCartDrawer extends StatelessWidget {
               ),
             ],
           ),
-          IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: () => Navigator.pop(context),
+          Tooltip(
+            message: 'Close cart',
+            child: IconButton(
+              icon: const Icon(Icons.close),
+              color: _accentRed,
+              onPressed: () => Navigator.pop(context),
+            ),
           ),
         ],
       ),
@@ -161,38 +161,48 @@ class MiniCartDrawer extends StatelessWidget {
             ],
           ),
           trailing: SizedBox(
-            width: 80,
+            width: 92,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                GestureDetector(
-                  onTap: item.quantity > 1
-                      ? () => onQuantityChanged(item.id, item.quantity - 1)
-                      : null,
-                  child: Icon(
-                    Icons.remove_circle_outline,
-                    size: 16,
-                    color: item.quantity > 1 ? Colors.blue : Colors.grey,
+                Tooltip(
+                  message: 'Decrease quantity',
+                  child: GestureDetector(
+                    onTap: item.quantity > 1
+                        ? () => onQuantityChanged(item.id, item.quantity - 1)
+                        : null,
+                    child: Icon(
+                      Icons.remove_circle_outline,
+                      size: 18,
+                      color: item.quantity > 1 ? _accentRed : Colors.grey,
+                    ),
                   ),
                 ),
-                const SizedBox(width: 4),
-                GestureDetector(
-                  onTap: item.canIncreaseQuantity
-                      ? () => onQuantityChanged(item.id, item.quantity + 1)
-                      : null,
-                  child: Icon(
-                    Icons.add_circle_outline,
-                    size: 16,
-                    color: item.canIncreaseQuantity ? Colors.blue : Colors.grey,
+                const SizedBox(width: 6),
+                Tooltip(
+                  message: 'Increase quantity',
+                  child: GestureDetector(
+                    onTap: item.canIncreaseQuantity
+                        ? () => onQuantityChanged(item.id, item.quantity + 1)
+                        : null,
+                    child: Icon(
+                      Icons.add_circle_outline,
+                      size: 18,
+                      color:
+                          item.canIncreaseQuantity ? _accentRed : Colors.grey,
+                    ),
                   ),
                 ),
-                const SizedBox(width: 4),
-                GestureDetector(
-                  onTap: () => onRemoveItem(item.id),
-                  child: Icon(
-                    Icons.close,
-                    size: 16,
-                    color: Colors.red[600],
+                const SizedBox(width: 6),
+                Tooltip(
+                  message: 'Remove from cart',
+                  child: GestureDetector(
+                    onTap: () => onRemoveItem(item.id),
+                    child: const Icon(
+                      Icons.close,
+                      size: 18,
+                      color: _accentRed,
+                    ),
                   ),
                 ),
               ],
@@ -275,41 +285,57 @@ class MiniCartBadge extends StatelessWidget {
     this.hasDiscount = false,
   }) : super(key: key);
 
+  static const Color _accentRed = Color(0xFFC63D2F);
+
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        IconButton(
-          icon: Icon(
-            Icons.shopping_cart_outlined,
-            color: hasDiscount ? Colors.green[600] : Colors.blue[600],
+    return Tooltip(
+      message: hasDiscount ? 'Cart has discount' : 'Cart Page',
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          IconButton(
+            icon: const Icon(
+              Icons.shopping_cart_outlined,
+              color: _accentRed,
+            ),
+            iconSize: 24,
+            hoverColor: _accentRed.withValues(alpha: 0.1),
+            highlightColor: _accentRed.withValues(alpha: 0.1),
+            constraints: const BoxConstraints(
+              minWidth: 48,
+              minHeight: 48,
+            ),
+            onPressed: onTap,
           ),
-          onPressed: onTap,
-        ),
-        if (itemCount > 0)
-          Positioned(
-            right: 0,
-            top: 0,
-            child: Container(
-              padding: const EdgeInsets.all(2),
-              decoration: BoxDecoration(
-                color: Colors.red[600],
-                borderRadius: BorderRadius.circular(10),
-              ),
-              constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
-              child: Center(
-                child: Text(
-                  itemCount > 99 ? '99+' : itemCount.toString(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
+          if (itemCount > 0)
+            Positioned(
+              right: 2,
+              top: 2,
+              child: Container(
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  color: _accentRed,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                constraints: const BoxConstraints(
+                  minWidth: 20,
+                  minHeight: 20,
+                ),
+                child: Center(
+                  child: Text(
+                    itemCount > 99 ? '99+' : itemCount.toString(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 }

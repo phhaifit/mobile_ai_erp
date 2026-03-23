@@ -1,7 +1,6 @@
 import 'package:mobile_ai_erp/presentation/home/home.dart';
 import 'package:mobile_ai_erp/presentation/login/login.dart';
 import 'package:mobile_ai_erp/presentation/product/screens/product_list_page.dart';
-import 'package:mobile_ai_erp/presentation/product/screens/product_detail_page.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/web_builder_dashboard.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/store_settings/store_settings_screen.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/theme_engine/theme_list_screen.dart';
@@ -45,7 +44,7 @@ class Routes {
     login: (BuildContext context) => LoginScreen(),
     home: (BuildContext context) => HomeScreen(),
     productList: (BuildContext context) => ProductListPage(),
-    productDetail: (BuildContext context) => ProductDetailPage(),
+    productDetail: (BuildContext context) => ProductDetailScreen(),
     ...CartRoutes.getRoutes(),
     webBuilder: (BuildContext context) => const WebBuilderDashboard(),
     storeSettings: (BuildContext context) => const StoreSettingsScreen(),
