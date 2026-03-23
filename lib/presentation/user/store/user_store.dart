@@ -1,6 +1,7 @@
 import 'package:mobile_ai_erp/domain/entity/user/user.dart';
 import 'package:mobile_ai_erp/domain/repository/user/role_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/user_repository.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/assign_role_to_user_usecase.dart';
 import 'package:mobx/mobx.dart';
 
 part 'user_store.g.dart';
@@ -10,8 +11,9 @@ class UserStore = _UserStore with _$UserStore;
 abstract class _UserStore with Store {
   final UserRepository userRepo;
   final RoleRepository roleRepo;
+  final AssignRoleToUserUseCase assignRoleUseCase;
 
-  _UserStore(this.userRepo, this.roleRepo);
+  _UserStore(this.userRepo, this.roleRepo, this.assignRoleUseCase);
 
   @observable
   ObservableList<User> userList = ObservableList();
@@ -57,6 +59,20 @@ abstract class _UserStore with Store {
   @action
   Future<void> assignRole(int userId, int roleId) async {
     final user = userList.firstWhere((u) => u.id == userId);
-    await updateUser(user.copyWith(roleId: roleId));
+
+    try {
+      loading = true;
+
+      await assignRoleUseCase.execute(
+        user: user,
+        roleId: roleId,
+      );
+
+      await loadUsers();
+    } catch (e) {
+      error = e.toString();
+    } finally {
+      loading = false;
+    }
   }
 }
