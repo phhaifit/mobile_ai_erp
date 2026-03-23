@@ -333,7 +333,8 @@ abstract class _StockOperationsStore with Store {
   @action
   Future<bool> submitDamagedOrExpired() async {
     if (!canSubmitDamagedOrExpired) {
-      errorMessage = 'Please complete damaged/expired fields with valid values.';
+      errorMessage =
+          'Please complete damaged/expired fields with valid values.';
       return false;
     }
 
@@ -368,12 +369,12 @@ abstract class _StockOperationsStore with Store {
     if (warehouseId == null) {
       return '-';
     }
-    return warehouses
-        .firstWhere(
-          (warehouse) => warehouse.id == warehouseId,
-          orElse: () => const Warehouse(id: '', name: '-', location: ''),
-        )
-        .name;
+    for (final warehouse in warehouses) {
+      if (warehouse.id == warehouseId) {
+        return warehouse.name;
+      }
+    }
+    return '-';
   }
 
   List<ProductStock> getProductsByWarehouse(String? warehouseId) {
