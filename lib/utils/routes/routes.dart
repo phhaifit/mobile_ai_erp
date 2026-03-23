@@ -16,6 +16,10 @@ import 'package:mobile_ai_erp/presentation/order_fulfillment/fulfillment_list.da
 import 'package:mobile_ai_erp/presentation/order_fulfillment/order_tracking.dart';
 import 'package:mobile_ai_erp/presentation/order_fulfillment/packaging.dart';
 import 'package:mobile_ai_erp/presentation/order_fulfillment/print_label.dart';
+import 'package:mobile_ai_erp/presentation/user/home/user_home.dart';
+import 'package:mobile_ai_erp/di/service_locator.dart';
+import 'package:mobile_ai_erp/presentation/user/store/role_store.dart';
+import 'package:mobile_ai_erp/presentation/user/store/user_store.dart';
 
 class Routes {
   Routes._();
@@ -32,6 +36,7 @@ class Routes {
   static const String cmsPageEditor = '/web-builder/cms-pages/editor';
   static const String orderTracking = OrderTrackingNavigation.routeName;
   static const String reports = '/reports';
+  static const String users = '/users';
   static const String productDetail = '/product-detail';
   static const String fulfillment = '/fulfillment';
   static const String fulfillmentDetail = '/fulfillment/detail';
@@ -51,6 +56,10 @@ class Routes {
     cmsPageEditor: (BuildContext context) => const CmsPageEditorScreen(),
     orderTracking: OrderTrackingNavigation.buildScreen,
     reports: (BuildContext context) => ReportsAnalyticsScreen(),
+    users: (BuildContext context) => UserManagementScreen(
+      userStore: getIt<UserStore>(),
+      roleStore: getIt<RoleStore>(),
+    ),
     productDetail: (BuildContext context) => const ProductDetailScreen(),
     fulfillment: (BuildContext context) => FulfillmentListScreen(),
     fulfillmentDetail: (BuildContext context) => FulfillmentDetailScreen(),
