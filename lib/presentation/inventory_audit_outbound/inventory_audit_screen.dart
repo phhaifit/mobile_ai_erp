@@ -114,7 +114,7 @@ class _AuditDesktopBody extends StatelessWidget {
                         title: 'Physical Count & Discrepancy',
                         trailing: FilledButton(
                           key: const Key('audit_save_button_desktop'),
-                          onPressed: store.isSubmitting || !store.canSaveAudit
+                          onPressed: store.isSubmittingAudit || !store.canSaveAudit
                               ? null
                               : () async {
                                   final success = await store.saveAuditSession();
@@ -172,7 +172,7 @@ class _AuditMobileBody extends StatelessWidget {
                 width: double.infinity,
                 child: FilledButton(
                   key: const Key('audit_save_button_mobile'),
-                  onPressed: store.isSubmitting || !store.canSaveAudit
+                  onPressed: store.isSubmittingAudit || !store.canSaveAudit
                       ? null
                       : () async {
                           final success = await store.saveAuditSession();

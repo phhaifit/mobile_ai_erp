@@ -148,7 +148,7 @@ class _OutboundForm extends StatelessWidget {
               const SizedBox(height: 12),
               FilledButton.icon(
                 key: const Key('outbound_submit_button'),
-                onPressed: store.isSubmitting || !store.canSubmitOutbound
+                onPressed: store.isSubmittingOutbound || !store.canSubmitOutbound
                     ? null
                     : () async {
                         final success = await store.submitOutbound();
