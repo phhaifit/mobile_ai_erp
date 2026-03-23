@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/entity/user/role.dart';
 import 'package:mobile_ai_erp/domain/entity/user/user.dart';
 import 'package:mobile_ai_erp/domain/entity/user/user_status.dart';
@@ -8,7 +7,14 @@ import 'package:mobile_ai_erp/presentation/user/store/role_store.dart';
 import 'package:mobile_ai_erp/presentation/user/store/user_store.dart';
 
 class UserManagementScreen extends StatefulWidget {
-  const UserManagementScreen({super.key});
+  final UserStore userStore;
+  final RoleStore roleStore;
+
+  const UserManagementScreen({
+    super.key,
+    required this.userStore,
+    required this.roleStore,
+  });
 
   @override
   State<UserManagementScreen> createState() => _UserManagementScreenState();
@@ -16,26 +22,34 @@ class UserManagementScreen extends StatefulWidget {
 
 class _UserManagementScreenState extends State<UserManagementScreen>
     with SingleTickerProviderStateMixin {
-  final UserStore _userStore = getIt<UserStore>();
-  final RoleStore _roleStore = getIt<RoleStore>();
-
   late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    _userStore.loadUsers();
-    _roleStore.loadRoles();
+
+    if (widget.userStore.userList.isEmpty) {
+      widget.userStore.loadUsers();
+    }
+
+    if (widget.roleStore.roleList.isEmpty) {
+      widget.roleStore.loadRoles();
+    }
+
     _tabController = TabController(length: 2, vsync: this);
   }
 
-  // ✅ helper (rất quan trọng)
   Role? _findRoleById(int id) {
-    try {
-      return _roleStore.roleList.firstWhere((r) => r.id == id);
-    } catch (_) {
-      return null;
-    }
+    return widget.roleStore.roleList
+        .where((r) => r.id == id)
+        .cast<Role?>()
+        .firstOrNull;
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
@@ -78,15 +92,15 @@ class _UserManagementScreenState extends State<UserManagementScreen>
   Widget _buildUserTab() {
     return Observer(
       builder: (_) {
-        if (_userStore.loading) {
+        if (widget.userStore.loading) {
           return const Center(child: CircularProgressIndicator());
         }
 
         return ListView.builder(
           padding: const EdgeInsets.all(16),
-          itemCount: _userStore.userList.length,
+          itemCount: widget.userStore.userList.length,
           itemBuilder: (_, index) {
-            final user = _userStore.userList[index];
+            final user = widget.userStore.userList[index];
             final role = _findRoleById(user.roleId);
 
             return Card(
@@ -96,7 +110,6 @@ class _UserManagementScreenState extends State<UserManagementScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Header
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -109,21 +122,13 @@ class _UserManagementScreenState extends State<UserManagementScreen>
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 8),
-
                     Text(user.email),
-
                     const SizedBox(height: 12),
-
-                    // Role (single)
                     Chip(
                       label: Text(role?.name ?? 'No role'),
                     ),
-
                     const SizedBox(height: 12),
-
-                    // Actions
                     Row(
                       children: [
                         ElevatedButton(
@@ -132,7 +137,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
                         ),
                         const SizedBox(width: 8),
                         IconButton(
-                          onPressed: () => _userStore.deleteUser(user.id),
+                          onPressed: () => widget.userStore.deleteUser(user.id),
                           icon: const Icon(Icons.delete),
                         ),
                       ],
@@ -161,7 +166,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
                 builder: (_) {
                   return Column(
                     mainAxisSize: MainAxisSize.min,
-                    children: _roleStore.roleList.map((role) {
+                    children: widget.roleStore.roleList.map((role) {
                       return RadioListTile<int>(
                         title: Text(role.name),
                         value: role.id,
@@ -184,7 +189,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
                 ElevatedButton(
                   onPressed: () {
                     if (selectedRoleId != null) {
-                      _userStore.assignRole(user.id, selectedRoleId!);
+                      widget.userStore.assignRole(user.id, selectedRoleId!);
                     }
                     Navigator.pop(context);
                   },
@@ -208,73 +213,75 @@ class _UserManagementScreenState extends State<UserManagementScreen>
     showDialog(
       context: context,
       builder: (_) {
-        return AlertDialog(
-          title: const Text('Create User'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Name'),
-                ),
-                TextField(
-                  controller: emailController,
-                  decoration: const InputDecoration(labelText: 'Email'),
-                ),
-                TextField(
-                  controller: phoneController,
-                  decoration: const InputDecoration(labelText: 'Phone'),
-                ),
-                const SizedBox(height: 16),
-
-                // Role select
-                Observer(
-                  builder: (_) {
-                    return DropdownButtonFormField<int>(
-                      hint: const Text('Select Role'),
-                      value: selectedRoleId,
-                      items: _roleStore.roleList.map((role) {
-                        return DropdownMenuItem(
-                          value: role.id,
-                          child: Text(role.name),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Create User'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nameController,
+                      decoration: const InputDecoration(labelText: 'Name'),
+                    ),
+                    TextField(
+                      controller: emailController,
+                      decoration: const InputDecoration(labelText: 'Email'),
+                    ),
+                    TextField(
+                      controller: phoneController,
+                      decoration: const InputDecoration(labelText: 'Phone'),
+                    ),
+                    const SizedBox(height: 16),
+                    Observer(
+                      builder: (_) {
+                        return DropdownButtonFormField<int>(
+                          hint: const Text('Select Role'),
+                          value: selectedRoleId,
+                          items: widget.roleStore.roleList.map((role) {
+                            return DropdownMenuItem(
+                              value: role.id,
+                              child: Text(role.name),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            setState(() {
+                              selectedRoleId = value;
+                            });
+                          },
                         );
-                      }).toList(),
-                      onChanged: (value) {
-                        selectedRoleId = value;
-                        (context as Element).markNeedsBuild();
                       },
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    if (selectedRoleId == null) return;
+
+                    final newUser = User(
+                      id: DateTime.now().millisecondsSinceEpoch,
+                      name: nameController.text,
+                      email: emailController.text,
+                      phone: phoneController.text,
+                      status: UserStatus.active,
+                      roleId: selectedRoleId!,
                     );
+
+                    widget.userStore.createUser(newUser);
+                    Navigator.pop(context);
                   },
+                  child: const Text('Create'),
                 ),
               ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (selectedRoleId == null) return;
-
-                final newUser = User(
-                  id: DateTime.now().millisecondsSinceEpoch,
-                  name: nameController.text,
-                  email: emailController.text,
-                  phone: phoneController.text,
-                  status: UserStatus.active,
-                  roleId: selectedRoleId!,
-                );
-
-                _userStore.createUser(newUser);
-
-                Navigator.pop(context);
-              },
-              child: const Text('Create'),
-            ),
-          ],
+            );
+          },
         );
       },
     );
@@ -283,19 +290,19 @@ class _UserManagementScreenState extends State<UserManagementScreen>
   Widget _buildRoleTab() {
     return Observer(
       builder: (_) {
-        if (_roleStore.loading) {
+        if (widget.roleStore.loading) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (_roleStore.error != null) {
-          return Center(child: Text(_roleStore.error!));
+        if (widget.roleStore.error != null) {
+          return Center(child: Text(widget.roleStore.error!));
         }
 
         return ListView.builder(
           padding: const EdgeInsets.all(16),
-          itemCount: _roleStore.roleList.length,
+          itemCount: widget.roleStore.roleList.length,
           itemBuilder: (_, index) {
-            final role = _roleStore.roleList[index];
+            final role = widget.roleStore.roleList[index];
 
             return Card(
               margin: const EdgeInsets.only(bottom: 16),
@@ -304,7 +311,6 @@ class _UserManagementScreenState extends State<UserManagementScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Header
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -314,20 +320,16 @@ class _UserManagementScreenState extends State<UserManagementScreen>
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 8),
-
                     Text(
                       role.description ?? 'No description',
                       style: const TextStyle(color: Colors.grey),
                     ),
-
                     const SizedBox(height: 12),
-
                     Row(
                       children: [
                         IconButton(
-                          onPressed: () => _roleStore.deleteRole(role.id),
+                          onPressed: () => widget.roleStore.deleteRole(role.id),
                           icon: const Icon(Icons.delete),
                         ),
                       ],
@@ -372,12 +374,12 @@ class _UserManagementScreenState extends State<UserManagementScreen>
             ElevatedButton(
               onPressed: () {
                 final newRole = Role(
-                    id: DateTime.now().millisecondsSinceEpoch,
-                    name: nameController.text,
-                    description: descController.text);
+                  id: DateTime.now().millisecondsSinceEpoch,
+                  name: nameController.text,
+                  description: descController.text,
+                );
 
-                _roleStore.createRole(newRole);
-
+                widget.roleStore.createRole(newRole);
                 Navigator.pop(context);
               },
               child: const Text('Create'),
