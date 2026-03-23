@@ -210,22 +210,32 @@ abstract class _InventoryAuditOutboundStore with Store {
     selectedAuditProductId = null;
     physicalCountInputs.clear();
     inventoryItems = ObservableList<InventoryItem>();
+    clearError();
 
     if (warehouseId == null) {
       return;
     }
 
-    final loadedInventory =
-        await _getInventoryByWarehouseUseCase.call(params: warehouseId);
-    if (requestId != _selectedWarehouseRequestId || selectedWarehouseId != warehouseId) {
-      return;
-    }
+    try {
+      final loadedInventory =
+          await _getInventoryByWarehouseUseCase.call(params: warehouseId);
+      if (requestId != _selectedWarehouseRequestId || selectedWarehouseId != warehouseId) {
+        return;
+      }
 
-    runInAction(() {
-      inventoryItems = ObservableList<InventoryItem>.of(loadedInventory);
-      selectedAuditProductId =
-          loadedInventory.isNotEmpty ? loadedInventory.first.productId : null;
-    });
+      runInAction(() {
+        inventoryItems = ObservableList<InventoryItem>.of(loadedInventory);
+        selectedAuditProductId =
+            loadedInventory.isNotEmpty ? loadedInventory.first.productId : null;
+      });
+    } catch (error) {
+      if (requestId != _selectedWarehouseRequestId || selectedWarehouseId != warehouseId) {
+        return;
+      }
+      runInAction(() {
+        errorMessage = error.toString();
+      });
+    }
   }
 
   @action
