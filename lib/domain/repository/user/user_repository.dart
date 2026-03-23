@@ -1,13 +1,14 @@
 import 'dart:async';
 
-import 'package:mobile_ai_erp/domain/usecase/user/login_usecase.dart';
-
 import '../../entity/user/user.dart';
 
+// =============================
+// REPOSITORIES (ASYNC)
+// =============================
+
 abstract class UserRepository {
-  Future<User?> login(LoginParams params);
-
-  Future<void> saveIsLoggedIn(bool value);
-
-  Future<bool> get isLoggedIn;
+  Future<List<User>> getAll();
+  Future<void> create(User user);
+  Future<void> update(User user);
+  Future<void> delete(int id);
 }
