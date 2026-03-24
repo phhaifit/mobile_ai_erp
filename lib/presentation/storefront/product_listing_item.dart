@@ -17,15 +17,27 @@ class ProductListingItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      color: Colors.red,
       padding: EdgeInsets.only(left: 10.0, right: 10.0, top: 5.0, bottom: 5.0),
+      margin: EdgeInsets.only(bottom: 10.0),
+      height: MediaQuery.of(context).size.height * 0.2,
+      alignment: Alignment.centerLeft,
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           productListing.imageSource != null ? 
             Image.network(
               productListing.imageSource!,
+              width: MediaQuery.of(context).size.width * 0.15,
+              height: MediaQuery.of(context).size.height * 0.15,
             ) : 
-            Image.network('https://picsum.photos/250?image=9'), // placeholder image, replace with "no image" asset
+            Image.network(
+              'https://picsum.photos/250?image=9',
+              width: MediaQuery.of(context).size.width * 0.15,
+              height: MediaQuery.of(context).size.height * 0.15,
+            ), // placeholder image, replace with "no image" asset
           Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 productListing.productName,
