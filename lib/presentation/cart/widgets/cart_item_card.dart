@@ -12,6 +12,7 @@ class CartItemCard extends StatelessWidget {
   final bool showStockWarning;
   final bool isSelected;
   final ValueChanged<bool>? onSelectChanged;
+  final VoidCallback? onMoveToWishlist;
 
   const CartItemCard({
     Key? key,
@@ -22,6 +23,7 @@ class CartItemCard extends StatelessWidget {
     this.showStockWarning = true,
     this.isSelected = false,
     this.onSelectChanged,
+    this.onMoveToWishlist,
   }) : super(key: key);
 
   static const Color _accentRed = Color(0xFFC63D2F);
@@ -35,8 +37,9 @@ class CartItemCard extends StatelessWidget {
         return Card(
           elevation: 1,
           margin: const EdgeInsets.symmetric(vertical: 8),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           child: GestureDetector(
             onTap: onTap,
             child: Container(
@@ -80,8 +83,13 @@ class CartItemCard extends StatelessWidget {
         Expanded(child: _buildInfoContent(compact: false)),
         const SizedBox(width: 12),
         Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             _buildRemoveButton(),
+            if (onMoveToWishlist != null) ...[
+              const SizedBox(height: 8),
+              _buildMoveToWishlistButton(),
+            ],
             const SizedBox(height: 10),
             QuantitySelector(
               currentQuantity: item.quantity,
@@ -124,7 +132,16 @@ class CartItemCard extends StatelessWidget {
                 children: [
                   Expanded(child: _buildInfoContent(compact: true)),
                   const SizedBox(width: 8),
-                  _buildRemoveButton(),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      _buildRemoveButton(),
+                      if (onMoveToWishlist != null) ...[
+                        const SizedBox(height: 6),
+                        _buildMoveToWishlistButton(compact: true),
+                      ],
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -252,14 +269,10 @@ class CartItemCard extends StatelessWidget {
 
   Widget _buildRemoveButton() {
     return Tooltip(
-      message: 'Xóa khỏi giỏ hàng',
+      message: 'Remove from cart',
       child: IconButton(
         onPressed: onRemove,
-        icon: const Icon(
-          Icons.delete_outline,
-          color: _accentRed,
-          size: 20,
-        ),
+        icon: const Icon(Icons.delete_outline, color: _accentRed, size: 20),
         padding: EdgeInsets.zero,
         constraints: const BoxConstraints(),
         visualDensity: VisualDensity.compact,
@@ -270,9 +283,33 @@ class CartItemCard extends StatelessWidget {
   Widget _buildImagePlaceholder() {
     return Container(
       color: Colors.grey[100],
-      child: Icon(
-        Icons.image_not_supported_outlined,
-        color: Colors.grey[400],
+      child: Icon(Icons.image_not_supported_outlined, color: Colors.grey[400]),
+    );
+  }
+
+  Widget _buildMoveToWishlistButton({bool compact = false}) {
+    if (onMoveToWishlist == null) return const SizedBox.shrink();
+
+    return TextButton.icon(
+      onPressed: onMoveToWishlist,
+      style: TextButton.styleFrom(
+        padding: EdgeInsets.zero,
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        visualDensity: VisualDensity.compact,
+      ),
+      icon: Icon(
+        Icons.favorite_border,
+        size: compact ? 16 : 18,
+        color: Colors.grey[700],
+      ),
+      label: Text(
+        'Save for later',
+        style: TextStyle(
+          fontSize: compact ? 11 : 12,
+          color: Colors.grey[700],
+          fontWeight: FontWeight.w500,
+        ),
       ),
     );
   }
@@ -306,10 +343,7 @@ class CompactCartItemCard extends StatelessWidget {
         child: item.imageUrl.isNotEmpty
             ? ClipRRect(
                 borderRadius: BorderRadius.circular(4),
-                child: Image.network(
-                  item.imageUrl,
-                  fit: BoxFit.cover,
-                ),
+                child: Image.network(item.imageUrl, fit: BoxFit.cover),
               )
             : Icon(Icons.image, color: Colors.grey[400]),
       ),

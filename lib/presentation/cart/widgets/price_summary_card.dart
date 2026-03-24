@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_ai_erp/core/utils/price_formatter.dart';
 
 /// Card widget displaying price breakdown summary
 class PriceSummaryCard extends StatelessWidget {
@@ -23,8 +24,6 @@ class PriceSummaryCard extends StatelessWidget {
     this.padding,
   }) : super(key: key);
 
-  String _formatPrice(double amount) => '\$${amount.toStringAsFixed(2)}';
-
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -38,9 +37,9 @@ class PriceSummaryCard extends StatelessWidget {
             // Title
             Text(
               'Order Summary',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             if (showDividers) ...[
               const SizedBox(height: 16),
@@ -50,7 +49,7 @@ class PriceSummaryCard extends StatelessWidget {
             // Subtotal row
             _SummaryRow(
               label: 'Subtotal',
-              amount: _formatPrice(subtotal),
+              amount: PriceFormatter.formatPrice(subtotal),
               isBold: false,
             ),
             const SizedBox(height: 8),
@@ -58,7 +57,7 @@ class PriceSummaryCard extends StatelessWidget {
             if (discountAmount > 0) ...[
               _SummaryRow(
                 label: discountLabel ?? 'Discount',
-                amount: '-${_formatPrice(discountAmount)}',
+                amount: '-${PriceFormatter.formatPrice(discountAmount)}',
                 isBold: false,
                 isDiscount: true,
               ),
@@ -67,15 +66,16 @@ class PriceSummaryCard extends StatelessWidget {
             // Tax row
             _SummaryRow(
               label: 'Tax',
-              amount: _formatPrice(taxAmount),
+              amount: PriceFormatter.formatPrice(taxAmount),
               isBold: false,
             ),
             const SizedBox(height: 8),
             // Shipping row
             _SummaryRow(
               label: 'Shipping',
-              amount:
-                  shippingAmount == 0 ? 'FREE' : _formatPrice(shippingAmount),
+              amount: shippingAmount == 0
+                  ? 'FREE'
+                  : PriceFormatter.formatPrice(shippingAmount),
               isBold: false,
               isShipping: shippingAmount == 0,
             ),
@@ -87,7 +87,7 @@ class PriceSummaryCard extends StatelessWidget {
             // Total row
             _SummaryRow(
               label: 'Total',
-              amount: _formatPrice(total),
+              amount: PriceFormatter.formatPrice(total),
               isBold: true,
               isTotal: true,
             ),

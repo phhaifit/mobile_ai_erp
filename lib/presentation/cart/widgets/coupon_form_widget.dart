@@ -53,7 +53,8 @@ class _CouponFormWidgetState extends State<CouponFormWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final hasAppliedCoupon = widget.appliedCouponCode != null &&
+    final hasAppliedCoupon =
+        widget.appliedCouponCode != null &&
         widget.appliedCouponCode!.isNotEmpty;
 
     return Card(
@@ -66,41 +67,42 @@ class _CouponFormWidgetState extends State<CouponFormWidget> {
             GestureDetector(
               onTap: () => setState(() => _isExpanded = !_isExpanded),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.local_offer_outlined,
-                        color: Colors.blue[600],
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Apply Coupon',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: hasAppliedCoupon ? Colors.green[600] : null,
+                  Expanded(
+                    child: Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        Icon(
+                          Icons.local_offer_outlined,
+                          color: Colors.blue[600],
                         ),
-                      ),
-                      if (hasAppliedCoupon) ...[
-                        const SizedBox(width: 8),
-                        Chip(
-                          label: Text(widget.appliedCouponCode!),
-                          backgroundColor: Colors.green[100],
-                          labelStyle: TextStyle(
-                            color: Colors.green[700],
-                            fontSize: 12,
+                        Text(
+                          'Apply Coupon',
+                          style: TextStyle(
+                            fontSize: 16,
                             fontWeight: FontWeight.w600,
+                            color: hasAppliedCoupon ? Colors.green[600] : null,
                           ),
-                          onDeleted: _handleRemove,
                         ),
+                        if (hasAppliedCoupon)
+                          Chip(
+                            label: Text(widget.appliedCouponCode!),
+                            backgroundColor: Colors.green[100],
+                            labelStyle: TextStyle(
+                              color: Colors.green[700],
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            onDeleted: _handleRemove,
+                          ),
                       ],
-                    ],
+                    ),
                   ),
-                  Icon(
-                    _isExpanded ? Icons.expand_less : Icons.expand_more,
-                  ),
+                  const SizedBox(width: 8),
+                  Icon(_isExpanded ? Icons.expand_less : Icons.expand_more),
                 ],
               ),
             ),
@@ -170,8 +172,10 @@ class _CouponFormWidgetState extends State<CouponFormWidget> {
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.check_circle_outline,
-                            color: Colors.green[600]),
+                        Icon(
+                          Icons.check_circle_outline,
+                          color: Colors.green[600],
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -200,8 +204,9 @@ class _CouponFormWidgetState extends State<CouponFormWidget> {
                           height: 20,
                           width: 20,
                           child: CircularProgressIndicator(
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
                             strokeWidth: 2,
                           ),
                         )
@@ -274,8 +279,11 @@ class AvailableCouponsWidget extends StatelessWidget {
                         ],
                       ),
                     ),
-                    Icon(Icons.arrow_forward_ios,
-                        size: 16, color: Colors.blue[600]),
+                    Icon(
+                      Icons.arrow_forward_ios,
+                      size: 16,
+                      color: Colors.blue[600],
+                    ),
                   ],
                 ),
               ),

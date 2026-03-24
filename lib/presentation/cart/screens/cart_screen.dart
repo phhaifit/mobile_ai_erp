@@ -74,10 +74,7 @@ class _CartScreenState extends State<CartScreen> {
         content: const Text('Item removed from cart'),
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
-        action: SnackBarAction(
-          label: 'UNDO',
-          onPressed: () {},
-        ),
+        action: SnackBarAction(label: 'UNDO', onPressed: () {}),
       ),
     );
   }
@@ -165,10 +162,9 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   void _handleContinueShopping() {
-    Navigator.of(context).pushNamedAndRemoveUntil(
-      '/products',
-      (route) => false,
-    );
+    Navigator.of(
+      context,
+    ).pushNamedAndRemoveUntil('/products', (route) => false);
   }
 
   Future<void> _handleApproveCheckout() async {
@@ -328,10 +324,9 @@ class _CartScreenState extends State<CartScreen> {
                     color: Theme.of(context).colorScheme.surface,
                     border: Border(
                       left: BorderSide(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .outlineVariant
-                            .withValues(alpha: 0.5),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.outlineVariant.withValues(alpha: 0.5),
                       ),
                     ),
                   ),
@@ -363,9 +358,7 @@ class _CartScreenState extends State<CartScreen> {
   Widget _buildLeftContent(CartUIModel cartUIModel) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildCartItemsSection(cartUIModel),
-      ],
+      children: [_buildCartItemsSection(cartUIModel)],
     );
   }
 
@@ -438,8 +431,10 @@ class _CartScreenState extends State<CartScreen> {
               ),
             ),
             controlAffinity: ListTileControlAffinity.leading,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 8,
+              vertical: 2,
+            ),
           ),
         ),
         const SizedBox(height: 24),
@@ -498,10 +493,9 @@ class _CartScreenState extends State<CartScreen> {
               'Selected: ${_cartStore.checkoutItems.length} item(s)',
               style: TextStyle(
                 fontSize: 13,
-                color: Theme.of(context)
-                    .colorScheme
-                    .onSurface
-                    .withValues(alpha: 0.7),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
           ),
@@ -521,17 +515,19 @@ class _CartScreenState extends State<CartScreen> {
           children: [
             Text(
               'Items in Cart',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             if (cartUIModel.itemCount > 0)
               InkWell(
                 borderRadius: BorderRadius.circular(8),
                 onTap: _selectAllItems,
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 4,
+                  ),
                   child: Text(
                     _allItemsSelected ? 'Deselect All' : 'Select All',
                     style: TextStyle(
@@ -561,6 +557,21 @@ class _CartScreenState extends State<CartScreen> {
                   _cartStore.toggleItemSelection(item.id);
                 },
                 onRemove: () => _handleRemoveItem(item.id),
+                onMoveToWishlist: () async {
+                  final cartItem = _cartStore.cart.items.firstWhere(
+                    (cartItem) => cartItem.id == item.id,
+                  );
+
+                  final messenger = ScaffoldMessenger.of(context);
+
+                  await _cartStore.moveCartItemToWishlist(cartItem);
+
+                  if (!mounted) return;
+
+                  messenger.showSnackBar(
+                    const SnackBar(content: Text('Moved to wishlist')),
+                  );
+                },
                 onQuantityChanged: (newQuantity) =>
                     _handleQuantityChange(item.id, newQuantity),
               ),
@@ -580,11 +591,7 @@ class _CartScreenState extends State<CartScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.error_outline,
-                size: 64,
-                color: Colors.red[600],
-              ),
+              Icon(Icons.error_outline, size: 64, color: Colors.red[600]),
               const SizedBox(height: 16),
               Text(
                 'Something went wrong',
@@ -668,11 +675,8 @@ class _CartScreenWithDrawerState extends State<CartScreenWithDrawer> {
 
   void _handleCheckout() {
     Navigator.pop(context);
-    Navigator.of(context).pushNamed(
-      '/checkout',
-      arguments: {
-        'cartData': _cartStore.checkoutData,
-      },
-    );
+    Navigator.of(
+      context,
+    ).pushNamed('/checkout', arguments: {'cartData': _cartStore.checkoutData});
   }
 }

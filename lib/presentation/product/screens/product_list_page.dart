@@ -40,7 +40,8 @@ class _ProductListPageState extends State<ProductListPage> {
       }
     }
 
-    final firstVariant = findMainVariant('Red', 'US 9') ??
+    final firstVariant =
+        findMainVariant('Red', 'US 9') ??
         (mainProduct.variants.isNotEmpty ? mainProduct.variants.first : null);
 
     final list = <Map<String, dynamic>>[];
@@ -51,8 +52,9 @@ class _ProductListPageState extends State<ProductListPage> {
         'name': mainProduct.name,
         'brandName': mainProduct.brandName,
         'categoryName': mainProduct.categoryName,
-        'imageUrl':
-            mainProduct.media.isNotEmpty ? mainProduct.media.first.url : '',
+        'imageUrl': mainProduct.media.isNotEmpty
+            ? mainProduct.media.first.url
+            : '',
         'rating': mainProduct.averageRating,
         'reviewCount': mainProduct.reviewCount,
         'variantId': firstVariant.id,
@@ -90,10 +92,7 @@ class _ProductListPageState extends State<ProductListPage> {
         'variant': ProductVariant(
           id: 'mock_adidas_white_42',
           sku: 'AD-ULTRA-WH-42',
-          color: const ProductColor(
-            name: 'White',
-            color: Color(0xFFF5F5F5),
-          ),
+          color: const ProductColor(name: 'White', color: Color(0xFFF5F5F5)),
           size: 'EU 42',
           price: 2890000.0,
           salePrice: 2490000.0,
@@ -121,10 +120,7 @@ class _ProductListPageState extends State<ProductListPage> {
         'variant': ProductVariant(
           id: 'mock_puma_blue_41',
           sku: 'PM-NITRO-BL-41',
-          color: const ProductColor(
-            name: 'Blue',
-            color: Color(0xFF2446B8),
-          ),
+          color: const ProductColor(name: 'Blue', color: Color(0xFF2446B8)),
           size: 'EU 41',
           price: 2190000.0,
           salePrice: null,
@@ -152,10 +148,7 @@ class _ProductListPageState extends State<ProductListPage> {
         'variant': ProductVariant(
           id: 'mock_nb_silver_40',
           sku: 'NB-530-SL-40',
-          color: const ProductColor(
-            name: 'Silver',
-            color: Color(0xFFB8B8C0),
-          ),
+          color: const ProductColor(name: 'Silver', color: Color(0xFFB8B8C0)),
           size: 'EU 40',
           price: 2590000.0,
           salePrice: 2290000.0,
@@ -183,10 +176,7 @@ class _ProductListPageState extends State<ProductListPage> {
         'variant': ProductVariant(
           id: 'mock_cv_black_43',
           sku: 'CV-70-BK-43',
-          color: const ProductColor(
-            name: 'Black',
-            color: Color(0xFF1F1F1F),
-          ),
+          color: const ProductColor(name: 'Black', color: Color(0xFF1F1F1F)),
           size: 'EU 43',
           price: 1790000.0,
           salePrice: 1590000.0,
@@ -274,8 +264,9 @@ class _ProductListPageState extends State<ProductListPage> {
     if (!useOfficialDetail) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content:
-              Text('Detailed page is only available for the first product'),
+          content: Text(
+            'Detailed page is only available for the first product',
+          ),
           duration: Duration(seconds: 2),
         ),
       );
@@ -337,14 +328,14 @@ class _ProductListPageState extends State<ProductListPage> {
           final crossAxisCount = constraints.maxWidth >= 1100
               ? 4
               : constraints.maxWidth >= 800
-                  ? 3
-                  : 2;
+              ? 3
+              : 2;
 
           final childAspectRatio = constraints.maxWidth >= 1100
               ? 0.72
               : constraints.maxWidth >= 800
-                  ? 0.70
-                  : 0.68;
+              ? 0.70
+              : 0.72;
 
           return GridView.builder(
             padding: const EdgeInsets.all(16),
@@ -482,8 +473,9 @@ class _ProductListPageState extends State<ProductListPage> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(10),
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
@@ -507,7 +499,7 @@ class _ProductListPageState extends State<ProductListPage> {
                       height: 1.25,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
                   Text(
                     '${product['colorName']} / ${product['size']}',
                     maxLines: 1,
@@ -523,12 +515,9 @@ class _ProductListPageState extends State<ProductListPage> {
                     product['categoryName'] as String,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 11,
-                    ),
+                    style: TextStyle(color: Colors.grey[600], fontSize: 11),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Text(
                     _buildPriceText(product),
                     style: TextStyle(
@@ -541,6 +530,8 @@ class _ProductListPageState extends State<ProductListPage> {
                     const SizedBox(height: 2),
                     Text(
                       '₫${originalPrice.toStringAsFixed(0)}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: Colors.grey[600],
                         fontSize: 11,
@@ -557,20 +548,25 @@ class _ProductListPageState extends State<ProductListPage> {
                         '${product['rating']}',
                         style: const TextStyle(fontSize: 11),
                       ),
-                      const Spacer(),
-                      Text(
-                        'Stock ${product['stockQuantity']}',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: (product['stockQuantity'] as int) <= 5
-                              ? Colors.orange[700]
-                              : Colors.grey[600],
-                          fontWeight: FontWeight.w500,
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'Stock ${product['stockQuantity']}',
+                          textAlign: TextAlign.right,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: (product['stockQuantity'] as int) <= 5
+                                ? Colors.orange[700]
+                                : Colors.grey[600],
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -596,10 +592,13 @@ class _ProductListPageState extends State<ProductListPage> {
                             )
                           : Text(
                               inStock ? 'Add to Cart' : 'Unavailable',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontSize: 12,
-                                color:
-                                    inStock ? Colors.white : Colors.grey[700],
+                                color: inStock
+                                    ? Colors.white
+                                    : Colors.grey[700],
                                 fontWeight: FontWeight.w600,
                               ),
                             ),

@@ -19,17 +19,15 @@ class CartPresentationModule {
     final cartRepository = getIt<CartRepository>();
     final productRepository = getIt<ProductRepository>();
 
+    getIt.registerSingleton<WishlistStore>(
+      WishlistStore(cartRepository: cartRepository, userId: userId),
+    );
+
     getIt.registerSingleton<CartStore>(
       CartStore(
         cartRepository: cartRepository,
         productRepository: productRepository,
-        userId: userId,
-      ),
-    );
-
-    getIt.registerSingleton<WishlistStore>(
-      WishlistStore(
-        cartRepository: cartRepository,
+        wishlistStore: getIt<WishlistStore>(),
         userId: userId,
       ),
     );
