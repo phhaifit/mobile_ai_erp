@@ -1,0 +1,415 @@
+import 'package:mobile_ai_erp/core/stores/error/error_store.dart';
+import 'package:mobile_ai_erp/domain/entity/checkout/checkout_item.dart';
+import 'package:mobile_ai_erp/domain/entity/checkout/checkout_order.dart';
+import 'package:mobile_ai_erp/domain/entity/checkout/coupon.dart';
+import 'package:mobile_ai_erp/domain/entity/checkout/delivery_address.dart';
+import 'package:mobile_ai_erp/domain/entity/checkout/payment_method.dart';
+import 'package:mobile_ai_erp/domain/entity/checkout/shipping_method.dart';
+import 'package:mobile_ai_erp/domain/usecase/checkout/checkout_usecases.dart';
+import 'package:mobile_ai_erp/domain/usecase/checkout/get_payment_methods_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/checkout/get_shipping_methods_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/checkout/validate_coupon_usecase.dart';
+import 'package:mobx/mobx.dart';
+
+part 'checkout_store.g.dart';
+
+class CheckoutStore = _CheckoutStore with _$CheckoutStore;
+
+/// Enum representing checkout steps
+enum CheckoutStep {
+  cart('Cart'),
+  address('Delivery Address'),
+  shipping('Shipping Method'),
+  payment('Payment Method'),
+  review('Review Order'),
+  confirmation('Order Confirmed');
+
+  const CheckoutStep(this.displayName);
+
+  final String displayName;
+}
+
+abstract class _CheckoutStore with Store {
+  _CheckoutStore(
+    this._getShippingMethodsUseCase,
+    this._getPaymentMethodsUseCase,
+    this._validateCouponUseCase,
+    this._validateAddressUseCase,
+    this._parseAddressUseCase,
+    this._createOrderUseCase,
+    this._getOrderUseCase,
+    this._updateOrderUseCase,
+    this._confirmOrderUseCase,
+    this._getSavedAddressesUseCase,
+    this._saveAddressUseCase,
+    this._deleteAddressUseCase,
+    this.errorStore,
+  );
+
+  // Use cases
+  final GetShippingMethodsUseCase _getShippingMethodsUseCase;
+  final GetPaymentMethodsUseCase _getPaymentMethodsUseCase;
+  final ValidateCouponUseCase _validateCouponUseCase;
+  final ValidateAddressUseCase _validateAddressUseCase;
+  final ParseAddressUseCase _parseAddressUseCase;
+  final CreateCheckoutOrderUseCase _createOrderUseCase;
+  final GetCheckoutOrderUseCase _getOrderUseCase;
+  final UpdateCheckoutOrderUseCase _updateOrderUseCase;
+  final ConfirmOrderUseCase _confirmOrderUseCase;
+  final GetSavedAddressesUseCase _getSavedAddressesUseCase;
+  final SaveAddressUseCase _saveAddressUseCase;
+  final DeleteAddressUseCase _deleteAddressUseCase;
+  final ErrorStore errorStore;
+
+  // ==================== Observables ====================
+
+  @observable
+  CheckoutOrder? currentOrder;
+
+  @observable
+  ObservableList<ShippingMethod> shippingMethods = ObservableList();
+
+  @observable
+  ObservableList<PaymentMethod> paymentMethods = ObservableList();
+
+  @observable
+  ObservableList<DeliveryAddress> savedAddresses = ObservableList();
+
+  @observable
+  CheckoutStep currentStep = CheckoutStep.address;
+
+  @observable
+  ShippingMethod? selectedShippingMethod;
+
+  @observable
+  PaymentMethod? selectedPaymentMethod;
+
+  @observable
+  DeliveryAddress? selectedDeliveryAddress;
+
+  @observable
+  DeliveryAddress? billingAddress;
+
+  @observable
+  Coupon? appliedCoupon;
+
+  @observable
+  bool isLoadingShippingMethods = false;
+
+  @observable
+  bool isLoadingPaymentMethods = false;
+
+  @observable
+  bool isLoadingAddresses = false;
+
+  @observable
+  bool isValidatingCoupon = false;
+
+  @observable
+  bool isProcessingOrder = false;
+
+  @observable
+  String? couponCode;
+
+  @observable
+  String? couponError;
+
+  @observable
+  String? orderNotes;
+
+  // ==================== Computed ====================
+
+  @computed
+  bool get hasItems => currentOrder?.items.isNotEmpty ?? false;
+
+  @computed
+  int get totalItemCount => currentOrder?.totalItemCount ?? 0;
+
+  @computed
+  double get subtotal => currentOrder?.subtotal ?? 0;
+
+  @computed
+  double get shippingCost => selectedShippingMethod?.baseCost ?? 0;
+
+  @computed
+  double get couponDiscount {
+    if (appliedCoupon == null) return 0;
+    return appliedCoupon!.calculateDiscount(subtotal, shippingCost: shippingCost);
+  }
+
+  @computed
+  double get paymentFee {
+    if (selectedPaymentMethod == null) return 0;
+    return selectedPaymentMethod!.calculateFee(subtotal - couponDiscount + shippingCost);
+  }
+
+  @computed
+  double get grandTotal {
+    return subtotal - couponDiscount + shippingCost + paymentFee;
+  }
+
+  @computed
+  bool get isReadyForConfirmation {
+    return hasItems &&
+        selectedDeliveryAddress != null &&
+        selectedShippingMethod != null &&
+        selectedPaymentMethod != null;
+  }
+
+  @computed
+  String get formattedGrandTotal => '\$${grandTotal.toStringAsFixed(2)}';
+
+  // ==================== Actions ====================
+
+  @action
+  void initializeCheckout(List<CheckoutItem> items, {String? customerId}) {
+    currentOrder = CheckoutOrder(
+      id: 'temp-${DateTime.now().millisecondsSinceEpoch}',
+      items: items,
+      customerId: customerId,
+      createdAt: DateTime.now(),
+    );
+    currentStep = CheckoutStep.address;
+    _loadInitialData();
+  }
+
+  @action
+  Future<void> _loadInitialData() async {
+    await Future.wait([
+      loadShippingMethods(),
+      loadPaymentMethods(),
+      loadSavedAddresses(),
+    ]);
+  }
+
+  @action
+  Future<void> loadShippingMethods() async {
+    isLoadingShippingMethods = true;
+    try {
+      final methods = await _getShippingMethodsUseCase.call(
+        params: GetShippingMethodsParams(
+          countryCode: selectedDeliveryAddress?.countryCode ?? 'US',
+          orderTotal: subtotal,
+        ),
+      );
+      shippingMethods = ObservableList.of(methods);
+    } catch (e) {
+      errorStore.errorMessage = 'Failed to load shipping methods: $e';
+    } finally {
+      isLoadingShippingMethods = false;
+    }
+  }
+
+  @action
+  Future<void> loadPaymentMethods() async {
+    isLoadingPaymentMethods = true;
+    try {
+      final methods = await _getPaymentMethodsUseCase.call(
+        params: GetPaymentMethodsParams(
+          orderTotal: grandTotal,
+        ),
+      );
+      paymentMethods = ObservableList.of(methods);
+    } catch (e) {
+      errorStore.errorMessage = 'Failed to load payment methods: $e';
+    } finally {
+      isLoadingPaymentMethods = false;
+    }
+  }
+
+  @action
+  Future<void> loadSavedAddresses() async {
+    isLoadingAddresses = true;
+    try {
+      final addresses = await _getSavedAddressesUseCase.call(
+        params: currentOrder?.customerId,
+      );
+      savedAddresses = ObservableList.of(addresses);
+      // Auto-select default address
+      if (addresses.isNotEmpty) {
+        final defaultAddress = addresses.firstWhere(
+          (a) => a.isDefault,
+          orElse: () => addresses.first,
+        );
+        selectDeliveryAddress(defaultAddress);
+      }
+    } catch (e) {
+      errorStore.errorMessage = 'Failed to load addresses: $e';
+    } finally {
+      isLoadingAddresses = false;
+    }
+  }
+
+  @action
+  void selectDeliveryAddress(DeliveryAddress address) {
+    selectedDeliveryAddress = address;
+    // Reload shipping methods for new address
+    loadShippingMethods();
+  }
+
+  @action
+  void selectShippingMethod(ShippingMethod method) {
+    selectedShippingMethod = method;
+  }
+
+  @action
+  void selectPaymentMethod(PaymentMethod method) {
+    selectedPaymentMethod = method;
+  }
+
+  @action
+  Future<void> applyCoupon(String code) async {
+    isValidatingCoupon = true;
+    couponError = null;
+    couponCode = code;
+
+    try {
+      final coupon = await _validateCouponUseCase.call(
+        params: ValidateCouponParams(
+          code: code,
+          orderTotal: subtotal,
+        ),
+      );
+
+      if (coupon != null) {
+        appliedCoupon = coupon;
+        couponError = null;
+      } else {
+        couponError = 'Invalid coupon code';
+        appliedCoupon = null;
+      }
+    } catch (e) {
+      couponError = e.toString();
+      appliedCoupon = null;
+    } finally {
+      isValidatingCoupon = false;
+    }
+  }
+
+  @action
+  void removeCoupon() {
+    appliedCoupon = null;
+    couponCode = null;
+    couponError = null;
+  }
+
+  @action
+  Future<DeliveryAddress?> parseAddress(String rawAddress) async {
+    try {
+      return await _parseAddressUseCase.call(params: rawAddress);
+    } catch (e) {
+      errorStore.errorMessage = 'Failed to parse address: $e';
+      return null;
+    }
+  }
+
+  @action
+  Future<void> saveNewAddress(DeliveryAddress address) async {
+    try {
+      final saved = await _saveAddressUseCase.call(params: address);
+      savedAddresses.add(saved);
+      selectDeliveryAddress(saved);
+    } catch (e) {
+      errorStore.errorMessage = 'Failed to save address: $e';
+    }
+  }
+
+  @action
+  Future<void> deleteSavedAddress(String addressId) async {
+    try {
+      await _deleteAddressUseCase.call(params: addressId);
+      savedAddresses.removeWhere((a) => a.id == addressId);
+      if (selectedDeliveryAddress?.id == addressId) {
+        selectedDeliveryAddress = null;
+      }
+    } catch (e) {
+      errorStore.errorMessage = 'Failed to delete address: $e';
+    }
+  }
+
+  @action
+  void goToStep(CheckoutStep step) {
+    currentStep = step;
+  }
+
+  @action
+  void nextStep() {
+    final steps = CheckoutStep.values;
+    final currentIndex = steps.indexOf(currentStep);
+    if (currentIndex < steps.length - 1) {
+      currentStep = steps[currentIndex + 1];
+    }
+  }
+
+  @action
+  void previousStep() {
+    final steps = CheckoutStep.values;
+    final currentIndex = steps.indexOf(currentStep);
+    if (currentIndex > 0) {
+      currentStep = steps[currentIndex - 1];
+    }
+  }
+
+  @action
+  void setOrderNotes(String? notes) {
+    orderNotes = notes;
+  }
+
+  @action
+  Future<bool> confirmOrder() async {
+    if (!isReadyForConfirmation) {
+      errorStore.errorMessage = 'Please complete all required fields';
+      return false;
+    }
+
+    isProcessingOrder = true;
+    try {
+      // Create the order with all selected options
+      final orderToCreate = CheckoutOrder(
+        id: 'temp-${DateTime.now().millisecondsSinceEpoch}',
+        items: currentOrder!.items,
+        customerId: currentOrder!.customerId,
+        customerEmail: currentOrder!.customerEmail,
+        customerPhone: currentOrder!.customerPhone,
+        customerName: currentOrder!.customerName,
+        deliveryAddress: selectedDeliveryAddress,
+        billingAddress: billingAddress ?? selectedDeliveryAddress,
+        shippingMethod: selectedShippingMethod,
+        paymentMethod: selectedPaymentMethod,
+        coupon: appliedCoupon,
+        notes: orderNotes,
+        createdAt: DateTime.now(),
+      );
+
+      final createdOrder = await _createOrderUseCase.call(params: orderToCreate);
+
+      // Confirm the order
+      final confirmedOrder = await _confirmOrderUseCase.call(
+        params: createdOrder.id,
+      );
+
+      currentOrder = confirmedOrder;
+      currentStep = CheckoutStep.confirmation;
+      return true;
+    } catch (e) {
+      errorStore.errorMessage = 'Failed to place order: $e';
+      return false;
+    } finally {
+      isProcessingOrder = false;
+    }
+  }
+
+  @action
+  void resetCheckout() {
+    currentOrder = null;
+    selectedShippingMethod = null;
+    selectedPaymentMethod = null;
+    selectedDeliveryAddress = null;
+    billingAddress = null;
+    appliedCoupon = null;
+    couponCode = null;
+    couponError = null;
+    orderNotes = null;
+    currentStep = CheckoutStep.address;
+  }
+}
