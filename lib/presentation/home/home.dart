@@ -6,7 +6,6 @@ import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/presentation/customer_management/navigation/customer_navigator.dart';
 import 'package:mobile_ai_erp/presentation/home/store/language/language_store.dart';
 import 'package:mobile_ai_erp/presentation/home/store/theme/theme_store.dart';
-import 'package:mobile_ai_erp/presentation/post/post_list.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_navigator.dart';
 import 'package:mobile_ai_erp/presentation/supplier/supplier_list/supplier_list_screen.dart';
 import 'package:mobile_ai_erp/presentation/cart/store/cart_store.dart';
@@ -205,17 +204,47 @@ class _HomeScreenState extends State<HomeScreen> {
       _buildStockOperationsButton(),
       _buildCartButton(),
       _buildWishlistButton(),
-      IconButton(
-        onPressed: () => CustomerNavigator.openHome(context),
-        icon: const Icon(Icons.people_outline),
-        tooltip: 'Customer Management',
+      PopupMenuButton<String>(
+        tooltip: 'More',
+        onSelected: (value) {
+          switch (value) {
+            case 'customers':
+              CustomerNavigator.openHome(context);
+              break;
+            case 'metadata':
+              ProductMetadataNavigator.openProductMetadataHome(context);
+              break;
+            case 'tracking':
+              Navigator.of(context).pushNamed(Routes.orderTracking);
+              break;
+            case 'fulfillment':
+              Navigator.of(context).pushNamed(Routes.fulfillment);
+              break;
+            case 'language':
+              _buildLanguageDialog();
+              break;
+            case 'theme':
+              _themeStore.changeBrightnessToDark(!_themeStore.darkMode);
+              break;
+            case 'logout':
+              SharedPreferences.getInstance().then((preference) {
+                preference.setBool(Preferences.is_logged_in, false);
+                Navigator.of(context).pushReplacementNamed(Routes.login);
+              });
+              break;
+          }
+        },
+        itemBuilder: (context) => const [
+          PopupMenuItem(value: 'customers', child: Text('Customer Management')),
+          PopupMenuItem(value: 'metadata', child: Text('Product Metadata')),
+          PopupMenuItem(value: 'tracking', child: Text('Track Order')),
+          PopupMenuItem(value: 'fulfillment', child: Text('Order Fulfillment')),
+          PopupMenuItem(value: 'language', child: Text('Language')),
+          PopupMenuItem(value: 'theme', child: Text('Toggle Theme')),
+          PopupMenuItem(value: 'logout', child: Text('Logout')),
+        ],
+        icon: const Icon(Icons.more_vert),
       ),
-      _buildProductMetadataButton(),
-      _buildOrderTrackingButton(),
-      _buildFulfillmentButton(),
-      _buildLanguageButton(),
-      _buildThemeButton(),
-      _buildLogoutButton(),
     ];
   }
 

@@ -60,7 +60,7 @@ class WishlistItemCard extends StatelessWidget {
                     ),
                   const SizedBox(height: 6),
                   Text(
-                    '\$${item.price.toStringAsFixed(2)}',
+                    '\$${item.effectivePrice.toStringAsFixed(2)}',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 15,

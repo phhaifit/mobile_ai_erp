@@ -109,7 +109,8 @@ class CartLocalDataSourceImpl implements CartDataSource {
 
   @override
   Future<Cart> getCart(String userId) async {
-    final cart = _carts[userId] ??
+    final cart =
+        _carts[userId] ??
         Cart(
           id: 'cart_$userId',
           userId: userId,
@@ -147,7 +148,10 @@ class CartLocalDataSourceImpl implements CartDataSource {
 
   @override
   Future<void> updateItemQuantity(
-      String userId, String itemId, int newQuantity) async {
+    String userId,
+    String itemId,
+    int newQuantity,
+  ) async {
     await _simulateDelay();
 
     final cart = await getCart(userId);
@@ -239,8 +243,9 @@ class CartLocalDataSourceImpl implements CartDataSource {
     final wishlist = await getWishlist(userId);
 
     // Check if item already exists
-    final existingIndex =
-        wishlist.indexWhere((w) => w.productId == item.productId);
+    final existingIndex = wishlist.indexWhere(
+      (w) => w.variantId == item.variantId,
+    );
 
     if (existingIndex != -1) {
       // Update existing
@@ -254,11 +259,11 @@ class CartLocalDataSourceImpl implements CartDataSource {
   }
 
   @override
-  Future<void> removeFromWishlist(String userId, String productId) async {
+  Future<void> removeFromWishlist(String userId, String variantId) async {
     await _simulateDelay();
 
     final wishlist = await getWishlist(userId);
-    wishlist.removeWhere((item) => item.productId == productId);
+    wishlist.removeWhere((item) => item.variantId == variantId);
     await saveWishlist(userId, wishlist);
   }
 

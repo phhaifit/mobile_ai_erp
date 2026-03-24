@@ -236,7 +236,7 @@ abstract class WishlistStoreBase with Store {
     errorMessage = null;
 
     try {
-      await _cartRepository.removeFromWishlist(userId, item.productId);
+      await _cartRepository.removeFromWishlist(userId, item.variantId);
       await loadWishlist();
       selectedItemIds.remove(item.id);
     } catch (e) {
@@ -266,7 +266,7 @@ abstract class WishlistStoreBase with Store {
 
     try {
       for (final item in itemsToRemove) {
-        await _cartRepository.removeFromWishlist(userId, item.productId);
+        await _cartRepository.removeFromWishlist(userId, item.variantId);
       }
       await loadWishlist();
       selectedItemIds.clear();
@@ -341,7 +341,7 @@ abstract class WishlistStoreBase with Store {
     errorMessage = null;
 
     try {
-      await _cartRepository.moveWishlistItemToCart(userId, item.productId);
+      await _cartRepository.moveWishlistItemToCart(userId, item.variantId);
       await loadWishlist();
       selectedItemIds.remove(item.id);
     } catch (e) {
@@ -369,7 +369,7 @@ abstract class WishlistStoreBase with Store {
 
     try {
       for (final item in itemsToMove) {
-        await _cartRepository.moveWishlistItemToCart(userId, item.productId);
+        await _cartRepository.moveWishlistItemToCart(userId, item.variantId);
       }
       await loadWishlist();
       selectedItemIds.clear();
