@@ -221,20 +221,101 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Widget> _buildActions(BuildContext context) {
     return <Widget>[
       _buildInventoryAuditButton(),
-      _buildStockOperationsButton(),
-      IconButton(
-        onPressed: () => CustomerNavigator.openHome(context),
-        icon: const Icon(Icons.people_outline),
-        tooltip: 'Customer Management',
-      ),
-      _buildProductMetadataButton(),
+      _buildCheckoutButton(),
       _buildOrderTrackingButton(),
       _buildFulfillmentButton(),
-      _buildCheckoutButton(),
-      _buildLanguageButton(),
-      _buildThemeButton(),
-      _buildLogoutButton(),
+      _buildOverflowMenu(),
     ];
+  }
+
+  Widget _buildOverflowMenu() {
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.more_vert),
+      tooltip: 'More options',
+      onSelected: (value) => _handleMenuSelection(value),
+      itemBuilder: (context) => [
+        const PopupMenuItem(
+          value: 'stock',
+          child: ListTile(
+            leading: Icon(Icons.warehouse_outlined),
+            title: Text('Stock Operations'),
+            contentPadding: EdgeInsets.zero,
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'customer',
+          child: ListTile(
+            leading: Icon(Icons.people_outline),
+            title: Text('Customer Management'),
+            contentPadding: EdgeInsets.zero,
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'productMetadata',
+          child: ListTile(
+            leading: Icon(Icons.dashboard_outlined),
+            title: Text('Product Metadata'),
+            contentPadding: EdgeInsets.zero,
+          ),
+        ),
+        const PopupMenuDivider(),
+        const PopupMenuItem(
+          value: 'language',
+          child: ListTile(
+            leading: Icon(Icons.language),
+            title: Text('Language'),
+            contentPadding: EdgeInsets.zero,
+          ),
+        ),
+        PopupMenuItem(
+          value: 'theme',
+          child: Observer(
+            builder: (context) => ListTile(
+              leading: Icon(
+                _themeStore.darkMode ? Icons.brightness_5 : Icons.brightness_3,
+              ),
+              title: Text(_themeStore.darkMode ? 'Light Mode' : 'Dark Mode'),
+              contentPadding: EdgeInsets.zero,
+            ),
+          ),
+        ),
+        const PopupMenuDivider(),
+        const PopupMenuItem(
+          value: 'logout',
+          child: ListTile(
+            leading: Icon(Icons.power_settings_new),
+            title: Text('Logout'),
+            contentPadding: EdgeInsets.zero,
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _handleMenuSelection(String value) {
+    switch (value) {
+      case 'stock':
+        Navigator.of(context).pushNamed(Routes.stockOperations);
+        break;
+      case 'customer':
+        CustomerNavigator.openHome(context);
+        break;
+      case 'productMetadata':
+        ProductMetadataNavigator.openProductMetadataHome(context);
+        break;
+      case 'language':
+        _buildLanguageDialog();
+        break;
+      case 'theme':
+        _themeStore.changeBrightnessToDark(!_themeStore.darkMode);
+        break;
+      case 'logout':
+        SharedPreferences.getInstance().then((preference) {
+          preference.setBool(Preferences.is_logged_in, false);
+          Navigator.of(context).pushReplacementNamed(Routes.login);
+        });
+        break;
+    }
   }
 
   Widget _buildInventoryAuditButton() {
