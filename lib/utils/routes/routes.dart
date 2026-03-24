@@ -33,6 +33,7 @@ import 'package:mobile_ai_erp/presentation/reports/reports_analytics.dart';
 import 'package:mobile_ai_erp/presentation/stock_operations/stock_operations_screen.dart';
 import 'package:mobile_ai_erp/presentation/user/home/user_home.dart';
 import 'package:mobile_ai_erp/presentation/checkout/screens/checkout_screen.dart';
+import 'package:mobile_ai_erp/presentation/checkout/screens/checkout_test_screen.dart';
 import 'package:mobile_ai_erp/presentation/user/store/role_store.dart';
 import 'package:mobile_ai_erp/presentation/user/store/user_store.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/cms_pages/cms_page_editor_screen.dart';
@@ -74,6 +75,7 @@ class Routes {
   static const String fulfillmentPackaging = '/fulfillment/packaging';
   static const String fulfillmentPrintLabel = '/fulfillment/print-label';
   static const String checkout = '/checkout';
+  static const String checkoutTest = '/checkout-test';
 
   static const String profileDashboard = '/profile';
   static const String addressBook = '/address_book';
@@ -118,6 +120,7 @@ class Routes {
     fulfillmentTracking: (BuildContext context) => FulfillmentTrackingScreen(),
     fulfillmentPackaging: (BuildContext context) => PackagingScreen(),
     fulfillmentPrintLabel: (BuildContext context) => PrintLabelScreen(),
+    checkoutTest: (BuildContext context) => const CheckoutTestScreen(),
   };
 
   /// Navigate to checkout screen with items

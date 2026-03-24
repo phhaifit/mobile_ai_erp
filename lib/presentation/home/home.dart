@@ -222,49 +222,18 @@ class _HomeScreenState extends State<HomeScreen> {
     return <Widget>[
       _buildInventoryAuditButton(),
       _buildStockOperationsButton(),
-      _buildCartButton(),
-      _buildWishlistButton(),
-      PopupMenuButton<String>(
-        tooltip: 'More',
-        onSelected: (value) {
-          switch (value) {
-            case 'customers':
-              CustomerNavigator.openHome(context);
-              break;
-            case 'metadata':
-              ProductMetadataNavigator.openProductMetadataHome(context);
-              break;
-            case 'tracking':
-              Navigator.of(context).pushNamed(Routes.orderTracking);
-              break;
-            case 'fulfillment':
-              Navigator.of(context).pushNamed(Routes.fulfillment);
-              break;
-            case 'language':
-              _buildLanguageDialog();
-              break;
-            case 'theme':
-              _themeStore.changeBrightnessToDark(!_themeStore.darkMode);
-              break;
-            case 'logout':
-              SharedPreferences.getInstance().then((preference) {
-                preference.setBool(Preferences.is_logged_in, false);
-                Navigator.of(context).pushReplacementNamed(Routes.login);
-              });
-              break;
-          }
-        },
-        itemBuilder: (context) => const [
-          PopupMenuItem(value: 'customers', child: Text('Customer Management')),
-          PopupMenuItem(value: 'metadata', child: Text('Product Metadata')),
-          PopupMenuItem(value: 'tracking', child: Text('Track Order')),
-          PopupMenuItem(value: 'fulfillment', child: Text('Order Fulfillment')),
-          PopupMenuItem(value: 'language', child: Text('Language')),
-          PopupMenuItem(value: 'theme', child: Text('Toggle Theme')),
-          PopupMenuItem(value: 'logout', child: Text('Logout')),
-        ],
-        icon: const Icon(Icons.more_vert),
+      IconButton(
+        onPressed: () => CustomerNavigator.openHome(context),
+        icon: const Icon(Icons.people_outline),
+        tooltip: 'Customer Management',
       ),
+      _buildProductMetadataButton(),
+      _buildOrderTrackingButton(),
+      _buildFulfillmentButton(),
+      _buildCheckoutButton(),
+      _buildLanguageButton(),
+      _buildThemeButton(),
+      _buildLogoutButton(),
     ];
   }
 
@@ -315,6 +284,16 @@ class _HomeScreenState extends State<HomeScreen> {
         Navigator.of(context).pushNamed(Routes.orderTracking);
       },
       icon: Icon(Icons.local_shipping_outlined),
+    );
+  }
+
+  Widget _buildCheckoutButton() {
+    return IconButton(
+      tooltip: 'Checkout',
+      onPressed: () {
+        Navigator.of(context).pushNamed(Routes.checkoutTest);
+      },
+      icon: const Icon(Icons.shopping_cart_checkout),
     );
   }
 
