@@ -19,27 +19,28 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
   late TextEditingController _streetController;
   late TextEditingController _cityController;
   bool _isDefault = false;
+  bool _isLoading = false;
+  bool _isInit = false;
 
   Address? _existingAddress;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Check if we passed an existing Address to edit
-    final args = ModalRoute.of(context)?.settings.arguments;
-    if (args != null && args is Address) {
-      _existingAddress = args;
-    }
+    if (!_isInit) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is Address) {
+        _existingAddress = args;
+      }
 
-    // Pre-fill controllers if editing
-    _nameController =
-        TextEditingController(text: _existingAddress?.fullName ?? '');
-    _phoneController =
-        TextEditingController(text: _existingAddress?.phone ?? '');
-    _streetController =
-        TextEditingController(text: _existingAddress?.street ?? '');
-    _cityController = TextEditingController(text: _existingAddress?.city ?? '');
-    _isDefault = _existingAddress?.isDefault ?? false;
+      _nameController = TextEditingController(text: _existingAddress?.fullName ?? '');
+      _phoneController = TextEditingController(text: _existingAddress?.phone ?? '');
+      _streetController = TextEditingController(text: _existingAddress?.street ?? '');
+      _cityController = TextEditingController(text: _existingAddress?.city ?? '');
+      _isDefault = _existingAddress?.isDefault ?? false;
+      
+      _isInit = true; 
+    }
   }
 
   @override
@@ -51,26 +52,58 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
     super.dispose();
   }
 
-  void _saveAddress() async {
+  Future<void> _saveAddress() async {
     if (_formKey.currentState!.validate()) {
-      final addressData = Address(
-        // Mock a new ID if creating, otherwise keep existing ID
-        id: _existingAddress?.id ??
-            'addr_${DateTime.now().millisecondsSinceEpoch}',
-        fullName: _nameController.text,
-        phone: _phoneController.text,
-        street: _streetController.text,
-        city: _cityController.text,
-        isDefault: _isDefault,
-      );
+      setState(() => _isLoading = true);
+      
+      try {
+        final newStreet = _streetController.text.trim();
+        final newCity = _cityController.text.trim();
+        final newPhone = _phoneController.text.trim();
 
-      if (_existingAddress == null) {
-        await _addressStore.addAddress(addressData);
-      } else {
-        await _addressStore.updateAddress(addressData);
+        // Duplicate Check: Prevent adding/updating to an address that already exists (except itself when editing)
+        final isDuplicate = _addressStore.addresses.any((existing) => 
+            existing.id != _existingAddress?.id && 
+            existing.street.toLowerCase() == newStreet.toLowerCase() &&
+            existing.city.toLowerCase() == newCity.toLowerCase() &&
+            existing.phone == newPhone
+        );
+
+        if (isDuplicate) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('This exact address already exists on your account.')),
+            );
+            setState(() => _isLoading = false);
+          }
+          return;
+        }
+
+        final addressData = Address(
+          id: _existingAddress?.id ?? 'addr_${DateTime.now().millisecondsSinceEpoch}',
+          fullName: _nameController.text.trim(),
+          phone: newPhone,
+          street: newStreet,
+          city: newCity,
+          isDefault: _isDefault,
+        );
+
+        if (_existingAddress == null) {
+          await _addressStore.addAddress(addressData);
+        } else {
+          await _addressStore.updateAddress(addressData);
+        }
+
+        if (mounted) Navigator.pop(context);
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to save address: $e')),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
       }
-
-      if (mounted) Navigator.pop(context); // Go back to the list
     }
   }
 
@@ -92,45 +125,109 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
             children: [
               TextFormField(
                 controller: _nameController,
+                enabled: !_isLoading,
+                maxLength: 100,
                 decoration: const InputDecoration(
-                    labelText: 'Full Name', border: OutlineInputBorder()),
-                validator: (val) =>
-                    val == null || val.isEmpty ? 'Required' : null,
+                  labelText: 'Full Name', 
+                  border: OutlineInputBorder(),
+                  counterText: '',
+                  errorStyle: TextStyle(color: Colors.red),
+                ),
+                validator: (val) {
+                  final text = val?.trim() ?? '';
+                  if (text.isEmpty) return 'Required';
+                  if (text.length < 2) return 'Name must be at least 2 characters';
+                  if (text.length > 100) return 'Name cannot exceed 100 characters';
+                  if (!RegExp(r"^[\p{L}\p{N}\s,-]+$", unicode: true).hasMatch(text)) {
+                    return 'Name contains invalid characters or numbers';
+                  }
+                  return null;
+                },
               ),
+              
               const SizedBox(height: 16),
+              
               TextFormField(
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
+                enabled: !_isLoading,
+                maxLength: 15,
                 decoration: const InputDecoration(
-                    labelText: 'Phone Number', border: OutlineInputBorder()),
-                validator: (val) =>
-                    val == null || val.isEmpty ? 'Required' : null,
+                  labelText: 'Phone Number', 
+                  border: OutlineInputBorder(),
+                  counterText: '',
+                  errorStyle: TextStyle(color: Colors.red),
+                ),
+                validator: (val) {
+                  final text = val?.trim() ?? '';
+                  if (text.isEmpty) return 'Required';
+                  if (text.length < 7) return 'Phone number too short';
+                  
+                  final cleanPhone = text.replaceAll(RegExp(r'[\s\-]'), '');
+                  
+                  if (!RegExp(r'^\+?[0-9]{7,15}$').hasMatch(cleanPhone)) {
+                    return 'Enter a valid phone number';
+                  }
+                  return null;
+                },
               ),
+
               const SizedBox(height: 16),
+
               TextFormField(
                 controller: _streetController,
+                enabled: !_isLoading,
+                maxLength: 255,
+                maxLines: 1,
                 decoration: const InputDecoration(
-                    labelText: 'Street Address', border: OutlineInputBorder()),
-                validator: (val) =>
-                    val == null || val.isEmpty ? 'Required' : null,
+                  labelText: 'Street Address', 
+                  border: OutlineInputBorder(),
+                  counterText: '',
+                  errorStyle: TextStyle(color: Colors.red),
+                ),
+                validator: (val) {
+                  final text = val?.trim() ?? '';
+                  if (text.isEmpty) return 'Required';
+                  if (text.length < 5) return 'Address is too short to be valid';
+                  return null;
+                },
               ),
+
               const SizedBox(height: 16),
+
               TextFormField(
                 controller: _cityController,
+                enabled: !_isLoading,
+                maxLength: 100,
                 decoration: const InputDecoration(
-                    labelText: 'City / Province', border: OutlineInputBorder()),
-                validator: (val) =>
-                    val == null || val.isEmpty ? 'Required' : null,
+                  labelText: 'City / Province', 
+                  border: OutlineInputBorder(),
+                  counterText: '',
+                  errorStyle: TextStyle(color: Colors.red),
+                ),
+                validator: (val) {
+                  final text = val?.trim() ?? '';
+                  if (text.isEmpty) return 'Required';
+                  if (text.length < 2) return 'City name is too short';
+                  
+                  if (!RegExp(r"^[\p{L}\p{N}\s,-]+$", unicode: true).hasMatch(text)) {
+                    return 'City contains invalid characters';
+                  }
+                  return null;
+                },
               ),
+
               const SizedBox(height: 32),
+
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   backgroundColor: Colors.blue,
                 ),
-                onPressed: _saveAddress,
-                child: const Text('Save Address',
-                    style: TextStyle(fontSize: 16, color: Colors.white)),
+                onPressed: _isLoading ? null : _saveAddress,
+                child: _isLoading 
+                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Text('Save Address', style: TextStyle(fontSize: 16, color: Colors.white)),
               ),
             ],
           ),
