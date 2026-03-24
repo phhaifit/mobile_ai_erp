@@ -27,6 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Column(
         children: [
           _buildReportsEntry(),
+          _buildPostPurchaseEntry(),
           Expanded(child: PostListScreen()),
         ],
       ),
@@ -55,6 +56,21 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildPostPurchaseEntry() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      child: Card(
+        child: ListTile(
+          leading: Icon(Icons.support_agent_outlined),
+          title: Text('Post-Purchase & Issues'),
+          subtitle: Text('Complaints, returns, and exchanges (offline mock).'),
+          trailing: Icon(Icons.chevron_right),
+          onTap: () => Navigator.of(context).pushNamed(Routes.postPurchase),
+        ),
+      ),
+    );
+  }
+
   // app bar methods:-----------------------------------------------------------
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
@@ -68,6 +84,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _buildProductMetadataButton(),
       _buildOrderTrackingButton(),
       _buildFulfillmentButton(),
+      _buildPostPurchaseButton(),
       _buildLanguageButton(),
       _buildThemeButton(),
       _buildLogoutButton(),
@@ -91,6 +108,16 @@ class _HomeScreenState extends State<HomeScreen> {
         Navigator.of(context).pushNamed(Routes.fulfillment);
       },
       icon: const Icon(Icons.inventory_2_outlined),
+    );
+  }
+
+  Widget _buildPostPurchaseButton() {
+    return IconButton(
+      tooltip: 'Post-Purchase & Issues',
+      onPressed: () {
+        Navigator.of(context).pushNamed(Routes.postPurchase);
+      },
+      icon: const Icon(Icons.support_agent_outlined),
     );
   }
 

@@ -13,6 +13,16 @@ import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_fulfillment_orders_
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/update_fulfillment_status_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/update_package_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/update_picked_quantity_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/post_purchase/get_issue_detail_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/post_purchase/get_issue_list_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/post_purchase/get_return_detail_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/post_purchase/get_return_list_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/post_purchase/update_issue_status_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/post_purchase/update_issue_notes_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/post_purchase/link_issue_to_return_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/post_purchase/update_return_notes_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/post_purchase/convert_exchange_to_refund_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/post_purchase/update_return_status_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/is_logged_in_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/login_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/save_login_in_status_usecase.dart';
@@ -37,6 +47,7 @@ import 'package:mobile_ai_erp/presentation/web_builder/store/cms_page_store.dart
 import 'package:mobile_ai_erp/presentation/web_builder/store/store_settings_store.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/store/web_theme_store.dart';
 import 'package:mobile_ai_erp/presentation/order_fulfillment/store/fulfillment_store.dart';
+import 'package:mobile_ai_erp/presentation/post_purchase/store/post_purchase_store.dart';
 
 import '../../../di/service_locator.dart';
 
@@ -86,6 +97,22 @@ class StoreModule {
     getIt.registerSingleton<PostStore>(
       PostStore(
         getIt<GetPostUseCase>(),
+        getIt<ErrorStore>(),
+      ),
+    );
+
+    getIt.registerSingleton<PostPurchaseStore>(
+      PostPurchaseStore(
+        getIt<GetIssueListUseCase>(),
+        getIt<GetIssueDetailUseCase>(),
+        getIt<UpdateIssueStatusUseCase>(),
+        getIt<UpdateIssueNotesUseCase>(),
+        getIt<LinkIssueToReturnUseCase>(),
+        getIt<GetReturnListUseCase>(),
+        getIt<GetReturnDetailUseCase>(),
+        getIt<UpdateReturnStatusUseCase>(),
+        getIt<UpdateReturnNotesUseCase>(),
+        getIt<ConvertExchangeToRefundUseCase>(),
         getIt<ErrorStore>(),
       ),
     );

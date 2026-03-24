@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:mobile_ai_erp/domain/repository/fulfillment/fulfillment_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/post/post_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/post_purchase/post_purchase_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/order_tracking/order_tracking_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/user_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/web_builder/cms_page_repository.dart';
@@ -20,6 +21,16 @@ import 'package:mobile_ai_erp/domain/usecase/post/find_post_by_id_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/post/get_post_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/post/insert_post_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/post/udpate_post_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/post_purchase/get_issue_detail_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/post_purchase/get_issue_list_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/post_purchase/get_return_detail_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/post_purchase/get_return_list_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/post_purchase/update_issue_status_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/post_purchase/update_issue_notes_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/post_purchase/link_issue_to_return_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/post_purchase/update_return_notes_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/post_purchase/convert_exchange_to_refund_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/post_purchase/update_return_status_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/is_logged_in_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/login_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/save_login_in_status_usecase.dart';
@@ -63,6 +74,38 @@ class UseCaseModule {
     );
     getIt.registerSingleton<DeletePostUseCase>(
       DeletePostUseCase(getIt<PostRepository>()),
+    );
+
+    // post_purchase:----------------------------------------------------------
+    getIt.registerSingleton<GetIssueListUseCase>(
+      GetIssueListUseCase(getIt<PostPurchaseRepository>()),
+    );
+    getIt.registerSingleton<GetIssueDetailUseCase>(
+      GetIssueDetailUseCase(getIt<PostPurchaseRepository>()),
+    );
+    getIt.registerSingleton<UpdateIssueStatusUseCase>(
+      UpdateIssueStatusUseCase(getIt<PostPurchaseRepository>()),
+    );
+    getIt.registerSingleton<UpdateIssueNotesUseCase>(
+      UpdateIssueNotesUseCase(getIt<PostPurchaseRepository>()),
+    );
+    getIt.registerSingleton<LinkIssueToReturnUseCase>(
+      LinkIssueToReturnUseCase(getIt<PostPurchaseRepository>()),
+    );
+    getIt.registerSingleton<GetReturnListUseCase>(
+      GetReturnListUseCase(getIt<PostPurchaseRepository>()),
+    );
+    getIt.registerSingleton<GetReturnDetailUseCase>(
+      GetReturnDetailUseCase(getIt<PostPurchaseRepository>()),
+    );
+    getIt.registerSingleton<UpdateReturnStatusUseCase>(
+      UpdateReturnStatusUseCase(getIt<PostPurchaseRepository>()),
+    );
+    getIt.registerSingleton<UpdateReturnNotesUseCase>(
+      UpdateReturnNotesUseCase(getIt<PostPurchaseRepository>()),
+    );
+    getIt.registerSingleton<ConvertExchangeToRefundUseCase>(
+      ConvertExchangeToRefundUseCase(getIt<PostPurchaseRepository>()),
     );
 
     // web_builder:--------------------------------------------------------------

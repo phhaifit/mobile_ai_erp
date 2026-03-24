@@ -13,6 +13,9 @@ import 'package:mobile_ai_erp/presentation/order_fulfillment/fulfillment_list.da
 import 'package:mobile_ai_erp/presentation/order_fulfillment/order_tracking.dart';
 import 'package:mobile_ai_erp/presentation/order_fulfillment/packaging.dart';
 import 'package:mobile_ai_erp/presentation/order_fulfillment/print_label.dart';
+import 'package:mobile_ai_erp/presentation/post_purchase/post_purchase_dashboard.dart';
+import 'package:mobile_ai_erp/presentation/post_purchase/issue_detail_screen.dart';
+import 'package:mobile_ai_erp/presentation/post_purchase/return_detail_screen.dart';
 import 'package:flutter/material.dart';
 
 class Routes {
@@ -34,6 +37,9 @@ class Routes {
   static const String fulfillmentTracking = '/fulfillment/tracking';
   static const String fulfillmentPackaging = '/fulfillment/packaging';
   static const String fulfillmentPrintLabel = '/fulfillment/print-label';
+  static const String postPurchase = '/post-purchase';
+  static const String postPurchaseIssueDetail = '/post-purchase/issue';
+  static const String postPurchaseReturnDetail = '/post-purchase/return';
 
   static final routes = <String, WidgetBuilder>{
     login: (BuildContext context) => LoginScreen(),
@@ -51,5 +57,9 @@ class Routes {
     fulfillmentTracking: (BuildContext context) => FulfillmentTrackingScreen(),
     fulfillmentPackaging: (BuildContext context) => PackagingScreen(),
     fulfillmentPrintLabel: (BuildContext context) => PrintLabelScreen(),
+    postPurchase: (BuildContext context) => const PostPurchaseDashboardScreen(),
+    postPurchaseIssueDetail: (BuildContext context) => const IssueDetailScreen(),
+    postPurchaseReturnDetail: (BuildContext context) =>
+        const ReturnDetailScreen(),
   };
 }
