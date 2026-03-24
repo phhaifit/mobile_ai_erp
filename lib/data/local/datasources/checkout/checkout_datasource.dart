@@ -1,4 +1,3 @@
-import 'package:mobile_ai_erp/domain/entity/checkout/checkout_item.dart';
 import 'package:mobile_ai_erp/domain/entity/checkout/checkout_order.dart';
 import 'package:mobile_ai_erp/domain/entity/checkout/coupon.dart';
 import 'package:mobile_ai_erp/domain/entity/checkout/delivery_address.dart';

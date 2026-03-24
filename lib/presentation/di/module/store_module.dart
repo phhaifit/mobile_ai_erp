@@ -10,12 +10,17 @@ import 'package:mobile_ai_erp/domain/repository/stock_operations/stock_operation
 import 'package:mobile_ai_erp/domain/repository/supplier/supplier_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/role_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/user_repository.dart';
+import 'package:mobile_ai_erp/domain/usecase/checkout/checkout_usecases.dart';
+import 'package:mobile_ai_erp/domain/usecase/checkout/get_payment_methods_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/checkout/get_shipping_methods_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/checkout/validate_coupon_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/add_package_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_fulfillment_order_detail_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_fulfillment_orders_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/update_fulfillment_status_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/update_package_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/update_picked_quantity_usecase.dart';
+import 'package:mobile_ai_erp/presentation/checkout/store/checkout_store.dart';
 import 'package:mobile_ai_erp/domain/usecase/inventory_audit_outbound/get_inventory_audit_records_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/inventory_audit_outbound/get_inventory_by_warehouse_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/inventory_audit_outbound/get_inventory_outbound_records_usecase.dart';
@@ -199,6 +204,25 @@ class StoreModule {
         getIt<UpdatePickedQuantityUseCase>(),
         getIt<AddPackageUseCase>(),
         getIt<UpdatePackageUseCase>(),
+        getIt<ErrorStore>(),
+      ),
+    );
+
+    // checkout:---------------------------------------------------------------
+    getIt.registerSingleton<CheckoutStore>(
+      CheckoutStore(
+        getIt<GetShippingMethodsUseCase>(),
+        getIt<GetPaymentMethodsUseCase>(),
+        getIt<ValidateCouponUseCase>(),
+        getIt<ValidateAddressUseCase>(),
+        getIt<ParseAddressUseCase>(),
+        getIt<CreateCheckoutOrderUseCase>(),
+        getIt<GetCheckoutOrderUseCase>(),
+        getIt<UpdateCheckoutOrderUseCase>(),
+        getIt<ConfirmOrderUseCase>(),
+        getIt<GetSavedAddressesUseCase>(),
+        getIt<SaveAddressUseCase>(),
+        getIt<DeleteAddressUseCase>(),
         getIt<ErrorStore>(),
       ),
     );

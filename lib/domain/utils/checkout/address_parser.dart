@@ -60,13 +60,13 @@ class ParsedAddress {
 
   /// Get formatted address string
   String get formatted {
-    final parts = <String>[
-      if (street != null) street!,
-      if (city != null) city!,
-      if (state != null) state!,
-      if (postalCode != null) postalCode!,
-      if (country != null) country!,
-    ];
+    final parts = <String?>[
+      street,
+      city,
+      state,
+      postalCode,
+      country,
+    ].whereType<String>().toList();
     return parts.join(', ');
   }
 
@@ -234,7 +234,7 @@ class AddressParser {
 
     if (parts.length > 3) {
       country = parts[3];
-      countryCode = _getCountryCode(country!);
+      countryCode = _getCountryCode(country);
     } else {
       // Default to US if not specified
       country = 'United States';

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:mobile_ai_erp/data/local/datasources/checkout/checkout_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/customer/customer_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/order_tracking/order_tracking_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/post/post_datasource.dart';
@@ -7,6 +8,7 @@ import 'package:mobile_ai_erp/data/local/datasources/product_metadata/product_me
 import 'package:mobile_ai_erp/data/local/datasources/user/role_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/user/user_datasource.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
+import 'package:mobile_ai_erp/data/repository/checkout/checkout_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/customer/customer_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/fulfillment/fulfillment_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/inventory_audit_outbound/mock_inventory_audit_outbound_repository.dart';
@@ -21,6 +23,7 @@ import 'package:mobile_ai_erp/data/repository/user/user_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/web_builder/cms_page_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/web_builder/store_settings_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/web_builder/web_theme_repository_impl.dart';
+import 'package:mobile_ai_erp/domain/repository/checkout/checkout_repository.dart';
 import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
 import 'package:mobile_ai_erp/domain/repository/customer/customer_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/fulfillment/fulfillment_repository.dart';
@@ -105,5 +108,11 @@ class RepositoryModule {
 
     getIt.registerLazySingleton<SupplierRepository>(() => SupplierMockRepository());
     getIt.registerSingleton<FulfillmentRepository>(FulfillmentRepositoryImpl());
+
+    // checkout:--------------------------------------------------------------
+    getIt.registerSingleton<CheckoutDataSource>(CheckoutLocalDataSourceImpl());
+    getIt.registerSingleton<CheckoutRepository>(
+      CheckoutRepositoryImpl(getIt<CheckoutDataSource>()),
+    );
   }
 }

@@ -90,10 +90,10 @@ class PaymentMethod {
   String get feeDescription {
     if (fee == 0 && feePercentage == 0) return 'No fee';
     if (fee > 0 && feePercentage > 0) {
-      return '\$${fee.toStringAsFixed(2)} + ${feePercentage}%';
+      return '\$${fee.toStringAsFixed(2)} + $feePercentage%';
     }
     if (fee > 0) return '\$${fee.toStringAsFixed(2)}';
-    return '${feePercentage}%';
+    return '$feePercentage%';
   }
 
   PaymentMethod copyWith({
