@@ -14,6 +14,7 @@ class _ReturnRequestScreenState extends State<ReturnRequestScreen> {
   final _formKey = GlobalKey<FormState>();
   final _reasonController = TextEditingController();
   String _selectedReason = 'Damaged Item';
+  bool _isLoading = false;
 
   final List<String> _reasons = [
     'Damaged Item',
@@ -30,7 +31,15 @@ class _ReturnRequestScreenState extends State<ReturnRequestScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final order = ModalRoute.of(context)!.settings.arguments as Order;
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is! Order) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Error')),
+        body: const Center(child: Text('Order details not found.')),
+      );
+    }
+    
+    final order = args;
     final orderStore = getIt<OrderStore>();
 
     return Scaffold(
@@ -60,7 +69,7 @@ class _ReturnRequestScreenState extends State<ReturnRequestScreen> {
                     child: Text(reason),
                   );
                 }).toList(),
-                onChanged: (String? newValue) {
+                onChanged: _isLoading ? null : (String? newValue) {
                   setState(() {
                     _selectedReason = newValue!;
                   });
@@ -70,20 +79,22 @@ class _ReturnRequestScreenState extends State<ReturnRequestScreen> {
               TextFormField(
                 controller: _reasonController,
                 maxLines: 4,
+                enabled: !_isLoading,
+                maxLength: 500,
                 decoration: const InputDecoration(
                   labelText: 'Additional Details',
                   alignLabelWithHint: true,
                   border: OutlineInputBorder(),
                 ),
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
+                  if (value == null || value.trim().isEmpty) {
                     return 'Please provide details';
                   }
                   return null;
                 },
               ),
               const SizedBox(height: 24),
-              Container(
+               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(32),
                 decoration: BoxDecoration(
@@ -109,22 +120,36 @@ class _ReturnRequestScreenState extends State<ReturnRequestScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     backgroundColor: Colors.blue,
                   ),
-                  onPressed: () async {
-                    if (_formKey.currentState!.validate()) {
-                      await orderStore.submitReturnRequest(
-                          order.id, _selectedReason);
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text(
-                                  'Return request submitted successfully!')),
-                        );
-                        Navigator.pop(context); // Go back to order details
-                      }
-                    }
-                  },
-                  child: const Text('Submit Request',
-                      style: TextStyle(color: Colors.white, fontSize: 16)),
+                  onPressed: _isLoading
+                      ? null
+                      : () async {
+                          if (_formKey.currentState!.validate()) {
+                            setState(() => _isLoading = true);
+                            try {
+                              await orderStore.submitReturnRequest(
+                                  order.id, _selectedReason);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text('Return request submitted successfully!')),
+                                );
+                                Navigator.pop(context);
+                              }
+                            } catch (e) {
+                              // Handle network errors when implementing real API calls
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Failed to submit: $e')),
+                                );
+                              }
+                            } finally {
+                              if (mounted) setState(() => _isLoading = false);
+                            }
+                          }
+                        },
+                  child: _isLoading 
+                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : const Text('Submit Request', style: TextStyle(color: Colors.white, fontSize: 16)),
                 ),
               ),
             ],
