@@ -6,6 +6,7 @@ import 'package:mobile_ai_erp/core/stores/supplier/supplier_store.dart';
 import 'package:mobile_ai_erp/domain/repository/customer/customer_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadata_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/setting/setting_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/stock_operations/stock_operations_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/supplier/supplier_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/role_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/user_repository.dart';
@@ -51,6 +52,7 @@ import 'package:mobile_ai_erp/presentation/product_detail/store/product_detail_s
 import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
 import 'package:mobile_ai_erp/presentation/reports/data/reports_mock_repository.dart';
 import 'package:mobile_ai_erp/presentation/reports/store/reports_store.dart';
+import 'package:mobile_ai_erp/presentation/stock_operations/store/stock_operations_store.dart';
 import 'package:mobile_ai_erp/presentation/user/store/role_store.dart';
 import 'package:mobile_ai_erp/presentation/user/store/user_store.dart' as user_mgmt;
 import 'package:mobile_ai_erp/presentation/web_builder/store/cms_page_store.dart';
@@ -61,7 +63,6 @@ import '../../../di/service_locator.dart';
 
 class StoreModule {
   static Future<void> configureStoreModuleInjection() async {
-    // factories:---------------------------------------------------------------
     getIt.registerFactory(() => ErrorStore());
     getIt.registerFactory(() => FormErrorStore());
     getIt.registerFactory(
@@ -69,7 +70,6 @@ class StoreModule {
     );
     getIt.registerLazySingleton(() => ReportsMockRepository());
 
-    // stores:------------------------------------------------------------------
     getIt.registerSingleton<auth.UserStore>(
       auth.UserStore(
         getIt<IsLoggedInUseCase>(),
@@ -81,17 +81,11 @@ class StoreModule {
     );
 
     getIt.registerSingleton<PostStore>(
-      PostStore(
-        getIt<GetPostUseCase>(),
-        getIt<ErrorStore>(),
-      ),
+      PostStore(getIt<GetPostUseCase>(), getIt<ErrorStore>()),
     );
 
     getIt.registerSingleton<ReportsStore>(
-      ReportsStore(
-        getIt<ReportsMockRepository>(),
-        getIt<ErrorStore>(),
-      ),
+      ReportsStore(getIt<ReportsMockRepository>(), getIt<ErrorStore>()),
     );
 
     getIt.registerSingleton<ProductMetadataStore>(
@@ -102,10 +96,7 @@ class StoreModule {
     );
 
     getIt.registerSingleton<CustomerStore>(
-      CustomerStore(
-        getIt<CustomerRepository>(),
-        getIt<ErrorStore>(),
-      ),
+      CustomerStore(getIt<CustomerRepository>(), getIt<ErrorStore>()),
     );
 
     getIt.registerSingleton<OrderTrackingStore>(
@@ -117,17 +108,15 @@ class StoreModule {
     );
 
     getIt.registerSingleton<ThemeStore>(
-      ThemeStore(
-        getIt<SettingRepository>(),
-        getIt<ErrorStore>(),
-      ),
+      ThemeStore(getIt<SettingRepository>(), getIt<ErrorStore>()),
     );
 
     getIt.registerSingleton<LanguageStore>(
-      LanguageStore(
-        getIt<SettingRepository>(),
-        getIt<ErrorStore>(),
-      ),
+      LanguageStore(getIt<SettingRepository>(), getIt<ErrorStore>()),
+    );
+
+    getIt.registerSingleton<StockOperationsStore>(
+      StockOperationsStore(getIt<StockOperationsRepository>()),
     );
 
     getIt.registerSingleton<InventoryAuditOutboundStore>(
@@ -161,7 +150,6 @@ class StoreModule {
       () => SupplierStore(getIt<SupplierRepository>()),
     );
 
-    // web_builder stores:------------------------------------------------------
     getIt.registerSingleton<CmsPageStore>(
       CmsPageStore(
         getIt<GetCmsPagesUseCase>(),

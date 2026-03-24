@@ -31,6 +31,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _buildStorefrontPDPEntry(),
           _buildReportsEntry(),
           _buildUsersManagementEntry(),
+          // _buildSuppliersEntry(),
           // Expanded(child: PostListScreen()),
         ],
       ),
@@ -123,6 +124,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Widget> _buildActions(BuildContext context) {
     return <Widget>[
       _buildInventoryAuditButton(),
+      _buildStockOperationsButton(),
       IconButton(
         onPressed: () => CustomerNavigator.openHome(context),
         icon: const Icon(Icons.people_outline),
@@ -144,6 +146,16 @@ class _HomeScreenState extends State<HomeScreen> {
         Navigator.of(context).pushNamed(Routes.inventoryAudit);
       },
       icon: const Icon(Icons.fact_check_outlined),
+    );
+  }
+
+  Widget _buildStockOperationsButton() {
+    return IconButton(
+      tooltip: 'Stock Operations',
+      onPressed: () {
+        Navigator.of(context).pushNamed(Routes.stockOperations);
+      },
+      icon: const Icon(Icons.warehouse_outlined),
     );
   }
 
@@ -173,9 +185,7 @@ class _HomeScreenState extends State<HomeScreen> {
       onPressed: () {
         Navigator.of(context).pushNamed(Routes.orderTracking);
       },
-      icon: Icon(
-        Icons.local_shipping_outlined,
-      ),
+      icon: Icon(Icons.local_shipping_outlined),
     );
   }
 
