@@ -19,11 +19,54 @@ class PaymentMethodsWidget extends StatefulWidget {
 
 class _PaymentMethodsWidgetState extends State<PaymentMethodsWidget> {
   late String _selectedMethod;
+  String? _selectedSavedCard;
 
   @override
   void initState() {
     super.initState();
-    _selectedMethod = widget.selectedMethod ?? 'credit_card';
+
+    final initialValue = widget.selectedMethod ?? 'credit_card';
+
+    if (initialValue.startsWith('saved_')) {
+      _selectedMethod = 'credit_card';
+      _selectedSavedCard = initialValue;
+    } else {
+      _selectedMethod = initialValue;
+      _selectedSavedCard = null;
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant PaymentMethodsWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.selectedMethod != widget.selectedMethod) {
+      final newValue = widget.selectedMethod ?? 'credit_card';
+
+      if (newValue.startsWith('saved_')) {
+        _selectedMethod = 'credit_card';
+        _selectedSavedCard = newValue;
+      } else {
+        _selectedMethod = newValue;
+        _selectedSavedCard = null;
+      }
+    }
+  }
+
+  void _selectPaymentMethod(String value) {
+    setState(() {
+      _selectedMethod = value;
+      _selectedSavedCard = null;
+    });
+    widget.onMethodSelected(value);
+  }
+
+  void _selectSavedCard(String cardValue) {
+    setState(() {
+      _selectedMethod = 'credit_card';
+      _selectedSavedCard = cardValue;
+    });
+    widget.onMethodSelected(cardValue);
   }
 
   @override
@@ -36,12 +79,12 @@ class _PaymentMethodsWidgetState extends State<PaymentMethodsWidget> {
           children: [
             Text(
               'Payment Method',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            // Credit Card option
+
             _buildPaymentOption(
               value: 'credit_card',
               title: 'Credit Card',
@@ -49,7 +92,7 @@ class _PaymentMethodsWidgetState extends State<PaymentMethodsWidget> {
               subtitle: 'Visa, Mastercard, American Express',
             ),
             const SizedBox(height: 12),
-            // Debit Card option
+
             _buildPaymentOption(
               value: 'debit_card',
               title: 'Debit Card',
@@ -57,7 +100,7 @@ class _PaymentMethodsWidgetState extends State<PaymentMethodsWidget> {
               subtitle: 'Debit card from your bank',
             ),
             const SizedBox(height: 12),
-            // Digital Wallet option
+
             _buildPaymentOption(
               value: 'digital_wallet',
               title: 'Digital Wallet',
@@ -65,13 +108,14 @@ class _PaymentMethodsWidgetState extends State<PaymentMethodsWidget> {
               subtitle: 'Google Pay, Apple Pay, PayPal',
             ),
             const SizedBox(height: 12),
-            // Bank Transfer option
+
             _buildPaymentOption(
               value: 'bank_transfer',
               title: 'Bank Transfer',
               icon: Icons.account_balance,
               subtitle: 'Direct bank transfer',
             ),
+
             if (widget.showSavedCards) ...[
               const SizedBox(height: 16),
               Divider(color: Colors.grey[200]),
@@ -90,24 +134,20 @@ class _PaymentMethodsWidgetState extends State<PaymentMethodsWidget> {
     required IconData icon,
     required String subtitle,
   }) {
+    final isSelected = _selectedMethod == value;
+
     return Material(
       child: InkWell(
-        onTap: () {
-          setState(() => _selectedMethod = value);
-          widget.onMethodSelected(value);
-        },
+        onTap: () => _selectPaymentMethod(value),
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             border: Border.all(
-              color: _selectedMethod == value
-                  ? Colors.blue[600]!
-                  : Colors.grey[300]!,
-              width: _selectedMethod == value ? 2 : 1,
+              color: isSelected ? Colors.blue[600]! : Colors.grey[300]!,
+              width: isSelected ? 2 : 1,
             ),
             borderRadius: BorderRadius.circular(8),
-            color:
-                _selectedMethod == value ? Colors.blue[50] : Colors.transparent,
+            color: isSelected ? Colors.blue[50] : Colors.transparent,
           ),
           child: Row(
             children: [
@@ -116,8 +156,7 @@ class _PaymentMethodsWidgetState extends State<PaymentMethodsWidget> {
                 groupValue: _selectedMethod,
                 onChanged: (val) {
                   if (val != null) {
-                    setState(() => _selectedMethod = val);
-                    widget.onMethodSelected(val);
+                    _selectPaymentMethod(val);
                   }
                 },
               ),
@@ -134,10 +173,7 @@ class _PaymentMethodsWidgetState extends State<PaymentMethodsWidget> {
                     ),
                     Text(
                       subtitle,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                     ),
                   ],
                 ),
@@ -150,7 +186,6 @@ class _PaymentMethodsWidgetState extends State<PaymentMethodsWidget> {
   }
 
   Widget _buildSavedCardsSection() {
-    // Mock saved cards data
     final savedCards = [
       {
         'id': 'card_1',
@@ -171,18 +206,14 @@ class _PaymentMethodsWidgetState extends State<PaymentMethodsWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Saved Cards',
-          style: Theme.of(context).textTheme.titleSmall,
-        ),
+        Text('Saved Cards', style: Theme.of(context).textTheme.titleSmall),
         const SizedBox(height: 12),
         ...savedCards.map((card) {
           final cardValue = 'saved_${card['id']}';
+          final isSelected = _selectedSavedCard == cardValue;
+
           return GestureDetector(
-            onTap: () {
-              setState(() => _selectedMethod = cardValue);
-              widget.onMethodSelected(cardValue);
-            },
+            onTap: () => _selectSavedCard(cardValue),
             child: Card(
               child: Padding(
                 padding: const EdgeInsets.all(12),
@@ -190,11 +221,10 @@ class _PaymentMethodsWidgetState extends State<PaymentMethodsWidget> {
                   children: [
                     Radio<String>(
                       value: cardValue,
-                      groupValue: _selectedMethod,
+                      groupValue: _selectedSavedCard,
                       onChanged: (val) {
                         if (val != null) {
-                          setState(() => _selectedMethod = val);
-                          widget.onMethodSelected(val);
+                          _selectSavedCard(val);
                         }
                       },
                     ),
@@ -218,6 +248,12 @@ class _PaymentMethodsWidgetState extends State<PaymentMethodsWidget> {
                         ],
                       ),
                     ),
+                    if (isSelected)
+                      Icon(
+                        Icons.check_circle,
+                        color: Colors.blue[600],
+                        size: 20,
+                      ),
                   ],
                 ),
               ),

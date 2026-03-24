@@ -35,8 +35,8 @@ class Cart {
     this.isAbandoned = false,
     this.abandonedDate,
     this.status = 'active',
-  })  : dateCreated = dateCreated ?? DateTime.now(),
-        dateModified = dateModified ?? DateTime.now();
+  }) : dateCreated = dateCreated ?? DateTime.now(),
+       dateModified = dateModified ?? DateTime.now();
 
   /// Get total number of items (quantity sum)
   int get itemCount =>
@@ -238,12 +238,13 @@ class Cart {
     }
 
     if (hasOutOfStockItems) {
-      final outOfStockNames =
-          outOfStockItems.map((e) => e.productName).join(', ');
+      final outOfStockNames = outOfStockItems
+          .map((e) => e.productName)
+          .join(', ');
       errors.add('Out of stock items: $outOfStockNames');
     }
 
-    if (!isCouponValid) {
+    if (appliedCoupon != null && !isCouponValid) {
       errors.add('Applied coupon is no longer valid');
     }
 
@@ -251,15 +252,19 @@ class Cart {
   }
 
   /// Create modified cart copy with new state
+  static const Object _couponSentinel = Object();
+
   Cart _createModifiedCart(
     List<CartItem> newItems, {
-    Coupon? coupon,
+    Object? coupon = _couponSentinel,
   }) {
     return Cart(
       id: id,
       userId: userId,
       items: newItems,
-      appliedCoupon: coupon ?? appliedCoupon,
+      appliedCoupon: identical(coupon, _couponSentinel)
+          ? appliedCoupon
+          : coupon as Coupon?,
       deliveryAddressId: deliveryAddressId,
       shippingMethod: shippingMethod,
       shippingCost: shippingCost,

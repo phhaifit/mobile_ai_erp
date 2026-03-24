@@ -11,6 +11,8 @@ import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_m
 import 'package:mobile_ai_erp/presentation/supplier/supplier_list/supplier_list_screen.dart';
 import 'package:mobile_ai_erp/presentation/cart/store/cart_store.dart';
 import 'package:mobile_ai_erp/presentation/cart/widgets/mini_cart_drawer.dart';
+import 'package:mobile_ai_erp/presentation/cart/store/wishlist_store.dart';
+import 'package:mobile_ai_erp/presentation/cart/screens/wishlist_page.dart';
 import 'package:mobile_ai_erp/utils/routes/cart_routes.dart';
 import 'package:mobile_ai_erp/utils/locale/app_localization.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
@@ -25,12 +27,16 @@ class _HomeScreenState extends State<HomeScreen> {
   final ThemeStore _themeStore = getIt<ThemeStore>();
   final LanguageStore _languageStore = getIt<LanguageStore>();
   late final CartStore _cartStore;
+  late final WishlistStore _wishlistStore;
 
   @override
   void initState() {
     super.initState();
     _cartStore = getIt<CartStore>();
+    _wishlistStore = getIt<WishlistStore>();
+
     _cartStore.loadCart();
+    _wishlistStore.loadWishlist();
   }
 
   @override
@@ -64,6 +70,55 @@ class _HomeScreenState extends State<HomeScreen> {
             CartRoutes.navigateToCart(context);
           },
           hasDiscount: _cartStore.hasCoupon,
+        );
+      },
+    );
+  }
+
+  Widget _buildWishlistButton() {
+    return Observer(
+      builder: (context) {
+        final count = _wishlistStore.itemCount;
+
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            IconButton(
+              tooltip: 'Wishlist',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const WishlistPage()),
+                );
+              },
+              icon: const Icon(Icons.favorite_border),
+            ),
+            if (count > 0)
+              Positioned(
+                right: 6,
+                top: 6,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  constraints: const BoxConstraints(
+                    minWidth: 18,
+                    minHeight: 18,
+                  ),
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    count > 99 ? '99+' : '$count',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+          ],
         );
       },
     );
@@ -149,6 +204,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return <Widget>[
       _buildStockOperationsButton(),
       _buildCartButton(),
+      _buildWishlistButton(),
       IconButton(
         onPressed: () => CustomerNavigator.openHome(context),
         icon: const Icon(Icons.people_outline),

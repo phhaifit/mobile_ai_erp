@@ -1,6 +1,7 @@
 /// UI Models for Cart Feature
 /// Converts domain entities to UI-friendly representations with formatting and computed properties
 ///
+import 'package:mobile_ai_erp/constants/cart_constants.dart';
 import 'package:mobile_ai_erp/domain/entity/cart/cart.dart';
 import 'package:mobile_ai_erp/domain/entity/cart/cart_item.dart';
 import 'package:mobile_ai_erp/domain/entity/cart/coupon.dart';
@@ -33,8 +34,9 @@ class CartUIModel {
     return CartUIModel(
       id: cart.id,
       userId: cart.userId,
-      items:
-          cart.items.map((item) => CartItemUIModel.fromEntity(item)).toList(),
+      items: cart.items
+          .map((item) => CartItemUIModel.fromEntity(item))
+          .toList(),
       appliedCouponCode: cart.appliedCoupon?.code,
       appliedCoupon: cart.appliedCoupon != null
           ? CouponUIModel.fromEntity(cart.appliedCoupon!)
@@ -68,12 +70,12 @@ class CartUIModel {
 
   double get taxAmount {
     final taxableAmount = subtotal - discountAmount;
-    return taxableAmount * (taxRate / 100);
+    return taxableAmount * (CartConstants.defaultTaxRate / 100);
   }
 
   double get shippingAmount {
-    if (subtotal >= freeShippingThreshold) return 0;
-    return standardShippingCost;
+    if (subtotal >= CartConstants.freeShippingThreshold) return 0;
+    return CartConstants.standardShippingCost;
   }
 
   double get total => subtotal - discountAmount + taxAmount + shippingAmount;
@@ -126,11 +128,6 @@ class CartUIModel {
     if (discountAmount > 0) return 'You\'re saving ${formattedSavingsAmount}!';
     return 'Ready for checkout';
   }
-
-  /// Constants for shipping calculations
-  static const double taxRate = 10.0; // 10% default tax
-  static const double freeShippingThreshold = 50.0;
-  static const double standardShippingCost = 9.99;
 
   /// Copy with method for immutable updates
   CartUIModel copyWith({
@@ -215,8 +212,9 @@ class CartItemUIModel {
       rating: 0.0, // CartItem doesn't have rating
       size: item.selectedSize ?? '',
       color: item.selectedColorName ?? '',
-      itemDiscount:
-          item.hasDiscount ? item.discountPercentage.toDouble() : null,
+      itemDiscount: item.hasDiscount
+          ? item.discountPercentage.toDouble()
+          : null,
       addedAt: item.dateAdded,
       isLowStock: item.isLowStock,
       isOutOfStock: item.isOutOfStock,
@@ -487,7 +485,7 @@ class WishlistItemUIModel {
       categories: item.category != null ? [item.category!] : [],
       rating: item.rating ?? 0.0,
       addedAt: item.dateAdded,
-      isOnSale: item.isOnSale,
+      isOnSale: item.hasDiscount,
       isLowStock: (item.stockAvailable ?? 0) < 5,
       isOutOfStock: (item.stockAvailable ?? 0) <= 0,
     );

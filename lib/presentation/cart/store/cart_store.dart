@@ -1,5 +1,7 @@
 import 'package:mobile_ai_erp/data/repository/product/product_repository.dart';
+import 'package:mobile_ai_erp/domain/entity/cart/wishlist_item.dart';
 import 'package:mobile_ai_erp/domain/entity/product_detail/product_detail.dart';
+import 'package:mobile_ai_erp/presentation/cart/store/wishlist_store.dart';
 import 'package:mobx/mobx.dart';
 import 'package:mobile_ai_erp/data/repository/cart/cart_repository.dart';
 import 'package:mobile_ai_erp/domain/entity/cart/cart.dart';
@@ -14,6 +16,7 @@ class CartStore = CartStoreBase with _$CartStore;
 abstract class CartStoreBase with Store {
   final CartRepository _cartRepository;
   final ProductRepository _productRepository;
+  final WishlistStore _wishlistStore;
   final String userId;
   final Uuid _uuid = const Uuid();
 
@@ -23,14 +26,12 @@ abstract class CartStoreBase with Store {
   CartStoreBase({
     required CartRepository cartRepository,
     required ProductRepository productRepository,
+    required WishlistStore wishlistStore,
     required this.userId,
-  })  : _cartRepository = cartRepository,
-        _productRepository = productRepository {
-    cart = Cart(
-      id: 'cart_$userId',
-      userId: userId,
-      items: const [],
-    );
+  }) : _cartRepository = cartRepository,
+       _productRepository = productRepository,
+       _wishlistStore = wishlistStore {
+    cart = Cart(id: 'cart_$userId', userId: userId, items: const []);
     loadCart();
   }
 
@@ -104,7 +105,7 @@ abstract class CartStoreBase with Store {
   int get selectedItemsCount => selectedItemIds.length;
 
   /// Selected items for checkout.
-  /// If user has not selected anything, fallback to all cart items.
+  /// If no items are selected, returns an empty list.
   @computed
   List<CartItem> get checkoutItems {
     return cart.items
@@ -125,10 +126,7 @@ abstract class CartStoreBase with Store {
 
   @computed
   double get selectedSubtotal {
-    return checkoutItems.fold<double>(
-      0,
-      (sum, item) => sum + item.subtotal,
-    );
+    return checkoutItems.fold<double>(0, (sum, item) => sum + item.subtotal);
   }
 
   @computed
@@ -148,7 +146,8 @@ abstract class CartStoreBase with Store {
   double get selectedShippingAmount {
     if (checkoutItems.isEmpty) return 0.0;
 
-    final allSelected = selectedItemIds.isNotEmpty &&
+    final allSelected =
+        selectedItemIds.isNotEmpty &&
         selectedItemIds.length == cart.items.length;
 
     return allSelected ? cart.shippingAmount : 0.0;
@@ -185,34 +184,14 @@ abstract class CartStoreBase with Store {
         )
         .toList();
 
-    final checkoutSubtotal = checkoutItems.fold<double>(
-      0,
-      (sum, item) => sum + item.subtotal,
-    );
-
-    final couponDiscount = hasCoupon && cart.subtotal > 0
-        ? (checkoutSubtotal / cart.subtotal) * cart.cartLevelDiscount
-        : 0.0;
-
-    final taxableAmount = checkoutSubtotal - couponDiscount;
-    final checkoutTax = (cart.taxPercentage == null || cart.taxPercentage == 0)
-        ? 0.0
-        : (taxableAmount * cart.taxPercentage!) / 100;
-
-    final checkoutShipping =
-        selectedItemIds.isEmpty || selectedItemIds.length == cart.items.length
-            ? cart.shippingAmount
-            : 0.0;
-
-    final checkoutTotal =
-        checkoutSubtotal - couponDiscount + checkoutTax + checkoutShipping;
-
     return {
       'cartId': cart.id,
       'userId': cart.userId,
       'isValid': isCartValid,
-      'itemCount':
-          checkoutItems.fold<int>(0, (sum, item) => sum + item.quantity),
+      'itemCount': checkoutItems.fold<int>(
+        0,
+        (sum, item) => sum + item.quantity,
+      ),
       'uniqueItemCount': checkoutItems.length,
       'couponCode': cart.appliedCoupon?.code,
       'pricing': {
@@ -233,9 +212,9 @@ abstract class CartStoreBase with Store {
     if (searchQuery.isNotEmpty) {
       filtered = filtered
           .where(
-            (item) => item.productName
-                .toLowerCase()
-                .contains(searchQuery.toLowerCase()),
+            (item) => item.productName.toLowerCase().contains(
+              searchQuery.toLowerCase(),
+            ),
           )
           .toList();
     }
@@ -280,8 +259,9 @@ abstract class CartStoreBase with Store {
     errorMessage = null;
 
     try {
-      final variantDetail =
-          await _productRepository.getVariantDetail(variantId);
+      final variantDetail = await _productRepository.getVariantDetail(
+        variantId,
+      );
 
       final item = CartItem.fromVariant(
         productId: variantDetail.productId,
@@ -289,9 +269,7 @@ abstract class CartStoreBase with Store {
         variant: variantDetail.variant,
         imageUrl: variantDetail.imageUrl,
         quantity: qty,
-      ).copyWith(
-        id: 'item_${_uuid.v4()}',
-      );
+      ).copyWith(id: 'item_${_uuid.v4()}');
 
       await _cartRepository.addItemToCart(userId, item);
       cart = await _cartRepository.getCart(userId);
@@ -325,9 +303,7 @@ abstract class CartStoreBase with Store {
         variant: variant,
         imageUrl: imageUrl,
         quantity: qty,
-      ).copyWith(
-        id: 'item_${_uuid.v4()}',
-      );
+      ).copyWith(id: 'item_${_uuid.v4()}');
 
       await _cartRepository.addItemToCart(userId, item);
       cart = await _cartRepository.getCart(userId);
@@ -345,8 +321,9 @@ abstract class CartStoreBase with Store {
     errorMessage = null;
 
     try {
-      final normalizedItem =
-          item.id.isEmpty ? item.copyWith(id: 'item_${_uuid.v4()}') : item;
+      final normalizedItem = item.id.isEmpty
+          ? item.copyWith(id: 'item_${_uuid.v4()}')
+          : item;
 
       await _cartRepository.addItemToCart(userId, normalizedItem);
       cart = await _cartRepository.getCart(userId);
@@ -608,5 +585,84 @@ abstract class CartStoreBase with Store {
     clearSelection();
     closeCartDrawer();
     clearError();
+  }
+
+  WishlistItem _mapCartItemToWishlistItem(CartItem item) {
+    return WishlistItem(
+      id: 'wishlist_${item.id}',
+      productId: item.productId,
+      productName: item.productName,
+      imageUrl: item.imageUrl,
+      variantId: item.variantId,
+      sku: item.sku,
+      selectedSize: item.selectedSize,
+      selectedColorName: item.selectedColorName,
+      selectedColorValue: item.selectedColorValue,
+      price: item.price,
+      salePrice: item.salePrice,
+      stockAvailable: item.stockAvailable,
+      dateAdded: DateTime.now(),
+    );
+  }
+
+  CartItem _mapWishlistItemToCartItem(WishlistItem item) {
+    return CartItem(
+      id: '${item.productId}_${item.variantId}',
+      productId: item.productId,
+      productName: item.productName,
+      imageUrl: item.imageUrl,
+      variantId: item.variantId,
+      sku: item.sku,
+      selectedSize: item.selectedSize,
+      selectedColorName: item.selectedColorName,
+      selectedColorValue: item.selectedColorValue,
+      price: item.price,
+      salePrice: item.salePrice,
+      stockAvailable: item.stockAvailable,
+      quantity: 1,
+      isSelected: false,
+    );
+  }
+
+  @action
+  Future<void> moveCartItemToWishlist(CartItem item) async {
+    isLoading = true;
+    errorMessage = null;
+
+    try {
+      final wishlistItem = _mapCartItemToWishlistItem(item);
+
+      if (!_wishlistStore.containsVariant(item.variantId)) {
+        await _wishlistStore.addToWishlist(wishlistItem);
+      }
+
+      await removeItemFromCart(item.id);
+      selectedItemIds.remove(item.id);
+    } catch (e) {
+      errorMessage = e.toString();
+    } finally {
+      isLoading = false;
+    }
+  }
+
+  @action
+  Future<void> moveWishlistItemToCart(WishlistItem item) async {
+    isLoading = true;
+    errorMessage = null;
+
+    try {
+      if (item.isOutOfStock) {
+        throw Exception('Item is out of stock');
+      }
+
+      final cartItem = _mapWishlistItemToCartItem(item);
+
+      await addItemToCart(cartItem);
+      await _wishlistStore.removeFromWishlist(item);
+    } catch (e) {
+      errorMessage = e.toString();
+    } finally {
+      isLoading = false;
+    }
   }
 }
