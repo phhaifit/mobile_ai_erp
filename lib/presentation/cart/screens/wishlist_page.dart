@@ -31,9 +31,20 @@ class WishlistPage extends StatelessWidget {
               return WishlistItemCard(
                 item: item,
                 onMoveToCart: () async {
+                  final messenger = ScaffoldMessenger.of(context);
+
                   await cartStore.moveWishlistItemToCart(item);
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
+
+                  if (!context.mounted) return;
+
+                  messenger.clearSnackBars();
+
+                  if (cartStore.errorMessage != null) {
+                    messenger.showSnackBar(
+                      SnackBar(content: Text(cartStore.errorMessage!)),
+                    );
+                  } else {
+                    messenger.showSnackBar(
                       const SnackBar(content: Text('Moved to cart')),
                     );
                   }

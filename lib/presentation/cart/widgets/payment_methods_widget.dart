@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Widget for selecting payment method
 class PaymentMethodsWidget extends StatefulWidget {
   final ValueChanged<String> onMethodSelected;
   final String? selectedMethod;
@@ -18,55 +17,141 @@ class PaymentMethodsWidget extends StatefulWidget {
 }
 
 class _PaymentMethodsWidgetState extends State<PaymentMethodsWidget> {
+  static const String _defaultMethod = 'credit_card';
+
+  static const List<Map<String, String>> _savedCards = [
+    {
+      'value': 'saved_visa_4242',
+      'brand': 'Visa',
+      'last4': '4242',
+      'label': 'Personal card',
+      'method': 'credit_card',
+    },
+    {
+      'value': 'saved_mastercard_8888',
+      'brand': 'Mastercard',
+      'last4': '8888',
+      'label': 'Work card',
+      'method': 'credit_card',
+    },
+    {
+      'value': 'saved_debit_vcb_1234',
+      'brand': 'VCB Debit',
+      'last4': '1234',
+      'label': 'Vietcombank',
+      'method': 'debit_card',
+    },
+  ];
+
   late String _selectedMethod;
   String? _selectedSavedCard;
 
   @override
   void initState() {
     super.initState();
-
-    final initialValue = widget.selectedMethod ?? 'credit_card';
-
-    if (initialValue.startsWith('saved_')) {
-      _selectedMethod = 'credit_card';
-      _selectedSavedCard = initialValue;
-    } else {
-      _selectedMethod = initialValue;
-      _selectedSavedCard = null;
-    }
+    _selectedMethod = _normalizeMethod(widget.selectedMethod);
+    _selectedSavedCard = _extractSavedCard(widget.selectedMethod);
   }
 
   @override
   void didUpdateWidget(covariant PaymentMethodsWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    if (oldWidget.selectedMethod != widget.selectedMethod) {
-      final newValue = widget.selectedMethod ?? 'credit_card';
+    if (oldWidget.selectedMethod == widget.selectedMethod) return;
 
-      if (newValue.startsWith('saved_')) {
-        _selectedMethod = 'credit_card';
-        _selectedSavedCard = newValue;
-      } else {
-        _selectedMethod = newValue;
+    final incoming = widget.selectedMethod?.trim();
+    if (incoming == null || incoming.isEmpty) return;
+
+    // Parent chỉ nên truyền method xuống đây.
+    // Nếu lỡ truyền saved card thì vẫn map đúng method của card đó,
+    // không ép cứng về credit_card nữa.
+    final mappedMethod = _normalizeMethod(incoming);
+    final mappedSavedCard = _extractSavedCard(incoming);
+
+    if (mappedMethod == _selectedMethod &&
+        mappedSavedCard == _selectedSavedCard) {
+      return;
+    }
+
+    setState(() {
+      _selectedMethod = mappedMethod;
+
+      // Chỉ giữ selectedSavedCard nếu incoming thực sự là saved card
+      // và nó thuộc đúng method hiện tại.
+      if (mappedSavedCard != null &&
+          _getMethodOfSavedCard(mappedSavedCard) == mappedMethod) {
+        _selectedSavedCard = mappedSavedCard;
+      } else if (!_savedCardBelongsToMethod(_selectedSavedCard, mappedMethod)) {
         _selectedSavedCard = null;
       }
-    }
+    });
   }
 
-  void _selectPaymentMethod(String value) {
+  String _normalizeMethod(String? value) {
+    final raw = value?.trim();
+    if (raw == null || raw.isEmpty) return _defaultMethod;
+
+    if (_isSavedCardValue(raw)) {
+      return _getMethodOfSavedCard(raw) ?? _defaultMethod;
+    }
+
+    return raw;
+  }
+
+  String? _extractSavedCard(String? value) {
+    final raw = value?.trim();
+    if (raw == null || raw.isEmpty) return null;
+    return _isSavedCardValue(raw) ? raw : null;
+  }
+
+  bool _isSavedCardValue(String value) => value.startsWith('saved_');
+
+  bool _methodSupportsSavedCards(String method) {
+    return method == 'credit_card' || method == 'debit_card';
+  }
+
+  String? _getMethodOfSavedCard(String cardValue) {
+    for (final card in _savedCards) {
+      if (card['value'] == cardValue) {
+        return card['method'];
+      }
+    }
+    return null;
+  }
+
+  bool _savedCardBelongsToMethod(String? cardValue, String method) {
+    if (cardValue == null) return false;
+    return _getMethodOfSavedCard(cardValue) == method;
+  }
+
+  void _selectMethod(String method) {
+    if (_selectedMethod == method) return;
+
     setState(() {
-      _selectedMethod = value;
-      _selectedSavedCard = null;
+      _selectedMethod = method;
+
+      if (!_savedCardBelongsToMethod(_selectedSavedCard, method)) {
+        _selectedSavedCard = null;
+      }
     });
-    widget.onMethodSelected(value);
+
+    // Parent chỉ nhận method
+    widget.onMethodSelected(method);
   }
 
   void _selectSavedCard(String cardValue) {
+    final cardMethod = _getMethodOfSavedCard(cardValue);
+
     setState(() {
-      _selectedMethod = 'credit_card';
+      if (cardMethod != null) {
+        _selectedMethod = cardMethod;
+      }
       _selectedSavedCard = cardValue;
     });
-    widget.onMethodSelected(cardValue);
+
+    // Quan trọng: parent chỉ nhận method, KHÔNG nhận cardValue.
+    // Như vậy sẽ không còn rebuild rồi ép về method 1 nữa.
+    widget.onMethodSelected(_selectedMethod);
   }
 
   @override
@@ -96,30 +181,31 @@ class _PaymentMethodsWidgetState extends State<PaymentMethodsWidget> {
             _buildPaymentOption(
               value: 'debit_card',
               title: 'Debit Card',
-              icon: Icons.card_giftcard,
-              subtitle: 'Debit card from your bank',
+              icon: Icons.payment,
+              subtitle: 'Pay directly from your bank account',
             ),
             const SizedBox(height: 12),
 
             _buildPaymentOption(
               value: 'digital_wallet',
               title: 'Digital Wallet',
-              icon: Icons.account_balance_wallet,
-              subtitle: 'Google Pay, Apple Pay, PayPal',
+              icon: Icons.account_balance_wallet_outlined,
+              subtitle: 'MoMo, ZaloPay, Apple Pay, Google Pay',
             ),
             const SizedBox(height: 12),
 
             _buildPaymentOption(
               value: 'bank_transfer',
               title: 'Bank Transfer',
-              icon: Icons.account_balance,
-              subtitle: 'Direct bank transfer',
+              icon: Icons.account_balance_outlined,
+              subtitle: 'Manual transfer to our bank account',
             ),
 
-            if (widget.showSavedCards) ...[
+            if (widget.showSavedCards &&
+                _methodSupportsSavedCards(_selectedMethod)) ...[
               const SizedBox(height: 16),
-              Divider(color: Colors.grey[200]),
-              const SizedBox(height: 16),
+              Divider(color: Colors.grey[300]),
+              const SizedBox(height: 12),
               _buildSavedCardsSection(),
             ],
           ],
@@ -136,110 +222,139 @@ class _PaymentMethodsWidgetState extends State<PaymentMethodsWidget> {
   }) {
     final isSelected = _selectedMethod == value;
 
-    return Material(
-      child: InkWell(
-        onTap: () => _selectPaymentMethod(value),
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: isSelected ? Colors.blue[600]! : Colors.grey[300]!,
-              width: isSelected ? 2 : 1,
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () => _selectMethod(value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.blue.withOpacity(0.06) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? Colors.blue : Colors.grey.shade300,
+            width: isSelected ? 1.6 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Radio<String>(
+              value: value,
+              groupValue: _selectedMethod,
+              onChanged: (v) {
+                if (v != null) _selectMethod(v);
+              },
             ),
-            borderRadius: BorderRadius.circular(8),
-            color: isSelected ? Colors.blue[50] : Colors.transparent,
-          ),
-          child: Row(
-            children: [
-              Radio<String>(
-                value: value,
-                groupValue: _selectedMethod,
-                onChanged: (val) {
-                  if (val != null) {
-                    _selectPaymentMethod(val);
-                  }
-                },
-              ),
-              const SizedBox(width: 8),
-              Icon(icon, color: Colors.grey[600]),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
+            const SizedBox(width: 8),
+            Icon(icon, color: isSelected ? Colors.blue : Colors.grey[700]),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: isSelected ? Colors.blue[800] : null,
                     ),
-                    Text(
-                      subtitle,
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildSavedCardsSection() {
-    final savedCards = [
-      {
-        'id': 'card_1',
-        'lastDigits': '4242',
-        'brand': 'Visa',
-        'expiryMonth': 12,
-        'expiryYear': 25,
-      },
-      {
-        'id': 'card_2',
-        'lastDigits': '5555',
-        'brand': 'Mastercard',
-        'expiryMonth': 8,
-        'expiryYear': 26,
-      },
-    ];
+    final availableCards = _savedCards.where((card) {
+      return card['method'] == _selectedMethod;
+    }).toList();
+
+    if (availableCards.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Accounts',
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'No saved accounts for this payment method.',
+            style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+          ),
+        ],
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Saved Cards', style: Theme.of(context).textTheme.titleSmall),
+        Text(
+          'Accounts',
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+        ),
         const SizedBox(height: 12),
-        ...savedCards.map((card) {
-          final cardValue = 'saved_${card['id']}';
+        ...availableCards.map((card) {
+          final cardValue = card['value']!;
           final isSelected = _selectedSavedCard == cardValue;
 
-          return GestureDetector(
-            onTap: () => _selectSavedCard(cardValue),
-            child: Card(
-              child: Padding(
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () => _selectSavedCard(cardValue),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
                 padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? Colors.blue.withOpacity(0.06)
+                      : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isSelected ? Colors.blue : Colors.grey.shade300,
+                    width: isSelected ? 1.6 : 1,
+                  ),
+                ),
                 child: Row(
                   children: [
                     Radio<String>(
                       value: cardValue,
                       groupValue: _selectedSavedCard,
-                      onChanged: (val) {
-                        if (val != null) {
-                          _selectSavedCard(val);
-                        }
+                      onChanged: (v) {
+                        if (v != null) _selectSavedCard(v);
                       },
                     ),
-                    Icon(Icons.credit_card, color: Colors.grey[600]),
                     const SizedBox(width: 8),
+                    Icon(
+                      Icons.credit_card,
+                      color: isSelected ? Colors.blue : Colors.grey[700],
+                    ),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '${card['brand']} •••• ${card['lastDigits']}',
+                            '${card['brand']} •••• ${card['last4']}',
                             style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
+                          const SizedBox(height: 2),
                           Text(
-                            'Expires ${card['expiryMonth']}/${card['expiryYear']}',
+                            card['label']!,
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[600],
@@ -249,9 +364,9 @@ class _PaymentMethodsWidgetState extends State<PaymentMethodsWidget> {
                       ),
                     ),
                     if (isSelected)
-                      Icon(
+                      const Icon(
                         Icons.check_circle,
-                        color: Colors.blue[600],
+                        color: Colors.blue,
                         size: 20,
                       ),
                   ],
@@ -259,7 +374,7 @@ class _PaymentMethodsWidgetState extends State<PaymentMethodsWidget> {
               ),
             ),
           );
-        }).toList(),
+        }),
       ],
     );
   }

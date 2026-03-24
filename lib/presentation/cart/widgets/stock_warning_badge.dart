@@ -53,18 +53,18 @@ class StockWarningBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            _badgeIcon,
-            color: _badgeColor,
-            size: size ?? 14,
-          ),
+          Icon(_badgeIcon, color: _badgeColor, size: size ?? 14),
           const SizedBox(width: 4),
-          Text(
-            _badgeLabel,
-            style: TextStyle(
-              color: _badgeColor,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
+          Flexible(
+            child: Text(
+              _badgeLabel,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+              style: TextStyle(
+                color: _badgeColor,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -97,10 +97,7 @@ class StockStatusIndicator extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        color: _indicatorColor,
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(color: _indicatorColor, shape: BoxShape.circle),
     );
   }
 }
