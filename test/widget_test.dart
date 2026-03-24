@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile_ai_erp/data/repository/inventory_audit_outbound/mock_inventory_audit_outbound_repository.dart';
+import 'package:mobile_ai_erp/data/repository/stock_operations/mock_stock_operations_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/inventory_audit_outbound/inventory_audit_outbound_repository.dart';
 import 'package:mobile_ai_erp/domain/usecase/inventory_audit_outbound/get_inventory_audit_records_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/inventory_audit_outbound/get_inventory_by_warehouse_usecase.dart';
@@ -12,8 +13,10 @@ import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/inventory_au
 import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/inventory_audit_summary_screen.dart';
 import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/inventory_outbound_screen.dart';
 import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/store/inventory_audit_outbound_store.dart';
+import 'package:mobile_ai_erp/presentation/stock_operations/stock_operations_screen.dart';
+import 'package:mobile_ai_erp/presentation/stock_operations/store/stock_operations_store.dart';
 
-InventoryAuditOutboundStore _buildStore() {
+InventoryAuditOutboundStore _buildInventoryStore() {
   final InventoryAuditOutboundRepository repository =
       MockInventoryAuditOutboundRepository();
   return InventoryAuditOutboundStore(
@@ -27,6 +30,17 @@ InventoryAuditOutboundStore _buildStore() {
 }
 
 void main() {
+  testWidgets('stock operations screen smoke test', (WidgetTester tester) async {
+    final store = StockOperationsStore(MockStockOperationsRepository());
+
+    await tester.pumpWidget(
+      MaterialApp(home: StockOperationsScreen(store: store)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Stock Operations'), findsWidgets);
+  });
+
   testWidgets('inventory audit route smoke test', (WidgetTester tester) async {
     tester.view.physicalSize = const Size(500, 900);
     tester.view.devicePixelRatio = 1.0;
@@ -35,7 +49,7 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
 
-    final store = _buildStore();
+    final store = _buildInventoryStore();
 
     await tester.pumpWidget(MaterialApp(home: InventoryAuditScreen(store: store)));
     await tester.pumpAndSettle();
@@ -51,7 +65,7 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
 
-    final store = _buildStore();
+    final store = _buildInventoryStore();
     await store.loadInitialData();
 
     await tester.pumpWidget(
@@ -70,7 +84,7 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
 
-    final store = _buildStore();
+    final store = _buildInventoryStore();
 
     await tester.pumpWidget(
       MaterialApp(home: InventoryOutboundScreen(store: store)),

@@ -6,7 +6,7 @@ publish_to: "none"
 version: 1.0.0+1
 
 environment:
-  sdk: ">=3.0.6 <4.0.0"
+  sdk: ">=3.8.0 <4.0.0"
 
 dependencies:
   flutter:
@@ -69,6 +69,7 @@ dependency_overrides:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_lints: ^6.0.0
 
   # The following adds the launcher icon support to your application.
   # run below mentioned commands to generate launcher icons
@@ -99,3 +100,4 @@ flutter:
           style: italic
         - asset: assets/fonts/Product-Sans-Bold.ttf
           weight: 700
+

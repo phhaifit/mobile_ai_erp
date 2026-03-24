@@ -14,6 +14,7 @@ import 'package:mobile_ai_erp/presentation/order_fulfillment/print_label.dart';
 import 'package:mobile_ai_erp/presentation/order_tracking/order_tracking.dart';
 import 'package:mobile_ai_erp/presentation/product_detail/product_detail_screen.dart';
 import 'package:mobile_ai_erp/presentation/reports/reports_analytics.dart';
+import 'package:mobile_ai_erp/presentation/stock_operations/stock_operations_screen.dart';
 import 'package:mobile_ai_erp/presentation/user/home/user_home.dart';
 import 'package:mobile_ai_erp/presentation/user/store/role_store.dart';
 import 'package:mobile_ai_erp/presentation/user/store/user_store.dart';
@@ -30,6 +31,7 @@ class Routes {
   static const String splash = '/splash';
   static const String login = '/login';
   static const String home = '/post';
+  static const String stockOperations = '/stock-operations';
   static const String inventoryAudit = '/inventory-audit';
   static const String inventoryAuditSummary = '/inventory-audit-summary';
   static const String inventoryOutbound = '/inventory-outbound';
@@ -53,6 +55,7 @@ class Routes {
   static final routes = <String, WidgetBuilder>{
     login: (BuildContext context) => LoginScreen(),
     home: (BuildContext context) => HomeScreen(),
+    stockOperations: (BuildContext context) => const StockOperationsScreen(),
     inventoryAudit: (BuildContext context) => const InventoryAuditScreen(),
     inventoryAuditSummary: (BuildContext context) =>
         const InventoryAuditSummaryScreen(),
