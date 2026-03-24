@@ -2,11 +2,13 @@ import 'dart:async';
 
 import 'package:mobile_ai_erp/data/local/datasources/order_tracking/order_tracking_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/post/post_datasource.dart';
+import 'package:mobile_ai_erp/data/local/datasources/post_purchase/post_purchase_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/product_metadata/product_metadata_datasource.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
 import 'package:mobile_ai_erp/data/repository/order_tracking/order_tracking_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/fulfillment/fulfillment_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/post/post_repository_impl.dart';
+import 'package:mobile_ai_erp/data/repository/post_purchase/post_purchase_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/product_metadata/product_metadata_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/setting/setting_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/user/user_repository_impl.dart';
@@ -17,6 +19,7 @@ import 'package:mobile_ai_erp/domain/repository/order_tracking/order_tracking_re
 import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
 import 'package:mobile_ai_erp/domain/repository/fulfillment/fulfillment_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/post/post_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/post_purchase/post_purchase_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadata_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/setting/setting_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/user_repository.dart';
@@ -55,6 +58,14 @@ class RepositoryModule {
         ProductMetadataRepositoryImpl(
       getIt<ProductMetadataDataSource>(),
     ));
+
+    // post_purchase:----------------------------------------------------------
+    getIt.registerSingleton<PostPurchaseDataSource>(
+      PostPurchaseDataSource(),
+    );
+    getIt.registerSingleton<PostPurchaseRepository>(
+      PostPurchaseRepositoryImpl(getIt<PostPurchaseDataSource>()),
+    );
 
     // web_builder:--------------------------------------------------------------
     getIt.registerLazySingleton<CmsPageRepository>(
