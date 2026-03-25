@@ -130,9 +130,29 @@ abstract class CartStoreBase with Store {
   }
 
   @computed
+  double get selectedOriginalSubtotal {
+    return checkoutItems.fold<double>(
+      0,
+      (sum, item) => sum + (item.price * item.quantity),
+    );
+  }
+
+  @computed
   double get selectedDiscountAmount {
-    if (!hasCoupon || cart.subtotal <= 0 || selectedSubtotal <= 0) return 0.0;
-    return (selectedSubtotal / cart.subtotal) * cart.cartLevelDiscount;
+    final coupon = cart.appliedCoupon;
+    if (coupon == null || selectedOriginalSubtotal <= 0) return 0.0;
+
+    if (!coupon.isPercentage) {
+      return coupon.discountValue;
+    }
+
+    final discount = selectedOriginalSubtotal * (coupon.discountValue / 100);
+
+    if (coupon.maxDiscount != null) {
+      return discount > coupon.maxDiscount! ? coupon.maxDiscount! : discount;
+    }
+
+    return discount;
   }
 
   @computed
