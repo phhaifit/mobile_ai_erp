@@ -25,8 +25,8 @@ class CartItem {
   final int? stockAvailable;
 
   /// Cart state
-  int quantity;
-  bool isSelected;
+  final int quantity;
+  final bool isSelected;
   final DateTime dateAdded;
 
   CartItem({
@@ -46,7 +46,7 @@ class CartItem {
     this.isSelected = false,
     DateTime? dateAdded,
   }) : dateAdded = dateAdded ?? DateTime.now() {
-    _validateQuantity();
+    _validateQuantity(quantity);
   }
 
   /// Factory: create cart item directly from ProductVariant
@@ -74,16 +74,16 @@ class CartItem {
     );
   }
 
-  void _validateQuantity() {
-    if (quantity <= 0) {
+  void _validateQuantity(int value) {
+    if (value <= 0) {
       throw InvalidCartItemException(
         message: 'Quantity must be greater than 0',
       );
     }
 
-    if (stockAvailable != null && quantity > stockAvailable!) {
+    if (stockAvailable != null && value > stockAvailable!) {
       throw InsufficientStockException(
-        requestedQuantity: quantity,
+        requestedQuantity: value,
         availableQuantity: stockAvailable!,
       );
     }
@@ -130,37 +130,25 @@ class CartItem {
   bool get hasCustomization =>
       selectedSize != null || selectedColorName != null;
 
-  /// Update quantity with validation
-  void updateQuantity(int newQuantity) {
-    if (newQuantity <= 0) {
-      throw InvalidCartItemException(
-        message: 'Quantity must be greater than 0',
-      );
-    }
-
-    if (stockAvailable != null && newQuantity > stockAvailable!) {
-      throw InsufficientStockException(
-        requestedQuantity: newQuantity,
-        availableQuantity: stockAvailable!,
-      );
-    }
-
-    quantity = newQuantity;
+  /// Update quantity immutably with validation
+  CartItem updateQuantity(int newQuantity) {
+    _validateQuantity(newQuantity);
+    return copyWith(quantity: newQuantity);
   }
 
   /// Increment quantity by 1
-  void incrementQuantity() {
-    updateQuantity(quantity + 1);
+  CartItem incrementQuantity() {
+    return updateQuantity(quantity + 1);
   }
 
   /// Decrement quantity by 1
-  void decrementQuantity() {
+  CartItem decrementQuantity() {
     if (quantity <= 1) {
       throw InvalidCartItemException(
         message: 'Cannot decrement below 1. Please remove item from cart.',
       );
     }
-    updateQuantity(quantity - 1);
+    return updateQuantity(quantity - 1);
   }
 
   CartItem copyWith({

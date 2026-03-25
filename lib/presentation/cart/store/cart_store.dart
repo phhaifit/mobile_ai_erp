@@ -655,7 +655,9 @@ abstract class CartStoreBase with Store {
         throw Exception('Item is out of stock');
       }
 
-      final cartItem = _mapWishlistItemToCartItem(item);
+      final cartItem = _mapWishlistItemToCartItem(
+        item,
+      ).copyWith(id: 'item_${_uuid.v4()}');
 
       await addItemToCart(cartItem);
       await _wishlistStore.removeFromWishlist(item);

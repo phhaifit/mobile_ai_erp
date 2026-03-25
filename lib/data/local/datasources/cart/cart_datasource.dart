@@ -22,7 +22,10 @@ abstract class CartDataSource {
 
   /// Update quantity of specific cart item
   Future<void> updateItemQuantity(
-      String userId, String itemId, int newQuantity);
+    String userId,
+    String itemId,
+    int newQuantity,
+  );
 
   /// Clear all items from cart
   Future<void> clearCart(String userId);
@@ -54,13 +57,13 @@ abstract class CartDataSource {
   Future<void> addToWishlist(String userId, WishlistItem item);
 
   /// Remove item from wishlist
-  Future<void> removeFromWishlist(String userId, String productId);
+  Future<void> removeFromWishlist(String userId, String variantId);
 
   /// Clear all wishlist items
   Future<void> clearWishlist(String userId);
 
   /// Check if product is in wishlist
-  Future<bool> isInWishlist(String userId, String productId);
+  Future<bool> isInWishlist(String userId, String variantId);
 
   /// Get cart history/abandoned carts for user
   /// Used for abandoned cart reminders

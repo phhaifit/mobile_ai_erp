@@ -21,6 +21,7 @@ class _CartScreenState extends State<CartScreen> {
   late final CartStore _cartStore;
 
   String? _selectedPaymentMethod;
+  String? _selectedSavedCardId;
   bool _agreeToTerms = false;
   bool _isInitialLoading = true;
   bool _isApplyingCoupon = false;
@@ -70,11 +71,10 @@ class _CartScreenState extends State<CartScreen> {
     }
 
     messenger.showSnackBar(
-      SnackBar(
-        content: const Text('Item removed from cart'),
+      const SnackBar(
+        content: Text('Item removed from cart'),
         behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
-        action: SnackBarAction(label: 'UNDO', onPressed: () {}),
+        duration: Duration(seconds: 2),
       ),
     );
   }
@@ -221,6 +221,7 @@ class _CartScreenState extends State<CartScreen> {
         '/checkout',
         arguments: {
           'paymentMethod': _selectedPaymentMethod,
+          'selectedCardId': _selectedSavedCardId,
           'cartData': _cartStore.checkoutData,
         },
       );
@@ -238,13 +239,11 @@ class _CartScreenState extends State<CartScreen> {
       _cartStore.selectedItemIds.length == _cartStore.cart.items.length;
 
   void _selectAllItems() {
-    setState(() {
-      if (_allItemsSelected) {
-        _cartStore.clearSelection();
-      } else {
-        _cartStore.selectAllItems();
-      }
-    });
+    if (_allItemsSelected) {
+      _cartStore.clearSelection();
+    } else {
+      _cartStore.selectAllItems();
+    }
   }
 
   bool get _canCheckout =>
@@ -390,8 +389,11 @@ class _CartScreenState extends State<CartScreen> {
         ),
         const SizedBox(height: 24),
         PaymentMethodsWidget(
-          onMethodSelected: (method) {
-            setState(() => _selectedPaymentMethod = method);
+          onMethodSelected: (method, savedCardId) {
+            setState(() {
+              _selectedPaymentMethod = method;
+              _selectedSavedCardId = savedCardId;
+            });
           },
           selectedMethod: _selectedPaymentMethod,
           showSavedCards: true,

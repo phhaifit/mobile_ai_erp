@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class PaymentMethodsWidget extends StatefulWidget {
-  final ValueChanged<String> onMethodSelected;
+  final void Function(String method, String? savedCardId) onMethodSelected;
   final String? selectedMethod;
   final bool showSavedCards;
 
@@ -135,8 +135,7 @@ class _PaymentMethodsWidgetState extends State<PaymentMethodsWidget> {
       }
     });
 
-    // Parent chỉ nhận method
-    widget.onMethodSelected(method);
+    widget.onMethodSelected(method, null);
   }
 
   void _selectSavedCard(String cardValue) {
@@ -149,9 +148,7 @@ class _PaymentMethodsWidgetState extends State<PaymentMethodsWidget> {
       _selectedSavedCard = cardValue;
     });
 
-    // Quan trọng: parent chỉ nhận method, KHÔNG nhận cardValue.
-    // Như vậy sẽ không còn rebuild rồi ép về method 1 nữa.
-    widget.onMethodSelected(_selectedMethod);
+    widget.onMethodSelected(_selectedMethod, cardValue);
   }
 
   @override
