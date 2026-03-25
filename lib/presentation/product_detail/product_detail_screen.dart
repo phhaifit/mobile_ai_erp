@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
+import 'package:mobile_ai_erp/presentation/cart/store/cart_store.dart';
 import 'package:mobile_ai_erp/presentation/product_detail/store/product_detail_store.dart';
 import 'package:mobile_ai_erp/presentation/product_detail/widgets/attributes_table_widget.dart';
 import 'package:mobile_ai_erp/presentation/product_detail/widgets/price_stock_widget.dart';
@@ -21,6 +22,9 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   final ProductDetailStore _store = getIt<ProductDetailStore>();
+  final CartStore _cartStore = getIt<CartStore>();
+
+  int _quantity = 1;
 
   @override
   void initState() {
@@ -41,19 +45,65 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  void _onAddToCart() {
+  Future<void> _onAddToCart() async {
     final variant = _store.selectedVariant;
     if (variant == null || !variant.inStock) return;
+
+    final maxQty = variant.stockQuantity;
+    if (_quantity > maxQty) {
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Only $maxQty item(s) available in stock'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    await _cartStore.addToCart(variant.id, _quantity);
+
+    if (!mounted) return;
+
+    if (_cartStore.errorMessage != null) {
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_cartStore.errorMessage!),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
 
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Added to cart'),
+        content: Text('Added $_quantity item(s) to cart'),
         behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 3),
+        duration: const Duration(seconds: 2),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
+  }
+
+  void _increaseQuantity() {
+    final variant = _store.selectedVariant;
+    if (variant == null) return;
+
+    if (_quantity < variant.stockQuantity) {
+      setState(() {
+        _quantity++;
+      });
+    }
+  }
+
+  void _decreaseQuantity() {
+    if (_quantity > 1) {
+      setState(() {
+        _quantity--;
+      });
+    }
   }
 
   @override
@@ -124,6 +174,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               _buildDivider(),
               const SizedBox(height: 16),
               _buildVariantSelector(),
+              const SizedBox(height: 20),
+              _buildQuantitySelector(),
               const SizedBox(height: 24),
               _buildDivider(),
               const SizedBox(height: 16),
@@ -203,6 +255,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               _buildDivider(),
               const SizedBox(height: 20),
               _buildVariantSelector(),
+              const SizedBox(height: 20),
+              _buildQuantitySelector(),
               const SizedBox(height: 28),
               _buildAddToCartButton(),
             ],
@@ -311,8 +365,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         selectedSize: _store.selectedSize,
         isSizeInStock: _store.isSizeInStock,
         isSizeLowStock: _store.isSizeLowStock,
-        onColorSelected: _store.selectColor,
-        onSizeSelected: _store.selectSize,
+        onColorSelected: (colorName) {
+          _store.selectColor(colorName);
+          setState(() {
+            _quantity = 1;
+          });
+        },
+        onSizeSelected: (size) {
+          _store.selectSize(size);
+          setState(() {
+            _quantity = 1;
+          });
+        },
       ),
     );
   }
@@ -354,10 +418,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   Widget _buildAddToCartButton() {
     final colorScheme = Theme.of(context).colorScheme;
+
     return Observer(
       builder: (_) {
         final variant = _store.selectedVariant;
-        final canAdd = variant != null && variant.inStock;
+        final canAdd = variant != null &&
+            variant.inStock &&
+            _quantity > 0 &&
+            _quantity <= variant.stockQuantity &&
+            !_cartStore.isLoading;
+
         return Row(
           children: [
             Expanded(
@@ -365,9 +435,22 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 height: 50,
                 child: ElevatedButton.icon(
                   onPressed: canAdd ? _onAddToCart : null,
-                  icon: const Icon(Icons.shopping_cart_outlined, size: 20),
+                  icon: _cartStore.isLoading
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.shopping_cart_outlined, size: 20),
                   label: Text(
-                    canAdd ? 'Add to Cart' : 'Select Options',
+                    _cartStore.isLoading
+                        ? 'Adding...'
+                        : canAdd
+                            ? 'Add to Cart'
+                            : 'Select Options',
                     style: const TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 16,
@@ -392,23 +475,110 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             SizedBox(
               width: 50,
               height: 50,
-              child: OutlinedButton(
-                onPressed: () {},
-                style: OutlinedButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  side: BorderSide(
-                    color: colorScheme.onSurface.withValues(alpha: 0.2),
+              child: Observer(
+                builder: (_) => OutlinedButton(
+                  onPressed: () {
+                    // sau này có thể mở mini cart / navigate cart
+                  },
+                  style: OutlinedButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    side: BorderSide(
+                      color: colorScheme.onSurface.withValues(alpha: 0.2),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                  child: Badge(
+                    isLabelVisible: _cartStore.itemCount > 0,
+                    label: Text('${_cartStore.itemCount}'),
+                    child: Icon(
+                      Icons.shopping_cart,
+                      color: colorScheme.onSurface.withValues(alpha: 0.7),
+                      size: 22,
+                    ),
                   ),
-                ),
-                child: Icon(
-                  Icons.shopping_cart,
-                  color: colorScheme.onSurface.withValues(alpha: 0.7),
-                  size: 22,
                 ),
               ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildQuantitySelector() {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Observer(
+      builder: (_) {
+        final variant = _store.selectedVariant;
+        final maxQty = variant?.stockQuantity ?? 0;
+        final canIncrease = variant != null && _quantity < maxQty;
+        final canDecrease = _quantity > 1;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Quantity',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                SizedBox(
+                  width: 44,
+                  height: 44,
+                  child: OutlinedButton(
+                    onPressed: canDecrease ? _decreaseQuantity : null,
+                    style: OutlinedButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Icon(Icons.remove),
+                  ),
+                ),
+                Container(
+                  width: 64,
+                  alignment: Alignment.center,
+                  child: Text(
+                    '$_quantity',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 44,
+                  height: 44,
+                  child: OutlinedButton(
+                    onPressed: canIncrease ? _increaseQuantity : null,
+                    style: OutlinedButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Icon(Icons.add),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                if (variant != null)
+                  Text(
+                    'Stock: ${variant.stockQuantity}',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: colorScheme.onSurface.withValues(alpha: 0.65),
+                    ),
+                  ),
+              ],
             ),
           ],
         );
