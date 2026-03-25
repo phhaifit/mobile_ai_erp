@@ -151,32 +151,9 @@ abstract class WishlistStoreBase with Store {
     }
   }
 
-  /// Find wishlist item by variant ID
-  WishlistItem? getItemByVariantId(String variantId) {
-    try {
-      return items.firstWhere((item) => item.variantId == variantId);
-    } catch (_) {
-      return null;
-    }
-  }
-
-  /// Find wishlist item by product ID
-  WishlistItem? getItemByProductId(String productId) {
-    try {
-      return items.firstWhere((item) => item.productId == productId);
-    } catch (_) {
-      return null;
-    }
-  }
-
   /// Check if a variant already exists in wishlist
   bool containsVariant(String variantId) {
     return items.any((item) => item.variantId == variantId);
-  }
-
-  /// Check if an item ID is selected
-  bool isItemSelected(String itemId) {
-    return selectedItemIds.contains(itemId);
   }
 
   void _pruneInvalidSelections() {
@@ -246,14 +223,6 @@ abstract class WishlistStoreBase with Store {
     }
   }
 
-  /// Remove item from wishlist by item ID.
-  @action
-  Future<void> removeByItemId(String itemId) async {
-    final item = getItemById(itemId);
-    if (item == null) return;
-    await removeFromWishlist(item);
-  }
-
   /// Remove multiple items from wishlist
   @action
   Future<void> removeMultipleFromWishlist(
@@ -303,9 +272,9 @@ abstract class WishlistStoreBase with Store {
 
   /// Check if product is in wishlist by productId using repository
   @action
-  Future<bool> isInWishlist(String productId) async {
+  Future<bool> isInWishlist(String variantId) async {
     try {
-      return await _cartRepository.isInWishlist(userId, productId);
+      return await _cartRepository.isInWishlist(userId, variantId);
     } catch (_) {
       return false;
     }
@@ -314,77 +283,6 @@ abstract class WishlistStoreBase with Store {
   /// Local check by variantId for immediate UI logic
   bool isVariantInWishlist(String variantId) {
     return containsVariant(variantId);
-  }
-
-  /// Move all wishlist items to cart
-  @action
-  Future<void> moveAllToCart() async {
-    isLoading = true;
-    errorMessage = null;
-
-    try {
-      await _cartRepository.moveWishlistToCart(userId);
-      await loadWishlist();
-      selectedItemIds.clear();
-    } catch (e) {
-      errorMessage = e.toString();
-    } finally {
-      isLoading = false;
-    }
-  }
-
-  /// Move specific item to cart
-  /// Repository currently moves by productId.
-  @action
-  Future<void> moveItemToCart(WishlistItem item) async {
-    isLoading = true;
-    errorMessage = null;
-
-    try {
-      await _cartRepository.moveWishlistItemToCart(userId, item.variantId);
-      await loadWishlist();
-      selectedItemIds.remove(item.id);
-    } catch (e) {
-      errorMessage = e.toString();
-    } finally {
-      isLoading = false;
-    }
-  }
-
-  /// Move item to cart by item ID
-  @action
-  Future<void> moveItemToCartById(String itemId) async {
-    final item = getItemById(itemId);
-    if (item == null) return;
-    await moveItemToCart(item);
-  }
-
-  /// Move multiple items to cart
-  @action
-  Future<void> moveMultipleToCart(List<WishlistItem> itemsToMove) async {
-    if (itemsToMove.isEmpty) return;
-
-    isLoading = true;
-    errorMessage = null;
-
-    try {
-      for (final item in itemsToMove) {
-        await _cartRepository.moveWishlistItemToCart(userId, item.variantId);
-      }
-      await loadWishlist();
-      selectedItemIds.clear();
-    } catch (e) {
-      errorMessage = e.toString();
-    } finally {
-      isLoading = false;
-    }
-  }
-
-  /// Move all selected items to cart
-  @action
-  Future<void> moveSelectedToCart() async {
-    if (selectedItemIds.isEmpty) return;
-    await moveMultipleToCart(List<WishlistItem>.from(selectedItems));
   }
 
   /// Toggle item selection
@@ -419,53 +317,6 @@ abstract class WishlistStoreBase with Store {
   @action
   void updateSortBy(String sortOption) {
     sortBy = sortOption;
-  }
-
-  /// Share wishlist (returns formatted string for sharing)
-  String getShareableWishlistText() {
-    if (items.isEmpty) {
-      return 'Check out my wishlist!';
-    }
-
-    final buffer = StringBuffer();
-    buffer.writeln('My Wishlist:');
-
-    for (final item in items.take(5)) {
-      final variantText = [
-        if ((item.selectedColorName ?? '').isNotEmpty) item.selectedColorName,
-        if ((item.selectedSize ?? '').isNotEmpty) item.selectedSize,
-      ].whereType<String>().join(' / ');
-
-      final displayName = variantText.isEmpty
-          ? item.productName
-          : '${item.productName} ($variantText)';
-
-      buffer.writeln(
-        '- $displayName: \$${item.effectivePrice.toStringAsFixed(2)}',
-      );
-    }
-
-    if (items.length > 5) {
-      buffer.writeln('... and ${items.length - 5} more items');
-    }
-
-    return buffer.toString();
-  }
-
-  /// Get wishlist recommendations/deals
-  /// Returns items that are on sale or have high ratings
-  List<WishlistItem> getRecommendedItems() {
-    final recommended = <WishlistItem>[];
-
-    recommended.addAll(itemsOnSale);
-    recommended.addAll(
-      items.where((item) => item.rating != null && item.rating! >= 4.5),
-    );
-
-    final uniqueVariantIds = <String>{};
-    return recommended
-        .where((item) => uniqueVariantIds.add(item.variantId))
-        .toList();
   }
 
   /// Clear error message

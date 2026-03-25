@@ -254,11 +254,11 @@ class CartItemCard extends StatelessWidget {
         ),
         if (item.itemDiscount != null && item.itemDiscount! > 0)
           Text(
-            '-${item.formattedDiscountAmount}',
+            'Saved ${item.formattedDiscountAmount}',
             style: TextStyle(
               fontSize: compact ? 11 : 12,
               color: Colors.green[600],
-              decoration: TextDecoration.lineThrough,
+              fontWeight: FontWeight.w600,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

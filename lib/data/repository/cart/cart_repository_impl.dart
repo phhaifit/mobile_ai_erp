@@ -15,8 +15,8 @@ class CartRepositoryImpl implements CartRepository {
   CartRepositoryImpl({
     required CartDataSource dataSource,
     CartExternalMockService? externalMockService,
-  })  : _dataSource = dataSource,
-        _externalMockService = externalMockService ?? CartExternalMockService();
+  }) : _dataSource = dataSource,
+       _externalMockService = externalMockService ?? CartExternalMockService();
 
   @override
   Future<Cart> getCart(String userId) async {
@@ -95,9 +95,7 @@ class CartRepositoryImpl implements CartRepository {
       );
     }
 
-    final updatedCart = cart.copyWith(
-      appliedCoupon: coupon,
-    );
+    final updatedCart = cart.applyCoupon(coupon);
 
     await _dataSource.saveCart(updatedCart);
   }
@@ -151,18 +149,18 @@ class CartRepositoryImpl implements CartRepository {
   }
 
   @override
-  Future<void> removeFromWishlist(String userId, String productId) async {
-    return await _dataSource.removeFromWishlist(userId, productId);
+  Future<void> removeFromWishlist(String userId, String variantId) async {
+    return await _dataSource.removeFromWishlist(userId, variantId);
   }
 
   @override
   Future<void> removeMultipleFromWishlist(
     String userId,
-    List<String> productIds,
+    List<String> variantIds,
   ) async {
-    for (final productId in productIds) {
+    for (final variantId in variantIds) {
       try {
-        await _dataSource.removeFromWishlist(userId, productId);
+        await _dataSource.removeFromWishlist(userId, variantId);
       } catch (_) {
         continue;
       }
@@ -175,8 +173,8 @@ class CartRepositoryImpl implements CartRepository {
   }
 
   @override
-  Future<bool> isInWishlist(String userId, String productId) async {
-    return await _dataSource.isInWishlist(userId, productId);
+  Future<bool> isInWishlist(String userId, String variantId) async {
+    return await _dataSource.isInWishlist(userId, variantId);
   }
 
   @override
@@ -185,25 +183,24 @@ class CartRepositoryImpl implements CartRepository {
 
     if (wishlistItems.isEmpty) return;
 
-    final cartItems = wishlistItems.map((wish) {
-      final fallbackVariantId = 'variant_${wish.productId}';
-      final fallbackSku = 'SKU_${wish.productId}';
+    final now = DateTime.now();
 
+    final cartItems = wishlistItems.map((wish) {
       return CartItem(
-        id: 'item_${wish.productId}_${DateTime.now().millisecondsSinceEpoch}',
+        id: 'item_${wish.variantId}_${now.microsecondsSinceEpoch}',
         productId: wish.productId,
         productName: wish.productName,
         imageUrl: wish.imageUrl,
-        variantId: fallbackVariantId,
-        sku: fallbackSku,
-        selectedSize: null,
-        selectedColorName: null,
-        selectedColorValue: null,
-        price: wish.effectivePrice,
-        salePrice: null,
+        variantId: wish.variantId,
+        sku: wish.sku,
+        selectedSize: wish.selectedSize,
+        selectedColorName: wish.selectedColorName,
+        selectedColorValue: wish.selectedColorValue,
+        price: wish.price,
+        salePrice: wish.salePrice,
         stockAvailable: wish.stockAvailable,
         quantity: 1,
-        dateAdded: DateTime.now(),
+        dateAdded: now,
       );
     }).toList();
 
@@ -212,33 +209,33 @@ class CartRepositoryImpl implements CartRepository {
   }
 
   @override
-  Future<void> moveWishlistItemToCart(String userId, String productId) async {
+  Future<void> moveWishlistItemToCart(String userId, String variantId) async {
     final wishlistItems = await getWishlist(userId);
 
     final wishItem = wishlistItems.firstWhere(
-      (item) => item.productId == productId,
+      (item) => item.variantId == variantId,
       orElse: () => throw Exception('Item not in wishlist'),
     );
 
     final cartItem = CartItem(
-      id: 'item_${wishItem.productId}_${DateTime.now().millisecondsSinceEpoch}',
+      id: 'item_${wishItem.variantId}_${DateTime.now().millisecondsSinceEpoch}',
       productId: wishItem.productId,
       productName: wishItem.productName,
       imageUrl: wishItem.imageUrl,
-      variantId: 'variant_${wishItem.productId}',
-      sku: 'SKU_${wishItem.productId}',
-      selectedSize: null,
-      selectedColorName: null,
-      selectedColorValue: null,
-      price: wishItem.effectivePrice,
-      salePrice: null,
+      variantId: wishItem.variantId,
+      sku: wishItem.sku,
+      selectedSize: wishItem.selectedSize,
+      selectedColorName: wishItem.selectedColorName,
+      selectedColorValue: wishItem.selectedColorValue,
+      price: wishItem.price,
+      salePrice: wishItem.salePrice,
       stockAvailable: wishItem.stockAvailable,
       quantity: 1,
       dateAdded: DateTime.now(),
     );
 
     await addItemToCart(userId, cartItem);
-    await removeFromWishlist(userId, productId);
+    await removeFromWishlist(userId, variantId);
   }
 
   @override

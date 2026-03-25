@@ -75,26 +75,26 @@ abstract class CartRepository {
   /// Add product to wishlist
   Future<void> addToWishlist(String userId, WishlistItem item);
 
-  /// Remove product from wishlist by product ID
-  Future<void> removeFromWishlist(String userId, String productId);
+  /// Remove product from wishlist by variant ID
+  Future<void> removeFromWishlist(String userId, String variantId);
 
   /// Remove multiple items from wishlist
   Future<void> removeMultipleFromWishlist(
     String userId,
-    List<String> productIds,
+    List<String> variantIds,
   );
 
   /// Clear entire wishlist
   Future<void> clearWishlist(String userId);
 
   /// Check if product is in user's wishlist
-  Future<bool> isInWishlist(String userId, String productId);
+  Future<bool> isInWishlist(String userId, String variantId);
 
   /// Move all items from wishlist to cart
   Future<void> moveWishlistToCart(String userId);
 
   /// Move specific wishlist item to cart
-  Future<void> moveWishlistItemToCart(String userId, String productId);
+  Future<void> moveWishlistItemToCart(String userId, String variantId);
 
   /// Get cart history for user
   Future<List<Cart>> getCartHistory(String userId, {int limit = 10});

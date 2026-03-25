@@ -42,13 +42,6 @@ class CartLocalDataSourceImpl implements CartDataSource {
       isActive: true,
     ),
     Coupon(
-      code: 'FREESHIP',
-      discountValue: 0,
-      isPercentage: false,
-      description: 'Free shipping (no discount)',
-      isActive: true,
-    ),
-    Coupon(
       code: 'EXPIRED',
       discountValue: 30,
       isPercentage: true,
@@ -275,11 +268,11 @@ class CartLocalDataSourceImpl implements CartDataSource {
   }
 
   @override
-  Future<bool> isInWishlist(String userId, String productId) async {
+  Future<bool> isInWishlist(String userId, String variantId) async {
     await _simulateDelay(milliseconds: 100);
 
     final wishlist = await getWishlist(userId);
-    return wishlist.any((item) => item.productId == productId);
+    return wishlist.any((item) => item.variantId == variantId);
   }
 
   @override
