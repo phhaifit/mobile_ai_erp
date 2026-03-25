@@ -55,6 +55,15 @@ class CartExternalMockService {
         isActive: true,
         expiryDate: DateTime(2026, 12, 31),
       ),
+      'WELCOME30': Coupon(
+        code: 'WELCOME30',
+        discountValue: 30,
+        isPercentage: true,
+        minCartValue: 300,
+        description: '30% off for first orders',
+        isActive: true,
+        expiryDate: DateTime(2026, 12, 31),
+      ),
       'EXPIRED50': Coupon(
         code: 'EXPIRED50',
         discountValue: 50,

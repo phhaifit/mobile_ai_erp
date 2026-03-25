@@ -58,14 +58,27 @@ class CartUIModel {
   double get subtotal =>
       items.fold<double>(0, (sum, item) => sum + item.totalPrice);
 
+  double get originalSubtotal => items.fold<double>(
+    0,
+    (sum, item) => sum + (item.originalPrice * item.quantity),
+  );
+
   double get discountAmount {
     if (appliedCoupon == null) return 0;
-    // If discount is fixed amount, use it directly
+
     if (!appliedCoupon!.isPercentage) {
       return appliedCoupon!.discountValue;
     }
-    // If discount is percentage, calculate it
-    return subtotal * (appliedCoupon!.discountValue / 100);
+
+    final discount = originalSubtotal * (appliedCoupon!.discountValue / 100);
+
+    if (appliedCoupon!.maxDiscount != null) {
+      return discount > appliedCoupon!.maxDiscount!
+          ? appliedCoupon!.maxDiscount!
+          : discount;
+    }
+
+    return discount;
   }
 
   double get taxAmount {
@@ -166,6 +179,7 @@ class CartItemUIModel {
   final String name;
   final String description;
   final double price;
+  final double originalPrice;
   final int quantity;
   final int availableStock;
   final String imageUrl;
@@ -184,6 +198,7 @@ class CartItemUIModel {
     required this.name,
     required this.description,
     required this.price,
+    required this.originalPrice,
     required this.quantity,
     required this.availableStock,
     required this.imageUrl,
@@ -205,6 +220,7 @@ class CartItemUIModel {
       name: item.productName,
       description: '', // CartItem doesn't have description
       price: item.effectivePrice,
+      originalPrice: item.price,
       quantity: item.quantity,
       availableStock: item.stockAvailable ?? 0,
       imageUrl: item.imageUrl ?? '',
@@ -224,9 +240,10 @@ class CartItemUIModel {
   /// Price Properties
   double get unitPrice => price;
   double get totalPrice => price * quantity;
-  double get discountAmount =>
-      itemDiscount != null ? (totalPrice * itemDiscount! / 100) : 0;
-  double get finalPrice => totalPrice - discountAmount;
+  double get discountAmount => itemDiscount != null
+      ? (originalPrice * quantity * itemDiscount! / 100)
+      : 0;
+  double get finalPrice => totalPrice;
 
   /// Formatted Price Strings
   String get formattedPrice => PriceFormatter.formatPrice(price);
@@ -270,6 +287,7 @@ class CartItemUIModel {
     String? name,
     String? description,
     double? price,
+    double? originalPrice,
     int? quantity,
     int? availableStock,
     String? imageUrl,
@@ -288,6 +306,7 @@ class CartItemUIModel {
       name: name ?? this.name,
       description: description ?? this.description,
       price: price ?? this.price,
+      originalPrice: originalPrice ?? this.originalPrice,
       quantity: quantity ?? this.quantity,
       availableStock: availableStock ?? this.availableStock,
       imageUrl: imageUrl ?? this.imageUrl,
