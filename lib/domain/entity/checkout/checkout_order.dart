@@ -93,7 +93,7 @@ class CheckoutOrder {
   int get totalItemCount => items.fold(0, (sum, item) => sum + item.quantity);
 
   /// Subtotal before any discounts
-  double get subtotal => items.fold(0.0, (sum, item) => sum + item.totalPrice);
+  double get subtotal => items.fold(0.0, (sum, item) => sum + item.subtotal);
 
   /// Total item discount
   double get itemDiscount => items.fold(0.0, (sum, item) => sum + item.discount);
