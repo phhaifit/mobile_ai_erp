@@ -88,37 +88,42 @@ class CheckoutTestScreen extends StatelessWidget {
 
   List<CheckoutItem> _createSampleItems() {
     return [
-      const CheckoutItem(
+      CheckoutItem(
         id: 'item-1',
         productId: 'prod-001',
         productName: 'Wireless Bluetooth Headphones',
+        variantId: 'var-001',
         sku: 'WBH-001',
         quantity: 1,
-        unitPrice: 79.99,
+        price: 79.99,
         imageUrl: 'https://example.com/headphones.jpg',
-        variantInfo: {'Color': 'Black', 'Size': 'One Size'},
+        selectedColorName: 'Black',
+        selectedSize: 'One Size',
         weight: 0.5,
       ),
-      const CheckoutItem(
+      CheckoutItem(
         id: 'item-2',
         productId: 'prod-002',
         productName: 'USB-C Charging Cable (3-pack)',
+        variantId: 'var-002',
         sku: 'USBC-003',
         quantity: 2,
-        unitPrice: 14.99,
+        price: 14.99,
         imageUrl: 'https://example.com/cable.jpg',
-        variantInfo: {'Length': '6ft'},
+        selectedSize: '6ft',
         weight: 0.2,
       ),
-      const CheckoutItem(
+      CheckoutItem(
         id: 'item-3',
         productId: 'prod-003',
         productName: 'Phone Case - Premium Leather',
+        variantId: 'var-003',
         sku: 'PC-PL-001',
         quantity: 1,
-        unitPrice: 29.99,
+        price: 29.99,
         imageUrl: 'https://example.com/case.jpg',
-        variantInfo: {'Color': 'Brown', 'Model': 'iPhone 15 Pro'},
+        selectedColorName: 'Brown',
+        selectedSize: 'iPhone 15 Pro',
         weight: 0.1,
       ),
     ];

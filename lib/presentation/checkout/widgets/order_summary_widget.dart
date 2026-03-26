@@ -133,10 +133,10 @@ class OrderSummaryWidget extends StatelessWidget {
                         fontWeight: FontWeight.w500,
                       ),
                 ),
-                if (item.variantInfo != null && item.variantInfo!.isNotEmpty) ...[
+                if (item.variantString.isNotEmpty) ...[
                   const SizedBox(height: 2),
                   Text(
-                    item.variantInfo!.entries.map((e) => e.value).join(', '),
+                    item.variantString,
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
@@ -150,7 +150,7 @@ class OrderSummaryWidget extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Text(
-            '\$${item.totalPrice.toStringAsFixed(2)}',
+            '\$${item.subtotal.toStringAsFixed(2)}',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),

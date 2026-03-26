@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_ai_erp/presentation/cart/screens/cart_screen.dart';
+import 'package:mobile_ai_erp/presentation/checkout/screens/checkout_screen.dart';
+import 'package:mobile_ai_erp/domain/entity/checkout/checkout_item.dart';
 
 /// Cart feature routes configuration
 class CartRoutes {
@@ -25,28 +27,70 @@ class CartRoutes {
     };
   }
 
-  /// Build checkout screen (placeholder - implement based on your requirements)
+  /// Build checkout screen from cart data
   static Widget _buildCheckoutScreen(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Checkout'),
-        centerTitle: true,
-      ),
-      body: const Center(
-        child: Text('Checkout Screen - To be implemented'),
-      ),
+    // Get arguments passed from cart
+    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    
+    // Extract checkout items from cart data
+    List<CheckoutItem> checkoutItems = [];
+    String? customerId;
+    
+    if (args != null) {
+      final cartData = args['cartData'] as Map<String, dynamic>?;
+      if (cartData != null) {
+        final items = cartData['items'] as List<dynamic>? ?? [];
+        checkoutItems = items
+            .map((item) => CheckoutItem.fromCheckoutData(item as Map<String, dynamic>))
+            .toList();
+        customerId = cartData['userId'] as String?;
+        // Coupon code is handled by the checkout store from cartData
+      }
+    }
+
+    return CheckoutScreen(
+      items: checkoutItems,
+      customerId: customerId,
     );
   }
 
-  /// Build order confirmation screen (placeholder - implement based on your requirements)
+  /// Build order confirmation screen
   static Widget _buildOrderConfirmationScreen(BuildContext context) {
+    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Order Confirmation'),
         centerTitle: true,
       ),
-      body: const Center(
-        child: Text('Order Confirmation Screen - To be implemented'),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.check_circle_outline,
+              size: 80,
+              color: Colors.green,
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Order Placed Successfully!',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            if (args != null) ...[
+              Text(
+                'Order ID: ${args['orderId'] ?? "N/A"}',
+                style: const TextStyle(fontSize: 16, color: Colors.grey),
+              ),
+            ],
+            const SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Continue Shopping'),
+            ),
+          ],
+        ),
       ),
     );
   }
