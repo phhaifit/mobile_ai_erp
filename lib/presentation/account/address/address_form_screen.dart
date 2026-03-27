@@ -4,7 +4,7 @@ import '../../../../di/service_locator.dart';
 import '../store/address_store.dart';
 
 class AddressFormScreen extends StatefulWidget {
-  const AddressFormScreen({Key? key}) : super(key: key);
+  const AddressFormScreen({super.key});
 
   @override
   State<AddressFormScreen> createState() => _AddressFormScreenState();
@@ -37,7 +37,8 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
       _phoneController = TextEditingController(text: _existingAddress?.phone ?? '');
       _streetController = TextEditingController(text: _existingAddress?.street ?? '');
       _cityController = TextEditingController(text: _existingAddress?.city ?? '');
-      _isDefault = _existingAddress?.isDefault ?? false;
+      // If editing, use the existing status. If creating new, check if the list is empty!
+      _isDefault = _existingAddress?.isDefault ?? _addressStore.addresses.isEmpty;
       
       _isInit = true; 
     }
@@ -57,12 +58,14 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
       setState(() => _isLoading = true);
       
       try {
+        final newFullName = _nameController.text.trim();
         final newStreet = _streetController.text.trim();
         final newCity = _cityController.text.trim();
         final newPhone = _phoneController.text.trim();
 
         // Duplicate Check: Prevent adding/updating to an address that already exists (except itself when editing)
         final isDuplicate = _addressStore.addresses.any((existing) => 
+            existing.fullName.toLowerCase() == newFullName.toLowerCase() &&
             existing.id != _existingAddress?.id && 
             existing.street.toLowerCase() == newStreet.toLowerCase() &&
             existing.city.toLowerCase() == newCity.toLowerCase() &&

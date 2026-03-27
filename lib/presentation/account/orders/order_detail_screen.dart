@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import '../../../../domain/entity/order/order.dart';
 import '../../../../di/service_locator.dart';
 import '../../../../utils/routes/routes.dart';
+import '../../../../utils/formatters/currency_utils.dart';
 import '../store/order_store.dart';
 import '../widgets/order_status_badge.dart';
 
 class OrderDetailScreen extends StatelessWidget {
-  const OrderDetailScreen({Key? key}) : super(key: key);
+  const OrderDetailScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +48,7 @@ class OrderDetailScreen extends StatelessWidget {
                   ),
                   title: Text(item.productName),
                   subtitle: Text('Qty: ${item.quantity}'),
-                  trailing: Text('${item.price.toStringAsFixed(0)} VND'),
+                  trailing: Text(CurrencyUtils.format(item.price)),
                 )),
             const Divider(height: 32),
             const Text('Shipping Information',
@@ -61,8 +62,7 @@ class OrderDetailScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text('Subtotal:'),
-                Text(
-                    '${(order.totalAmount - order.shippingFee).toStringAsFixed(0)} VND'),
+                Text(CurrencyUtils.format(order.totalAmount - order.shippingFee)),
               ],
             ),
             const SizedBox(height: 8),
@@ -70,7 +70,7 @@ class OrderDetailScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text('Shipping Fee:'),
-                Text('${order.shippingFee.toStringAsFixed(0)} VND'),
+                Text(CurrencyUtils.format(order.shippingFee)),
               ],
             ),
             const SizedBox(height: 8),
@@ -80,11 +80,13 @@ class OrderDetailScreen extends StatelessWidget {
                 const Text('Total:',
                     style:
                         TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                Text('${order.totalAmount.toStringAsFixed(0)} VND',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: Colors.blue)),
+                Text(
+                  CurrencyUtils.format(order.totalAmount),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.blue),
+                ),
               ],
             ),
             // 1. Buy Again Button (Always visible)

@@ -18,4 +18,7 @@ class AddressRepositoryImpl implements AddressRepository {
 
   @override
   Future<void> setDefault(String id) => _dataSource.setDefault(id);
+  
+  @override
+  Future<void> deleteAddress(String id) => _dataSource.deleteAddress(id);
 }

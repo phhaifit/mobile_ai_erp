@@ -6,7 +6,7 @@ import '../store/address_store.dart';
 import '../widgets/address_card_widget.dart';
 
 class AddressBookScreen extends StatefulWidget {
-  const AddressBookScreen({Key? key}) : super(key: key);
+  const AddressBookScreen({super.key});
 
   @override
   State<AddressBookScreen> createState() => _AddressBookScreenState();
@@ -51,6 +51,32 @@ class _AddressBookScreenState extends State<AddressBookScreen> {
                   // Pass the address object to the form so it knows we are editing
                   Navigator.pushNamed(context, Routes.addressForm,
                       arguments: address);
+                },
+                onDelete: () {
+                  // Show confirmation dialog before deleting
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: const Text('Delete Address'),
+                        content: const Text('Are you sure you want to delete this address? This action cannot be undone.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(), // Cancel
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop(); 
+                              // Call the store using your actual _addressStore variable
+                              _addressStore.deleteAddress(address.id); 
+                            },
+                            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                          ),
+                        ],
+                      );
+                    },
+                  );
                 },
               );
             },

@@ -4,7 +4,7 @@ import '../../../../di/service_locator.dart';
 import '../store/order_store.dart';
 
 class ReturnRequestScreen extends StatefulWidget {
-  const ReturnRequestScreen({Key? key}) : super(key: key);
+  const ReturnRequestScreen({super.key});
 
   @override
   State<ReturnRequestScreen> createState() => _ReturnRequestScreenState();
