@@ -44,7 +44,6 @@ class CartRoutes {
             .map((item) => CheckoutItem.fromCheckoutData(item as Map<String, dynamic>))
             .toList();
         customerId = cartData['userId'] as String?;
-        // Coupon code is handled by the checkout store from cartData
       }
     }
 

@@ -21,6 +21,7 @@ class DeliveryAddress {
     required this.countryCode,
     this.label = AddressLabel.home,
     this.companyName,
+    this.email,
     this.state,
     this.stateCode,
     this.postalCode,
@@ -40,6 +41,9 @@ class DeliveryAddress {
 
   /// Phone number for delivery contact
   final String phone;
+
+  /// Email address for order confirmation
+  final String? email;
 
   /// Street address (including house/unit number)
   final String street;
@@ -121,6 +125,7 @@ class DeliveryAddress {
     String? countryCode,
     AddressLabel? label,
     String? companyName,
+    Object? email = _sentinel,
     Object? state = _sentinel,
     Object? stateCode = _sentinel,
     Object? postalCode = _sentinel,
@@ -135,6 +140,7 @@ class DeliveryAddress {
       id: id ?? this.id,
       fullName: fullName ?? this.fullName,
       phone: phone ?? this.phone,
+      email: identical(email, _sentinel) ? this.email : email as String?,
       street: street ?? this.street,
       city: city ?? this.city,
       countryCode: countryCode ?? this.countryCode,

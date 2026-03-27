@@ -221,7 +221,8 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Widget> _buildActions(BuildContext context) {
     return <Widget>[
       _buildInventoryAuditButton(),
-      _buildCheckoutButton(),
+      _buildCartButton(),
+      _buildWishlistButton(),
       _buildOrderTrackingButton(),
       _buildFulfillmentButton(),
       _buildOverflowMenu(),
@@ -365,16 +366,6 @@ class _HomeScreenState extends State<HomeScreen> {
         Navigator.of(context).pushNamed(Routes.orderTracking);
       },
       icon: Icon(Icons.local_shipping_outlined),
-    );
-  }
-
-  Widget _buildCheckoutButton() {
-    return IconButton(
-      tooltip: 'Checkout',
-      onPressed: () {
-        Navigator.of(context).pushNamed(Routes.checkoutTest);
-      },
-      icon: const Icon(Icons.shopping_cart_checkout),
     );
   }
 
