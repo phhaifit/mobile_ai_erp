@@ -46,4 +46,9 @@ class AddressMockDataSource {
           _mockAddresses[i].copyWith(isDefault: _mockAddresses[i].id == id);
     }
   }
+
+  Future<void> deleteAddress(String id) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+    _mockAddresses.removeWhere((a) => a.id == id);
+  }
 }

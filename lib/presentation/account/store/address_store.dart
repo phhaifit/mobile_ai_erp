@@ -45,4 +45,32 @@ abstract class _AddressStore with Store {
     await _repository.updateAddress(address);
     await fetchAddresses(); // Refresh list
   }
+
+  @action
+  Future<void> deleteAddress(String id) async {
+    isLoading = true;
+    try {
+      // Check if the address we are about to delete is the default one
+      final addressToDeleteIndex = addresses.indexWhere((a) => a.id == id);
+      final bool wasDefault = addressToDeleteIndex != -1 
+          ? addresses[addressToDeleteIndex].isDefault 
+          : false;
+
+      // Perform the deletion
+      await _repository.deleteAddress(id); 
+      
+      // Refresh the list so we have the most accurate remaining addresses
+      await fetchAddresses(); 
+
+      // The Business Rule: If we deleted the default, and there are still addresses left,
+      // make the first item in the newly fetched list the new default.
+      if (wasDefault && addresses.isNotEmpty) {
+        await setDefault(addresses.first.id); 
+      }
+      
+    } catch (e) {
+      isLoading = false;
+      rethrow; 
+    }
+  }
 }

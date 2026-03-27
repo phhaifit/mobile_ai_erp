@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 class LoyaltyPointCard extends StatelessWidget {
   final int points;
 
-  const LoyaltyPointCard({Key? key, required this.points}) : super(key: key);
+  const LoyaltyPointCard({
+    super.key,
+    required this.points,
+  });
 
   @override
   Widget build(BuildContext context) {

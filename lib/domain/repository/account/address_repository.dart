@@ -5,4 +5,5 @@ abstract class AddressRepository {
   Future<void> addAddress(Address address);
   Future<void> updateAddress(Address address);
   Future<void> setDefault(String id);
+  Future<void> deleteAddress(String id);
 }

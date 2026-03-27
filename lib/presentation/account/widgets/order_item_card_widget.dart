@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../domain/entity/order/order.dart';
+import '../../../../utils/formatters/currency_utils.dart';
 import 'order_status_badge.dart';
 
 class OrderItemCardWidget extends StatelessWidget {
@@ -7,10 +8,10 @@ class OrderItemCardWidget extends StatelessWidget {
   final VoidCallback onTap;
 
   const OrderItemCardWidget({
-    Key? key,
+    super.key,
     required this.order,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +60,7 @@ class OrderItemCardWidget extends StatelessWidget {
                   const Text('Total:',
                       style: TextStyle(fontWeight: FontWeight.bold)),
                   Text(
-                    '${order.totalAmount.toStringAsFixed(0)} VND',
+                    CurrencyUtils.format(order.totalAmount),
                     style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Colors.blue,
