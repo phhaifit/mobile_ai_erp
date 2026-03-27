@@ -131,20 +131,18 @@ class _CouponInputWidgetState extends State<CouponInputWidget> {
   }
 
   Widget _buildAppliedCoupon(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: colorScheme.primaryContainer.withValues(alpha: 0.3),
-        border: Border.all(color: colorScheme.primary),
+        color: Colors.green.withOpacity(0.1),
+        border: Border.all(color: Colors.green),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         children: [
-          Icon(
+          const Icon(
             Icons.check_circle,
-            color: colorScheme.primary,
+            color: Colors.green,
             size: 20,
           ),
           const SizedBox(width: 8),
@@ -155,7 +153,7 @@ class _CouponInputWidgetState extends State<CouponInputWidget> {
                 Text(
                   'Coupon Applied',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: colorScheme.primary,
+                        color: Colors.green,
                       ),
                 ),
                 Text(

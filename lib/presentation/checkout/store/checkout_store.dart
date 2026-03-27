@@ -117,6 +117,15 @@ abstract class _CheckoutStore with Store {
   @observable
   String? orderNotes;
 
+  @observable
+  String? customerEmail;
+
+  @observable
+  String? selectedPaymentMethodValue;
+
+  @observable
+  String? selectedSavedCardId;
+
   // ==================== Computed ====================
 
   @computed
@@ -258,6 +267,23 @@ abstract class _CheckoutStore with Store {
   }
 
   @action
+  void setSelectedPaymentMethod(String methodValue, {String? savedCardId}) {
+    selectedPaymentMethodValue = methodValue;
+    selectedSavedCardId = savedCardId;
+    
+    // Find and set the corresponding PaymentMethod entity
+    try {
+      final method = paymentMethods.firstWhere(
+        (m) => m.id == methodValue || m.type.toString().contains(methodValue),
+        orElse: () => paymentMethods.first,
+      );
+      selectedPaymentMethod = method;
+    } catch (_) {
+      // If no matching method found, keep the value for later use
+    }
+  }
+
+  @action
   Future<void> applyCoupon(String code) async {
     isValidatingCoupon = true;
     couponError = null;
@@ -291,6 +317,11 @@ abstract class _CheckoutStore with Store {
     appliedCoupon = null;
     couponCode = null;
     couponError = null;
+  }
+
+  @action
+  void setCustomerEmail(String email) {
+    customerEmail = email;
   }
 
   @action

@@ -4,10 +4,11 @@ import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/entity/checkout/checkout_item.dart';
 import 'package:mobile_ai_erp/domain/entity/checkout/delivery_address.dart';
 import 'package:mobile_ai_erp/presentation/checkout/store/checkout_store.dart';
-import 'package:mobile_ai_erp/presentation/checkout/widgets/coupon_input_widget.dart';
 import 'package:mobile_ai_erp/presentation/checkout/widgets/order_summary_widget.dart';
+import 'package:mobile_ai_erp/presentation/checkout/widgets/coupon_input_widget.dart';
+import 'package:mobile_ai_erp/presentation/cart/widgets/payment_methods_widget.dart';
 
-/// Main checkout screen with single-page layout like TikTok Shop/Shopee
+/// Main checkout screen with single-page layout
 /// All sections (address, shipping, payment, summary) are visible on one page
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({
@@ -59,7 +60,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Address Section
+                      // Address Section (includes email)
                       _buildAddressSection(context),
                       const SizedBox(height: 16),
 
@@ -160,6 +161,23 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ],
                     ],
                   ),
+                  // Email row (if available)
+                  if (address.email != null && address.email!.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(Icons.email_outlined, size: 14, color: Colors.grey[500]),
+                        const SizedBox(width: 4),
+                        Text(
+                          address.email!,
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 6),
                   Text(
                     address.formattedAddress,
@@ -441,80 +459,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           context: context,
           title: 'Payment Method',
           icon: Icons.payment_outlined,
-          child: _store.paymentMethods.isEmpty
-              ? const Text('No payment methods available')
-              : Column(
-                  children: _store.paymentMethods.map((method) {
-                    final isSelected = _store.selectedPaymentMethod?.id == method.id;
-                    return _buildPaymentOption(method, isSelected);
-                  }).toList(),
-                ),
+          child: PaymentMethodsWidget(
+            onMethodSelected: (method, savedCardId) {
+              _store.setSelectedPaymentMethod(method, savedCardId: savedCardId);
+            },
+            selectedMethod: _store.selectedPaymentMethodValue,
+            showSavedCards: true,
+          ),
         );
       },
     );
-  }
-
-  Widget _buildPaymentOption(dynamic method, bool isSelected) {
-    return InkWell(
-      onTap: () => _store.selectPaymentMethod(method),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isSelected ? Theme.of(context).primaryColor.withOpacity(0.05) : null,
-          border: Border.all(
-            color: isSelected ? Theme.of(context).primaryColor : Colors.grey[300]!,
-          ),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              _getPaymentIcon(method.type.toString()),
-              color: isSelected ? Theme.of(context).primaryColor : Colors.grey[600],
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    method.name,
-                    style: const TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                  if (method.description != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      method.description!,
-                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            Radio<bool>(
-              value: true,
-              groupValue: isSelected,
-              onChanged: (_) => _store.selectPaymentMethod(method),
-              activeColor: Theme.of(context).primaryColor,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  IconData _getPaymentIcon(String type) {
-    if (type.contains('cod') || type.contains('COD')) {
-      return Icons.money_outlined;
-    } else if (type.contains('bank') || type.contains('transfer')) {
-      return Icons.account_balance_outlined;
-    } else if (type.contains('wallet') || type.contains('eWallet')) {
-      return Icons.account_balance_wallet_outlined;
-    } else if (type.contains('gateway') || type.contains('card')) {
-      return Icons.credit_card_outlined;
-    }
-    return Icons.payment_outlined;
   }
 
   // ==================== Coupon Section ====================
@@ -776,6 +730,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
   final _addressController = TextEditingController();
   final _smartAddressController = TextEditingController();
   final _cityController = TextEditingController(text: 'Ho Chi Minh City');
@@ -787,6 +742,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
+    _emailController.dispose();
     _addressController.dispose();
     _smartAddressController.dispose();
     _cityController.dispose();
@@ -909,6 +865,25 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
               ),
               const SizedBox(height: 16),
 
+              // Email Address
+              TextFormField(
+                controller: _emailController,
+                decoration: const InputDecoration(
+                  labelText: 'Email Address',
+                  prefixIcon: Icon(Icons.email_outlined),
+                  hintText: 'For order confirmation',
+                ),
+                keyboardType: TextInputType.emailAddress,
+                validator: (value) {
+                  if (value == null || value.isEmpty) return null; // Optional field
+                  if (!value.contains('@') || !value.contains('.')) {
+                    return 'Please enter a valid email';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+
               // Street Address
               TextFormField(
                 controller: _addressController,
@@ -1013,6 +988,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
         id: 'addr-${DateTime.now().millisecondsSinceEpoch}',
         fullName: _nameController.text,
         phone: _phoneController.text,
+        email: _emailController.text.isNotEmpty ? _emailController.text : null,
         street: _addressController.text,
         city: _cityController.text,
         countryCode: 'VN',
