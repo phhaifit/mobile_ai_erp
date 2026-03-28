@@ -6,9 +6,13 @@ import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/presentation/customer_management/navigation/customer_navigator.dart';
 import 'package:mobile_ai_erp/presentation/home/store/language/language_store.dart';
 import 'package:mobile_ai_erp/presentation/home/store/theme/theme_store.dart';
-import 'package:mobile_ai_erp/presentation/post/post_list.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_navigator.dart';
 import 'package:mobile_ai_erp/presentation/supplier/supplier_list/supplier_list_screen.dart';
+import 'package:mobile_ai_erp/presentation/cart/store/cart_store.dart';
+import 'package:mobile_ai_erp/presentation/cart/widgets/mini_cart_drawer.dart';
+import 'package:mobile_ai_erp/presentation/cart/store/wishlist_store.dart';
+import 'package:mobile_ai_erp/presentation/cart/screens/wishlist_page.dart';
+import 'package:mobile_ai_erp/utils/routes/cart_routes.dart';
 import 'package:mobile_ai_erp/utils/locale/app_localization.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -21,6 +25,18 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final ThemeStore _themeStore = getIt<ThemeStore>();
   final LanguageStore _languageStore = getIt<LanguageStore>();
+  late final CartStore _cartStore;
+  late final WishlistStore _wishlistStore;
+
+  @override
+  void initState() {
+    super.initState();
+    _cartStore = getIt<CartStore>();
+    _wishlistStore = getIt<WishlistStore>();
+
+    _cartStore.loadCart();
+    _wishlistStore.loadWishlist();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _buildCustomerPortalEntry(),
           _buildSuppliersEntry(),
           _buildUsersManagementEntry(),
+          // _buildSuppliersEntry(),
           // Expanded(child: PostListScreen()),
         ],
       ),
@@ -46,6 +63,69 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildCartButton() {
+    return Observer(
+      builder: (context) {
+        return MiniCartBadge(
+          itemCount: _cartStore.itemCount,
+          onTap: () {
+            CartRoutes.navigateToCart(context);
+          },
+          hasDiscount: _cartStore.hasCoupon,
+        );
+      },
+    );
+  }
+
+  Widget _buildWishlistButton() {
+    return Observer(
+      builder: (context) {
+        final count = _wishlistStore.itemCount;
+
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            IconButton(
+              tooltip: 'Wishlist',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const WishlistPage()),
+                );
+              },
+              icon: const Icon(Icons.favorite_border),
+            ),
+            if (count > 0)
+              Positioned(
+                right: 6,
+                top: 6,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  constraints: const BoxConstraints(
+                    minWidth: 18,
+                    minHeight: 18,
+                  ),
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    count > 99 ? '99+' : '$count',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildStorefrontPDPEntry() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
@@ -53,9 +133,8 @@ class _HomeScreenState extends State<HomeScreen> {
         child: ListTile(
           leading: Icon(Icons.storefront_outlined),
           title: Text('Product Detail Page'),
-          subtitle: Text(
-            'Storefront PDP - View sample product (offline mock).',
-          ),
+          subtitle:
+              Text('Storefront PDP - View sample product (offline mock).'),
           trailing: Icon(Icons.chevron_right),
           onTap: () => Navigator.of(context).pushNamed(Routes.productDetail),
         ),
@@ -105,8 +184,9 @@ class _HomeScreenState extends State<HomeScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) =>
-                    SupplierListScreen(store: getIt<SupplierStore>()),
+                builder: (_) => SupplierListScreen(
+                  store: getIt<SupplierStore>(),
+                ),
               ),
             );
           },
@@ -140,19 +220,62 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<Widget> _buildActions(BuildContext context) {
     return <Widget>[
+      _buildInventoryAuditButton(),
       _buildStockOperationsButton(),
-      IconButton(
-        onPressed: () => CustomerNavigator.openHome(context),
-        icon: const Icon(Icons.people_outline),
-        tooltip: 'Customer Management',
+      _buildCartButton(),
+      _buildWishlistButton(),
+      PopupMenuButton<String>(
+        tooltip: 'More',
+        onSelected: (value) {
+          switch (value) {
+            case 'customers':
+              CustomerNavigator.openHome(context);
+              break;
+            case 'metadata':
+              ProductMetadataNavigator.openProductMetadataHome(context);
+              break;
+            case 'tracking':
+              Navigator.of(context).pushNamed(Routes.orderTracking);
+              break;
+            case 'fulfillment':
+              Navigator.of(context).pushNamed(Routes.fulfillment);
+              break;
+            case 'language':
+              _buildLanguageDialog();
+              break;
+            case 'theme':
+              _themeStore.changeBrightnessToDark(!_themeStore.darkMode);
+              break;
+            case 'logout':
+              SharedPreferences.getInstance().then((preference) {
+                preference.setBool(Preferences.is_logged_in, false);
+                Navigator.of(context).pushReplacementNamed(Routes.login);
+              });
+              break;
+          }
+        },
+        itemBuilder: (context) => const [
+          PopupMenuItem(value: 'customers', child: Text('Customer Management')),
+          PopupMenuItem(value: 'metadata', child: Text('Product Metadata')),
+          PopupMenuItem(value: 'tracking', child: Text('Track Order')),
+          PopupMenuItem(value: 'fulfillment', child: Text('Order Fulfillment')),
+          PopupMenuItem(value: 'language', child: Text('Language')),
+          PopupMenuItem(value: 'theme', child: Text('Toggle Theme')),
+          PopupMenuItem(value: 'logout', child: Text('Logout')),
+        ],
+        icon: const Icon(Icons.more_vert),
       ),
-      _buildProductMetadataButton(),
-      _buildOrderTrackingButton(),
-      _buildFulfillmentButton(),
-      _buildLanguageButton(),
-      _buildThemeButton(),
-      _buildLogoutButton(),
     ];
+  }
+
+  Widget _buildInventoryAuditButton() {
+    return IconButton(
+      tooltip: 'Inventory Audit',
+      onPressed: () {
+        Navigator.of(context).pushNamed(Routes.inventoryAudit);
+      },
+      icon: const Icon(Icons.fact_check_outlined),
+    );
   }
 
   Widget _buildStockOperationsButton() {
@@ -248,8 +371,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: _languageStore.locale == object.locale
                         ? Theme.of(context).primaryColor
                         : _themeStore.darkMode
-                        ? Colors.white
-                        : Colors.black,
+                            ? Colors.white
+                            : Colors.black,
                   ),
                 ),
                 onTap: () {
