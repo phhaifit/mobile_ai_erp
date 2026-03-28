@@ -52,6 +52,12 @@ import 'package:mobile_ai_erp/presentation/product_detail/store/product_detail_s
 import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
 import 'package:mobile_ai_erp/presentation/reports/data/reports_mock_repository.dart';
 import 'package:mobile_ai_erp/presentation/reports/store/reports_store.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
+import 'package:mobile_ai_erp/presentation/account/store/profile_store.dart';
+import 'package:mobile_ai_erp/presentation/account/store/address_store.dart';
+import 'package:mobile_ai_erp/presentation/account/store/order_store.dart';
+import 'package:mobile_ai_erp/domain/repository/account/address_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/account/order_repository.dart';
 import 'package:mobile_ai_erp/presentation/stock_operations/store/stock_operations_store.dart';
 import 'package:mobile_ai_erp/presentation/user/store/role_store.dart';
 import 'package:mobile_ai_erp/presentation/user/store/user_store.dart' as user_mgmt;
@@ -68,6 +74,10 @@ class StoreModule {
     getIt.registerFactory(
       () => FormStore(getIt<FormErrorStore>(), getIt<ErrorStore>()),
     );
+    
+    getIt.registerLazySingleton<ProfileStore>(() => ProfileStore());
+    getIt.registerLazySingleton<AddressStore>(() => AddressStore(getIt<AddressRepository>()));
+    getIt.registerLazySingleton<OrderStore>(() => OrderStore(getIt<OrderRepository>()));
     getIt.registerLazySingleton(() => ReportsMockRepository());
 
     getIt.registerSingleton<auth.UserStore>(

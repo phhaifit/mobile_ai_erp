@@ -6,6 +6,22 @@ import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/inventory_au
 import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/inventory_outbound_history_screen.dart';
 import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/inventory_outbound_screen.dart';
 import 'package:mobile_ai_erp/presentation/login/login.dart';
+import 'package:mobile_ai_erp/presentation/stock_operations/stock_operations_screen.dart';
+import 'package:mobile_ai_erp/presentation/web_builder/web_builder_dashboard.dart';
+import 'package:mobile_ai_erp/presentation/web_builder/store_settings/store_settings_screen.dart';
+import 'package:mobile_ai_erp/presentation/web_builder/theme_engine/theme_list_screen.dart';
+import 'package:mobile_ai_erp/presentation/web_builder/theme_engine/theme_detail_screen.dart';
+import 'package:mobile_ai_erp/presentation/web_builder/cms_pages/cms_page_list_screen.dart';
+import 'package:mobile_ai_erp/presentation/web_builder/cms_pages/cms_page_editor_screen.dart';
+import 'package:mobile_ai_erp/presentation/product_detail/product_detail_screen.dart';
+import 'package:mobile_ai_erp/presentation/order_tracking/order_tracking.dart';
+import 'package:mobile_ai_erp/presentation/reports/reports_analytics.dart';
+import 'package:mobile_ai_erp/presentation/account/profile/profile_dashboard_screen.dart';
+import 'package:mobile_ai_erp/presentation/account/address/address_book_screen.dart';
+import 'package:mobile_ai_erp/presentation/account/address/address_form_screen.dart';
+import 'package:mobile_ai_erp/presentation/account/orders/order_history_screen.dart';
+import 'package:mobile_ai_erp/presentation/account/orders/order_detail_screen.dart';
+import 'package:mobile_ai_erp/presentation/account/orders/return_request_screen.dart';
 import 'package:mobile_ai_erp/presentation/order_fulfillment/fulfillment_detail.dart';
 import 'package:mobile_ai_erp/presentation/order_fulfillment/fulfillment_list.dart';
 import 'package:mobile_ai_erp/presentation/order_fulfillment/order_tracking.dart';
@@ -27,9 +43,11 @@ import 'package:mobile_ai_erp/presentation/web_builder/web_builder_dashboard.dar
 import 'cart_routes.dart';
 import 'package:mobile_ai_erp/presentation/product/screens/product_list_page.dart';
 
+
 class Routes {
   Routes._();
 
+  // static variables
   static const String splash = '/splash';
   static const String login = '/login';
   static const String home = '/post';
@@ -55,6 +73,13 @@ class Routes {
   static const String fulfillmentPackaging = '/fulfillment/packaging';
   static const String fulfillmentPrintLabel = '/fulfillment/print-label';
 
+  static const String profileDashboard = '/profile';
+  static const String addressBook = '/address_book';
+  static const String addressForm = '/address_form';
+  static const String orderHistory = '/order_history';
+  static const String orderDetail = '/order_detail';
+  static const String returnRequest = '/return_request';
+
   static final routes = <String, WidgetBuilder>{
     login: (BuildContext context) => LoginScreen(),
     home: (BuildContext context) => HomeScreen(),
@@ -74,6 +99,12 @@ class Routes {
     orderTracking: OrderTrackingNavigation.buildScreen,
     ...CartRoutes.getRoutes(),
     reports: (BuildContext context) => ReportsAnalyticsScreen(),
+    profileDashboard: (BuildContext context) => ProfileDashboardScreen(),
+    addressBook: (BuildContext context) => const AddressBookScreen(),
+    addressForm: (BuildContext context) => const AddressFormScreen(),
+    orderHistory: (BuildContext context) => const OrderHistoryScreen(),
+    orderDetail: (BuildContext context) => const OrderDetailScreen(),
+    returnRequest: (BuildContext context) => const ReturnRequestScreen(),
     users: (BuildContext context) => UserManagementScreen(
       userStore: getIt<UserStore>(),
       roleStore: getIt<RoleStore>(),
@@ -86,4 +117,5 @@ class Routes {
     fulfillmentPackaging: (BuildContext context) => PackagingScreen(),
     fulfillmentPrintLabel: (BuildContext context) => PrintLabelScreen(),
   };
+
 }
