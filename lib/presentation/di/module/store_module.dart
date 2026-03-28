@@ -37,7 +37,7 @@ import 'package:mobile_ai_erp/presentation/web_builder/store/cms_page_store.dart
 import 'package:mobile_ai_erp/presentation/web_builder/store/store_settings_store.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/store/web_theme_store.dart';
 import 'package:mobile_ai_erp/presentation/order_fulfillment/store/fulfillment_store.dart';
-import 'package:mobile_ai_erp/presentation/storefront/product_listing/product_listing_store.dart';
+import 'package:mobile_ai_erp/presentation/storefront/store/product_listing_store.dart';
 
 import '../../../di/service_locator.dart';
 

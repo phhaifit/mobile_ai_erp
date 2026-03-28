@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
-import 'package:mobile_ai_erp/presentation/storefront/product_listing/product_listing_store.dart';
-import 'package:mobile_ai_erp/presentation/storefront/product_listing_item.dart';
+import 'package:mobile_ai_erp/presentation/storefront/store/product_listing_store.dart';
+import 'package:mobile_ai_erp/presentation/storefront/widgets/product_listing_item.dart';
 import 'package:mobile_ai_erp/presentation/storefront/search_filter_bar.dart';
 
 class ProductListingScreen extends StatefulWidget {
