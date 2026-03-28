@@ -129,19 +129,25 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 children: [
                   Row(
                     children: [
-                      Text(
-                        address.fullName,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
+                      Flexible(
+                        child: Text(
+                          address.fullName,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Text(
-                        address.phone,
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 14,
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          address.phone,
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 14,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       if (address.isDefault) ...[

@@ -287,35 +287,37 @@ class _CartScreenState extends State<CartScreen> {
         const SizedBox(height: 24),
         SizedBox(
           width: double.infinity,
-          child: ElevatedButton(
-            onPressed: _canCheckout ? _handleApproveCheckout : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue[600],
-              disabledBackgroundColor: Colors.grey[300],
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+          child: Observer(
+            builder: (_) => ElevatedButton(
+              onPressed: _canCheckout ? _handleApproveCheckout : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue[600],
+                disabledBackgroundColor: Colors.grey[300],
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
+              child: _isSubmittingCheckout
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Text(
+                      _cartStore.isCartValid
+                          ? 'Proceed to Checkout'
+                          : 'Selected items are invalid',
+                      style: TextStyle(
+                        color: _canCheckout ? Colors.white : Colors.grey[700],
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
             ),
-            child: _isSubmittingCheckout
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : Text(
-                    _cartStore.isCartValid
-                        ? 'Proceed to Checkout'
-                        : 'Selected items are invalid',
-                    style: TextStyle(
-                      color: _canCheckout ? Colors.white : Colors.grey[700],
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
           ),
         ),
         const SizedBox(height: 12),
@@ -333,19 +335,22 @@ class _CartScreenState extends State<CartScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        if (_cartStore.checkoutItems.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Text(
-              'Selected: ${_cartStore.checkoutItems.length} item(s)',
-              style: TextStyle(
-                fontSize: 13,
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurface.withValues(alpha: 0.7),
-              ),
-            ),
-          ),
+        Observer(
+          builder: (_) => _cartStore.checkoutItems.isNotEmpty
+              ? Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    'Selected: ${_cartStore.checkoutItems.length} item(s)',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.7),
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ),
       ],
     );
   }
