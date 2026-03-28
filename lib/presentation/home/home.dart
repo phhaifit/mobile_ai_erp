@@ -47,6 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _buildStorefrontPDPEntry(),
           _buildReportsEntry(),
           _buildUsersManagementEntry(),
+          // _buildSuppliersEntry(),
           // Expanded(child: PostListScreen()),
         ],
       ),
@@ -130,9 +131,8 @@ class _HomeScreenState extends State<HomeScreen> {
         child: ListTile(
           leading: Icon(Icons.storefront_outlined),
           title: Text('Product Detail Page'),
-          subtitle: Text(
-            'Storefront PDP - View sample product (offline mock).',
-          ),
+          subtitle:
+              Text('Storefront PDP - View sample product (offline mock).'),
           trailing: Icon(Icons.chevron_right),
           onTap: () => Navigator.of(context).pushNamed(Routes.productDetail),
         ),
@@ -182,8 +182,9 @@ class _HomeScreenState extends State<HomeScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) =>
-                    SupplierListScreen(store: getIt<SupplierStore>()),
+                builder: (_) => SupplierListScreen(
+                  store: getIt<SupplierStore>(),
+                ),
               ),
             );
           },
@@ -201,6 +202,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<Widget> _buildActions(BuildContext context) {
     return <Widget>[
+      _buildInventoryAuditButton(),
       _buildStockOperationsButton(),
       _buildCartButton(),
       _buildWishlistButton(),
@@ -246,6 +248,16 @@ class _HomeScreenState extends State<HomeScreen> {
         icon: const Icon(Icons.more_vert),
       ),
     ];
+  }
+
+  Widget _buildInventoryAuditButton() {
+    return IconButton(
+      tooltip: 'Inventory Audit',
+      onPressed: () {
+        Navigator.of(context).pushNamed(Routes.inventoryAudit);
+      },
+      icon: const Icon(Icons.fact_check_outlined),
+    );
   }
 
   Widget _buildStockOperationsButton() {
@@ -341,8 +353,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: _languageStore.locale == object.locale
                         ? Theme.of(context).primaryColor
                         : _themeStore.darkMode
-                        ? Colors.white
-                        : Colors.black,
+                            ? Colors.white
+                            : Colors.black,
                   ),
                 ),
                 onTap: () {

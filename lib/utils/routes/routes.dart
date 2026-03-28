@@ -1,25 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/presentation/home/home.dart';
+import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/inventory_audit_screen.dart';
+import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/inventory_audit_summary_screen.dart';
+import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/inventory_outbound_history_screen.dart';
+import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/inventory_outbound_screen.dart';
 import 'package:mobile_ai_erp/presentation/login/login.dart';
-import 'package:mobile_ai_erp/presentation/stock_operations/stock_operations_screen.dart';
-import 'package:mobile_ai_erp/presentation/web_builder/web_builder_dashboard.dart';
-import 'package:mobile_ai_erp/presentation/web_builder/store_settings/store_settings_screen.dart';
-import 'package:mobile_ai_erp/presentation/web_builder/theme_engine/theme_list_screen.dart';
-import 'package:mobile_ai_erp/presentation/web_builder/theme_engine/theme_detail_screen.dart';
-import 'package:mobile_ai_erp/presentation/web_builder/cms_pages/cms_page_list_screen.dart';
-import 'package:mobile_ai_erp/presentation/web_builder/cms_pages/cms_page_editor_screen.dart';
-import 'package:mobile_ai_erp/presentation/product_detail/product_detail_screen.dart';
-import 'package:mobile_ai_erp/presentation/order_tracking/order_tracking.dart';
-import 'package:mobile_ai_erp/presentation/reports/reports_analytics.dart';
 import 'package:mobile_ai_erp/presentation/order_fulfillment/fulfillment_detail.dart';
 import 'package:mobile_ai_erp/presentation/order_fulfillment/fulfillment_list.dart';
 import 'package:mobile_ai_erp/presentation/order_fulfillment/order_tracking.dart';
 import 'package:mobile_ai_erp/presentation/order_fulfillment/packaging.dart';
 import 'package:mobile_ai_erp/presentation/order_fulfillment/print_label.dart';
+import 'package:mobile_ai_erp/presentation/order_tracking/order_tracking.dart';
+import 'package:mobile_ai_erp/presentation/product_detail/product_detail_screen.dart';
+import 'package:mobile_ai_erp/presentation/reports/reports_analytics.dart';
+import 'package:mobile_ai_erp/presentation/stock_operations/stock_operations_screen.dart';
 import 'package:mobile_ai_erp/presentation/user/home/user_home.dart';
-import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/presentation/user/store/role_store.dart';
 import 'package:mobile_ai_erp/presentation/user/store/user_store.dart';
+import 'package:mobile_ai_erp/presentation/web_builder/cms_pages/cms_page_editor_screen.dart';
+import 'package:mobile_ai_erp/presentation/web_builder/cms_pages/cms_page_list_screen.dart';
+import 'package:mobile_ai_erp/presentation/web_builder/store_settings/store_settings_screen.dart';
+import 'package:mobile_ai_erp/presentation/web_builder/theme_engine/theme_detail_screen.dart';
+import 'package:mobile_ai_erp/presentation/web_builder/theme_engine/theme_list_screen.dart';
+import 'package:mobile_ai_erp/presentation/web_builder/web_builder_dashboard.dart';
 import 'cart_routes.dart';
 import 'package:mobile_ai_erp/presentation/product/screens/product_list_page.dart';
 
@@ -30,6 +34,10 @@ class Routes {
   static const String login = '/login';
   static const String home = '/post';
   static const String stockOperations = '/stock-operations';
+  static const String inventoryAudit = '/inventory-audit';
+  static const String inventoryAuditSummary = '/inventory-audit-summary';
+  static const String inventoryOutbound = '/inventory-outbound';
+  static const String inventoryOutboundHistory = '/inventory-outbound-history';
   static const String webBuilder = '/web-builder';
   static const String storeSettings = '/web-builder/store-settings';
   static const String themeList = '/web-builder/themes';
@@ -51,6 +59,12 @@ class Routes {
     login: (BuildContext context) => LoginScreen(),
     home: (BuildContext context) => HomeScreen(),
     stockOperations: (BuildContext context) => const StockOperationsScreen(),
+    inventoryAudit: (BuildContext context) => const InventoryAuditScreen(),
+    inventoryAuditSummary: (BuildContext context) =>
+        const InventoryAuditSummaryScreen(),
+    inventoryOutbound: (BuildContext context) => const InventoryOutboundScreen(),
+    inventoryOutboundHistory: (BuildContext context) =>
+        const InventoryOutboundHistoryScreen(),
     webBuilder: (BuildContext context) => const WebBuilderDashboard(),
     storeSettings: (BuildContext context) => const StoreSettingsScreen(),
     themeList: (BuildContext context) => const ThemeListScreen(),
