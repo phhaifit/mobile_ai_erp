@@ -46,6 +46,8 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           _buildStorefrontPDPEntry(),
           _buildReportsEntry(),
+          _buildCustomerPortalEntry(),
+          _buildSuppliersEntry(),
           _buildUsersManagementEntry(),
           // _buildSuppliersEntry(),
           // Expanded(child: PostListScreen()),
@@ -193,6 +195,22 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildCustomerPortalEntry() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      child: Card(
+        child: ListTile(
+          leading: Icon(Icons.person_outline), // Icon representing a user profile
+          title: Text('Customer Portal (Storefront)'),
+          subtitle: Text('Manage profile, address book, and order history.'),
+          trailing: Icon(Icons.chevron_right),
+          onTap: () => Navigator.of(context).pushNamed(Routes.profileDashboard), 
+        ),
+      ),
+    );
+  }
+
+  // app bar methods:-----------------------------------------------------------
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
       title: Text(AppLocalizations.of(context).translate('home_tv_posts')),

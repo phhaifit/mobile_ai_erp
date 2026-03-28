@@ -33,6 +33,12 @@ import 'package:mobile_ai_erp/domain/repository/stock_operations/stock_operation
 import 'package:mobile_ai_erp/domain/repository/supplier/supplier_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/role_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/user_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/account/address_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/account/order_repository.dart';
+import 'package:mobile_ai_erp/data/repository/account/address_repository_impl.dart';
+import 'package:mobile_ai_erp/data/repository/account/order_repository_impl.dart';
+import 'package:mobile_ai_erp/data/local/datasources/account/address_mock_datasource.dart';
+import 'package:mobile_ai_erp/data/local/datasources/account/order_mock_datasource.dart';
 import 'package:mobile_ai_erp/domain/repository/web_builder/cms_page_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/web_builder/store_settings_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/web_builder/web_theme_repository.dart';
@@ -71,8 +77,16 @@ class RepositoryModule {
       ProductMetadataDataSource(),
     );
     getIt.registerSingleton<ProductMetadataRepository>(
-      ProductMetadataRepositoryImpl(getIt<ProductMetadataDataSource>()),
-    );
+        ProductMetadataRepositoryImpl(
+      getIt<ProductMetadataDataSource>(),
+    ));
+    
+    getIt.registerLazySingleton<AddressRepository>(
+        () => AddressRepositoryImpl(getIt<AddressMockDataSource>()));
+        
+    getIt.registerLazySingleton<OrderRepository>(
+        () => OrderRepositoryImpl(getIt<OrderMockDataSource>()));
+      ProductMetadataRepositoryImpl(getIt<ProductMetadataDataSource>());
 
     getIt.registerSingleton<UserDataSource>(UserDataSource());
     getIt.registerSingleton<RoleDataSource>(RoleDataSource());
