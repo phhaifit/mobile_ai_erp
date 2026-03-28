@@ -3,7 +3,7 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/brand.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
-import 'package:mobile_ai_erp/presentation/storefront/product_listing/product_listing_store.dart';
+import 'package:mobile_ai_erp/presentation/storefront/store/product_listing_store.dart';
 
 class SearchFilterBar extends StatefulWidget {
   final List<Category> categories;
