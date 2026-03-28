@@ -291,11 +291,13 @@ class _ProductListPageState extends State<ProductListPage> {
     final salePrice = product['salePrice'] as double?;
     final price = (product['price'] as num).toDouble();
 
+    // Display price as integer (VND format) without rounding
+    // Use toInt() to truncate rather than round
     if (salePrice != null && salePrice < price) {
-      return '₫${salePrice.toStringAsFixed(0)}';
+      return '₫${salePrice.toInt()}';
     }
 
-    return '₫${price.toStringAsFixed(0)}';
+    return '₫${price.toInt()}';
   }
 
   int? _discountPercent(Map<String, dynamic> product) {

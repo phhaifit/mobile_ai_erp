@@ -281,6 +281,7 @@ class _CartScreenState extends State<CartScreen> {
             total: _cartStore.selectedTotal,
             discountLabel: 'Subtotal',
             showDividers: true,
+            isShippingDetermined: false,
           ),
         ),
         const SizedBox(height: 24),
