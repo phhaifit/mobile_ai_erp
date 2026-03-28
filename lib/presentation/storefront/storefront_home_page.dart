@@ -4,6 +4,8 @@ import 'package:mobile_ai_erp/domain/entity/product_metadata/brand.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
 import 'package:mobile_ai_erp/presentation/storefront/classes/filter_arguments.dart';
 import 'package:mobile_ai_erp/presentation/storefront/store/product_listing_store.dart';
+import 'package:mobile_ai_erp/presentation/storefront/widgets/brand_card.dart';
+import 'package:mobile_ai_erp/presentation/storefront/widgets/category_card.dart';
 import 'package:mobile_ai_erp/presentation/storefront/widgets/heading_section.dart';
 import 'package:mobile_ai_erp/presentation/storefront/widgets/page_banner.dart';
 import 'package:mobile_ai_erp/presentation/storefront/widgets/product_card_small.dart';
@@ -24,6 +26,8 @@ class _StorefrontHomePageState extends State<StorefrontHomePage> {
   List<Product> productsNewArrivals = List.empty();
   List<Product> productsPopular = List.empty();
   List<Product> productsForYou = List.empty();
+  List<Category> featuredCategories = List.empty();
+  List<Brand> featuredBrands = List.empty();
 
   String fetchBannerImageSource() {
     //// call repository here
@@ -45,6 +49,51 @@ class _StorefrontHomePageState extends State<StorefrontHomePage> {
   List<Product> fetchForYou() {
     //// call repository here
     return fetchMock();
+  }
+
+  List<Category> fetchFeaturedCategories() {
+    //// call repository here
+    return [
+      Category(
+        id: 'CAT1',
+        name: 'Electronics',
+        code: 'ELEC',
+        slug: 'electronics',
+      ),
+      Category(
+        id: 'CAT2',
+        name: 'Clothing',
+        code: 'CLOTH',
+        slug: 'clothing',
+      ),
+      Category(
+        id: 'CAT3',
+        name: 'Home & Garden',
+        code: 'HOME',
+        slug: 'home-garden',
+      ),
+    ];
+  }
+
+  List<Brand> fetchFeaturedBrands() {
+    //// call repository here
+    return [
+      const Brand(
+        id: 'BRAND1',
+        name: 'TechCorp',
+        code: 'BRAND1',
+      ),
+      const Brand(
+        id: 'BRAND2',
+        name: 'CompuTech',
+        code: 'BRAND2',
+      ),
+      const Brand(
+        id: 'BRAND3',
+        name: 'FashionBrand',
+        code: 'BRAND3',
+      ),
+    ];
   }
 
   List<Product> fetchMock() {
@@ -101,6 +150,8 @@ class _StorefrontHomePageState extends State<StorefrontHomePage> {
     productsNewArrivals = fetchNewArrivals();
     productsPopular = fetchPopular();
     productsForYou = fetchForYou();
+    featuredCategories = fetchFeaturedCategories();
+    featuredBrands = fetchFeaturedBrands();
   }
 
 
@@ -159,6 +210,24 @@ class _StorefrontHomePageState extends State<StorefrontHomePage> {
                       productName: product.productName, 
                       imageSource: product.imageSource
                     )
+                ],
+              ),
+              SectionHeader(headingText: "Featured Categories", linkText: "See all", linkDestination: Routes.categoriesLanding),
+              Wrap(
+                spacing: 5.0,
+                runSpacing: 5.0,
+                children: [
+                  for (final Category category in featuredCategories)
+                    CategoryCard(category: category)
+                ],
+              ),
+              SectionHeader(headingText: "Featured Brands", linkText: "See all", linkDestination: Routes.brandsLanding),
+              Wrap(
+                spacing: 5.0,
+                runSpacing: 5.0,
+                children: [
+                  for (final Brand brand in featuredBrands)
+                    BrandCard(brand: brand)
                 ],
               ),
               SectionHeader(headingText: "For You", linkText: "See all", linkDestination: Routes.storefrontProductListing, filterArguments: FilterArguments(sortOption: SortOption.relevance)),
