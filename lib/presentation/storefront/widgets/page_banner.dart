@@ -13,6 +13,7 @@ class PageBanner extends StatelessWidget {
 
     return Container(
       margin: EdgeInsets.all(5.0),
+      height: 200,
       decoration: imageSource != null
         ? BoxDecoration(
             image: DecorationImage(image: NetworkImage(imageSource!), fit: BoxFit.cover),
@@ -22,12 +23,11 @@ class PageBanner extends StatelessWidget {
       alignment: Alignment.center,
       child: Text(
         heading, 
-        // style: TextStyle(
-        //   fontSize: 36.0, 
-        //   color: colorScheme.onSurface, 
-        //   backgroundColor: colorScheme.surface
-        // )
-        style: theme.textTheme.headlineLarge
+        style: TextStyle(
+          fontSize: 36.0, 
+          color: colorScheme.onSurface, 
+          backgroundColor: colorScheme.surface
+        )
       ),
     );
   }

@@ -1,11 +1,15 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:mobile_ai_erp/presentation/storefront/classes/filter_arguments.dart';
 
 class SectionHeader extends StatelessWidget {
-  const SectionHeader({super.key, required this.headingText, this.linkText, this.linkDestination});
+  const SectionHeader({super.key, required this.headingText, this.linkText, this.linkDestination, this.filterArguments});
 
   final String headingText;
   final String? linkText;
   final String? linkDestination;
+  final FilterArguments? filterArguments;
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +30,8 @@ class SectionHeader extends StatelessWidget {
           if (linkText != null && linkDestination != null)
             TextButton(
               onPressed: () {
-                Navigator.of(context).pushNamed(linkDestination!);
+                log("ok");
+                Navigator.of(context).pushNamed(linkDestination!, arguments: filterArguments);
               },
               child: Text(linkText!),
             )

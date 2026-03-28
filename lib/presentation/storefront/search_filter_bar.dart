@@ -141,6 +141,8 @@ class _SearchFilterBarState extends State<SearchFilterBar> {
           },
           child: Column(
             children: [
+              ListTile(title: Text('Recommended'), leading: Radio<SortOption>(value: SortOption.relevance)),
+              ListTile(title: Text('Most Popular'), leading: Radio<SortOption>(value: SortOption.popular)),
               ListTile(title: Text('Newest Arrivals'), leading: Radio<SortOption>(value: SortOption.timeDesc)),
               ListTile(title: Text('Oldest Arrivals'), leading: Radio<SortOption>(value: SortOption.timeAsc)),
               ListTile(title: Text('Name: A-Z'), leading: Radio<SortOption>(value: SortOption.nameAsc)),

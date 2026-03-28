@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
+import 'package:mobile_ai_erp/presentation/storefront/classes/filter_arguments.dart';
 import 'package:mobile_ai_erp/presentation/storefront/store/product_listing_store.dart';
 import 'package:mobile_ai_erp/presentation/storefront/widgets/product_listing_item.dart';
 import 'package:mobile_ai_erp/presentation/storefront/search_filter_bar.dart';
@@ -30,6 +31,24 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+
+    final args = ModalRoute.of(context)?.settings.arguments as FilterArguments?;
+    if (args != null) {
+      if (args.searchQuery != null) {
+        _listingFilters.setSearchQuery(args.searchQuery!);
+      }
+      if (args.selectedBrands != null) {
+        _listingFilters.clearBrandFilters();
+        _listingFilters.setBrandFilter(args.selectedBrands!);
+      }
+      if (args.selectedCategories != null) {
+        _listingFilters.clearCategoryFilters();
+        _listingFilters.setCategoryFilter(args.selectedCategories!);
+      }
+      if (args.sortOption != null) {
+        _listingFilters.setSortOption(args.sortOption!);
+      }
+    }
         
     return Scaffold(
       appBar: AppBar(
