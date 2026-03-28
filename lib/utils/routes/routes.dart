@@ -2,6 +2,8 @@ import 'package:mobile_ai_erp/presentation/home/home.dart';
 import 'package:mobile_ai_erp/presentation/login/login.dart';
 import 'package:mobile_ai_erp/presentation/storefront/product_listing_page.dart';
 import 'package:mobile_ai_erp/presentation/storefront/storefront_home_page.dart';
+import 'package:mobile_ai_erp/presentation/storefront/categories_landing_page.dart';
+import 'package:mobile_ai_erp/presentation/storefront/brands_landing_page.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/web_builder_dashboard.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/store_settings/store_settings_screen.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/theme_engine/theme_list_screen.dart';
@@ -38,6 +40,8 @@ class Routes {
   static const String fulfillmentPrintLabel = '/fulfillment/print-label';
   static const String storeHome = '/storefront';
   static const String storefrontProductListing = '/storefront/product-listing';
+  static const String categoriesLanding = '/storefront/categories';
+  static const String brandsLanding = '/storefront/brands';
   static const String productDetail = '/storefront/product-detail';
 
   static final routes = <String, WidgetBuilder>{
@@ -58,6 +62,8 @@ class Routes {
     fulfillmentPrintLabel: (BuildContext context) => PrintLabelScreen(),
     storeHome: (BuildContext context) => StorefrontHomePage(),
     storefrontProductListing: (BuildContext context) => ProductListingScreen(),
+    categoriesLanding: (BuildContext context) => const CategoriesLandingPage(),
+    brandsLanding: (BuildContext context) => const BrandsLandingPage(),
     productDetail: (BuildContext context) => Text("Product detail page")
   };
 }

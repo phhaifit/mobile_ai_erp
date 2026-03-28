@@ -46,13 +46,42 @@ abstract class _ListingFiltersStore with Store {
   ];
 
   final List<Brand> testBrands = [
-    Brand(id: 'BRAND1', name: 'Brand A', code: 'BRAND1'),
-    Brand(id: 'BRAND2', name: 'Brand B', code: 'BRAND2'),
+    const Brand(
+        id: 'BRAND1',
+        name: 'TechCorp',
+        code: 'BRAND1',
+      ),
+      const Brand(
+        id: 'BRAND2',
+        name: 'CompuTech',
+        code: 'BRAND2',
+      ),
+      const Brand(
+        id: 'BRAND3',
+        name: 'FashionBrand',
+        code: 'BRAND3',
+      ),
   ];
 
   final List<Category> testCategories = [
-    Category(id: 'CAT1', name: 'Category 1', code: 'CAT1', slug: 'category-1'),
-    Category(id: 'CAT2', name: 'Category 2', code: 'CAT2', slug: 'category-2'),
+    Category(
+        id: 'CAT1',
+        name: 'Electronics',
+        code: 'ELEC',
+        slug: 'electronics',
+      ),
+      Category(
+        id: 'CAT2',
+        name: 'Clothing',
+        code: 'CLOTH',
+        slug: 'clothing',
+      ),
+      Category(
+        id: 'CAT3',
+        name: 'Home & Garden',
+        code: 'HOME',
+        slug: 'home-garden',
+      ),
   ];
 
   // store variables
