@@ -7,12 +7,14 @@ part 'product_listing_store.g.dart';
 
 // Define SortOption enum if not already available in domain
 enum SortOption {
+  relevance, // sort based on relevance for user
+  popular, // most popular products first
   timeAsc, // oldest first
   timeDesc, // newest first
   nameAsc, // a-z
   nameDesc, // z-a
-  priceAsc,
-  priceDesc,
+  priceAsc, // lowest price first
+  priceDesc, // highest price first
   rating, // highest rating first
 }
 
@@ -75,6 +77,10 @@ abstract class _ListingFiltersStore with Store {
     searchQuery = value;
   }
 
+  @action setCategoryFilter(List<String> categoryIds) {
+    categoryFilter = ObservableList.of(categoryIds);
+  }
+
   @action
   void addCategoryFilter(String categoryId) {
     if (!categoryFilter.contains(categoryId)) {
@@ -99,6 +105,11 @@ abstract class _ListingFiltersStore with Store {
   @action
   void clearCategoryFilters() {
     categoryFilter.clear();
+  }
+
+  @action
+  void setBrandFilter(List<String> brandIds) {
+    brandFilter = ObservableList.of(brandIds);
   }
 
   @action

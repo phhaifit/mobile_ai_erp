@@ -27,7 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Column(
         children: [
           _buildReportsEntry(),
-          _buildProductListingEntry(),
+          _buildStorefrontEntry(),
           Expanded(child: PostListScreen()),
         ],
       ),
@@ -56,16 +56,16 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildProductListingEntry() {
+  Widget _buildStorefrontEntry() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
       child: Card(
         child: ListTile(
           leading: Icon(Icons.shopping_cart),
-          title: Text('Product Listing'),
+          title: Text('Storefront'),
           subtitle: Text('View all available products.'),
           trailing: Icon(Icons.chevron_right),
-          onTap: () => Navigator.of(context).pushNamed(Routes.storefrontProductListing),
+          onTap: () => Navigator.of(context).pushNamed(Routes.storeHome),
         ),
       ),
     );

@@ -1,6 +1,7 @@
 import 'package:mobile_ai_erp/presentation/home/home.dart';
 import 'package:mobile_ai_erp/presentation/login/login.dart';
 import 'package:mobile_ai_erp/presentation/storefront/product_listing_page.dart';
+import 'package:mobile_ai_erp/presentation/storefront/storefront_home_page.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/web_builder_dashboard.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/store_settings/store_settings_screen.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/theme_engine/theme_list_screen.dart';
@@ -35,8 +36,9 @@ class Routes {
   static const String fulfillmentTracking = '/fulfillment/tracking';
   static const String fulfillmentPackaging = '/fulfillment/packaging';
   static const String fulfillmentPrintLabel = '/fulfillment/print-label';
-  // static const String storeHome = '/storefront';
+  static const String storeHome = '/storefront';
   static const String storefrontProductListing = '/storefront/product-listing';
+  static const String productDetail = '/storefront/product-detail';
 
   static final routes = <String, WidgetBuilder>{
     login: (BuildContext context) => LoginScreen(),
@@ -54,7 +56,8 @@ class Routes {
     fulfillmentTracking: (BuildContext context) => FulfillmentTrackingScreen(),
     fulfillmentPackaging: (BuildContext context) => PackagingScreen(),
     fulfillmentPrintLabel: (BuildContext context) => PrintLabelScreen(),
-    // storeHome: (BuildContext context) => StoreHomeScreen(),
+    storeHome: (BuildContext context) => StorefrontHomePage(),
     storefrontProductListing: (BuildContext context) => ProductListingScreen(),
+    productDetail: (BuildContext context) => Text("Product detail page")
   };
 }
