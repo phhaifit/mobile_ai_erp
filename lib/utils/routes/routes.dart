@@ -34,6 +34,7 @@ import 'package:mobile_ai_erp/presentation/product/screens/product_filter_screen
 import 'package:mobile_ai_erp/domain/entity/product/product.dart';
 import 'package:mobile_ai_erp/presentation/user/store/role_store.dart';
 import 'package:mobile_ai_erp/presentation/user/store/user_store.dart';
+import 'package:mobile_ai_erp/presentation/user/home/user_home.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/cms_pages/cms_page_editor_screen.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/cms_pages/cms_page_list_screen.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/store_settings/store_settings_screen.dart';
