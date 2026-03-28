@@ -89,7 +89,6 @@ class RepositoryModule {
         
     getIt.registerLazySingleton<OrderRepository>(
         () => OrderRepositoryImpl(getIt<OrderMockDataSource>()));
-      ProductMetadataRepositoryImpl(getIt<ProductMetadataDataSource>());
 
     getIt.registerSingleton<UserDataSource>(UserDataSource());
     getIt.registerSingleton<RoleDataSource>(RoleDataSource());
