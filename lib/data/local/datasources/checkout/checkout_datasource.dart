@@ -209,9 +209,12 @@ class CheckoutLocalDataSourceImpl implements CheckoutDataSource {
   Future<List<DeliveryAddress>> getSavedAddresses(String? customerId) async {
     await Future.delayed(const Duration(milliseconds: 200));
 
-    if (customerId == null) return [];
+    if (customerId == null || customerId.isEmpty) return [];
 
-    return _savedAddresses.where((a) => a.id.contains(customerId)).toList();
+    // For demo purposes: return all mock addresses when a customerId is provided.
+    // In production, this would filter by actual customer ID from the address.
+    // Mock addresses are shared across all customers for testing.
+    return _savedAddresses.toList();
   }
 
   @override
@@ -287,7 +290,7 @@ class CheckoutLocalDataSourceImpl implements CheckoutDataSource {
         name: 'Cash on Delivery',
         isEnabled: true,
         description: 'Pay with cash when your order arrives',
-        fee: 2.00,
+        fee: 0.0,
         processingTime: 'Pay on delivery',
       ),
       const PaymentMethod(
@@ -296,7 +299,7 @@ class CheckoutLocalDataSourceImpl implements CheckoutDataSource {
         name: 'Bank Transfer',
         isEnabled: true,
         description: 'Transfer directly to our bank account',
-        fee: 0.0,
+        fee: 2.0,
         instructions:
             'Bank: First National Bank\nAccount: 1234-5678-9012\nName: My Store Inc.',
         processingTime: '1-2 business days',
@@ -307,7 +310,7 @@ class CheckoutLocalDataSourceImpl implements CheckoutDataSource {
         name: 'E-Wallet',
         isEnabled: true,
         description: 'Pay with PayPal, Apple Pay, or Google Pay',
-        feePercentage: 1.5,
+        fee: 2.0,
         processingTime: 'Instant',
       ),
       const PaymentMethod(
@@ -316,7 +319,7 @@ class CheckoutLocalDataSourceImpl implements CheckoutDataSource {
         name: 'Credit/Debit Card',
         isEnabled: true,
         description: 'Visa, Mastercard, American Express',
-        feePercentage: 2.5,
+        fee: 2.0,
         minAmount: 1.0,
         maxAmount: 10000.0,
         processingTime: 'Instant',
@@ -328,7 +331,7 @@ class CheckoutLocalDataSourceImpl implements CheckoutDataSource {
         name: 'Payment Gateway',
         isEnabled: true,
         description: 'Secure payment via Stripe',
-        feePercentage: 2.9,
+        fee: 2.0,
         processingTime: 'Instant',
         gatewayConfig: {
           'provider': 'stripe',

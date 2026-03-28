@@ -15,10 +15,12 @@ class CheckoutScreen extends StatefulWidget {
     super.key,
     required this.items,
     this.customerId,
+    this.appliedCouponCode,
   });
 
   final List<CheckoutItem> items;
   final String? customerId;
+  final String? appliedCouponCode;
 
   @override
   State<CheckoutScreen> createState() => _CheckoutScreenState();
@@ -30,7 +32,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   void initState() {
     super.initState();
-    _store.initializeCheckout(widget.items, customerId: widget.customerId);
+    _store.initializeCheckout(
+      widget.items,
+      customerId: widget.customerId,
+      initialCouponCode: widget.appliedCouponCode,
+    );
   }
 
   @override
@@ -612,7 +618,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               Text('Total: ${_store.formattedGrandTotal}'),
               const SizedBox(height: 16),
               const Text(
-                'Thank you for your order! You will receive a confirmation email shortly.',
+                'Thank you for your order!',
                 style: TextStyle(color: Colors.grey),
               ),
             ],
@@ -621,7 +627,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(); // Close dialog
-                Navigator.of(context).pop(); // Return to previous screen
+                // Use popUntil to safely navigate back to cart or products screen
+                Navigator.of(context).popUntil((route) {
+                  // Stop at cart route or products route, or if can't pop anymore
+                  return route.settings.name == '/cart' ||
+                         route.settings.name == '/products' ||
+                         !Navigator.of(context).canPop();
+                });
               },
               child: const Text('Done'),
             ),

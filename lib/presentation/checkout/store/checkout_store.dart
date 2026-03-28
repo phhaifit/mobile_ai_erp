@@ -13,6 +13,7 @@ import 'package:mobx/mobx.dart';
 
 part 'checkout_store.g.dart';
 
+// ignore: library_private_types_in_public_api
 class CheckoutStore = _CheckoutStore with _$CheckoutStore;
 
 /// Enum representing checkout steps
@@ -34,11 +35,8 @@ abstract class _CheckoutStore with Store {
     this._getShippingMethodsUseCase,
     this._getPaymentMethodsUseCase,
     this._validateCouponUseCase,
-    this._validateAddressUseCase,
     this._parseAddressUseCase,
     this._createOrderUseCase,
-    this._getOrderUseCase,
-    this._updateOrderUseCase,
     this._confirmOrderUseCase,
     this._getSavedAddressesUseCase,
     this._saveAddressUseCase,
@@ -50,11 +48,8 @@ abstract class _CheckoutStore with Store {
   final GetShippingMethodsUseCase _getShippingMethodsUseCase;
   final GetPaymentMethodsUseCase _getPaymentMethodsUseCase;
   final ValidateCouponUseCase _validateCouponUseCase;
-  final ValidateAddressUseCase _validateAddressUseCase;
   final ParseAddressUseCase _parseAddressUseCase;
   final CreateCheckoutOrderUseCase _createOrderUseCase;
-  final GetCheckoutOrderUseCase _getOrderUseCase;
-  final UpdateCheckoutOrderUseCase _updateOrderUseCase;
   final ConfirmOrderUseCase _confirmOrderUseCase;
   final GetSavedAddressesUseCase _getSavedAddressesUseCase;
   final SaveAddressUseCase _saveAddressUseCase;
@@ -171,7 +166,9 @@ abstract class _CheckoutStore with Store {
   // ==================== Actions ====================
 
   @action
-  void initializeCheckout(List<CheckoutItem> items, {String? customerId}) {
+  void initializeCheckout(List<CheckoutItem> items, {String? customerId, String? initialCouponCode}) {
+    _resetState();
+    
     currentOrder = CheckoutOrder(
       id: 'temp-${DateTime.now().millisecondsSinceEpoch}',
       items: items,
@@ -179,7 +176,37 @@ abstract class _CheckoutStore with Store {
       createdAt: DateTime.now(),
     );
     currentStep = CheckoutStep.address;
-    _loadInitialData();
+    
+    if (initialCouponCode != null && initialCouponCode.isNotEmpty) {
+      couponCode = initialCouponCode;
+      _loadInitialData().then((_) {
+        applyCoupon(initialCouponCode);
+      });
+    } else {
+      _loadInitialData();
+    }
+  }
+
+  @action
+  void _resetState() {
+    currentOrder = null;
+    currentStep = CheckoutStep.address;
+    selectedShippingMethod = null;
+    selectedPaymentMethod = null;
+    selectedPaymentMethodValue = null;
+    selectedSavedCardId = null;
+    selectedDeliveryAddress = null;
+    billingAddress = null;
+    appliedCoupon = null;
+    couponCode = null;
+    couponError = null;
+    shippingMethods.clear();
+    paymentMethods.clear();
+    savedAddresses.clear();
+    isLoadingShippingMethods = false;
+    isLoadingPaymentMethods = false;
+    isLoadingAddresses = false;
+    isProcessingOrder = false;
   }
 
   @action
@@ -272,15 +299,33 @@ abstract class _CheckoutStore with Store {
     selectedSavedCardId = savedCardId;
     
     // Find and set the corresponding PaymentMethod entity
+    // Map UI values (snake_case) to datasource IDs (hyphenated)
+    final normalizedValue = _normalizePaymentMethodValue(methodValue);
+    
     try {
       final method = paymentMethods.firstWhere(
-        (m) => m.id == methodValue || m.type.toString().contains(methodValue),
+        (m) => m.id == normalizedValue,
         orElse: () => paymentMethods.first,
       );
       selectedPaymentMethod = method;
     } catch (_) {
       // If no matching method found, keep the value for later use
     }
+  }
+  
+  /// Normalize payment method value from UI (snake_case) to datasource ID format (hyphenated)
+  String _normalizePaymentMethodValue(String value) {
+    // Map UI values to datasource payment method IDs
+    final mappings = {
+      'credit_card': 'credit-card',
+      'debit_card': 'credit-card', // Debit cards use same processor as credit
+      'digital_wallet': 'e-wallet',
+      'bank_transfer': 'bank-transfer',
+      'e_wallet': 'e-wallet',
+      'cod': 'cod', // Cash on Delivery - already matches
+    };
+    
+    return mappings[value.toLowerCase()] ?? value.toLowerCase();
   }
 
   @action
@@ -396,13 +441,14 @@ abstract class _CheckoutStore with Store {
     isProcessingOrder = true;
     try {
       // Create the order with all selected options
+      // Use contact info from selected delivery address if available
       final orderToCreate = CheckoutOrder(
         id: 'temp-${DateTime.now().millisecondsSinceEpoch}',
         items: currentOrder!.items,
         customerId: currentOrder!.customerId,
-        customerEmail: currentOrder!.customerEmail,
-        customerPhone: currentOrder!.customerPhone,
-        customerName: currentOrder!.customerName,
+        customerEmail: selectedDeliveryAddress?.email ?? currentOrder!.customerEmail,
+        customerPhone: selectedDeliveryAddress?.phone ?? currentOrder!.customerPhone,
+        customerName: selectedDeliveryAddress?.fullName ?? currentOrder!.customerName,
         deliveryAddress: selectedDeliveryAddress,
         billingAddress: billingAddress ?? selectedDeliveryAddress,
         shippingMethod: selectedShippingMethod,

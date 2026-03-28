@@ -11,6 +11,7 @@ class PriceSummaryCard extends StatelessWidget {
   final String? discountLabel;
   final bool showDividers;
   final EdgeInsets? padding;
+  final bool? isShippingDetermined;
 
   const PriceSummaryCard({
     Key? key,
@@ -22,7 +23,18 @@ class PriceSummaryCard extends StatelessWidget {
     this.discountLabel,
     this.showDividers = true,
     this.padding,
+    this.isShippingDetermined,
   }) : super(key: key);
+
+  String _getShippingDisplayText() {
+    if (shippingAmount == 0) {
+      if (isShippingDetermined == false) {
+        return 'Calculated at checkout';
+      }
+      return 'FREE';
+    }
+    return PriceFormatter.formatPrice(shippingAmount);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,16 +81,16 @@ class PriceSummaryCard extends StatelessWidget {
               amount: PriceFormatter.formatPrice(taxAmount),
               isBold: false,
             ),
-            const SizedBox(height: 8),
-            // Shipping row
-            _SummaryRow(
-              label: 'Shipping',
-              amount: shippingAmount == 0
-                  ? 'FREE'
-                  : PriceFormatter.formatPrice(shippingAmount),
-              isBold: false,
-              isShipping: shippingAmount == 0,
-            ),
+            // Shipping row - only show when determined
+            if (isShippingDetermined ?? true) ...[
+              const SizedBox(height: 8),
+              _SummaryRow(
+                label: 'Shipping',
+                amount: _getShippingDisplayText(),
+                isBold: false,
+                isShipping: shippingAmount == 0,
+              ),
+            ],
             if (showDividers) ...[
               const SizedBox(height: 12),
               Divider(color: Colors.grey[200]),

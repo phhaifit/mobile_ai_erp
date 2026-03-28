@@ -43,7 +43,7 @@ class _AddressFormWidgetState extends State<AddressFormWidget> {
     super.initState();
     if (widget.initialAddress != null) {
       _fullNameController.text = widget.initialAddress!.fullName;
-      _phoneController.text = widget.initialAddress!.phone ?? '';
+      _phoneController.text = widget.initialAddress!.phone;
       _streetController.text = widget.initialAddress!.street;
       _cityController.text = widget.initialAddress!.city;
       _stateController.text = widget.initialAddress!.state ?? '';
@@ -74,7 +74,7 @@ class _AddressFormWidgetState extends State<AddressFormWidget> {
     if (parsed != null && mounted) {
       setState(() {
         _fullNameController.text = parsed.fullName;
-        _phoneController.text = parsed.phone ?? '';
+        _phoneController.text = parsed.phone;
         _streetController.text = parsed.street;
         _cityController.text = parsed.city;
         _stateController.text = parsed.state ?? '';
@@ -105,8 +105,6 @@ class _AddressFormWidgetState extends State<AddressFormWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Form(
       key: _formKey,
       child: Column(
