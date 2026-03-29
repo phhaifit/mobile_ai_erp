@@ -1,13 +1,26 @@
 import 'dart:async';
 
+import 'package:mobile_ai_erp/domain/repository/checkout/checkout_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/fulfillment/fulfillment_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/post/post_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/post_purchase/post_purchase_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/user/role_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/order_tracking/order_tracking_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/user_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/inventory_audit_outbound/inventory_audit_outbound_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/web_builder/cms_page_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/web_builder/store_settings_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/web_builder/web_theme_repository.dart';
+import 'package:mobile_ai_erp/domain/usecase/checkout/checkout_usecases.dart';
+import 'package:mobile_ai_erp/domain/usecase/checkout/get_payment_methods_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/checkout/get_shipping_methods_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/checkout/validate_coupon_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/inventory_audit_outbound/get_inventory_audit_records_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/inventory_audit_outbound/get_inventory_by_warehouse_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/inventory_audit_outbound/get_inventory_outbound_records_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/inventory_audit_outbound/get_inventory_warehouses_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/inventory_audit_outbound/save_inventory_audit_session_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/inventory_audit_outbound/submit_inventory_outbound_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/order_tracking/find_order_tracking_scenario_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/order_tracking/get_order_tracking_scenarios_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/add_package_usecase.dart';
@@ -37,9 +50,12 @@ import 'package:mobile_ai_erp/domain/usecase/post_purchase/get_refund_list_useca
 import 'package:mobile_ai_erp/domain/usecase/post_purchase/update_issue_notes_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/post_purchase/update_exchange_notes_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/post_purchase/update_refund_notes_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/assign_role_to_user_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/create_role_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/is_logged_in_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/login_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/save_login_in_status_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/update_role_usercase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/apply_web_theme_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/delete_cms_page_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/get_cms_page_by_id_usecase.dart';
@@ -63,6 +79,18 @@ class UseCaseModule {
     );
     getIt.registerSingleton<LoginUseCase>(
       LoginUseCase(getIt<UserRepository>()),
+    );
+
+    getIt.registerSingleton<AssignRoleToUserUseCase>(
+      AssignRoleToUserUseCase(getIt<UserRepository>()),
+    );
+
+    getIt.registerSingleton<CreateRoleUseCase>(
+      CreateRoleUseCase(getIt<RoleRepository>()),
+    );
+
+    getIt.registerSingleton<UpdateRoleUseCase>(
+      UpdateRoleUseCase(getIt<RoleRepository>()),
     );
 
     // post:--------------------------------------------------------------------
@@ -186,6 +214,64 @@ class UseCaseModule {
     );
     getIt.registerSingleton<FindOrderTrackingScenarioUseCase>(
       FindOrderTrackingScenarioUseCase(getIt<OrderTrackingRepository>()),
+    );
+
+    // checkout:---------------------------------------------------------------
+    getIt.registerSingleton<GetShippingMethodsUseCase>(
+      GetShippingMethodsUseCase(getIt<CheckoutRepository>()),
+    );
+    getIt.registerSingleton<GetPaymentMethodsUseCase>(
+      GetPaymentMethodsUseCase(getIt<CheckoutRepository>()),
+    );
+    getIt.registerSingleton<ValidateCouponUseCase>(
+      ValidateCouponUseCase(getIt<CheckoutRepository>()),
+    );
+    getIt.registerSingleton<ValidateAddressUseCase>(
+      ValidateAddressUseCase(getIt<CheckoutRepository>()),
+    );
+    getIt.registerSingleton<ParseAddressUseCase>(
+      ParseAddressUseCase(getIt<CheckoutRepository>()),
+    );
+    getIt.registerSingleton<CreateCheckoutOrderUseCase>(
+      CreateCheckoutOrderUseCase(getIt<CheckoutRepository>()),
+    );
+    getIt.registerSingleton<GetCheckoutOrderUseCase>(
+      GetCheckoutOrderUseCase(getIt<CheckoutRepository>()),
+    );
+    getIt.registerSingleton<UpdateCheckoutOrderUseCase>(
+      UpdateCheckoutOrderUseCase(getIt<CheckoutRepository>()),
+    );
+    getIt.registerSingleton<ConfirmOrderUseCase>(
+      ConfirmOrderUseCase(getIt<CheckoutRepository>()),
+    );
+    getIt.registerSingleton<GetSavedAddressesUseCase>(
+      GetSavedAddressesUseCase(getIt<CheckoutRepository>()),
+    );
+    getIt.registerSingleton<SaveAddressUseCase>(
+      SaveAddressUseCase(getIt<CheckoutRepository>()),
+    );
+    getIt.registerSingleton<DeleteAddressUseCase>(
+      DeleteAddressUseCase(getIt<CheckoutRepository>()),
+    );
+
+    // inventory_audit_outbound:-----------------------------------------------
+    getIt.registerSingleton<GetInventoryWarehousesUseCase>(
+      GetInventoryWarehousesUseCase(getIt<InventoryAuditOutboundRepository>()),
+    );
+    getIt.registerSingleton<GetInventoryByWarehouseUseCase>(
+      GetInventoryByWarehouseUseCase(getIt<InventoryAuditOutboundRepository>()),
+    );
+    getIt.registerSingleton<SaveInventoryAuditSessionUseCase>(
+      SaveInventoryAuditSessionUseCase(getIt<InventoryAuditOutboundRepository>()),
+    );
+    getIt.registerSingleton<GetInventoryAuditRecordsUseCase>(
+      GetInventoryAuditRecordsUseCase(getIt<InventoryAuditOutboundRepository>()),
+    );
+    getIt.registerSingleton<SubmitInventoryOutboundUseCase>(
+      SubmitInventoryOutboundUseCase(getIt<InventoryAuditOutboundRepository>()),
+    );
+    getIt.registerSingleton<GetInventoryOutboundRecordsUseCase>(
+      GetInventoryOutboundRecordsUseCase(getIt<InventoryAuditOutboundRepository>()),
     );
   }
 }
