@@ -12,7 +12,6 @@ import 'package:mobile_ai_erp/presentation/cart/store/cart_store.dart';
 import 'package:mobile_ai_erp/presentation/cart/widgets/mini_cart_drawer.dart';
 import 'package:mobile_ai_erp/presentation/cart/store/wishlist_store.dart';
 import 'package:mobile_ai_erp/presentation/cart/screens/wishlist_page.dart';
-import 'package:mobile_ai_erp/presentation/post/post_list.dart';
 import 'package:mobile_ai_erp/utils/routes/cart_routes.dart';
 import 'package:mobile_ai_erp/utils/locale/app_localization.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
@@ -44,19 +43,17 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _buildAppBar(),
-      body: Column(
+      body: ListView(
+        padding: const EdgeInsets.only(bottom: 16),
         children: [
           _buildStorefrontPDPEntry(),
           _buildReportsEntry(),
           _buildPostPurchaseEntry(),
-          Expanded(child: PostListScreen()),
           _buildStorefrontEntry(),
           _buildCustomerPortalEntry(),
           _buildSuppliersEntry(),
           _buildUsersManagementEntry(),
-          // _buildSuppliersEntry(),
           _buildProductsBody(),
-          // Expanded(child: PostListScreen()),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -139,8 +136,9 @@ class _HomeScreenState extends State<HomeScreen> {
         child: ListTile(
           leading: Icon(Icons.storefront_outlined),
           title: Text('Product Detail Page'),
-          subtitle:
-              Text('Storefront PDP - View sample product (offline mock).'),
+          subtitle: Text(
+            'Storefront PDP - View sample product (offline mock).',
+          ),
           trailing: Icon(Icons.chevron_right),
           onTap: () => Navigator.of(context).pushNamed(Routes.productDetail),
         ),
@@ -220,9 +218,8 @@ class _HomeScreenState extends State<HomeScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => SupplierListScreen(
-                  store: getIt<SupplierStore>(),
-                ),
+                builder: (_) =>
+                    SupplierListScreen(store: getIt<SupplierStore>()),
               ),
             );
           },
@@ -236,11 +233,13 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
       child: Card(
         child: ListTile(
-          leading: Icon(Icons.person_outline), // Icon representing a user profile
+          leading: Icon(
+            Icons.person_outline,
+          ), // Icon representing a user profile
           title: Text('Customer Portal (Storefront)'),
           subtitle: Text('Manage profile, address book, and order history.'),
           trailing: Icon(Icons.chevron_right),
-          onTap: () => Navigator.of(context).pushNamed(Routes.profileDashboard), 
+          onTap: () => Navigator.of(context).pushNamed(Routes.profileDashboard),
         ),
       ),
     );
@@ -255,7 +254,8 @@ class _HomeScreenState extends State<HomeScreen> {
           title: Text(ProductStrings.screenTitle),
           subtitle: Text(ProductStrings.screenDescription),
           trailing: Icon(Icons.chevron_right),
-          onTap: () => Navigator.of(context).pushNamed(Routes.productManagementList),
+          onTap: () =>
+              Navigator.of(context).pushNamed(Routes.productManagementList),
         ),
       ),
     );
@@ -487,8 +487,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: _languageStore.locale == object.locale
                         ? Theme.of(context).primaryColor
                         : _themeStore.darkMode
-                            ? Colors.white
-                            : Colors.black,
+                        ? Colors.white
+                        : Colors.black,
                   ),
                 ),
                 onTap: () {

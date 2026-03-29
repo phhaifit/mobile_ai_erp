@@ -16,7 +16,8 @@ class PostPurchaseDashboardScreen extends StatefulWidget {
       _PostPurchaseDashboardScreenState();
 }
 
-class _PostPurchaseDashboardScreenState extends State<PostPurchaseDashboardScreen> {
+class _PostPurchaseDashboardScreenState
+    extends State<PostPurchaseDashboardScreen> {
   final PostPurchaseStore _store = getIt<PostPurchaseStore>();
   final DateFormat _dateFormat = DateFormat('dd/MM/yyyy HH:mm');
 
@@ -80,13 +81,13 @@ class _PostPurchaseDashboardScreenState extends State<PostPurchaseDashboardScree
           child: _store.isLoadingIssues
               ? const Center(child: CircularProgressIndicator())
               : issues.isEmpty
-                  ? const Center(child: Text('No issues found.'))
-                  : ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                      itemCount: issues.length,
-                      itemBuilder: (context, index) =>
-                          _buildIssueCard(issues[index]),
-                    ),
+              ? const Center(child: Text('No issues found.'))
+              : ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                  itemCount: issues.length,
+                  itemBuilder: (context, index) =>
+                      _buildIssueCard(issues[index]),
+                ),
         ),
       ],
     );
@@ -137,8 +138,8 @@ class _PostPurchaseDashboardScreenState extends State<PostPurchaseDashboardScree
     final linkedBadge = issue.linkedExchangeId != null
         ? 'EXC: ${issue.linkedExchangeId}'
         : issue.linkedRefundId != null
-            ? 'RFD: ${issue.linkedRefundId}'
-            : null;
+        ? 'RFD: ${issue.linkedRefundId}'
+        : null;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -146,10 +147,11 @@ class _PostPurchaseDashboardScreenState extends State<PostPurchaseDashboardScree
         onTap: () async {
           await _store.getIssueDetail(issue.id);
           if (!mounted) return;
-          Navigator.of(context).pushNamed(
-            Routes.postPurchaseIssueDetail,
-            arguments: issue.id,
-          );
+          await Navigator.of(
+            context,
+          ).pushNamed(Routes.postPurchaseIssueDetail, arguments: issue.id);
+          if (!mounted) return;
+          await _load();
         },
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -162,11 +164,14 @@ class _PostPurchaseDashboardScreenState extends State<PostPurchaseDashboardScree
                     child: Text(
                       issue.subject,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                  _buildStatusChip(issue.status.displayName, _issueStatusColor(issue.status)),
+                  _buildStatusChip(
+                    issue.status.displayName,
+                    _issueStatusColor(issue.status),
+                  ),
                 ],
               ),
               const SizedBox(height: 6),
@@ -179,8 +184,10 @@ class _PostPurchaseDashboardScreenState extends State<PostPurchaseDashboardScree
                 children: [
                   if (linkedBadge != null)
                     Container(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.blueGrey.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(10),
@@ -217,13 +224,13 @@ class _PostPurchaseDashboardScreenState extends State<PostPurchaseDashboardScree
           child: _store.isLoadingExchanges
               ? const Center(child: CircularProgressIndicator())
               : exchanges.isEmpty
-                  ? const Center(child: Text('No exchanges found.'))
-                  : ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
-                      itemCount: exchanges.length,
-                      itemBuilder: (context, index) =>
-                          _buildExchangeCard(exchanges[index]),
-                    ),
+              ? const Center(child: Text('No exchanges found.'))
+              : ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+                  itemCount: exchanges.length,
+                  itemBuilder: (context, index) =>
+                      _buildExchangeCard(exchanges[index]),
+                ),
         ),
       ],
     );
@@ -277,10 +284,11 @@ class _PostPurchaseDashboardScreenState extends State<PostPurchaseDashboardScree
         onTap: () async {
           await _store.getExchangeDetail(request.id);
           if (!mounted) return;
-          Navigator.of(context).pushNamed(
-            Routes.postPurchaseExchangeDetail,
-            arguments: request.id,
-          );
+          await Navigator.of(
+            context,
+          ).pushNamed(Routes.postPurchaseExchangeDetail, arguments: request.id);
+          if (!mounted) return;
+          await _load();
         },
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -293,8 +301,8 @@ class _PostPurchaseDashboardScreenState extends State<PostPurchaseDashboardScree
                     child: Text(
                       '${request.id} - ${request.orderId}',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                   _buildStatusChip(
@@ -313,8 +321,10 @@ class _PostPurchaseDashboardScreenState extends State<PostPurchaseDashboardScree
                 children: [
                   if (request.linkedIssueId != null)
                     Container(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.indigo.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(10),
@@ -351,13 +361,13 @@ class _PostPurchaseDashboardScreenState extends State<PostPurchaseDashboardScree
           child: _store.isLoadingRefunds
               ? const Center(child: CircularProgressIndicator())
               : refunds.isEmpty
-                  ? const Center(child: Text('No refunds found.'))
-                  : ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
-                      itemCount: refunds.length,
-                      itemBuilder: (context, index) =>
-                          _buildRefundCard(refunds[index]),
-                    ),
+              ? const Center(child: Text('No refunds found.'))
+              : ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+                  itemCount: refunds.length,
+                  itemBuilder: (context, index) =>
+                      _buildRefundCard(refunds[index]),
+                ),
         ),
       ],
     );
@@ -411,10 +421,11 @@ class _PostPurchaseDashboardScreenState extends State<PostPurchaseDashboardScree
         onTap: () async {
           await _store.getRefundDetail(request.id);
           if (!mounted) return;
-          Navigator.of(context).pushNamed(
-            Routes.postPurchaseRefundDetail,
-            arguments: request.id,
-          );
+          await Navigator.of(
+            context,
+          ).pushNamed(Routes.postPurchaseRefundDetail, arguments: request.id);
+          if (!mounted) return;
+          await _load();
         },
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -427,8 +438,8 @@ class _PostPurchaseDashboardScreenState extends State<PostPurchaseDashboardScree
                     child: Text(
                       '${request.id} - ${request.orderId}',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                   _buildStatusChip(
@@ -447,8 +458,10 @@ class _PostPurchaseDashboardScreenState extends State<PostPurchaseDashboardScree
                 children: [
                   if (request.linkedIssueId != null)
                     Container(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.deepPurple.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(10),
@@ -484,7 +497,11 @@ class _PostPurchaseDashboardScreenState extends State<PostPurchaseDashboardScree
       ),
       child: Text(
         label,
-        style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600),
+        style: TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -498,7 +515,9 @@ class _PostPurchaseDashboardScreenState extends State<PostPurchaseDashboardScree
       ),
       IconButton(
         tooltip: 'Post-Purchase',
-        onPressed: () => Navigator.of(context).pushNamed(Routes.postPurchase),
+        onPressed: () async {
+          await _load();
+        },
         icon: const Icon(Icons.support_agent_outlined),
       ),
     ];
@@ -514,8 +533,9 @@ class _PostPurchaseDashboardScreenState extends State<PostPurchaseDashboardScree
     final descriptionController = TextEditingController();
     final channelController = TextEditingController();
     IssuePriority priority = IssuePriority.medium;
-    OrderComplaintCandidate? selectedOrder =
-        _store.orderPool.isNotEmpty ? _store.orderPool.first : null;
+    OrderComplaintCandidate? selectedOrder = _store.orderPool.isNotEmpty
+        ? _store.orderPool.first
+        : null;
     if (selectedOrder != null) {
       channelController.text = selectedOrder.preferredChannel;
     }
@@ -546,7 +566,8 @@ class _PostPurchaseDashboardScreenState extends State<PostPurchaseDashboardScree
                       onChanged: (value) {
                         setDialogState(() {
                           selectedOrder = value;
-                          channelController.text = value?.preferredChannel ?? '';
+                          channelController.text =
+                              value?.preferredChannel ?? '';
                         });
                       },
                       decoration: const InputDecoration(
@@ -627,7 +648,9 @@ class _PostPurchaseDashboardScreenState extends State<PostPurchaseDashboardScree
                         subjectController.text.trim().isEmpty ||
                         descriptionController.text.trim().isEmpty) {
                       ScaffoldMessenger.of(this.context).showSnackBar(
-                        const SnackBar(content: Text('Please fill required fields.')),
+                        const SnackBar(
+                          content: Text('Please fill required fields.'),
+                        ),
                       );
                       return;
                     }
@@ -643,10 +666,12 @@ class _PostPurchaseDashboardScreenState extends State<PostPurchaseDashboardScree
                     Navigator.of(context).pop();
                     setState(() {});
                     if (id != null) {
-                      Navigator.of(this.context).pushNamed(
+                      await Navigator.of(this.context).pushNamed(
                         Routes.postPurchaseIssueDetail,
                         arguments: id,
                       );
+                      if (!mounted) return;
+                      await _load();
                     }
                   },
                   child: const Text('Create'),
