@@ -68,6 +68,7 @@ import 'package:mobile_ai_erp/presentation/user/store/user_store.dart' as user_m
 import 'package:mobile_ai_erp/presentation/web_builder/store/cms_page_store.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/store/store_settings_store.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/store/web_theme_store.dart';
+import 'package:mobile_ai_erp/presentation/cart/store/cart_store.dart';
 
 import '../../../di/service_locator.dart';
 
@@ -220,6 +221,7 @@ class StoreModule {
         getIt<SaveAddressUseCase>(),
         getIt<DeleteAddressUseCase>(),
         getIt<ErrorStore>(),
+        getIt.isRegistered<CartStore>() ? getIt<CartStore>() : null,
       ),
     );
   }
