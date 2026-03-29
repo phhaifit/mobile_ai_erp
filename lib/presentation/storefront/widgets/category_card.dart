@@ -6,7 +6,7 @@ import 'package:mobile_ai_erp/utils/routes/routes.dart';
 class CategoryCard extends StatelessWidget {
   final Category category;
 
-  CategoryCard({required this.category});
+  const CategoryCard({super.key, required this.category});
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +22,7 @@ class CategoryCard extends StatelessWidget {
           onTap: () {
             Navigator.of(context).pushNamed(
               Routes.storefrontProductListing, 
-              arguments: FilterArguments(selectedCategories: [category.id])
+              arguments: FilterArguments(selectedCategories: [category.id], selectedBrands: [], searchQuery: '')
             );
           },
           child: Container(
