@@ -15,14 +15,20 @@ import 'package:mobile_ai_erp/domain/usecase/fulfillment/update_package_usecase.
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/update_picked_quantity_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/post_purchase/get_issue_detail_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/post_purchase/get_issue_list_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/post_purchase/get_return_detail_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/post_purchase/get_return_list_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/post_purchase/update_issue_status_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/post_purchase/get_order_pool_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/post_purchase/create_issue_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/post_purchase/execute_issue_action_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/post_purchase/update_issue_notes_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/post_purchase/link_issue_to_return_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/post_purchase/update_return_notes_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/post_purchase/convert_exchange_to_refund_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/post_purchase/update_return_status_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/post_purchase/get_exchange_list_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/post_purchase/get_exchange_detail_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/post_purchase/create_exchange_from_issue_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/post_purchase/execute_exchange_action_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/post_purchase/update_exchange_notes_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/post_purchase/get_refund_list_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/post_purchase/get_refund_detail_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/post_purchase/create_refund_from_issue_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/post_purchase/execute_refund_action_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/post_purchase/update_refund_notes_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/is_logged_in_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/login_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/save_login_in_status_usecase.dart';
@@ -104,15 +110,21 @@ class StoreModule {
     getIt.registerSingleton<PostPurchaseStore>(
       PostPurchaseStore(
         getIt<GetIssueListUseCase>(),
+        getIt<GetOrderPoolUseCase>(),
         getIt<GetIssueDetailUseCase>(),
-        getIt<UpdateIssueStatusUseCase>(),
+        getIt<CreateIssueUseCase>(),
+        getIt<ExecuteIssueActionUseCase>(),
         getIt<UpdateIssueNotesUseCase>(),
-        getIt<LinkIssueToReturnUseCase>(),
-        getIt<GetReturnListUseCase>(),
-        getIt<GetReturnDetailUseCase>(),
-        getIt<UpdateReturnStatusUseCase>(),
-        getIt<UpdateReturnNotesUseCase>(),
-        getIt<ConvertExchangeToRefundUseCase>(),
+        getIt<GetExchangeListUseCase>(),
+        getIt<GetExchangeDetailUseCase>(),
+        getIt<CreateExchangeFromIssueUseCase>(),
+        getIt<ExecuteExchangeActionUseCase>(),
+        getIt<UpdateExchangeNotesUseCase>(),
+        getIt<GetRefundListUseCase>(),
+        getIt<GetRefundDetailUseCase>(),
+        getIt<CreateRefundFromIssueUseCase>(),
+        getIt<ExecuteRefundActionUseCase>(),
+        getIt<UpdateRefundNotesUseCase>(),
         getIt<ErrorStore>(),
       ),
     );
