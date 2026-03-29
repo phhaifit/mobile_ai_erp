@@ -168,7 +168,9 @@ class _StorefrontHomePageState extends State<StorefrontHomePage> {
               PageBanner(imageSource: imageSource, heading: "Welcome"), // or replace with store name
               SizedBox(height: 20.0),
               SectionHeader(
-                headingText: "Featured"
+                headingText: "Featured",
+                linkText: "See all products",
+                linkDestination: Routes.storefrontProductListing,
               ),
               Wrap(
                 spacing: 5.0,
@@ -183,10 +185,29 @@ class _StorefrontHomePageState extends State<StorefrontHomePage> {
                 ],
               ),
               SectionHeader(
-                headingText: "New Arrivals", 
+                headingText: "For You", 
                 linkText: "See all", 
                 linkDestination: Routes.storefrontProductListing, 
-                filterArguments: FilterArguments(sortOption: SortOption.timeDesc),),
+                filterArguments: FilterArguments(sortOption: SortOption.relevance, selectedCategories: [], selectedBrands: [], searchQuery: "")
+              ),
+              Wrap(
+                spacing: 5.0,
+                runSpacing: 5.0,
+                children: [
+                  for (final Product product in productsForYou) 
+                    ProductCardSmall(
+                      productId: product.id, 
+                      productName: product.productName, 
+                      imageSource: product.imageSource
+                    )
+                ],
+              ),
+              SectionHeader(
+                headingText: "New Arrivals", 
+                linkText: "See newest products", 
+                linkDestination: Routes.storefrontProductListing, 
+                filterArguments: FilterArguments(sortOption: SortOption.timeDesc)
+              ),
               Wrap(
                 spacing: 5.0,
                 runSpacing: 5.0,
@@ -199,7 +220,12 @@ class _StorefrontHomePageState extends State<StorefrontHomePage> {
                     )
                 ],
               ),
-              SectionHeader(headingText: "Popular", linkText: "See all", linkDestination: Routes.storefrontProductListing, filterArguments: FilterArguments(sortOption: SortOption.popular)),
+              SectionHeader(
+                headingText: "Popular", 
+                linkText: "See all popular products", 
+                linkDestination: Routes.storefrontProductListing, 
+                filterArguments: FilterArguments(sortOption: SortOption.popular, selectedCategories: [], selectedBrands: [])
+              ),
               Wrap(
                 spacing: 5.0,
                 runSpacing: 5.0,
@@ -212,7 +238,10 @@ class _StorefrontHomePageState extends State<StorefrontHomePage> {
                     )
                 ],
               ),
-              SectionHeader(headingText: "Featured Categories", linkText: "See all", linkDestination: Routes.categoriesLanding),
+              SectionHeader(
+                headingText: "Featured Categories", 
+                linkText: "See all categories", 
+                linkDestination: Routes.categoriesLanding),
               Wrap(
                 spacing: 5.0,
                 runSpacing: 5.0,
@@ -221,7 +250,10 @@ class _StorefrontHomePageState extends State<StorefrontHomePage> {
                     CategoryCard(category: category)
                 ],
               ),
-              SectionHeader(headingText: "Featured Brands", linkText: "See all", linkDestination: Routes.brandsLanding),
+              SectionHeader(
+                headingText: "Featured Brands", 
+                linkText: "See all brands", 
+                linkDestination: Routes.brandsLanding),
               Wrap(
                 spacing: 5.0,
                 runSpacing: 5.0,
@@ -230,19 +262,6 @@ class _StorefrontHomePageState extends State<StorefrontHomePage> {
                     BrandCard(brand: brand)
                 ],
               ),
-              SectionHeader(headingText: "For You", linkText: "See all", linkDestination: Routes.storefrontProductListing, filterArguments: FilterArguments(sortOption: SortOption.relevance)),
-              Wrap(
-                spacing: 5.0,
-                runSpacing: 5.0,
-                children: [
-                  for (final Product product in productsForYou) 
-                    ProductCardSmall(
-                      productId: product.id, 
-                      productName: product.productName, 
-                      imageSource: product.imageSource
-                    )
-                ],
-              )
             ],
           ),
         )

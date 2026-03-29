@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:mobile_ai_erp/domain/entity/product/product.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/brand.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
+import 'package:mobile_ai_erp/presentation/storefront/classes/filter_arguments.dart';
 import 'package:mobile_ai_erp/presentation/storefront/widgets/heading_section.dart';
 import 'package:mobile_ai_erp/presentation/storefront/widgets/product_card_small.dart';
+import 'package:mobile_ai_erp/utils/routes/routes.dart';
 
 class BrandsLandingPage extends StatefulWidget {
   const BrandsLandingPage({super.key});
@@ -168,7 +170,12 @@ class _BrandsLandingPageState extends State<BrandsLandingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Brands')),
+      appBar: AppBar(
+        title: const Text('Brands'),
+        actions: [
+          IconButton(onPressed: () => Navigator.of(context).pushNamed(Routes.storeHome), icon: Icon(Icons.home))
+        ],
+      ),
       body: Container(
         alignment: Alignment.topCenter,
         child: SingleChildScrollView(
@@ -190,7 +197,12 @@ class _BrandsLandingPageState extends State<BrandsLandingPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SectionHeader(headingText: brand.name),
+        SectionHeader(
+          headingText: brand.name,
+          linkText: "See all products from ${brand.name}",
+          linkDestination: Routes.storefrontProductListing,
+          filterArguments: FilterArguments(selectedBrands: [brand.id]),
+        ),
         if (brand.description != null)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10.0),

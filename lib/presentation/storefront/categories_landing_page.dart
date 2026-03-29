@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:mobile_ai_erp/domain/entity/product/product.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/brand.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
+import 'package:mobile_ai_erp/presentation/storefront/classes/filter_arguments.dart';
 import 'package:mobile_ai_erp/presentation/storefront/widgets/heading_section.dart';
 import 'package:mobile_ai_erp/presentation/storefront/widgets/product_card_small.dart';
+import 'package:mobile_ai_erp/utils/routes/routes.dart';
 
 class CategoriesLandingPage extends StatefulWidget {
   const CategoriesLandingPage({super.key});
@@ -216,7 +218,12 @@ class _CategoriesLandingPageState extends State<CategoriesLandingPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SectionHeader(headingText: category.name),
+        SectionHeader(
+          headingText: category.name,
+          linkText: 'See all ${category.name}',
+          linkDestination: Routes.storefrontProductListing,
+          filterArguments: FilterArguments(selectedCategories: [category.id]),
+        ),
         if (products.isNotEmpty)
           Wrap(
             spacing: 5.0,
@@ -287,7 +294,7 @@ class _CategoriesLandingPageState extends State<CategoriesLandingPage> {
     return ActionChip(
       label: Text(subcategory.name),
       onPressed: () {
-        // Navigate to product listing filtered by this subcategory
+        Navigator.of(context).pushNamed(Routes.storefrontProductListing, arguments: FilterArguments(selectedCategories: [subcategory.id]));
       },
     );
   }
