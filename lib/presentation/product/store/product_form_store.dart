@@ -298,6 +298,8 @@ abstract class _ProductFormStore with Store {
         name: name,
         sku: sku,
         price: parsedPrice,
+        currency: 'USD', // placeholder,
+        rating: editingProduct?.rating ?? 0.0, // keep existing rating if editing
         description: description,
         status: status,
         categoryId: categoryId,
