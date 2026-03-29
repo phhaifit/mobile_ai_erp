@@ -5,6 +5,7 @@ import 'package:mobile_ai_erp/presentation/storefront/classes/filter_arguments.d
 import 'package:mobile_ai_erp/presentation/storefront/store/product_listing_store.dart';
 import 'package:mobile_ai_erp/presentation/storefront/widgets/product_listing_item.dart';
 import 'package:mobile_ai_erp/presentation/storefront/search_filter_bar.dart';
+import 'package:mobile_ai_erp/utils/routes/routes.dart';
 
 class ProductListingScreen extends StatefulWidget {
   const ProductListingScreen({super.key});
@@ -48,6 +49,7 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
       if (args.sortOption != null) {
         _listingFilters.setSortOption(args.sortOption!);
       }
+      _listingFilters.updateProducts();
     }
         
     return Scaffold(
@@ -64,6 +66,9 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
             color: colorScheme.onSurface,
           ),
         ),
+        actions: [
+          IconButton(onPressed: () => Navigator.of(context).pushNamed(Routes.storeHome), icon: Icon(Icons.home))
+        ],
       ),
       body: Stack(
         children: [
