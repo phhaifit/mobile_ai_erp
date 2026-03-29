@@ -20,9 +20,23 @@ class _SearchFilterBarState extends State<SearchFilterBar> {
   bool _searchOpen = false; // expands search bar
   bool _filterOpen = false; // expands filter options
   bool _sortOpen = false; // expands sorting options
+  bool _chatOpen = false; // expands chat options
   final _listingFilters = getIt<ListingFilters>();
+  late TextEditingController _chatInputController;
 
-  bool get isExpanded => _searchOpen || _filterOpen || _sortOpen;
+  @override
+  void initState() {
+    super.initState();
+    _chatInputController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _chatInputController.dispose();
+    super.dispose();
+  }
+
+  bool get isExpanded => _searchOpen || _filterOpen || _sortOpen || _chatOpen;
 
 
   Widget _buildExpandedContent() {
@@ -32,6 +46,8 @@ class _SearchFilterBarState extends State<SearchFilterBar> {
       return _buildFilterContent();
     } else if (_sortOpen) {
       return _buildSortContent();
+    } else if (_chatOpen) {
+      return _buildChatContent();
     }
     return const SizedBox.shrink();
   }
@@ -158,6 +174,67 @@ class _SearchFilterBarState extends State<SearchFilterBar> {
     );
   }
 
+  Widget _buildChatContent() {
+    return _expandedContainer(
+      contents: [
+        Text(
+          'AI Assistant',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'Describe what you\'re looking for and let AI help you find it.',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _chatInputController,
+          decoration: InputDecoration(
+            hintText: 'Tell AI what product you want...',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            suffixIcon: IconButton(
+              icon: Icon(Icons.send),
+              onPressed: _handleAIChatMock,
+            ),
+          ),
+          onSubmitted: (_) => _handleAIChatMock(),
+          maxLines: 3,
+          minLines: 1,
+        ),
+      ],
+    );
+  }
+
+  void _handleAIChatMock() {
+    final prompt = _chatInputController.text.trim();
+    if (prompt.isEmpty) return;
+
+    // Mock AI results
+    if (widget.categories.isNotEmpty) {
+      _listingFilters.toggleCategoryFilter(widget.categories.first.id);
+    }
+    _listingFilters.setSortOption(SortOption.popular);
+    _listingFilters.setSearchQuery('Product');
+    _listingFilters.updateProducts();
+
+    // Clear input and close the chat panel
+    _chatInputController.clear();
+    setState(() {
+      _chatOpen = false;
+    });
+
+    // Show success toast
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('AI has set search filters for you'),
+        behavior: SnackBarBehavior.floating,
+        duration: Duration(seconds: 3),
+      ),
+    );
+  }
+
   // options in the bottom bar
   Widget bottomBarButton (void Function() onPressed, bool isVisible, Icon icon) {
     return IconButton(
@@ -190,6 +267,7 @@ class _SearchFilterBarState extends State<SearchFilterBar> {
                         _filterOpen = !_filterOpen;
                         _searchOpen = false;
                         _sortOpen = false;
+                        _chatOpen = false;
                       });
                     }, 
                     _listingFilters.categoryFilter.isNotEmpty || _listingFilters.brandFilter.isNotEmpty,
@@ -201,6 +279,7 @@ class _SearchFilterBarState extends State<SearchFilterBar> {
                       _searchOpen = !_searchOpen;
                       _filterOpen = false;
                       _sortOpen = false;
+                      _chatOpen = false;
                     });
                   }, 
                   _listingFilters.searchQuery.isNotEmpty, 
@@ -212,10 +291,22 @@ class _SearchFilterBarState extends State<SearchFilterBar> {
                       _sortOpen = !_sortOpen;
                       _searchOpen = false;
                       _filterOpen = false;
+                      _chatOpen = false;
                     });
                   }, 
                   false, // no badge for sort
                   Icon(Icons.sort)
+                ),
+                bottomBarButton(() {
+                    setState(() {
+                      _chatOpen = !_chatOpen;
+                      _searchOpen = false;
+                      _filterOpen = false;
+                      _sortOpen = false;
+                    });
+                  }, 
+                  false, // no badge for AI chat
+                  Icon(Icons.smart_toy)
                 ),
               ],
             ),
