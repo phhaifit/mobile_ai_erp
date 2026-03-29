@@ -4,10 +4,8 @@ import 'package:get_it/get_it.dart';
 import 'package:mobile_ai_erp/presentation/cart/models/cart_ui_model.dart';
 import 'package:mobile_ai_erp/presentation/cart/store/cart_store.dart';
 import 'package:mobile_ai_erp/presentation/cart/widgets/cart_item_card.dart';
-import 'package:mobile_ai_erp/presentation/cart/widgets/coupon_form_widget.dart';
 import 'package:mobile_ai_erp/presentation/cart/widgets/empty_cart_state.dart';
 import 'package:mobile_ai_erp/presentation/cart/widgets/mini_cart_drawer.dart';
-import 'package:mobile_ai_erp/presentation/cart/widgets/payment_methods_widget.dart';
 import 'package:mobile_ai_erp/presentation/cart/widgets/price_summary_card.dart';
 
 class CartScreen extends StatefulWidget {
@@ -20,11 +18,7 @@ class CartScreen extends StatefulWidget {
 class _CartScreenState extends State<CartScreen> {
   late final CartStore _cartStore;
 
-  String? _selectedPaymentMethod;
-  String? _selectedSavedCardId;
-  bool _agreeToTerms = false;
   bool _isInitialLoading = true;
-  bool _isApplyingCoupon = false;
   bool _isSubmittingCheckout = false;
 
   @override
@@ -99,68 +93,6 @@ class _CartScreenState extends State<CartScreen> {
     }
   }
 
-  Future<void> _handleApplyCoupon(String couponCode) async {
-    setState(() {
-      _isApplyingCoupon = true;
-    });
-
-    await _cartStore.applyCoupon(couponCode);
-
-    if (!mounted) return;
-
-    setState(() {
-      _isApplyingCoupon = false;
-    });
-
-    ScaffoldMessenger.of(context).clearSnackBars();
-
-    if (_cartStore.errorMessage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_cartStore.errorMessage!),
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-      return;
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Coupon applied successfully'),
-        behavior: SnackBarBehavior.floating,
-        duration: Duration(seconds: 2),
-      ),
-    );
-  }
-
-  Future<void> _handleRemoveCoupon() async {
-    await _cartStore.removeCoupon();
-
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).clearSnackBars();
-
-    if (_cartStore.errorMessage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_cartStore.errorMessage!),
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-      return;
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Coupon removed'),
-        behavior: SnackBarBehavior.floating,
-        duration: Duration(seconds: 2),
-      ),
-    );
-  }
-
   void _handleContinueShopping() {
     Navigator.of(
       context,
@@ -168,28 +100,6 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Future<void> _handleApproveCheckout() async {
-    if (_selectedPaymentMethod == null) {
-      ScaffoldMessenger.of(context).clearSnackBars();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a payment method'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
-    if (!_agreeToTerms) {
-      ScaffoldMessenger.of(context).clearSnackBars();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please agree to terms and conditions'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
     if (_cartStore.checkoutItems.isEmpty) {
       ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
@@ -220,9 +130,8 @@ class _CartScreenState extends State<CartScreen> {
       Navigator.of(context).pushNamed(
         '/checkout',
         arguments: {
-          'paymentMethod': _selectedPaymentMethod,
-          'selectedCardId': _selectedSavedCardId,
           'cartData': _cartStore.checkoutData,
+          'appliedCoupon': _cartStore.appliedCouponCode,
         },
       );
     } finally {
@@ -247,8 +156,6 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   bool get _canCheckout =>
-      _selectedPaymentMethod != null &&
-      _agreeToTerms &&
       _cartStore.checkoutItems.isNotEmpty &&
       _cartStore.isCartValid &&
       !_isSubmittingCheckout;
@@ -365,15 +272,6 @@ class _CartScreenState extends State<CartScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        CouponFormWidget(
-          onApplyCoupon: _handleApplyCoupon,
-          onRemoveCoupon: _handleRemoveCoupon,
-          appliedCouponCode: _cartStore.appliedCouponCode,
-          isLoading: _isApplyingCoupon,
-          error: null,
-          success: null,
-        ),
-        const SizedBox(height: 24),
         Observer(
           builder: (_) => PriceSummaryCard(
             subtotal: _cartStore.selectedSubtotal,
@@ -381,96 +279,45 @@ class _CartScreenState extends State<CartScreen> {
             taxAmount: _cartStore.selectedTaxAmount,
             shippingAmount: _cartStore.selectedShippingAmount,
             total: _cartStore.selectedTotal,
-            discountLabel: cartUIModel.appliedCoupon != null
-                ? 'Coupon (${cartUIModel.appliedCoupon!.code})'
-                : 'Discount',
+            discountLabel: 'Subtotal',
             showDividers: true,
-          ),
-        ),
-        const SizedBox(height: 24),
-        PaymentMethodsWidget(
-          onMethodSelected: (method, savedCardId) {
-            setState(() {
-              _selectedPaymentMethod = method;
-              _selectedSavedCardId = savedCardId;
-            });
-          },
-          selectedMethod: _selectedPaymentMethod,
-          showSavedCards: true,
-        ),
-        const SizedBox(height: 16),
-        Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            color: Theme.of(context).colorScheme.surfaceContainerLowest,
-          ),
-          child: CheckboxListTile(
-            value: _agreeToTerms,
-            onChanged: (value) {
-              setState(() => _agreeToTerms = value ?? false);
-            },
-            title: Text.rich(
-              TextSpan(
-                children: [
-                  const TextSpan(text: 'I agree to '),
-                  TextSpan(
-                    text: 'Terms & Conditions',
-                    style: TextStyle(
-                      color: Colors.blue[600],
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                  const TextSpan(text: ' and '),
-                  TextSpan(
-                    text: 'Privacy Policy',
-                    style: TextStyle(
-                      color: Colors.blue[600],
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            controlAffinity: ListTileControlAffinity.leading,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 8,
-              vertical: 2,
-            ),
+            isShippingDetermined: false,
           ),
         ),
         const SizedBox(height: 24),
         SizedBox(
           width: double.infinity,
-          child: ElevatedButton(
-            onPressed: _canCheckout ? _handleApproveCheckout : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue[600],
-              disabledBackgroundColor: Colors.grey[300],
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+          child: Observer(
+            builder: (_) => ElevatedButton(
+              onPressed: _canCheckout ? _handleApproveCheckout : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue[600],
+                disabledBackgroundColor: Colors.grey[300],
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
+              child: _isSubmittingCheckout
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Text(
+                      _cartStore.isCartValid
+                          ? 'Proceed to Checkout'
+                          : 'Selected items are invalid',
+                      style: TextStyle(
+                        color: _canCheckout ? Colors.white : Colors.grey[700],
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
             ),
-            child: _isSubmittingCheckout
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : Text(
-                    _cartStore.isCartValid
-                        ? 'Proceed to Checkout'
-                        : 'Selected items are invalid',
-                    style: TextStyle(
-                      color: _canCheckout ? Colors.white : Colors.grey[700],
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
           ),
         ),
         const SizedBox(height: 12),
@@ -488,19 +335,22 @@ class _CartScreenState extends State<CartScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        if (_cartStore.checkoutItems.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Text(
-              'Selected: ${_cartStore.checkoutItems.length} item(s)',
-              style: TextStyle(
-                fontSize: 13,
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurface.withValues(alpha: 0.7),
-              ),
-            ),
-          ),
+        Observer(
+          builder: (_) => _cartStore.checkoutItems.isNotEmpty
+              ? Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    'Selected: ${_cartStore.checkoutItems.length} item(s)',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.7),
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ),
       ],
     );
   }

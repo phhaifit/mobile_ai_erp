@@ -292,10 +292,14 @@ class _ProductListPageState extends State<ProductListPage> {
     final price = (product['price'] as num).toDouble();
 
     if (salePrice != null && salePrice < price) {
-      return '₫${salePrice.toStringAsFixed(0)}';
+      return salePrice == salePrice.toInt().toDouble()
+          ? '₫${salePrice.toInt()}'
+          : '₫${salePrice.toStringAsFixed(2)}';
     }
 
-    return '₫${price.toStringAsFixed(0)}';
+    return price == price.toInt().toDouble()
+        ? '₫${price.toInt()}'
+        : '₫${price.toStringAsFixed(2)}';
   }
 
   int? _discountPercent(Map<String, dynamic> product) {

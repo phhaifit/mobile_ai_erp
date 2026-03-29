@@ -237,51 +237,102 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Widget> _buildActions(BuildContext context) {
     return <Widget>[
       _buildInventoryAuditButton(),
-      _buildStockOperationsButton(),
       _buildCartButton(),
       _buildWishlistButton(),
-      PopupMenuButton<String>(
-        tooltip: 'More',
-        onSelected: (value) {
-          switch (value) {
-            case 'customers':
-              CustomerNavigator.openHome(context);
-              break;
-            case 'metadata':
-              ProductMetadataNavigator.openProductMetadataHome(context);
-              break;
-            case 'tracking':
-              Navigator.of(context).pushNamed(Routes.orderTracking);
-              break;
-            case 'fulfillment':
-              Navigator.of(context).pushNamed(Routes.fulfillment);
-              break;
-            case 'language':
-              _buildLanguageDialog();
-              break;
-            case 'theme':
-              _themeStore.changeBrightnessToDark(!_themeStore.darkMode);
-              break;
-            case 'logout':
-              SharedPreferences.getInstance().then((preference) {
-                preference.setBool(Preferences.is_logged_in, false);
-                Navigator.of(context).pushReplacementNamed(Routes.login);
-              });
-              break;
-          }
-        },
-        itemBuilder: (context) => const [
-          PopupMenuItem(value: 'customers', child: Text('Customer Management')),
-          PopupMenuItem(value: 'metadata', child: Text('Product Metadata')),
-          PopupMenuItem(value: 'tracking', child: Text('Track Order')),
-          PopupMenuItem(value: 'fulfillment', child: Text('Order Fulfillment')),
-          PopupMenuItem(value: 'language', child: Text('Language')),
-          PopupMenuItem(value: 'theme', child: Text('Toggle Theme')),
-          PopupMenuItem(value: 'logout', child: Text('Logout')),
-        ],
-        icon: const Icon(Icons.more_vert),
-      ),
+      _buildOrderTrackingButton(),
+      _buildFulfillmentButton(),
+      _buildOverflowMenu(),
     ];
+  }
+
+  Widget _buildOverflowMenu() {
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.more_vert),
+      tooltip: 'More options',
+      onSelected: (value) => _handleMenuSelection(value),
+      itemBuilder: (context) => [
+        const PopupMenuItem(
+          value: 'stock',
+          child: ListTile(
+            leading: Icon(Icons.warehouse_outlined),
+            title: Text('Stock Operations'),
+            contentPadding: EdgeInsets.zero,
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'customer',
+          child: ListTile(
+            leading: Icon(Icons.people_outline),
+            title: Text('Customer Management'),
+            contentPadding: EdgeInsets.zero,
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'productMetadata',
+          child: ListTile(
+            leading: Icon(Icons.dashboard_outlined),
+            title: Text('Product Metadata'),
+            contentPadding: EdgeInsets.zero,
+          ),
+        ),
+        const PopupMenuDivider(),
+        const PopupMenuItem(
+          value: 'language',
+          child: ListTile(
+            leading: Icon(Icons.language),
+            title: Text('Language'),
+            contentPadding: EdgeInsets.zero,
+          ),
+        ),
+        PopupMenuItem(
+          value: 'theme',
+          child: Observer(
+            builder: (context) => ListTile(
+              leading: Icon(
+                _themeStore.darkMode ? Icons.brightness_5 : Icons.brightness_3,
+              ),
+              title: Text(_themeStore.darkMode ? 'Light Mode' : 'Dark Mode'),
+              contentPadding: EdgeInsets.zero,
+            ),
+          ),
+        ),
+        const PopupMenuDivider(),
+        const PopupMenuItem(
+          value: 'logout',
+          child: ListTile(
+            leading: Icon(Icons.power_settings_new),
+            title: Text('Logout'),
+            contentPadding: EdgeInsets.zero,
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _handleMenuSelection(String value) {
+    switch (value) {
+      case 'stock':
+        Navigator.of(context).pushNamed(Routes.stockOperations);
+        break;
+      case 'customer':
+        CustomerNavigator.openHome(context);
+        break;
+      case 'productMetadata':
+        ProductMetadataNavigator.openProductMetadataHome(context);
+        break;
+      case 'language':
+        _buildLanguageDialog();
+        break;
+      case 'theme':
+        _themeStore.changeBrightnessToDark(!_themeStore.darkMode);
+        break;
+      case 'logout':
+        SharedPreferences.getInstance().then((preference) {
+          preference.setBool(Preferences.is_logged_in, false);
+          Navigator.of(context).pushReplacementNamed(Routes.login);
+        });
+        break;
+    }
   }
 
   Widget _buildInventoryAuditButton() {

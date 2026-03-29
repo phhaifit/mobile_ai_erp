@@ -113,7 +113,7 @@ class CartUIModel {
   /// Display Properties
   String get shippingLabel {
     if (shippingAmount == 0) {
-      return 'FREE SHIPPING';
+      return 'Calculated at checkout';
     }
     return 'Shipping: ${PriceFormatter.formatPrice(shippingAmount)}';
   }
