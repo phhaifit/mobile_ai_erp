@@ -183,34 +183,23 @@ class _SearchFilterBarState extends State<SearchFilterBar> {
         ),
         const SizedBox(height: 12),
         Text(
-          'Describe what you\'re looking for and let AI help you find it.',
+          'Let AI help you find products by setting search and filters automatically.',
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 16),
-        TextField(
-          controller: _chatInputController,
-          decoration: InputDecoration(
-            hintText: 'Tell AI what product you want...',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            suffixIcon: IconButton(
-              icon: Icon(Icons.send),
-              onPressed: _handleAIChatMock,
-            ),
+        ElevatedButton.icon(
+          onPressed: _handleAIChatMock,
+          icon: Icon(Icons.smart_toy),
+          label: Text('Ask AI'),
+          style: ElevatedButton.styleFrom(
+            minimumSize: Size(double.infinity, 48),
           ),
-          onSubmitted: (_) => _handleAIChatMock(),
-          maxLines: 3,
-          minLines: 1,
         ),
       ],
     );
   }
 
   void _handleAIChatMock() {
-    final prompt = _chatInputController.text.trim();
-    if (prompt.isEmpty) return;
-
     // Mock AI results
     if (widget.categories.isNotEmpty) {
       _listingFilters.toggleCategoryFilter(widget.categories.first.id);
@@ -219,8 +208,7 @@ class _SearchFilterBarState extends State<SearchFilterBar> {
     _listingFilters.setSearchQuery('Product');
     _listingFilters.updateProducts();
 
-    // Clear input and close the chat panel
-    _chatInputController.clear();
+    // Close the chat panel
     setState(() {
       _chatOpen = false;
     });
