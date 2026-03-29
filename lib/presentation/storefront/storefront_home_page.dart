@@ -6,7 +6,7 @@ import 'package:mobile_ai_erp/presentation/storefront/classes/filter_arguments.d
 import 'package:mobile_ai_erp/presentation/storefront/store/product_listing_store.dart';
 import 'package:mobile_ai_erp/presentation/storefront/widgets/brand_card.dart';
 import 'package:mobile_ai_erp/presentation/storefront/widgets/category_card.dart';
-import 'package:mobile_ai_erp/presentation/storefront/widgets/heading_section.dart';
+import 'package:mobile_ai_erp/presentation/storefront/widgets/section_header.dart';
 import 'package:mobile_ai_erp/presentation/storefront/widgets/page_banner.dart';
 import 'package:mobile_ai_erp/presentation/storefront/widgets/product_card_small.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';

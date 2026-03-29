@@ -3,7 +3,7 @@ import 'package:mobile_ai_erp/domain/entity/product/product.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/brand.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
 import 'package:mobile_ai_erp/presentation/storefront/classes/filter_arguments.dart';
-import 'package:mobile_ai_erp/presentation/storefront/widgets/heading_section.dart';
+import 'package:mobile_ai_erp/presentation/storefront/widgets/section_header.dart';
 import 'package:mobile_ai_erp/presentation/storefront/widgets/product_card_small.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
 
@@ -193,7 +193,12 @@ class _CategoriesLandingPageState extends State<CategoriesLandingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Categories')),
+      appBar: AppBar(
+        title: const Text('Categories'),
+        actions: [
+          IconButton(onPressed: () => Navigator.of(context).pushNamed(Routes.storeHome), icon: Icon(Icons.home))
+        ],
+      ),
       body: Container(
         alignment: Alignment.topCenter,
         child: SingleChildScrollView(

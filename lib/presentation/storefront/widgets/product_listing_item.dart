@@ -17,10 +17,11 @@ class ProductListingItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final imageSize = 120.0;
 
     return Card(
       color: colorScheme.surface,
-      margin: EdgeInsets.all(10.0),
+      margin: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8.0),
         side: BorderSide(color: Colors.black87, width: 1),
@@ -30,63 +31,118 @@ class ProductListingItem extends StatelessWidget {
           Navigator.of(context).pushNamed(Routes.productDetail, arguments: productListing.id);
         },
         child: Padding(
-          padding: EdgeInsets.only(left: 10.0, right: 10.0, top: 5.0, bottom: 5.0),
+          padding: EdgeInsets.all(12.0),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              productListing.imageSource != null ? 
-              Image.network(
-                productListing.imageSource!,
-                width: MediaQuery.of(context).size.width * 0.15,
-                height: MediaQuery.of(context).size.height * 0.15,
-              ) : 
-              Image.network(
-                'https://picsum.photos/250?image=9',
-                width: MediaQuery.of(context).size.width * 0.15,
-                height: MediaQuery.of(context).size.height * 0.15,
-              ), // placeholder image, replace with "no image" asset
-              Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                spacing: 5.0,
-                children: [
-                  Text(
-                    productListing.productName,
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: colorScheme.onSurface),
-                  ),
-                  Row(
-                    children: [
-                      Text(
-                        productListing.category.name,
-                        style: TextStyle(fontSize: 16, color: colorScheme.onSurface),
+              // Product Image
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6.0),
+                child: productListing.imageSource != null 
+                  ? Image.network(
+                      productListing.imageSource!,
+                      width: imageSize,
+                      height: imageSize,
+                      fit: BoxFit.cover,
+                    )
+                  : Image.network(
+                      'https://picsum.photos/250?image=9',
+                      width: imageSize,
+                      height: imageSize,
+                      fit: BoxFit.cover,
+                    ),
+              ),
+              SizedBox(width: 16.0),
+              // Product Details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  spacing: 8.0,
+                  children: [
+                    // Product Name
+                    Text(
+                      productListing.productName,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: colorScheme.onSurface,
                       ),
-                      Text(
-                        productListing.brand.name,
-                        style: TextStyle(fontSize: 16, color: colorScheme.onSurface),
-                      )
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    spacing: 10.0,
-                    children: [
-                      Text(
-                        productListing.rating.toString(),
-                        style: TextStyle(fontSize: 16, color: colorScheme.onSurface),
-                      ), // temporary until rating image is available
-                      Text(
-                        productListing.price.toString(),
-                        style: TextStyle(fontSize: 20, color: colorScheme.onSurface ),
-                      ),
-                      Text(
-                        productListing.currency,
-                        style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
-                      )
-                    ],
-                  )
-                ]
-              )
+                    ),
+                    // Category and Brand
+                    Row(
+                      spacing: 8.0,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            productListing.category.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: colorScheme.onSurface.withOpacity(0.7),
+                            ),
+                          ),
+                        ),
+                        Text('•', style: TextStyle(color: colorScheme.onSurface.withOpacity(0.5))),
+                        Flexible(
+                          child: Text(
+                            productListing.brand.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: colorScheme.onSurface.withOpacity(0.7),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    // Rating
+                    Row(
+                      children: [
+                        Icon(Icons.star, size: 16, color: Colors.amber),
+                        SizedBox(width: 4.0),
+                        Text(
+                          productListing.rating.toStringAsFixed(1),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                      ],
+                    ),
+                    // Price Row
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      spacing: 4.0,
+                      children: [
+                        Text(
+                          productListing.price.toString(),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: colorScheme.primary,
+                          ),
+                        ),
+                        Text(
+                          productListing.currency,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: colorScheme.onSurface.withOpacity(0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ],
-          )
+          ),
         ),
       ),
     );
