@@ -70,6 +70,10 @@ import 'package:mobile_ai_erp/presentation/web_builder/store/store_settings_stor
 import 'package:mobile_ai_erp/presentation/web_builder/store/web_theme_store.dart';
 import 'package:mobile_ai_erp/presentation/cart/store/cart_store.dart';
 
+import 'package:mobile_ai_erp/presentation/product/store/product_form_store.dart';
+import 'package:mobile_ai_erp/presentation/product/store/product_store.dart';
+import 'package:mobile_ai_erp/domain/repository/product/product_management_repository.dart';
+
 import '../../../di/service_locator.dart';
 
 class StoreModule {
@@ -223,6 +227,14 @@ class StoreModule {
         getIt<ErrorStore>(),
         getIt.isRegistered<CartStore>() ? getIt<CartStore>() : null,
       ),
+    );
+
+    getIt.registerSingleton<ProductStore>(
+      ProductStore(getIt<ProductManagementRepository>(), getIt<ErrorStore>()),
+    );
+
+    getIt.registerSingleton<ProductFormStore>(
+      ProductFormStore(getIt<ProductManagementRepository>(), getIt<ErrorStore>()),
     );
   }
 }

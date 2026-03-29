@@ -46,6 +46,10 @@ import 'package:mobile_ai_erp/domain/repository/web_builder/cms_page_repository.
 import 'package:mobile_ai_erp/domain/repository/web_builder/store_settings_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/web_builder/web_theme_repository.dart';
 
+import 'package:mobile_ai_erp/data/repository/product/product_management_repository_impl.dart';
+import 'package:mobile_ai_erp/domain/repository/product/product_management_repository.dart';
+import 'package:mobile_ai_erp/data/local/datasources/product/mock_product_datasource.dart';
+
 import '../../../di/service_locator.dart';
 
 class RepositoryModule {
@@ -113,5 +117,10 @@ class RepositoryModule {
     getIt.registerSingleton<CheckoutRepository>(
       CheckoutRepositoryImpl(getIt<CheckoutDataSource>()),
     );
+
+    getIt.registerSingleton<ProductManagementRepository>(
+      ProductManagementRepositoryImpl(getIt<MockProductDataSource>()),
+    );
+
   }
 }
