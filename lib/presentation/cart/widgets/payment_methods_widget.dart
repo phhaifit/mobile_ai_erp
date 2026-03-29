@@ -17,7 +17,8 @@ class PaymentMethodsWidget extends StatefulWidget {
 }
 
 class _PaymentMethodsWidgetState extends State<PaymentMethodsWidget> {
-  static const String _defaultMethod = 'credit_card';
+  // No default method - user must explicitly select a payment method
+  // This ensures the visual state matches the actual checkout state
 
   static const List<Map<String, String>> _savedCards = [
     {
@@ -43,7 +44,7 @@ class _PaymentMethodsWidgetState extends State<PaymentMethodsWidget> {
     },
   ];
 
-  late String _selectedMethod;
+  String? _selectedMethod;
   String? _selectedSavedCard;
 
   @override
@@ -81,18 +82,18 @@ class _PaymentMethodsWidgetState extends State<PaymentMethodsWidget> {
       if (mappedSavedCard != null &&
           _getMethodOfSavedCard(mappedSavedCard) == mappedMethod) {
         _selectedSavedCard = mappedSavedCard;
-      } else if (!_savedCardBelongsToMethod(_selectedSavedCard, mappedMethod)) {
+      } else if (!_savedCardBelongsToMethod(_selectedSavedCard, mappedMethod ?? '')) {
         _selectedSavedCard = null;
       }
     });
   }
 
-  String _normalizeMethod(String? value) {
+  String? _normalizeMethod(String? value) {
     final raw = value?.trim();
-    if (raw == null || raw.isEmpty) return _defaultMethod;
+    if (raw == null || raw.isEmpty) return null; // No default - user must select
 
     if (_isSavedCardValue(raw)) {
-      return _getMethodOfSavedCard(raw) ?? _defaultMethod;
+      return _getMethodOfSavedCard(raw);
     }
 
     return raw;
@@ -106,7 +107,8 @@ class _PaymentMethodsWidgetState extends State<PaymentMethodsWidget> {
 
   bool _isSavedCardValue(String value) => value.startsWith('saved_');
 
-  bool _methodSupportsSavedCards(String method) {
+  bool _methodSupportsSavedCards(String? method) {
+    if (method == null) return false;
     return method == 'credit_card' || method == 'debit_card';
   }
 
@@ -119,8 +121,8 @@ class _PaymentMethodsWidgetState extends State<PaymentMethodsWidget> {
     return null;
   }
 
-  bool _savedCardBelongsToMethod(String? cardValue, String method) {
-    if (cardValue == null) return false;
+  bool _savedCardBelongsToMethod(String? cardValue, String? method) {
+    if (cardValue == null || method == null) return false;
     return _getMethodOfSavedCard(cardValue) == method;
   }
 
@@ -148,7 +150,8 @@ class _PaymentMethodsWidgetState extends State<PaymentMethodsWidget> {
       _selectedSavedCard = cardValue;
     });
 
-    widget.onMethodSelected(_selectedMethod, cardValue);
+    // cardMethod is guaranteed non-null for valid saved cards
+    widget.onMethodSelected(cardMethod ?? _selectedMethod ?? '', cardValue);
   }
 
   @override
@@ -196,6 +199,14 @@ class _PaymentMethodsWidgetState extends State<PaymentMethodsWidget> {
               title: 'Bank Transfer',
               icon: Icons.account_balance_outlined,
               subtitle: 'Manual transfer to our bank account',
+            ),
+            const SizedBox(height: 12),
+
+            _buildPaymentOption(
+              value: 'cod',
+              title: 'Cash on Delivery',
+              icon: Icons.local_shipping,
+              subtitle: 'Pay with cash when you receive your order',
             ),
 
             if (widget.showSavedCards &&
