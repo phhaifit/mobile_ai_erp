@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
+import 'package:mobile_ai_erp/domain/entity/post_purchase/exchange_request.dart';
 import 'package:mobile_ai_erp/domain/entity/post_purchase/issue_ticket.dart';
-import 'package:mobile_ai_erp/domain/entity/post_purchase/return_exchange_request.dart';
+import 'package:mobile_ai_erp/domain/entity/post_purchase/order_complaint_candidate.dart';
+import 'package:mobile_ai_erp/domain/entity/post_purchase/refund_request.dart';
 import 'package:mobile_ai_erp/presentation/post_purchase/store/post_purchase_store.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
 
@@ -15,36 +16,43 @@ class PostPurchaseDashboardScreen extends StatefulWidget {
       _PostPurchaseDashboardScreenState();
 }
 
-class _PostPurchaseDashboardScreenState
-    extends State<PostPurchaseDashboardScreen> {
+class _PostPurchaseDashboardScreenState extends State<PostPurchaseDashboardScreen> {
   final PostPurchaseStore _store = getIt<PostPurchaseStore>();
   final DateFormat _dateFormat = DateFormat('dd/MM/yyyy HH:mm');
 
   @override
   void initState() {
     super.initState();
-    _store.getIssues();
-    _store.getReturns();
+    _load();
+  }
+
+  Future<void> _load() async {
+    await _store.loadAll();
+    if (!mounted) return;
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Post-Purchase & Issues'),
+          title: const Text('Post-Purchase & Issue Management'),
+          actions: _buildQuickActions(),
           bottom: const TabBar(
             tabs: [
               Tab(text: 'Issues'),
-              Tab(text: 'Returns & Exchanges'),
+              Tab(text: 'Exchanges'),
+              Tab(text: 'Refunds'),
             ],
           ),
         ),
         body: TabBarView(
           children: [
             _buildIssuesTab(),
-            _buildReturnsTab(),
+            _buildExchangesTab(),
+            _buildRefundsTab(),
           ],
         ),
       ),
@@ -52,11 +60,34 @@ class _PostPurchaseDashboardScreenState
   }
 
   Widget _buildIssuesTab() {
+    final issues = _store.filteredIssues;
     return Column(
       children: [
         _buildIssueSearch(),
-        _buildIssueStatusFilters(),
-        Expanded(child: _buildIssueList()),
+        _buildIssueFilters(),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: ElevatedButton.icon(
+              onPressed: _showCreateIssueDialog,
+              icon: const Icon(Icons.add_circle_outline),
+              label: const Text('Create Issue'),
+            ),
+          ),
+        ),
+        Expanded(
+          child: _store.isLoadingIssues
+              ? const Center(child: CircularProgressIndicator())
+              : issues.isEmpty
+                  ? const Center(child: Text('No issues found.'))
+                  : ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                      itemCount: issues.length,
+                      itemBuilder: (context, index) =>
+                          _buildIssueCard(issues[index]),
+                    ),
+        ),
       ],
     );
   }
@@ -65,10 +96,13 @@ class _PostPurchaseDashboardScreenState
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
       child: TextField(
-        onChanged: _store.setIssueSearchQuery,
+        onChanged: (value) {
+          _store.issueSearchQuery = value;
+          setState(() {});
+        },
         decoration: const InputDecoration(
           prefixIcon: Icon(Icons.search),
-          hintText: 'Search by ID, order ID, or customer',
+          hintText: 'Search issue by id / order / customer / subject',
           border: OutlineInputBorder(),
           isDense: true,
         ),
@@ -76,66 +110,47 @@ class _PostPurchaseDashboardScreenState
     );
   }
 
-  Widget _buildIssueStatusFilters() {
-    return Observer(
-      builder: (_) {
-        return SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Row(
-            children: [
-              _buildFilterChip<IssueStatus?>(
-                label: 'All',
-                value: null,
-                groupValue: _store.issueStatusFilter,
-                onSelected: _store.setIssueStatusFilter,
-              ),
-              ...IssueStatus.values.map(
-                (status) => _buildFilterChip<IssueStatus?>(
-                  label: status.displayName,
-                  value: status,
-                  groupValue: _store.issueStatusFilter,
-                  onSelected: _store.setIssueStatusFilter,
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildIssueList() {
-    return Observer(
-      builder: (_) {
-        if (_store.isLoadingIssues) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        final issues = _store.filteredIssues;
-        if (issues.isEmpty) {
-          return const Center(child: Text('No issues found.'));
-        }
-        return ListView.builder(
-          padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
-          itemCount: issues.length,
-          itemBuilder: (context, index) => _buildIssueCard(issues[index]),
-        );
-      },
+  Widget _buildIssueFilters() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        children: IssueFilterGroup.values.map((group) {
+          final selected = _store.issueFilterGroup == group;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: FilterChip(
+              label: Text(group.displayName),
+              selected: selected,
+              onSelected: (_) {
+                _store.issueFilterGroup = group;
+                setState(() {});
+              },
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 
   Widget _buildIssueCard(IssueTicket issue) {
+    final linkedBadge = issue.linkedExchangeId != null
+        ? 'EXC: ${issue.linkedExchangeId}'
+        : issue.linkedRefundId != null
+            ? 'RFD: ${issue.linkedRefundId}'
+            : null;
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
-        onTap: () {
-          _store.getIssueDetail(issue.id);
+        onTap: () async {
+          await _store.getIssueDetail(issue.id);
+          if (!mounted) return;
           Navigator.of(context).pushNamed(
             Routes.postPurchaseIssueDetail,
             arguments: issue.id,
           );
         },
-        borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -151,29 +166,37 @@ class _PostPurchaseDashboardScreenState
                           ),
                     ),
                   ),
-                  _buildIssueStatusChip(issue.status),
+                  _buildStatusChip(issue.status.displayName, _issueStatusColor(issue.status)),
                 ],
               ),
               const SizedBox(height: 6),
               Text(
-                '${issue.customerName} • ${issue.orderId}',
+                '${issue.id} - ${issue.orderId} - ${issue.customerName}',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               const SizedBox(height: 6),
               Row(
                 children: [
-                  _buildPriorityChip(issue.priority),
-                  const SizedBox(width: 8),
-                  Text(
-                    issue.channel,
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
+                  if (linkedBadge != null)
+                    Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.blueGrey.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        linkedBadge,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                   const Spacer(),
                   Text(
                     _dateFormat.format(issue.updatedAt),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).hintColor,
-                        ),
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
               ),
@@ -184,24 +207,39 @@ class _PostPurchaseDashboardScreenState
     );
   }
 
-  Widget _buildReturnsTab() {
+  Widget _buildExchangesTab() {
+    final exchanges = _store.filteredExchanges;
     return Column(
       children: [
-        _buildReturnSearch(),
-        _buildReturnFilters(),
-        Expanded(child: _buildReturnList()),
+        _buildExchangeSearch(),
+        _buildExchangeFilters(),
+        Expanded(
+          child: _store.isLoadingExchanges
+              ? const Center(child: CircularProgressIndicator())
+              : exchanges.isEmpty
+                  ? const Center(child: Text('No exchanges found.'))
+                  : ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+                      itemCount: exchanges.length,
+                      itemBuilder: (context, index) =>
+                          _buildExchangeCard(exchanges[index]),
+                    ),
+        ),
       ],
     );
   }
 
-  Widget _buildReturnSearch() {
+  Widget _buildExchangeSearch() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
       child: TextField(
-        onChanged: _store.setReturnSearchQuery,
+        onChanged: (value) {
+          _store.exchangeSearchQuery = value;
+          setState(() {});
+        },
         decoration: const InputDecoration(
           prefixIcon: Icon(Icons.search),
-          hintText: 'Search by ID, order ID, or customer',
+          hintText: 'Search exchange by id / order / customer / reason',
           border: OutlineInputBorder(),
           isDense: true,
         ),
@@ -209,92 +247,41 @@ class _PostPurchaseDashboardScreenState
     );
   }
 
-  Widget _buildReturnFilters() {
-    return Observer(
-      builder: (_) {
-        return Column(
-          children: [
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-              child: Row(
-                children: [
-                  _buildFilterChip<ReturnType?>(
-                    label: 'All Types',
-                    value: null,
-                    groupValue: _store.returnTypeFilter,
-                    onSelected: _store.setReturnTypeFilter,
-                  ),
-                  ...ReturnType.values.map(
-                    (type) => _buildFilterChip<ReturnType?>(
-                      label: type.displayName,
-                      value: type,
-                      groupValue: _store.returnTypeFilter,
-                      onSelected: _store.setReturnTypeFilter,
-                    ),
-                  ),
-                ],
-              ),
+  Widget _buildExchangeFilters() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        children: ExchangeFilterGroup.values.map((group) {
+          final selected = _store.exchangeFilterGroup == group;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: FilterChip(
+              label: Text(group.displayName),
+              selected: selected,
+              onSelected: (_) {
+                _store.exchangeFilterGroup = group;
+                setState(() {});
+              },
             ),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-              child: Row(
-                children: [
-                  _buildFilterChip<ReturnStatus?>(
-                    label: 'All Status',
-                    value: null,
-                    groupValue: _store.returnStatusFilter,
-                    onSelected: _store.setReturnStatusFilter,
-                  ),
-                  ...ReturnStatus.values.map(
-                    (status) => _buildFilterChip<ReturnStatus?>(
-                      label: status.displayName,
-                      value: status,
-                      groupValue: _store.returnStatusFilter,
-                      onSelected: _store.setReturnStatusFilter,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        );
-      },
+          );
+        }).toList(),
+      ),
     );
   }
 
-  Widget _buildReturnList() {
-    return Observer(
-      builder: (_) {
-        if (_store.isLoadingReturns) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        final returns = _store.filteredReturns;
-        if (returns.isEmpty) {
-          return const Center(child: Text('No return or exchange requests.'));
-        }
-        return ListView.builder(
-          padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-          itemCount: returns.length,
-          itemBuilder: (context, index) => _buildReturnCard(returns[index]),
-        );
-      },
-    );
-  }
-
-  Widget _buildReturnCard(ReturnExchangeRequest req) {
+  Widget _buildExchangeCard(ExchangeRequest request) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
-        onTap: () {
-          _store.getReturnDetail(req.id);
+        onTap: () async {
+          await _store.getExchangeDetail(request.id);
+          if (!mounted) return;
           Navigator.of(context).pushNamed(
-            Routes.postPurchaseReturnDetail,
-            arguments: req.id,
+            Routes.postPurchaseExchangeDetail,
+            arguments: request.id,
           );
         },
-        borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -302,55 +289,51 @@ class _PostPurchaseDashboardScreenState
             children: [
               Row(
                 children: [
-                  Text(
-                    req.id,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                  Expanded(
+                    child: Text(
+                      '${request.id} - ${request.orderId}',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
                   ),
-                  const SizedBox(width: 8),
-                  _buildReturnTypeChip(req.type),
-                  const Spacer(),
-                  _buildReturnStatusChip(req.status),
+                  _buildStatusChip(
+                    request.status.displayName,
+                    _exchangeStatusColor(request.status),
+                  ),
                 ],
               ),
               const SizedBox(height: 6),
               Text(
-                '${req.customerName} • ${req.orderId}',
+                request.customerName,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               const SizedBox(height: 6),
               Row(
                 children: [
-                  Expanded(
-                    child: Text(
-                      req.reason,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ),
-                  Text(
-                    _dateFormat.format(req.updatedAt),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).hintColor,
+                  if (request.linkedIssueId != null)
+                    Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.indigo.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        'ISS: ${request.linkedIssueId}',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
                         ),
+                      ),
+                    ),
+                  const Spacer(),
+                  Text(
+                    _dateFormat.format(request.updatedAt),
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
               ),
-              const SizedBox(height: 6),
-              if (req.refundAmount != null)
-                Text(
-                  'Refund: ${NumberFormat.currency(locale: 'vi_VN', symbol: 'VND').format(req.refundAmount)}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                )
-              else if (req.exchangeSku != null)
-                Text(
-                  'Exchange SKU: ${req.exchangeSku}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                ),
             ],
           ),
         ),
@@ -358,109 +341,340 @@ class _PostPurchaseDashboardScreenState
     );
   }
 
-  Widget _buildIssueStatusChip(IssueStatus status) {
-    final color = _issueStatusColor(status);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        status.displayName,
-        style: TextStyle(
-          color: color,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
+  Widget _buildRefundsTab() {
+    final refunds = _store.filteredRefunds;
+    return Column(
+      children: [
+        _buildRefundSearch(),
+        _buildRefundFilters(),
+        Expanded(
+          child: _store.isLoadingRefunds
+              ? const Center(child: CircularProgressIndicator())
+              : refunds.isEmpty
+                  ? const Center(child: Text('No refunds found.'))
+                  : ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+                      itemCount: refunds.length,
+                      itemBuilder: (context, index) =>
+                          _buildRefundCard(refunds[index]),
+                    ),
         ),
-      ),
+      ],
     );
   }
 
-  Widget _buildReturnStatusChip(ReturnStatus status) {
-    final color = _returnStatusColor(status);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        status.displayName,
-        style: TextStyle(
-          color: color,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildReturnTypeChip(ReturnType type) {
-    final color = type == ReturnType.returnOnly ? Colors.blueGrey : Colors.teal;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Text(
-        type.displayName,
-        style: TextStyle(
-          color: color,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPriorityChip(IssuePriority priority) {
-    final color = _priorityColor(priority);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Text(
-        priority.displayName,
-        style: TextStyle(
-          color: color,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFilterChip<T>({
-    required String label,
-    required T value,
-    required T groupValue,
-    required void Function(T value) onSelected,
-  }) {
-    final isSelected = value == groupValue;
+  Widget _buildRefundSearch() {
     return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: FilterChip(
-        label: Text(label),
-        selected: isSelected,
-        onSelected: (_) => onSelected(value),
-        selectedColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-        checkmarkColor: Theme.of(context).colorScheme.primary,
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      child: TextField(
+        onChanged: (value) {
+          _store.refundSearchQuery = value;
+          setState(() {});
+        },
+        decoration: const InputDecoration(
+          prefixIcon: Icon(Icons.search),
+          hintText: 'Search refund by id / order / customer / reason',
+          border: OutlineInputBorder(),
+          isDense: true,
+        ),
       ),
     );
+  }
+
+  Widget _buildRefundFilters() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        children: RefundFilterGroup.values.map((group) {
+          final selected = _store.refundFilterGroup == group;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: FilterChip(
+              label: Text(group.displayName),
+              selected: selected,
+              onSelected: (_) {
+                _store.refundFilterGroup = group;
+                setState(() {});
+              },
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildRefundCard(RefundRequest request) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        onTap: () async {
+          await _store.getRefundDetail(request.id);
+          if (!mounted) return;
+          Navigator.of(context).pushNamed(
+            Routes.postPurchaseRefundDetail,
+            arguments: request.id,
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${request.id} - ${request.orderId}',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                  ),
+                  _buildStatusChip(
+                    request.status.displayName,
+                    _refundStatusColor(request.status),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                request.customerName,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  if (request.linkedIssueId != null)
+                    Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.deepPurple.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        'ISS: ${request.linkedIssueId}',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  const Spacer(),
+                  Text(
+                    _dateFormat.format(request.updatedAt),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusChip(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+
+  List<Widget> _buildQuickActions() {
+    return [
+      IconButton(
+        tooltip: 'Home',
+        onPressed: () => Navigator.of(context).pushNamed(Routes.home),
+        icon: const Icon(Icons.home_outlined),
+      ),
+      IconButton(
+        tooltip: 'Post-Purchase',
+        onPressed: () => Navigator.of(context).pushNamed(Routes.postPurchase),
+        icon: const Icon(Icons.support_agent_outlined),
+      ),
+    ];
+  }
+
+  Future<void> _showCreateIssueDialog() async {
+    if (_store.orderPool.isEmpty) {
+      await _store.getOrderPool();
+      if (!mounted) return;
+      setState(() {});
+    }
+    final subjectController = TextEditingController();
+    final descriptionController = TextEditingController();
+    final channelController = TextEditingController();
+    IssuePriority priority = IssuePriority.medium;
+    OrderComplaintCandidate? selectedOrder =
+        _store.orderPool.isNotEmpty ? _store.orderPool.first : null;
+    if (selectedOrder != null) {
+      channelController.text = selectedOrder.preferredChannel;
+    }
+
+    await showDialog<void>(
+      context: context,
+      builder: (_) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Create Issue'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    DropdownButtonFormField<OrderComplaintCandidate>(
+                      initialValue: selectedOrder,
+                      items: _store.orderPool
+                          .map(
+                            (order) => DropdownMenuItem(
+                              value: order,
+                              child: Text(
+                                '${order.orderId} - ${order.customerName}',
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        setDialogState(() {
+                          selectedOrder = value;
+                          channelController.text = value?.preferredChannel ?? '';
+                        });
+                      },
+                      decoration: const InputDecoration(
+                        labelText: 'Order *',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: subjectController,
+                      decoration: const InputDecoration(
+                        labelText: 'Subject *',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: descriptionController,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        labelText: 'Description *',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    DropdownButtonFormField<IssuePriority>(
+                      initialValue: priority,
+                      items: IssuePriority.values
+                          .map(
+                            (item) => DropdownMenuItem(
+                              value: item,
+                              child: Text(item.displayName),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setDialogState(() => priority = value);
+                      },
+                      decoration: const InputDecoration(
+                        labelText: 'Priority',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    InputDecorator(
+                      decoration: const InputDecoration(
+                        labelText: 'Customer',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                      child: Text(selectedOrder?.customerName ?? ''),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: channelController,
+                      decoration: const InputDecoration(
+                        labelText: 'Channel',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (selectedOrder == null ||
+                        subjectController.text.trim().isEmpty ||
+                        descriptionController.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(this.context).showSnackBar(
+                        const SnackBar(content: Text('Please fill required fields.')),
+                      );
+                      return;
+                    }
+                    final id = await _store.createIssue(
+                      orderId: selectedOrder!.orderId,
+                      customerName: selectedOrder!.customerName,
+                      subject: subjectController.text.trim(),
+                      description: descriptionController.text.trim(),
+                      priority: priority,
+                      channel: channelController.text.trim(),
+                    );
+                    if (!mounted) return;
+                    Navigator.of(context).pop();
+                    setState(() {});
+                    if (id != null) {
+                      Navigator.of(this.context).pushNamed(
+                        Routes.postPurchaseIssueDetail,
+                        arguments: id,
+                      );
+                    }
+                  },
+                  child: const Text('Create'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    subjectController.dispose();
+    descriptionController.dispose();
+    channelController.dispose();
   }
 
   Color _issueStatusColor(IssueStatus status) {
     switch (status) {
-      case IssueStatus.newIssue:
+      case IssueStatus.open:
         return Colors.orange;
-      case IssueStatus.inReview:
+      case IssueStatus.investigating:
         return Colors.blue;
-      case IssueStatus.awaitingCustomer:
+      case IssueStatus.waitingCustomer:
         return Colors.indigo;
+      case IssueStatus.pendingExchange:
+        return Colors.teal;
+      case IssueStatus.pendingRefund:
+        return Colors.deepPurple;
       case IssueStatus.resolved:
         return Colors.green;
       case IssueStatus.closed:
@@ -468,32 +682,46 @@ class _PostPurchaseDashboardScreenState
     }
   }
 
-  Color _returnStatusColor(ReturnStatus status) {
+  Color _exchangeStatusColor(ExchangeStatus status) {
     switch (status) {
-      case ReturnStatus.requested:
+      case ExchangeStatus.requested:
         return Colors.orange;
-      case ReturnStatus.approved:
+      case ExchangeStatus.approved:
         return Colors.blue;
-      case ReturnStatus.inTransitBack:
-        return Colors.teal;
-      case ReturnStatus.received:
+      case ExchangeStatus.awaitingReturn:
         return Colors.indigo;
-      case ReturnStatus.refunded:
-        return Colors.green;
-      case ReturnStatus.exchanged:
+      case ExchangeStatus.inTransitBack:
+        return Colors.teal;
+      case ExchangeStatus.received:
+        return Colors.cyan;
+      case ExchangeStatus.replacementShipped:
         return Colors.purple;
-      case ReturnStatus.rejected:
+      case ExchangeStatus.completed:
+        return Colors.green;
+      case ExchangeStatus.rejected:
+      case ExchangeStatus.cancelled:
         return Colors.red;
     }
   }
 
-  Color _priorityColor(IssuePriority priority) {
-    switch (priority) {
-      case IssuePriority.low:
-        return Colors.green;
-      case IssuePriority.medium:
+  Color _refundStatusColor(RefundStatus status) {
+    switch (status) {
+      case RefundStatus.requested:
         return Colors.orange;
-      case IssuePriority.high:
+      case RefundStatus.approved:
+        return Colors.blue;
+      case RefundStatus.awaitingReturn:
+        return Colors.indigo;
+      case RefundStatus.inTransitBack:
+        return Colors.teal;
+      case RefundStatus.received:
+        return Colors.cyan;
+      case RefundStatus.refundPending:
+        return Colors.purple;
+      case RefundStatus.refunded:
+        return Colors.green;
+      case RefundStatus.rejected:
+      case RefundStatus.cancelled:
         return Colors.red;
     }
   }

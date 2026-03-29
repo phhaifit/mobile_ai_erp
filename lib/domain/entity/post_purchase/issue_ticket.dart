@@ -1,7 +1,9 @@
 enum IssueStatus {
-  newIssue,
-  inReview,
-  awaitingCustomer,
+  open,
+  investigating,
+  waitingCustomer,
+  pendingExchange,
+  pendingRefund,
   resolved,
   closed,
 }
@@ -9,16 +11,73 @@ enum IssueStatus {
 extension IssueStatusLabel on IssueStatus {
   String get displayName {
     switch (this) {
-      case IssueStatus.newIssue:
-        return 'New';
-      case IssueStatus.inReview:
-        return 'In Review';
-      case IssueStatus.awaitingCustomer:
-        return 'Awaiting Customer';
+      case IssueStatus.open:
+        return 'Open';
+      case IssueStatus.investigating:
+        return 'Investigating';
+      case IssueStatus.waitingCustomer:
+        return 'Waiting Customer';
+      case IssueStatus.pendingExchange:
+        return 'Pending Exchange';
+      case IssueStatus.pendingRefund:
+        return 'Pending Refund';
       case IssueStatus.resolved:
         return 'Resolved';
       case IssueStatus.closed:
         return 'Closed';
+    }
+  }
+}
+
+enum IssueFilterGroup {
+  all,
+  active,
+  waiting,
+  done,
+}
+
+extension IssueFilterGroupLabel on IssueFilterGroup {
+  String get displayName {
+    switch (this) {
+      case IssueFilterGroup.all:
+        return 'All';
+      case IssueFilterGroup.active:
+        return 'Active';
+      case IssueFilterGroup.waiting:
+        return 'Waiting';
+      case IssueFilterGroup.done:
+        return 'Done';
+    }
+  }
+}
+
+enum IssueAction {
+  startInvestigating,
+  requestCustomerInfo,
+  createExchange,
+  createRefund,
+  resolveDirectly,
+  resumeInvestigating,
+  closeIssue,
+}
+
+extension IssueActionLabel on IssueAction {
+  String get displayName {
+    switch (this) {
+      case IssueAction.startInvestigating:
+        return 'Start Investigating';
+      case IssueAction.requestCustomerInfo:
+        return 'Request Customer Info';
+      case IssueAction.createExchange:
+        return 'Create Exchange';
+      case IssueAction.createRefund:
+        return 'Create Refund';
+      case IssueAction.resolveDirectly:
+        return 'Resolve Directly';
+      case IssueAction.resumeInvestigating:
+        return 'Resume Investigating';
+      case IssueAction.closeIssue:
+        return 'Close Issue';
     }
   }
 }
@@ -56,7 +115,8 @@ class IssueTicket {
     required this.updatedAt,
     this.assignee,
     this.adminNotes,
-    this.linkedReturnId,
+    this.linkedExchangeId,
+    this.linkedRefundId,
   });
 
   final String id;
@@ -71,5 +131,6 @@ class IssueTicket {
   DateTime updatedAt;
   final String? assignee;
   String? adminNotes;
-  String? linkedReturnId;
+  String? linkedExchangeId;
+  String? linkedRefundId;
 }
