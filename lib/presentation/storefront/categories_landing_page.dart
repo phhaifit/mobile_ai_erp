@@ -227,7 +227,7 @@ class _CategoriesLandingPageState extends State<CategoriesLandingPage> {
           headingText: category.name,
           linkText: 'See all ${category.name}',
           linkDestination: Routes.storefrontProductListing,
-          filterArguments: FilterArguments(selectedCategories: [category.id]),
+          filterArguments: FilterArguments(selectedCategories: [category.id], selectedBrands: [], searchQuery: ""),
         ),
         if (products.isNotEmpty)
           Wrap(
@@ -299,7 +299,7 @@ class _CategoriesLandingPageState extends State<CategoriesLandingPage> {
     return ActionChip(
       label: Text(subcategory.name),
       onPressed: () {
-        Navigator.of(context).pushNamed(Routes.storefrontProductListing, arguments: FilterArguments(selectedCategories: [subcategory.id]));
+        Navigator.of(context).pushNamed(Routes.storefrontProductListing, arguments: FilterArguments(selectedCategories: [subcategory.id], selectedBrands: [], searchQuery: ""));
       },
     );
   }
