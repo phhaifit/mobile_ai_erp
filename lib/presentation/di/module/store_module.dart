@@ -213,6 +213,7 @@ class StoreModule {
     // Product listing store:---------------------------------------------------
     getIt.registerSingleton<ListingFilters>(
       ListingFilters(),
+    );
     // checkout:---------------------------------------------------------------
     getIt.registerSingleton<CheckoutStore>(
       CheckoutStore(
