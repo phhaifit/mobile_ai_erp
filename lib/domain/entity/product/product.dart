@@ -2,34 +2,50 @@ import 'package:mobile_ai_erp/domain/entity/product_metadata/attribute.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/brand.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/tag.dart';
+import 'package:mobile_ai_erp/domain/entity/product/product_status.dart';
 
 /// Product entity class. Mainly contains information shown to customers of the store
-/// 
-/// Currently only used in storefront.
+/// Used in storefront pages
 class Product {
-  // Core product details
-  final String id; // product ID
-  final String productName; // name of the product
-  final double price; // price for sale //// same as unit price?
+  final int? id;
+  final String name;
+  final String sku;
+  final double price;
   final String currency; // currency display, e.g. USD, CNY
   final double rating; // average rating from customers, between 0 and 5
-  final String? imageSource; // URL or local path to product image, can be null if no image available
+  final String description;
+  final ProductStatus status;
+  final int categoryId;
+  final int brandId;
+  final List<int> tagIds;
+  final List<String> imageUrls;
+  final DateTime? createdAt;
 
-  // Metadata
-  final Category category; // product category //// can this be null?
-  final Brand brand; // product brand //// can this be null?
+  // Metadata (currently may overlap with above fields)
+  final Category? category; // product category //// can this be null?
+  final Brand? brand; // product brand //// can this be null?
   final List<Tag> tags; // list of tags, can be empty
   final List<Attribute> attributes; // list of attributes, can be empty
 
+
+
   Product({
-    required this.id,
-    required this.productName,
+    this.id,
+    required this.name,
+    required this.sku,
     required this.price,
     required this.currency,
     required this.rating,
-    this.imageSource,
-    required this.category,
-    required this.brand,
+    required this.description,
+    required this.status,
+    required this.categoryId,
+    required this.brandId,
+    required this.tagIds,
+    required this.imageUrls,
+    this.createdAt,
+
+    this.category,
+    this.brand,
     this.tags = const <Tag>[],
     this.attributes = const <Attribute>[],
   }) {
@@ -41,41 +57,14 @@ class Product {
       throw ArgumentError('Rating must be between 0 and 5');
     }
   }
-}
-import 'package:mobile_ai_erp/domain/entity/product/product_status.dart';
-
-class Product {
-  final int? id;
-  final String name;
-  final String sku;
-  final double price;
-  final String description;
-  final ProductStatus status;
-  final int categoryId;
-  final int brandId;
-  final List<int> tagIds;
-  final List<String> imageUrls;
-  final DateTime? createdAt;
-
-  Product({
-    this.id,
-    required this.name,
-    required this.sku,
-    required this.price,
-    required this.description,
-    required this.status,
-    required this.categoryId,
-    required this.brandId,
-    required this.tagIds,
-    required this.imageUrls,
-    this.createdAt,
-  });
 
   factory Product.fromMap(Map<String, dynamic> json) => Product(
         id: json["id"],
         name: json["name"] ?? "",
         sku: json["sku"] ?? "",
         price: (json["price"] as num?)?.toDouble() ?? 0.0,
+        currency: json["currency"] ?? "USD",
+        rating: (json["rating"] as num?)?.toDouble() ?? 0.0,
         description: json["description"] ?? "",
         status: productStatusFromValue(json["status"] ?? 2),
         categoryId: json["categoryId"] ?? 0,
@@ -106,6 +95,8 @@ class Product {
     String? name,
     String? sku,
     double? price,
+    String? currency,
+    double? rating,
     String? description,
     ProductStatus? status,
     int? categoryId,
@@ -119,6 +110,8 @@ class Product {
       name: name ?? this.name,
       sku: sku ?? this.sku,
       price: price ?? this.price,
+      currency: currency ?? this.currency,
+      rating: rating ?? this.rating,
       description: description ?? this.description,
       status: status ?? this.status,
       categoryId: categoryId ?? this.categoryId,

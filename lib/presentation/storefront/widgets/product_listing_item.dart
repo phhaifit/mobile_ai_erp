@@ -56,9 +56,9 @@ class ProductListingItem extends StatelessWidget {
               // Product Image
               ClipRRect(
                 borderRadius: BorderRadius.circular(6.0),
-                child: productListing.imageSource != null 
+                child: productListing.imageUrls.isNotEmpty 
                   ? Image.network(
-                      productListing.imageSource!,
+                      productListing.imageUrls.first,
                       width: imageSize,
                       height: imageSize,
                       fit: BoxFit.cover,
@@ -80,7 +80,7 @@ class ProductListingItem extends StatelessWidget {
                   children: [
                     // Product Name
                     TextHighlight(
-                      text: productListing.productName,
+                      text: productListing.name,
                       words: highlightedWords,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -95,25 +95,27 @@ class ProductListingItem extends StatelessWidget {
                       spacing: 8.0,
                       children: [
                         Flexible(
-                          child: Text(
-                            productListing.category.name,
+                          child: TextHighlight(
+                            text: productListing.category?.name ?? 'No category information',
+                            words: highlightedWords,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
+                            textStyle: TextStyle(
                               fontSize: 13,
-                              color: colorScheme.onSurface.withOpacity(0.7),
+                              color: colorScheme.onSurface.withValues(alpha: 0.7),
                             ),
                           ),
                         ),
-                        Text('•', style: TextStyle(color: colorScheme.onSurface.withOpacity(0.5))),
+                        Text('•', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5))),
                         Flexible(
-                          child: Text(
-                            productListing.brand.name,
-                            maxLines: 1,
+                          child: TextHighlight(
+                            text: productListing.brand?.name ?? 'No brand information',
+                            words: highlightedWords,
+                            maxLines: 1,    
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
+                            textStyle: TextStyle(
                               fontSize: 13,
-                              color: colorScheme.onSurface.withOpacity(0.7),
+                              color: colorScheme.onSurface.withValues(alpha: 0.7),
                             ),
                           ),
                         ),
@@ -133,6 +135,17 @@ class ProductListingItem extends StatelessWidget {
                           ),
                         ),
                       ],
+                    ),
+                    // Product Description
+                    TextHighlight(
+                      text: productListing.description,
+                      words: highlightedWords,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textStyle: TextStyle(
+                        fontSize: 13,
+                        color: colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
                     ),
                     // Price Row
                     Row(
