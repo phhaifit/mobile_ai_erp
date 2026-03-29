@@ -10,12 +10,17 @@ import 'package:mobile_ai_erp/domain/repository/stock_operations/stock_operation
 import 'package:mobile_ai_erp/domain/repository/supplier/supplier_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/role_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/user_repository.dart';
+import 'package:mobile_ai_erp/domain/usecase/checkout/checkout_usecases.dart';
+import 'package:mobile_ai_erp/domain/usecase/checkout/get_payment_methods_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/checkout/get_shipping_methods_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/checkout/validate_coupon_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/add_package_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_fulfillment_order_detail_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_fulfillment_orders_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/update_fulfillment_status_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/update_package_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/update_picked_quantity_usecase.dart';
+import 'package:mobile_ai_erp/presentation/checkout/store/checkout_store.dart';
 import 'package:mobile_ai_erp/domain/usecase/inventory_audit_outbound/get_inventory_audit_records_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/inventory_audit_outbound/get_inventory_by_warehouse_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/inventory_audit_outbound/get_inventory_outbound_records_usecase.dart';
@@ -52,7 +57,6 @@ import 'package:mobile_ai_erp/presentation/product_detail/store/product_detail_s
 import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
 import 'package:mobile_ai_erp/presentation/reports/data/reports_mock_repository.dart';
 import 'package:mobile_ai_erp/presentation/reports/store/reports_store.dart';
-import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
 import 'package:mobile_ai_erp/presentation/account/store/profile_store.dart';
 import 'package:mobile_ai_erp/presentation/account/store/address_store.dart';
 import 'package:mobile_ai_erp/presentation/account/store/order_store.dart';
@@ -66,6 +70,7 @@ import 'package:mobile_ai_erp/presentation/web_builder/store/store_settings_stor
 import 'package:mobile_ai_erp/presentation/web_builder/store/web_theme_store.dart';
 import 'package:mobile_ai_erp/presentation/order_fulfillment/store/fulfillment_store.dart';
 import 'package:mobile_ai_erp/presentation/storefront/store/product_listing_store.dart';
+import 'package:mobile_ai_erp/presentation/cart/store/cart_store.dart';
 
 import '../../../di/service_locator.dart';
 
@@ -208,6 +213,21 @@ class StoreModule {
     // Product listing store:---------------------------------------------------
     getIt.registerSingleton<ListingFilters>(
       ListingFilters(),
+    // checkout:---------------------------------------------------------------
+    getIt.registerSingleton<CheckoutStore>(
+      CheckoutStore(
+        getIt<GetShippingMethodsUseCase>(),
+        getIt<GetPaymentMethodsUseCase>(),
+        getIt<ValidateCouponUseCase>(),
+        getIt<ParseAddressUseCase>(),
+        getIt<CreateCheckoutOrderUseCase>(),
+        getIt<ConfirmOrderUseCase>(),
+        getIt<GetSavedAddressesUseCase>(),
+        getIt<SaveAddressUseCase>(),
+        getIt<DeleteAddressUseCase>(),
+        getIt<ErrorStore>(),
+        getIt.isRegistered<CartStore>() ? getIt<CartStore>() : null,
+      ),
     );
   }
 }
