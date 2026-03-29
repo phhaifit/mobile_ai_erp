@@ -201,7 +201,7 @@ class _BrandsLandingPageState extends State<BrandsLandingPage> {
           headingText: brand.name,
           linkText: "See all products from ${brand.name}",
           linkDestination: Routes.storefrontProductListing,
-          filterArguments: FilterArguments(selectedBrands: [brand.id]),
+          filterArguments: FilterArguments(selectedBrands: [brand.id], selectedCategories: [], searchQuery: ""),
         ),
         if (brand.description != null)
           Padding(
