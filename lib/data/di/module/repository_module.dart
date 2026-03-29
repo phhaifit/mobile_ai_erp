@@ -4,6 +4,7 @@ import 'package:mobile_ai_erp/data/local/datasources/checkout/checkout_datasourc
 import 'package:mobile_ai_erp/data/local/datasources/customer/customer_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/order_tracking/order_tracking_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/post/post_datasource.dart';
+import 'package:mobile_ai_erp/data/local/datasources/post_purchase/post_purchase_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/product_metadata/product_metadata_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/user/role_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/user/user_datasource.dart';
@@ -14,6 +15,7 @@ import 'package:mobile_ai_erp/data/repository/fulfillment/fulfillment_repository
 import 'package:mobile_ai_erp/data/repository/inventory_audit_outbound/mock_inventory_audit_outbound_repository.dart';
 import 'package:mobile_ai_erp/data/repository/order_tracking/order_tracking_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/post/post_repository_impl.dart';
+import 'package:mobile_ai_erp/data/repository/post_purchase/post_purchase_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/product_metadata/product_metadata_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/setting/setting_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/stock_operations/mock_stock_operations_repository.dart';
@@ -30,6 +32,7 @@ import 'package:mobile_ai_erp/domain/repository/fulfillment/fulfillment_reposito
 import 'package:mobile_ai_erp/domain/repository/inventory_audit_outbound/inventory_audit_outbound_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/order_tracking/order_tracking_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/post/post_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/post_purchase/post_purchase_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadata_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/setting/setting_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/stock_operations/stock_operations_repository.dart';
@@ -94,6 +97,15 @@ class RepositoryModule {
     getIt.registerLazySingleton<OrderRepository>(
         () => OrderRepositoryImpl(getIt<OrderMockDataSource>()));
 
+    // post_purchase:----------------------------------------------------------
+    getIt.registerSingleton<PostPurchaseDataSource>(
+      PostPurchaseDataSource(),
+    );
+    getIt.registerSingleton<PostPurchaseRepository>(
+      PostPurchaseRepositoryImpl(getIt<PostPurchaseDataSource>()),
+    );
+
+    // user:---------------------------------------------------------------------
     getIt.registerSingleton<UserDataSource>(UserDataSource());
     getIt.registerSingleton<RoleDataSource>(RoleDataSource());
     getIt.registerSingleton<UserRepository>(
@@ -103,8 +115,13 @@ class RepositoryModule {
       RoleRepositoryImpl(getIt<RoleDataSource>()),
     );
 
-    getIt.registerLazySingleton<CmsPageRepository>(() => CmsPageRepositoryImpl());
-    getIt.registerLazySingleton<WebThemeRepository>(() => WebThemeRepositoryImpl());
+    // web_builder:--------------------------------------------------------------
+    getIt.registerLazySingleton<CmsPageRepository>(
+      () => CmsPageRepositoryImpl(),
+    );
+    getIt.registerLazySingleton<WebThemeRepository>(
+      () => WebThemeRepositoryImpl(),
+    );
     getIt.registerLazySingleton<StoreSettingsRepository>(
       () => StoreSettingsRepositoryImpl(),
     );
