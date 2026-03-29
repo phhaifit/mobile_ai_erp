@@ -9,6 +9,7 @@ import 'package:mobile_ai_erp/domain/usecase/checkout/checkout_usecases.dart';
 import 'package:mobile_ai_erp/domain/usecase/checkout/get_payment_methods_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/checkout/get_shipping_methods_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/checkout/validate_coupon_usecase.dart';
+import 'package:mobile_ai_erp/presentation/cart/store/cart_store.dart';
 import 'package:mobx/mobx.dart';
 
 part 'checkout_store.g.dart';
@@ -42,6 +43,7 @@ abstract class _CheckoutStore with Store {
     this._saveAddressUseCase,
     this._deleteAddressUseCase,
     this.errorStore,
+    this._cartStore,
   );
 
   // Use cases
@@ -55,6 +57,7 @@ abstract class _CheckoutStore with Store {
   final SaveAddressUseCase _saveAddressUseCase;
   final DeleteAddressUseCase _deleteAddressUseCase;
   final ErrorStore errorStore;
+  final CartStore? _cartStore;
 
   // ==================== Observables ====================
 
@@ -467,6 +470,13 @@ abstract class _CheckoutStore with Store {
 
       currentOrder = confirmedOrder;
       currentStep = CheckoutStep.confirmation;
+      
+      // Clear purchased items from cart after successful order
+      if (_cartStore != null && currentOrder!.items.isNotEmpty) {
+        final purchasedItemIds = currentOrder!.items.map((item) => item.id).toList();
+        await _cartStore.removeMultipleItemsFromCart(purchasedItemIds);
+      }
+      
       return true;
     } catch (e) {
       errorStore.errorMessage = 'Failed to place order: $e';
