@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:mobile_ai_erp/data/local/datasources/product/mock_product_datasource.dart';
 import 'package:mobile_ai_erp/core/data/local/sembast/sembast_client.dart';
 import 'package:mobile_ai_erp/data/local/constants/db_constants.dart';
 import 'package:mobile_ai_erp/data/local/datasources/post/post_datasource.dart';
@@ -40,5 +41,8 @@ class LocalModule {
         () => AddressMockDataSource());
     getIt.registerLazySingleton<OrderMockDataSource>(
         () => OrderMockDataSource());
+
+    getIt.registerLazySingleton<MockProductDataSource>(
+      () => MockProductDataSource());
   }
 }
