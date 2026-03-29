@@ -6,6 +6,10 @@ import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/inventory_au
 import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/inventory_outbound_history_screen.dart';
 import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/inventory_outbound_screen.dart';
 import 'package:mobile_ai_erp/presentation/login/login.dart';
+import 'package:mobile_ai_erp/presentation/storefront/product_listing_page.dart';
+import 'package:mobile_ai_erp/presentation/storefront/storefront_home_page.dart';
+import 'package:mobile_ai_erp/presentation/storefront/categories_landing_page.dart';
+import 'package:mobile_ai_erp/presentation/storefront/brands_landing_page.dart';
 import 'package:mobile_ai_erp/presentation/stock_operations/stock_operations_screen.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/web_builder_dashboard.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/store_settings/store_settings_screen.dart';
@@ -32,6 +36,7 @@ import 'package:mobile_ai_erp/presentation/post_purchase/issue_detail_screen.dar
 import 'package:mobile_ai_erp/presentation/post_purchase/exchange_detail_screen.dart';
 import 'package:mobile_ai_erp/presentation/post_purchase/refund_detail_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:mobile_ai_erp/presentation/user/home/user_home.dart';
 import 'package:mobile_ai_erp/presentation/checkout/screens/checkout_screen.dart';
 import 'package:mobile_ai_erp/presentation/checkout/screens/checkout_test_screen.dart';
 import 'package:mobile_ai_erp/presentation/product/screens/product_list_screen.dart';
@@ -84,6 +89,10 @@ class Routes {
   static const String postPurchaseIssueDetail = '/post-purchase/issue';
   static const String postPurchaseExchangeDetail = '/post-purchase/exchange';
   static const String postPurchaseRefundDetail = '/post-purchase/refund';
+  static const String storeHome = '/storefront';
+  static const String storefrontProductListing = '/storefront/product-listing';
+  static const String categoriesLanding = '/storefront/categories';
+  static const String brandsLanding = '/storefront/brands';
   static const String checkout = '/checkout';
   static const String checkoutTest = '/checkout-test';
   static const String productManagementList = '/products-management';
@@ -140,6 +149,10 @@ class Routes {
         const ExchangeDetailScreen(),
     postPurchaseRefundDetail: (BuildContext context) =>
         const RefundDetailScreen(),
+    storeHome: (BuildContext context) => StorefrontHomePage(),
+    storefrontProductListing: (BuildContext context) => ProductListingScreen(),
+    categoriesLanding: (BuildContext context) => const CategoriesLandingPage(),
+    brandsLanding: (BuildContext context) => const BrandsLandingPage(),
     checkoutTest: (BuildContext context) => const CheckoutTestScreen(),
     productManagementList: (BuildContext context) => ProductListScreen(),
     productManagementFilter: (BuildContext context) => ProductFilterScreen(),

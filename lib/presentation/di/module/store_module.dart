@@ -86,6 +86,7 @@ import 'package:mobile_ai_erp/presentation/web_builder/store/store_settings_stor
 import 'package:mobile_ai_erp/presentation/web_builder/store/web_theme_store.dart';
 import 'package:mobile_ai_erp/presentation/order_fulfillment/store/fulfillment_store.dart';
 import 'package:mobile_ai_erp/presentation/post_purchase/store/post_purchase_store.dart';
+import 'package:mobile_ai_erp/presentation/storefront/store/product_listing_store.dart';
 import 'package:mobile_ai_erp/presentation/cart/store/cart_store.dart';
 
 import 'package:mobile_ai_erp/presentation/product/store/product_form_store.dart';
@@ -256,6 +257,10 @@ class StoreModule {
       ),
     );
 
+    // Product listing store:---------------------------------------------------
+    getIt.registerSingleton<ListingFilters>(
+      ListingFilters(),
+    );
     // checkout:---------------------------------------------------------------
     getIt.registerSingleton<CheckoutStore>(
       CheckoutStore(

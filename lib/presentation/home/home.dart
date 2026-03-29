@@ -49,6 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _buildReportsEntry(),
           _buildPostPurchaseEntry(),
           Expanded(child: PostListScreen()),
+          _buildStorefrontEntry(),
           _buildCustomerPortalEntry(),
           _buildSuppliersEntry(),
           _buildUsersManagementEntry(),
@@ -162,6 +163,21 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildPostPurchaseEntry() {
+  Widget _buildStorefrontEntry() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      child: Card(
+        child: ListTile(
+          leading: Icon(Icons.shopping_cart),
+          title: Text('Storefront'),
+          subtitle: Text('View all available products.'),
+          trailing: Icon(Icons.chevron_right),
+          onTap: () => Navigator.of(context).pushNamed(Routes.storeHome),
+        )
+      )
+    );
+  }
+  
   Widget _buildUsersManagementEntry() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
