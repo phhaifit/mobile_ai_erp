@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:highlight_text/highlight_text.dart';
 import 'package:mobile_ai_erp/domain/entity/product/product.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
 
@@ -9,12 +10,29 @@ class ProductListingItem extends StatelessWidget {
   const ProductListingItem({
     super.key,
     required this.productListing,
+    this.highlightText,
   });
 
   final Product productListing;
+  final String? highlightText;
 
   @override
   Widget build(BuildContext context) {
+    Map<String, HighlightedWord> highlightedWords = {};
+    if (highlightText != null && highlightText!.isNotEmpty) {
+      highlightedWords = {
+        highlightText!: HighlightedWord(
+          textStyle: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).colorScheme.onSurface,
+            ),
+          decoration: BoxDecoration(
+            color: Colors.amber[300]
+          ),
+        ),
+      };
+    }
+
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final imageSize = 120.0;
@@ -61,11 +79,12 @@ class ProductListingItem extends StatelessWidget {
                   spacing: 8.0,
                   children: [
                     // Product Name
-                    Text(
-                      productListing.productName,
+                    TextHighlight(
+                      text: productListing.productName,
+                      words: highlightedWords,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
+                      textStyle: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                         color: colorScheme.onSurface,

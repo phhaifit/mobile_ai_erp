@@ -11,7 +11,7 @@ class ProductListingScreen extends StatefulWidget {
   const ProductListingScreen({super.key});
 
   @override
-  _ProductListingScreenState createState() => _ProductListingScreenState();
+  State<ProductListingScreen> createState() => _ProductListingScreenState();
 }
 
 class _ProductListingScreenState extends State<ProductListingScreen> {
@@ -77,7 +77,7 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
               child: ListView.builder(
                 itemCount: _listingFilters.products.length,
                 itemBuilder: (context, index) {
-                  return Observer(builder: (_) => ProductListingItem(productListing: _listingFilters.products[index]));
+                  return Observer(builder: (_) => ProductListingItem(productListing: _listingFilters.products[index], highlightText: _listingFilters.searchQuery));
                 },
               ),
             )
