@@ -1,3 +1,4 @@
+import 'package:mobile_ai_erp/domain/entity/product/product_status.dart';
 import 'package:mobx/mobx.dart';
 import 'package:mobile_ai_erp/domain/entity/product/product.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/brand.dart';
@@ -23,27 +24,72 @@ class ListingFilters = _ListingFiltersStore with _$ListingFilters;
 abstract class _ListingFiltersStore with Store {
   // test data
   final List<Product> testProducts = [
-    Product(
-      id: 'PT1',
-      productName: 'Product A',
-      category: Category(id: 'CAT1', name: 'Category 1', code: 'CAT1', slug: 'category-1'),
-      brand: Brand(id: 'BRAND1', name: 'Brand A', code: 'BRAND1'),
-      rating: 4.5,
-      price: 19.99,
-      currency: 'USD',
-      imageSource: 'https://picsum.photos/250?image=2',
-    ),
-    Product(
-      id: 'PT2',
-      productName: 'Product B',
-      category: Category(id: 'CAT2', name: 'Category 2', code: 'CAT2', slug: 'category-2'),
-      brand: Brand(id: 'BRAND2', name: 'Brand B', code: 'BRAND2'),
-      rating: 4.0,
-      price: 29.99,
-      currency: 'USD',
-      imageSource: null,
-    ),
-  ];
+          Product(
+        id: 1,
+        name: 'Smile',
+        sku: 'SMILE-001',
+        price: 2000.0,
+        currency: 'USD',
+        rating: 5.0,
+        description: 'Premium smile product for happy customers',
+        status: ProductStatus.ACTIVE,
+        categoryId: 1,
+        brandId: 1,
+        tagIds: [1],
+        imageUrls: ['https://picsum.photos/id/17/250/250'],
+        category: Category(id: 'CAT1', name: 'Happy', code: 'CAT1', slug: 'happy'),
+        brand: Brand(id: 'BRAND1', name: 'CLX', code: 'BRAND1'),
+      ),
+      Product(
+        id: 2,
+        name: 'Surprise',
+        sku: 'SURPRISE-001',
+        price: 29.99,
+        currency: 'USD',
+        rating: 4.0,
+        description: 'Amazing surprise product that delights customers',
+        status: ProductStatus.ACTIVE,
+        categoryId: 1,
+        brandId: 2,
+        tagIds: [1, 2],
+        imageUrls: [],
+        category: Category(id: 'CAT1', name: 'Happy', code: 'CAT1', slug: 'happy'),
+        brand: Brand(id: 'BRAND2', name: 'MGMG', code: 'BRAND2'),
+      ),
+      Product(
+        id: 3,
+        name: 'Fresh Pro',
+        sku: 'FRESH-PRO-001',
+        price: 29.99,
+        currency: 'USD',
+        rating: 1.0,
+        description: 'Professional fresh product for everyday use',
+        status: ProductStatus.ACTIVE,
+        categoryId: 2,
+        brandId: 2,
+        tagIds: [2, 3],
+        imageUrls: ['https://picsum.photos/id/19/250/250'],
+        category: Category(id: 'CAT2', name: 'General', code: 'CAT2', slug: 'general'),
+        brand: Brand(id: 'BRAND2', name: 'MGMG', code: 'BRAND2'),
+      ),
+      Product(
+        id: 4,
+        name: 'Super Item',
+        sku: 'SUPER-ITEM-001',
+        price: 40.50,
+        currency: 'USD',
+        rating: 4.0,
+        description: 'Super quality item for superior performance',
+        status: ProductStatus.ACTIVE,
+        categoryId: 2,
+        brandId: 3,
+        tagIds: [3],
+        imageUrls: ['https://picsum.photos/id/20/250/250'],
+        category: Category(id: 'CAT2', name: 'General', code: 'CAT2', slug: 'general'),
+        brand: Brand(id: 'BRAND3', name: 'SOUPS', code: 'BRAND3'),
+      ),
+  ].toList();
+
 
   final List<Brand> testBrands = [
     const Brand(
@@ -188,11 +234,14 @@ abstract class _ListingFiltersStore with Store {
   ) {
     return testProducts.where((product) {
       final matchesSearch =
-          product.productName.toLowerCase().contains(searchQuery.toLowerCase());
+          product.name.toLowerCase().contains(searchQuery.toLowerCase()) 
+          || product.description.toLowerCase().contains(searchQuery.toLowerCase()) 
+          || (product.category != null && product.category!.name.toLowerCase().contains(searchQuery.toLowerCase())) 
+          || (product.brand != null && product.brand!.name.toLowerCase().contains(searchQuery.toLowerCase()));
       final matchesCategory =
-          categoryFilter.isEmpty || categoryFilter.contains(product.category.id);
+          categoryFilter.isEmpty || (product.category != null && categoryFilter.contains(product.category!.id));
       final matchesBrand =
-          brandFilter.isEmpty || brandFilter.contains(product.brand.id);
+          brandFilter.isEmpty || (product.brand != null && brandFilter.contains(product.brand!.id));
       return matchesSearch && matchesCategory && matchesBrand;
     }).toList();
   }
@@ -215,10 +264,10 @@ abstract class _ListingFiltersStore with Store {
         // sort by time descending, if product has a createdAt field
         break;
       case SortOption.nameAsc:
-        sortedProducts.sort((a, b) => a.productName.compareTo(b.productName));
+        sortedProducts.sort((a, b) => a.name.compareTo(b.name));
         break;
       case SortOption.nameDesc:
-        sortedProducts.sort((a, b) => b.productName.compareTo(a.productName));
+        sortedProducts.sort((a, b) => b.name.compareTo(a.name));
         break;
       case SortOption.priceAsc:
         sortedProducts.sort((a, b) => a.price.compareTo(b.price));
