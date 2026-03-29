@@ -53,14 +53,21 @@ class _SearchFilterBarState extends State<SearchFilterBar> {
 
   Widget _expandedContainer({required List<Widget> contents})
   {
+    final contentsWithBlankBox = [
+      ...contents,
+      SizedBox(height: 16), // blank box for scrollability and clickability
+    ];
+    
     return Container(
-      color: Colors.blue[100], // temp for viewing boundaries
+      color: Colors.blue[100],
+      constraints: BoxConstraints(maxHeight: 350),
       padding: EdgeInsets.all(10.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: contents,
-      ), 
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: contentsWithBlankBox,
+        ),
+      ),
     );
   }
 
@@ -253,6 +260,7 @@ class _SearchFilterBarState extends State<SearchFilterBar> {
       clipBehavior: Clip.none,
       alignment: Alignment.bottomCenter,
       children: [
+          // if (isExpanded) SizedBox(height: 350), // reserve space for expanded content
           Container(
           height: kBottomNavigationBarHeight,
           color: Colors.red[100],//colorScheme.surface,

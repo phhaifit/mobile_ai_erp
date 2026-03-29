@@ -6,7 +6,7 @@ import 'package:mobile_ai_erp/utils/routes/routes.dart';
 class BrandCard extends StatelessWidget {
   final Brand brand;
 
-  BrandCard({required this.brand});
+  const BrandCard({super.key, required this.brand});
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +22,7 @@ class BrandCard extends StatelessWidget {
           onTap: () {
             Navigator.of(context).pushNamed(
               Routes.storefrontProductListing, 
-              arguments: FilterArguments(selectedBrands: [brand.id])
+              arguments: FilterArguments(selectedBrands: [brand.id], selectedCategories: [], searchQuery: '')
             );
           },
           child: Container(
