@@ -12,6 +12,7 @@ import 'package:mobile_ai_erp/presentation/cart/store/cart_store.dart';
 import 'package:mobile_ai_erp/presentation/cart/widgets/mini_cart_drawer.dart';
 import 'package:mobile_ai_erp/presentation/cart/store/wishlist_store.dart';
 import 'package:mobile_ai_erp/presentation/cart/screens/wishlist_page.dart';
+import 'package:mobile_ai_erp/presentation/post/post_list.dart';
 import 'package:mobile_ai_erp/utils/routes/cart_routes.dart';
 import 'package:mobile_ai_erp/utils/locale/app_localization.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
@@ -163,6 +164,20 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildPostPurchaseEntry() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      child: Card(
+        child: ListTile(
+          leading: Icon(Icons.support_agent_outlined),
+          title: Text('Post-Purchase & Issues'),
+          subtitle: Text('Complaints, returns, and exchanges (offline mock).'),
+          trailing: Icon(Icons.chevron_right),
+          onTap: () => Navigator.of(context).pushNamed(Routes.postPurchase),
+        ),
+      ),
+    );
+  }
+
   Widget _buildStorefrontEntry() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
@@ -173,21 +188,16 @@ class _HomeScreenState extends State<HomeScreen> {
           subtitle: Text('View all available products.'),
           trailing: Icon(Icons.chevron_right),
           onTap: () => Navigator.of(context).pushNamed(Routes.storeHome),
-        )
-      )
+        ),
+      ),
     );
   }
-  
+
   Widget _buildUsersManagementEntry() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
       child: Card(
         child: ListTile(
-          leading: Icon(Icons.support_agent_outlined),
-          title: Text('Post-Purchase & Issues'),
-          subtitle: Text('Complaints, returns, and exchanges (offline mock).'),
-          trailing: Icon(Icons.chevron_right),
-          onTap: () => Navigator.of(context).pushNamed(Routes.postPurchase),
           leading: Icon(Icons.insights_outlined),
           title: Text('User Management'),
           subtitle: Text('User & Roles Managements (offline mock).'),

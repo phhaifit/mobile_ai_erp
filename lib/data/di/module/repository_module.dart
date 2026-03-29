@@ -105,9 +105,7 @@ class RepositoryModule {
       PostPurchaseRepositoryImpl(getIt<PostPurchaseDataSource>()),
     );
 
-    // web_builder:--------------------------------------------------------------
-    getIt.registerLazySingleton<CmsPageRepository>(
-      () => CmsPageRepositoryImpl(),
+    // user:---------------------------------------------------------------------
     getIt.registerSingleton<UserDataSource>(UserDataSource());
     getIt.registerSingleton<RoleDataSource>(RoleDataSource());
     getIt.registerSingleton<UserRepository>(
@@ -117,8 +115,13 @@ class RepositoryModule {
       RoleRepositoryImpl(getIt<RoleDataSource>()),
     );
 
-    getIt.registerLazySingleton<CmsPageRepository>(() => CmsPageRepositoryImpl());
-    getIt.registerLazySingleton<WebThemeRepository>(() => WebThemeRepositoryImpl());
+    // web_builder:--------------------------------------------------------------
+    getIt.registerLazySingleton<CmsPageRepository>(
+      () => CmsPageRepositoryImpl(),
+    );
+    getIt.registerLazySingleton<WebThemeRepository>(
+      () => WebThemeRepositoryImpl(),
+    );
     getIt.registerLazySingleton<StoreSettingsRepository>(
       () => StoreSettingsRepositoryImpl(),
     );
