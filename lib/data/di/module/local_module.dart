@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:mobile_ai_erp/data/local/datasources/product/mock_product_datasource.dart';
 import 'package:mobile_ai_erp/core/data/local/sembast/sembast_client.dart';
 import 'package:mobile_ai_erp/data/local/constants/db_constants.dart';
 import 'package:mobile_ai_erp/data/local/datasources/post/post_datasource.dart';
@@ -7,6 +8,8 @@ import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:mobile_ai_erp/data/local/datasources/account/address_mock_datasource.dart';
+import 'package:mobile_ai_erp/data/local/datasources/account/order_mock_datasource.dart';
 
 import '../../../di/service_locator.dart';
 
@@ -33,5 +36,13 @@ class LocalModule {
     // data sources:------------------------------------------------------------
     getIt.registerSingleton(
         PostDataSource(await getIt.getAsync<SembastClient>()));
+
+    getIt.registerLazySingleton<AddressMockDataSource>(
+        () => AddressMockDataSource());
+    getIt.registerLazySingleton<OrderMockDataSource>(
+        () => OrderMockDataSource());
+
+    getIt.registerLazySingleton<MockProductDataSource>(
+      () => MockProductDataSource());
   }
 }
