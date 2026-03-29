@@ -31,19 +31,9 @@ import 'package:mobile_ai_erp/presentation/order_fulfillment/fulfillment_list.da
 import 'package:mobile_ai_erp/presentation/order_fulfillment/order_tracking.dart';
 import 'package:mobile_ai_erp/presentation/order_fulfillment/packaging.dart';
 import 'package:mobile_ai_erp/presentation/order_fulfillment/print_label.dart';
-import 'package:mobile_ai_erp/presentation/order_tracking/order_tracking.dart';
-import 'package:mobile_ai_erp/presentation/product_detail/product_detail_screen.dart';
-import 'package:mobile_ai_erp/presentation/reports/reports_analytics.dart';
-import 'package:mobile_ai_erp/presentation/stock_operations/stock_operations_screen.dart';
 import 'package:mobile_ai_erp/presentation/user/home/user_home.dart';
 import 'package:mobile_ai_erp/presentation/user/store/role_store.dart';
 import 'package:mobile_ai_erp/presentation/user/store/user_store.dart';
-import 'package:mobile_ai_erp/presentation/web_builder/cms_pages/cms_page_editor_screen.dart';
-import 'package:mobile_ai_erp/presentation/web_builder/cms_pages/cms_page_list_screen.dart';
-import 'package:mobile_ai_erp/presentation/web_builder/store_settings/store_settings_screen.dart';
-import 'package:mobile_ai_erp/presentation/web_builder/theme_engine/theme_detail_screen.dart';
-import 'package:mobile_ai_erp/presentation/web_builder/theme_engine/theme_list_screen.dart';
-import 'package:mobile_ai_erp/presentation/web_builder/web_builder_dashboard.dart';
 import 'cart_routes.dart';
 import 'package:mobile_ai_erp/presentation/product/screens/product_list_page.dart';
 
@@ -80,7 +70,6 @@ class Routes {
   static const String storefrontProductListing = '/storefront/product-listing';
   static const String categoriesLanding = '/storefront/categories';
   static const String brandsLanding = '/storefront/brands';
-  static const String productDetail = '/storefront/product-detail';
 
   static const String profileDashboard = '/profile';
   static const String addressBook = '/address_book';
@@ -129,7 +118,6 @@ class Routes {
     storefrontProductListing: (BuildContext context) => ProductListingScreen(),
     categoriesLanding: (BuildContext context) => const CategoriesLandingPage(),
     brandsLanding: (BuildContext context) => const BrandsLandingPage(),
-    productDetail: (BuildContext context) => Text("Product detail page")
   };
 
 }

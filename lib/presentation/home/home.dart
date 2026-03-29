@@ -47,7 +47,6 @@ class _HomeScreenState extends State<HomeScreen> {
           _buildStorefrontPDPEntry(),
           _buildReportsEntry(),
           _buildStorefrontEntry(),
-          Expanded(child: PostListScreen()),
           _buildCustomerPortalEntry(),
           _buildSuppliersEntry(),
           _buildUsersManagementEntry(),
