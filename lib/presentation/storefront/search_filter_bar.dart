@@ -11,9 +11,8 @@ class SearchFilterBar extends StatefulWidget {
 
   const SearchFilterBar({super.key, required this.categories, required this.brands});
 
-
   @override
-  _SearchFilterBarState createState() => _SearchFilterBarState();
+  State<SearchFilterBar> createState() => _SearchFilterBarState();
 }
 
 class _SearchFilterBarState extends State<SearchFilterBar> {

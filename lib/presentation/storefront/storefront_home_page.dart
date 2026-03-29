@@ -15,7 +15,7 @@ class StorefrontHomePage extends StatefulWidget {
   const StorefrontHomePage({super.key});
 
   @override
-  _StorefrontHomePageState createState() => _StorefrontHomePageState();
+  State<StorefrontHomePage> createState() => _StorefrontHomePageState();
 }
 
 class _StorefrontHomePageState extends State<StorefrontHomePage> {
