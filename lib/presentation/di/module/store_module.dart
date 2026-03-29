@@ -84,7 +84,6 @@ import 'package:mobile_ai_erp/presentation/user/store/user_store.dart' as user_m
 import 'package:mobile_ai_erp/presentation/web_builder/store/cms_page_store.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/store/store_settings_store.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/store/web_theme_store.dart';
-import 'package:mobile_ai_erp/presentation/order_fulfillment/store/fulfillment_store.dart';
 import 'package:mobile_ai_erp/presentation/post_purchase/store/post_purchase_store.dart';
 import 'package:mobile_ai_erp/presentation/storefront/store/product_listing_store.dart';
 import 'package:mobile_ai_erp/presentation/cart/store/cart_store.dart';
@@ -190,10 +189,6 @@ class StoreModule {
       ),
     );
 
-    getIt.registerSingleton<ThemeStore>(
-      ThemeStore(
-        getIt<SettingRepository>(),
-        getIt<ErrorStore>(),
     getIt.registerSingleton<user_mgmt.UserStore>(
       user_mgmt.UserStore(
         getIt<UserRepository>(),
