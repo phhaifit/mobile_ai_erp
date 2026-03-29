@@ -28,14 +28,14 @@ class SembastClient {
       var codec = getXXTeaCodec(password: encryptionKey);
 
       // Initialize the encryption codec with a user password
-      if(kIsWeb) {
+      if (kIsWeb) {
         var factory = databaseFactoryWeb;
         database = await factory.openDatabase(databaseName, codec: codec);
       } else {
         database = await databaseFactoryIo.openDatabase(dbPath, codec: codec);
       }
     } else {
-      if(kIsWeb) {
+      if (kIsWeb) {
         var factory = databaseFactoryWeb;
         database = await factory.openDatabase(databaseName);
       } else {
