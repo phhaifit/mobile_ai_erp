@@ -46,6 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: ListView(
         padding: const EdgeInsets.only(bottom: 16),
         children: [
+          _buildDashboardEntry(),
           _buildStorefrontPDPEntry(),
           _buildReportsEntry(),
           _buildPostPurchaseEntry(),
@@ -141,6 +142,23 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           trailing: Icon(Icons.chevron_right),
           onTap: () => Navigator.of(context).pushNamed(Routes.productDetail),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDashboardEntry() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      child: Card(
+        child: ListTile(
+          leading: const Icon(Icons.dashboard_customize_outlined),
+          title: const Text('Dashboard'),
+          subtitle: const Text(
+            'Business health, tasks, sales trend, and insights (offline mock).',
+          ),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => Navigator.of(context).pushNamed(Routes.dashboard),
         ),
       ),
     );
@@ -270,6 +288,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   List<Widget> _buildActions(BuildContext context) {
+    final isCompact = MediaQuery.sizeOf(context).width <= 390;
+    if (isCompact) {
+      return <Widget>[
+        _buildCartButton(),
+        _buildWishlistButton(),
+        _buildOverflowMenu(compact: true),
+      ];
+    }
+
     return <Widget>[
       _buildInventoryAuditButton(),
       _buildCartButton(),
@@ -280,16 +307,62 @@ class _HomeScreenState extends State<HomeScreen> {
       _buildLanguageButton(),
       _buildThemeButton(),
       _buildLogoutButton(),
-      _buildOverflowMenu(),
+      _buildOverflowMenu(compact: false),
     ];
   }
 
-  Widget _buildOverflowMenu() {
+  Widget _buildOverflowMenu({required bool compact}) {
     return PopupMenuButton<String>(
       icon: const Icon(Icons.more_vert),
       tooltip: 'More options',
       onSelected: (value) => _handleMenuSelection(value),
       itemBuilder: (context) => [
+        if (compact)
+          const PopupMenuItem(
+            value: 'inventoryAudit',
+            child: ListTile(
+              leading: Icon(Icons.fact_check_outlined),
+              title: Text('Inventory Audit'),
+              contentPadding: EdgeInsets.zero,
+            ),
+          ),
+        if (compact)
+          const PopupMenuItem(
+            value: 'orderTracking',
+            child: ListTile(
+              leading: Icon(Icons.local_shipping_outlined),
+              title: Text('Order Tracking'),
+              contentPadding: EdgeInsets.zero,
+            ),
+          ),
+        if (compact)
+          const PopupMenuItem(
+            value: 'fulfillment',
+            child: ListTile(
+              leading: Icon(Icons.inventory_2_outlined),
+              title: Text('Order Fulfillment'),
+              contentPadding: EdgeInsets.zero,
+            ),
+          ),
+        if (compact)
+          const PopupMenuItem(
+            value: 'postPurchase',
+            child: ListTile(
+              leading: Icon(Icons.support_agent_outlined),
+              title: Text('Post-Purchase & Issues'),
+              contentPadding: EdgeInsets.zero,
+            ),
+          ),
+        if (compact)
+          const PopupMenuDivider(),
+        const PopupMenuItem(
+          value: 'dashboard',
+          child: ListTile(
+            leading: Icon(Icons.dashboard_customize_outlined),
+            title: Text('Dashboard'),
+            contentPadding: EdgeInsets.zero,
+          ),
+        ),
         const PopupMenuItem(
           value: 'stock',
           child: ListTile(
@@ -350,6 +423,21 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _handleMenuSelection(String value) {
     switch (value) {
+      case 'inventoryAudit':
+        Navigator.of(context).pushNamed(Routes.inventoryAudit);
+        break;
+      case 'orderTracking':
+        Navigator.of(context).pushNamed(Routes.orderTracking);
+        break;
+      case 'fulfillment':
+        Navigator.of(context).pushNamed(Routes.fulfillment);
+        break;
+      case 'postPurchase':
+        Navigator.of(context).pushNamed(Routes.postPurchase);
+        break;
+      case 'dashboard':
+        Navigator.of(context).pushNamed(Routes.dashboard);
+        break;
       case 'stock':
         Navigator.of(context).pushNamed(Routes.stockOperations);
         break;
@@ -381,26 +469,6 @@ class _HomeScreenState extends State<HomeScreen> {
         Navigator.of(context).pushNamed(Routes.inventoryAudit);
       },
       icon: const Icon(Icons.fact_check_outlined),
-    );
-  }
-
-  Widget _buildStockOperationsButton() {
-    return IconButton(
-      tooltip: 'Stock Operations',
-      onPressed: () {
-        Navigator.of(context).pushNamed(Routes.stockOperations);
-      },
-      icon: const Icon(Icons.warehouse_outlined),
-    );
-  }
-
-  Widget _buildProductMetadataButton() {
-    return IconButton(
-      tooltip: 'Product metadata',
-      onPressed: () {
-        ProductMetadataNavigator.openProductMetadataHome(context);
-      },
-      icon: const Icon(Icons.dashboard_outlined),
     );
   }
 

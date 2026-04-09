@@ -11,6 +11,7 @@ import 'package:mobile_ai_erp/data/local/datasources/user/user_datasource.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
 import 'package:mobile_ai_erp/data/repository/checkout/checkout_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/customer/customer_repository_impl.dart';
+import 'package:mobile_ai_erp/data/repository/dashboard/mock_dashboard_repository.dart';
 import 'package:mobile_ai_erp/data/repository/fulfillment/fulfillment_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/inventory_audit_outbound/mock_inventory_audit_outbound_repository.dart';
 import 'package:mobile_ai_erp/data/repository/order_tracking/order_tracking_repository_impl.dart';
@@ -28,6 +29,7 @@ import 'package:mobile_ai_erp/data/repository/web_builder/web_theme_repository_i
 import 'package:mobile_ai_erp/domain/repository/checkout/checkout_repository.dart';
 import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
 import 'package:mobile_ai_erp/domain/repository/customer/customer_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/dashboard/dashboard_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/fulfillment/fulfillment_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/inventory_audit_outbound/inventory_audit_outbound_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/order_tracking/order_tracking_repository.dart';
@@ -60,6 +62,10 @@ class RepositoryModule {
     getIt.registerSingleton<CustomerDataSource>(CustomerDataSource());
     getIt.registerSingleton<CustomerRepository>(
       CustomerRepositoryImpl(getIt<CustomerDataSource>()),
+    );
+
+    getIt.registerSingleton<DashboardRepository>(
+      MockDashboardRepository(),
     );
 
     getIt.registerSingleton<SettingRepository>(
