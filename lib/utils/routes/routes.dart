@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_ai_erp/core/stores/supplier/supplier_store.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/entity/product/product.dart';
 import 'package:mobile_ai_erp/presentation/account/address/address_book_screen.dart';
@@ -9,6 +10,7 @@ import 'package:mobile_ai_erp/presentation/account/orders/return_request_screen.
 import 'package:mobile_ai_erp/presentation/account/profile/profile_dashboard_screen.dart';
 import 'package:mobile_ai_erp/presentation/checkout/screens/checkout_screen.dart';
 import 'package:mobile_ai_erp/presentation/checkout/screens/checkout_test_screen.dart';
+import 'package:mobile_ai_erp/presentation/dashboard/dashboard_screen.dart';
 import 'package:mobile_ai_erp/presentation/home/home.dart';
 import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/inventory_audit_screen.dart';
 import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/inventory_audit_summary_screen.dart';
@@ -37,6 +39,7 @@ import 'package:mobile_ai_erp/presentation/storefront/brands_landing_page.dart';
 import 'package:mobile_ai_erp/presentation/storefront/categories_landing_page.dart';
 import 'package:mobile_ai_erp/presentation/storefront/product_listing_page.dart';
 import 'package:mobile_ai_erp/presentation/storefront/storefront_home_page.dart';
+import 'package:mobile_ai_erp/presentation/supplier/supplier_list/supplier_list_screen.dart';
 import 'package:mobile_ai_erp/presentation/user/home/user_home.dart';
 import 'package:mobile_ai_erp/presentation/user/store/role_store.dart';
 import 'package:mobile_ai_erp/presentation/user/store/user_store.dart';
@@ -55,6 +58,8 @@ class Routes {
   static const String splash = '/splash';
   static const String login = '/login';
   static const String home = '/post';
+  static const String dashboard = '/dashboard';
+  static const String suppliers = '/suppliers';
   static const String stockOperations = '/stock-operations';
   static const String inventoryAudit = '/inventory-audit';
   static const String inventoryAuditSummary = '/inventory-audit-summary';
@@ -102,6 +107,7 @@ class Routes {
   static final routes = <String, WidgetBuilder>{
     login: (BuildContext context) => LoginScreen(),
     home: (BuildContext context) => HomeScreen(),
+    dashboard: (BuildContext context) => const DashboardScreen(),
     stockOperations: (BuildContext context) => const StockOperationsScreen(),
     inventoryAudit: (BuildContext context) => const InventoryAuditScreen(),
     inventoryAuditSummary: (BuildContext context) =>
@@ -119,6 +125,8 @@ class Routes {
     orderTracking: OrderTrackingNavigation.buildScreen,
     ...CartRoutes.getRoutes(),
     reports: (BuildContext context) => ReportsAnalyticsScreen(),
+    suppliers: (BuildContext context) =>
+      SupplierListScreen(store: getIt<SupplierStore>()),
     profileDashboard: (BuildContext context) => ProfileDashboardScreen(),
     addressBook: (BuildContext context) => const AddressBookScreen(),
     addressForm: (BuildContext context) => const AddressFormScreen(),

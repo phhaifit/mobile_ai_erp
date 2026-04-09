@@ -4,6 +4,7 @@ import 'package:mobile_ai_erp/core/stores/error/error_store.dart';
 import 'package:mobile_ai_erp/core/stores/form/form_store.dart';
 import 'package:mobile_ai_erp/core/stores/supplier/supplier_store.dart';
 import 'package:mobile_ai_erp/domain/repository/customer/customer_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/dashboard/dashboard_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadata_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/setting/setting_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/stock_operations/stock_operations_repository.dart';
@@ -62,6 +63,7 @@ import 'package:mobile_ai_erp/domain/usecase/web_builder/get_web_themes_usecase.
 import 'package:mobile_ai_erp/domain/usecase/web_builder/save_cms_page_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/save_store_settings_usecase.dart';
 import 'package:mobile_ai_erp/presentation/customer_management/store/customer_store.dart';
+import 'package:mobile_ai_erp/presentation/dashboard/store/dashboard_store.dart';
 import 'package:mobile_ai_erp/presentation/home/store/language/language_store.dart';
 import 'package:mobile_ai_erp/presentation/home/store/theme/theme_store.dart';
 import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/store/inventory_audit_outbound_store.dart';
@@ -123,6 +125,10 @@ class StoreModule {
 
     getIt.registerSingleton<ReportsStore>(
       ReportsStore(getIt<ReportsMockRepository>(), getIt<ErrorStore>()),
+    );
+
+    getIt.registerSingleton<DashboardStore>(
+      DashboardStore(getIt<DashboardRepository>(), getIt<ErrorStore>()),
     );
 
     getIt.registerSingleton<ProductMetadataStore>(
