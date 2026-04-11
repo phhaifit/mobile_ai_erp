@@ -19,12 +19,9 @@ import 'package:mobile_ai_erp/domain/usecase/checkout/checkout_usecases.dart';
 import 'package:mobile_ai_erp/domain/usecase/checkout/get_payment_methods_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/checkout/get_shipping_methods_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/checkout/validate_coupon_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/fulfillment/add_package_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_fulfillment_order_detail_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_fulfillment_orders_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/update_fulfillment_status_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/fulfillment/update_package_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/fulfillment/update_picked_quantity_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/post_purchase/get_issue_detail_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/post_purchase/get_issue_list_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/post_purchase/get_order_pool_usecase.dart';
@@ -287,9 +284,6 @@ class StoreModule {
         getIt<GetFulfillmentOrdersUseCase>(),
         getIt<GetFulfillmentOrderDetailUseCase>(),
         getIt<UpdateFulfillmentStatusUseCase>(),
-        getIt<UpdatePickedQuantityUseCase>(),
-        getIt<AddPackageUseCase>(),
-        getIt<UpdatePackageUseCase>(),
         getIt<ErrorStore>(),
       ),
     );
