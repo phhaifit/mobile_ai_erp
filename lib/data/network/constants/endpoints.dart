@@ -37,4 +37,9 @@ class Endpoints {
   // web builder - themes
   static const String themes = "/themes";
   static const String activeTheme = "/themes/active";
+
+  // order endpoints
+  static const String orders = "/orders";
+  static String orderDetail(String id) => "/orders/$id";
+  static String orderStatus(String id) => "/orders/$id/status";
 }
