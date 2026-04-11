@@ -21,7 +21,7 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
         final order = _store.selectedOrder;
         return Scaffold(
           appBar: AppBar(
-            title: Text(order != null ? 'Tracking ${order.id}' : 'Tracking'),
+            title: Text(order != null ? 'Tracking ${order.code}' : 'Tracking'),
           ),
           body: order == null
               ? const Center(child: Text('No order selected'))
@@ -38,7 +38,7 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
     }
 
     final sortedEvents = List<TrackingEvent>.from(events)
-      ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      ..sort((a, b) => b.changedAt.compareTo(a.changedAt));
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -111,8 +111,8 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
     required bool isLast,
   }) {
     final color = isFirst
-        ? _getStatusColor(event.status)
-        : _getStatusColor(event.status).withOpacity(0.5);
+        ? _getStatusColor(event.newStatus)
+        : _getStatusColor(event.newStatus).withOpacity(0.5);
 
     return IntrinsicHeight(
       child: Row(
@@ -165,7 +165,9 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              event.status.displayName,
+                              event.oldStatus != null
+                                  ? '${event.oldStatus!.displayName} → ${event.newStatus.displayName}'
+                                  : event.newStatus.displayName,
                               style: TextStyle(
                                 color: color,
                                 fontSize: 11,
@@ -174,7 +176,7 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
                             ),
                           ),
                           Text(
-                            DateFormat('dd/MM HH:mm').format(event.timestamp),
+                            DateFormat('dd/MM HH:mm').format(event.changedAt),
                             style:
                                 Theme.of(context).textTheme.bodySmall?.copyWith(
                                       color: Theme.of(context).hintColor,
@@ -182,30 +184,14 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        event.description,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                      if (event.location != null) ...[
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Icon(Icons.location_on,
-                                size: 14, color: Theme.of(context).hintColor),
-                            const SizedBox(width: 4),
-                            Text(
-                              event.location!,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(
-                                      color: Theme.of(context).hintColor),
-                            ),
-                          ],
+                      if (event.note != null && event.note!.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          event.note!,
+                          style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ],
-                      if (event.updatedBy != null) ...[
+                      if (event.changedByName != null) ...[
                         const SizedBox(height: 4),
                         Row(
                           children: [
@@ -213,7 +199,7 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
                                 size: 14, color: Theme.of(context).hintColor),
                             const SizedBox(width: 4),
                             Text(
-                              event.updatedBy!,
+                              event.changedByName!,
                               style: Theme.of(context)
                                   .textTheme
                                   .bodySmall
@@ -238,20 +224,16 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
     switch (status) {
       case FulfillmentStatus.pending:
         return Colors.orange;
-      case FulfillmentStatus.picking:
+      case FulfillmentStatus.processing:
         return Colors.blue;
-      case FulfillmentStatus.packing:
-        return Colors.indigo;
-      case FulfillmentStatus.packed:
-        return Colors.purple;
       case FulfillmentStatus.shipped:
         return Colors.teal;
-      case FulfillmentStatus.partiallyDelivered:
-        return Colors.amber.shade800;
       case FulfillmentStatus.delivered:
         return Colors.green;
       case FulfillmentStatus.cancelled:
         return Colors.red;
+      case FulfillmentStatus.returned:
+        return Colors.grey;
     }
   }
 
@@ -259,20 +241,16 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
     switch (status) {
       case FulfillmentStatus.pending:
         return Icons.hourglass_empty;
-      case FulfillmentStatus.picking:
-        return Icons.shopping_cart;
-      case FulfillmentStatus.packing:
-        return Icons.inventory;
-      case FulfillmentStatus.packed:
-        return Icons.check_box;
+      case FulfillmentStatus.processing:
+        return Icons.sync;
       case FulfillmentStatus.shipped:
         return Icons.local_shipping;
-      case FulfillmentStatus.partiallyDelivered:
-        return Icons.call_split;
       case FulfillmentStatus.delivered:
         return Icons.done_all;
       case FulfillmentStatus.cancelled:
         return Icons.cancel;
+      case FulfillmentStatus.returned:
+        return Icons.assignment_return;
     }
   }
 }

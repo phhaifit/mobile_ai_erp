@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
-import 'package:mobile_ai_erp/domain/entity/fulfillment/package_info.dart';
+import 'package:mobile_ai_erp/domain/entity/fulfillment/fulfillment_order.dart';
 import 'package:mobile_ai_erp/presentation/order_fulfillment/store/fulfillment_store.dart';
 
 class PrintLabelScreen extends StatefulWidget {
@@ -11,7 +11,6 @@ class PrintLabelScreen extends StatefulWidget {
 
 class _PrintLabelScreenState extends State<PrintLabelScreen> {
   final FulfillmentStore _store = getIt<FulfillmentStore>();
-  int _selectedPackageIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -21,67 +20,30 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
         return Scaffold(
           appBar: AppBar(
             title: Text(
-                order != null ? 'Labels ${order.id}' : 'Print Label'),
+                order != null ? 'Labels ${order.code}' : 'Print Label'),
           ),
           body: order == null
               ? const Center(child: Text('No order selected'))
-              : order.packages.isEmpty
-                  ? _buildNoPackages()
-                  : _buildBody(order.packages),
+              : _buildBody(order),
         );
       },
     );
   }
 
-  Widget _buildNoPackages() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.print_disabled,
-              size: 64, color: Theme.of(context).hintColor),
-          const SizedBox(height: 16),
-          Text(
-            'No packages to print labels for',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Create packages first in the Packaging screen',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).hintColor,
-                ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBody(List<PackageInfo> packages) {
-    final order = _store.selectedOrder!;
-    if (_selectedPackageIndex >= packages.length) {
-      _selectedPackageIndex = packages.length - 1;
-    }
+  Widget _buildBody(FulfillmentOrder order) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (packages.length > 1) _buildPackageSelector(packages),
+          _buildComingSoonBanner(),
           const SizedBox(height: 16),
-          _buildLabelPreview(order, packages[_selectedPackageIndex]),
+          _buildLabelPreview(order),
           const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Print functionality will be available '
-                        'with API integration in Phase 2'),
-                  ),
-                );
-              },
+              onPressed: null, // Disabled until backend API supports labels
               icon: const Icon(Icons.print),
               label: const Text('Print Label'),
               style: ElevatedButton.styleFrom(
@@ -94,28 +56,46 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
     );
   }
 
-  Widget _buildPackageSelector(List<PackageInfo> packages) {
-    return SizedBox(
-      height: 40,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: packages.length,
-        itemBuilder: (context, index) {
-          final isSelected = index == _selectedPackageIndex;
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: ChoiceChip(
-              label: Text(packages[index].label),
-              selected: isSelected,
-              onSelected: (_) => setState(() => _selectedPackageIndex = index),
+  Widget _buildComingSoonBanner() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.amber.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.amber.withOpacity(0.4)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.info_outline, color: Colors.amber, size: 24),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Coming Soon',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.amber.shade800,
+                      ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Label printing will be available with backend API integration.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).hintColor,
+                      ),
+                ),
+              ],
             ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildLabelPreview(dynamic order, PackageInfo pkg) {
+  Widget _buildLabelPreview(FulfillmentOrder order) {
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: Colors.black, width: 2),
@@ -157,11 +137,11 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
                 _buildLabelSection(
                   'TO',
                   order.customerName,
-                  order.shippingAddress,
-                  'Tel: ${order.customerPhone}',
+                  order.shippingAddress ?? 'N/A',
+                  'Tel: ${order.customerPhone ?? 'N/A'}',
                 ),
                 const Divider(height: 24, thickness: 1),
-                // Tracking & Package info
+                // Order info
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -169,16 +149,10 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildLabelField(
-                              'ORDER', order.id),
+                          _buildLabelField('ORDER', order.code),
                           const SizedBox(height: 8),
-                          _buildLabelField('PACKAGE', pkg.label),
-                          const SizedBox(height: 8),
-                          _buildLabelField(
-                              'WEIGHT',
-                              pkg.weight != null
-                                  ? '${pkg.weight} kg'
-                                  : 'N/A'),
+                          _buildLabelField('ITEMS',
+                              '${order.items.length} product(s)'),
                         ],
                       ),
                     ),
@@ -186,65 +160,14 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildLabelField('CHANNEL', order.channel),
+                          _buildLabelField('SOURCE', order.source),
                           const SizedBox(height: 8),
-                          _buildLabelField('DIMENSIONS', pkg.dimensionsDisplay),
-                          const SizedBox(height: 8),
-                          _buildLabelField(
-                              'ITEMS', '${pkg.items.length} product(s)'),
+                          _buildLabelField('PAYMENT', order.paymentStatus),
                         ],
                       ),
                     ),
                   ],
                 ),
-                if (pkg.trackingNumber != null) ...[
-                  const Divider(height: 24, thickness: 1),
-                  // Barcode placeholder
-                  Center(
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 220,
-                          height: 60,
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey.shade300),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: List.generate(
-                                  30,
-                                  (i) => Container(
-                                    width: i % 3 == 0 ? 3 : 2,
-                                    height: 30,
-                                    margin: const EdgeInsets.symmetric(
-                                        horizontal: 0.5),
-                                    color: i % 2 == 0
-                                        ? Colors.black
-                                        : Colors.transparent,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                pkg.trackingNumber!,
-                                style: const TextStyle(
-                                  fontFamily: 'monospace',
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 1.5,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
