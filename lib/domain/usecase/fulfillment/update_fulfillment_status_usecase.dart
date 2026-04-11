@@ -19,33 +19,9 @@ class UpdateFulfillmentStatusUseCase
   UpdateFulfillmentStatusUseCase(this._repository);
 
   @override
-  Future<void> call({required UpdateFulfillmentStatusParams params}) async {
-    final order = await _repository.getOrderById(params.orderId);
-    if (order == null) {
-      throw Exception('Order not found: ${params.orderId}');
-    }
-
-    switch (params.status) {
-      case FulfillmentStatus.packing:
-        if (!order.isFullyPicked) {
-          throw Exception('All items must be picked before packing');
-        }
-        break;
-      case FulfillmentStatus.packed:
-        if (!order.isFullyPacked) {
-          throw Exception(
-              'All items must be packed into packages before marking as packed');
-        }
-        break;
-      case FulfillmentStatus.shipped:
-        if (!order.isFullyPacked) {
-          throw Exception('All items must be packed before shipping');
-        }
-        break;
-      default:
-        break;
-    }
-
+  Future<void> call({required UpdateFulfillmentStatusParams params}) {
+    // Validation is now handled by the BE API.
+    // The API will return appropriate error responses for invalid transitions.
     return _repository.updateOrderStatus(params.orderId, params.status);
   }
 }
