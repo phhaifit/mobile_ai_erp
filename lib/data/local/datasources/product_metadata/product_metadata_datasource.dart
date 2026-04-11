@@ -2,7 +2,6 @@ import 'package:mobile_ai_erp/domain/entity/product_metadata/attribute.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/attribute_option.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/brand.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
-import 'package:mobile_ai_erp/domain/entity/product_metadata/category_attribute.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/product_metadata_validation_exception.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/tag.dart';
 import 'package:mobile_ai_erp/core/utils/slug_util.dart';
@@ -120,35 +119,6 @@ class ProductMetadataDataSource {
       attributeId: 'attr_size',
       value: 'L',
       sortOrder: 30,
-    ),
-  ];
-
-  final List<CategoryAttribute> _categoryAttributes = <CategoryAttribute>[
-    const CategoryAttribute(
-      id: 'cat_attr_dresses_color',
-      categoryId: 'cat_dresses',
-      attributeId: 'attr_color',
-      isRequired: true,
-      sortOrder: 10,
-    ),
-    const CategoryAttribute(
-      id: 'cat_attr_dresses_size',
-      categoryId: 'cat_dresses',
-      attributeId: 'attr_size',
-      isRequired: true,
-      sortOrder: 20,
-    ),
-    const CategoryAttribute(
-      id: 'cat_attr_dresses_material',
-      categoryId: 'cat_dresses',
-      attributeId: 'attr_material',
-      sortOrder: 30,
-    ),
-    const CategoryAttribute(
-      id: 'cat_attr_accessories_weight',
-      categoryId: 'cat_accessories',
-      attributeId: 'attr_weight',
-      sortOrder: 10,
     ),
   ];
 
@@ -319,7 +289,6 @@ class ProductMetadataDataSource {
         'Delete child categories first.',
       );
     }
-    _categoryAttributes.removeWhere((item) => item.categoryId == categoryId);
     _categories.removeWhere((item) => item.id == categoryId);
   }
 
@@ -395,7 +364,6 @@ class ProductMetadataDataSource {
   Future<void> deleteAttribute(String attributeId) async {
     _attributes.removeWhere((item) => item.id == attributeId);
     _attributeOptions.removeWhere((item) => item.attributeId == attributeId);
-    _categoryAttributes.removeWhere((item) => item.attributeId == attributeId);
   }
 
   Future<List<AttributeOption>> getAttributeOptions(String attributeId) async {
@@ -462,50 +430,6 @@ class ProductMetadataDataSource {
 
   Future<void> deleteAttributeOption(String attributeOptionId) async {
     _attributeOptions.removeWhere((item) => item.id == attributeOptionId);
-  }
-
-  Future<List<CategoryAttribute>> getCategoryAttributes() async =>
-      _sortByOrderThenName(
-        _categoryAttributes,
-        (item) => '${item.categoryId}_${item.attributeId}',
-        (item) => item.sortOrder,
-      );
-
-  Future<CategoryAttribute> saveCategoryAttribute(
-      CategoryAttribute item) async {
-    final existsCategory =
-        _categories.any((category) => category.id == item.categoryId);
-    if (!existsCategory) {
-      throw const ProductMetadataValidationException('Category not found.');
-    }
-    final existsAttribute =
-        _attributes.any((attribute) => attribute.id == item.attributeId);
-    if (!existsAttribute) {
-      throw const ProductMetadataValidationException('Attribute not found.');
-    }
-
-    final relationId = item.id.trim();
-    final hasDuplicate = _categoryAttributes.any(
-      (existing) =>
-          existing.id != relationId &&
-          existing.categoryId == item.categoryId &&
-          existing.attributeId == item.attributeId,
-    );
-    if (hasDuplicate) {
-      throw const ProductMetadataValidationException(
-        'This category already links to the selected attribute.',
-      );
-    }
-
-    final saved = item.copyWith(
-      id: relationId.isEmpty ? _generateId('cat_attr') : relationId,
-    );
-    _upsertById(_categoryAttributes, saved, (entry) => entry.id);
-    return saved;
-  }
-
-  Future<void> deleteCategoryAttribute(String categoryAttributeId) async {
-    _categoryAttributes.removeWhere((item) => item.id == categoryAttributeId);
   }
 
   Future<List<Brand>> getBrands() async => _sortByOrderThenName(

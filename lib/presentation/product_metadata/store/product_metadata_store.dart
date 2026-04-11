@@ -3,7 +3,6 @@ import 'package:mobile_ai_erp/domain/entity/product_metadata/attribute.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/attribute_option.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/brand.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
-import 'package:mobile_ai_erp/domain/entity/product_metadata/category_attribute.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/tag.dart';
 import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadata_repository.dart';
 import 'package:mobx/mobx.dart';
@@ -40,10 +39,6 @@ abstract class ProductMetadataStoreBase with Store {
       ObservableMap<String, int>();
 
   @observable
-  ObservableList<CategoryAttribute> categoryAttributes =
-      ObservableList<CategoryAttribute>();
-
-  @observable
   ObservableList<Brand> brands = ObservableList<Brand>();
 
   @observable
@@ -62,17 +57,14 @@ abstract class ProductMetadataStoreBase with Store {
       final results = await Future.wait<dynamic>(<Future<dynamic>>[
         _repository.getCategories(),
         _repository.getAttributes(),
-        _repository.getCategoryAttributes(),
         _repository.getBrands(),
         _repository.getTags(),
       ]);
 
       categories = ObservableList<Category>.of(results[0] as List<Category>);
       attributes = ObservableList<Attribute>.of(results[1] as List<Attribute>);
-      categoryAttributes = ObservableList<CategoryAttribute>.of(
-          results[2] as List<CategoryAttribute>);
-      brands = ObservableList<Brand>.of(results[3] as List<Brand>);
-      tags = ObservableList<Tag>.of(results[4] as List<Tag>);
+      brands = ObservableList<Brand>.of(results[2] as List<Brand>);
+      tags = ObservableList<Tag>.of(results[3] as List<Tag>);
       attributeOptionCounts = ObservableMap<String, int>.of(
         await _repository.getAttributeOptionCounts(
           attributes.map((attribute) => attribute.id).toList(),
@@ -119,7 +111,6 @@ abstract class ProductMetadataStoreBase with Store {
   Future<void> deleteCategory(String categoryId) async {
     await _repository.deleteCategory(categoryId);
     categories.removeWhere((category) => category.id == categoryId);
-    categoryAttributes.removeWhere((item) => item.categoryId == categoryId);
   }
 
   @action
@@ -138,7 +129,6 @@ abstract class ProductMetadataStoreBase with Store {
     await _repository.deleteAttribute(attributeId);
     attributes.removeWhere((attribute) => attribute.id == attributeId);
     attributeOptionCounts.remove(attributeId);
-    categoryAttributes.removeWhere((item) => item.attributeId == attributeId);
     if (activeAttributeId == attributeId) {
       activeAttributeId = null;
       attributeOptions.clear();
@@ -168,18 +158,6 @@ abstract class ProductMetadataStoreBase with Store {
     if (affectedAttributeId != null) {
       await _refreshAttributeOptionCount(affectedAttributeId);
     }
-  }
-
-  @action
-  Future<void> saveCategoryAttribute(CategoryAttribute item) async {
-    final saved = await _repository.saveCategoryAttribute(item);
-    _upsertCategoryAttribute(saved);
-  }
-
-  @action
-  Future<void> deleteCategoryAttribute(String categoryAttributeId) async {
-    await _repository.deleteCategoryAttribute(categoryAttributeId);
-    categoryAttributes.removeWhere((item) => item.id == categoryAttributeId);
   }
 
   @action
@@ -228,14 +206,6 @@ abstract class ProductMetadataStoreBase with Store {
 
   Attribute? findAttributeById(String? id) =>
       _findById(attributes, id, (item) => item.id);
-
-  List<CategoryAttribute> categoryAttributesForCategory(String categoryId) {
-    final items = categoryAttributes
-        .where((item) => item.categoryId == categoryId)
-        .toList()
-      ..sort((left, right) => left.sortOrder.compareTo(right.sortOrder));
-    return items;
-  }
 
   int optionCountForAttribute(String attributeId) =>
       attributeOptionCounts[attributeId] ?? 0;
@@ -302,26 +272,6 @@ abstract class ProductMetadataStoreBase with Store {
           return orderCompare;
         }
         return left.value.toLowerCase().compareTo(right.value.toLowerCase());
-      },
-    );
-  }
-
-  @action
-  void _upsertCategoryAttribute(CategoryAttribute item) {
-    _upsert<CategoryAttribute>(
-      list: categoryAttributes,
-      item: item,
-      idSelector: (entry) => entry.id,
-      compare: (left, right) {
-        final categoryCompare = left.categoryId.compareTo(right.categoryId);
-        if (categoryCompare != 0) {
-          return categoryCompare;
-        }
-        final orderCompare = left.sortOrder.compareTo(right.sortOrder);
-        if (orderCompare != 0) {
-          return orderCompare;
-        }
-        return left.attributeId.compareTo(right.attributeId);
       },
     );
   }
