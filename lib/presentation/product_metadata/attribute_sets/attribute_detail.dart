@@ -42,11 +42,6 @@ class _ProductMetadataAttributeDetailScreenState
             body: const Center(child: Text('Attribute not found.')),
           );
         }
-
-        final linkedCategories = _store.categoryAttributes
-            .where((item) => item.attributeId == attribute.id)
-            .toList()
-          ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
         return Scaffold(
           appBar: AppBar(
             title: const Text('Attribute detail'),
@@ -111,10 +106,6 @@ class _ProductMetadataAttributeDetailScreenState
                     spacing: 8,
                     runSpacing: 8,
                     children: <Widget>[
-                      _UsageMetricChip(
-                        label: 'Linked categories',
-                        value: linkedCategories.length.toString(),
-                      ),
                       if (attribute.valueType.supportsOptions)
                         _UsageMetricChip(
                           label: 'Options',
@@ -124,60 +115,6 @@ class _ProductMetadataAttributeDetailScreenState
                         ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Linked categories',
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                  ),
-                  const SizedBox(height: 8),
-                  if (linkedCategories.isEmpty)
-                    const Text('Not linked to any category yet.')
-                  else
-                    ...linkedCategories.map((link) {
-                      final category = _store.findCategoryById(link.categoryId);
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .surfaceContainerLow,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              Text(
-                                category?.name ?? link.categoryId,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleSmall
-                                    ?.copyWith(fontWeight: FontWeight.w600),
-                              ),
-                              const SizedBox(height: 8),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: <Widget>[
-                                  MetadataStatusChip(
-                                    label: link.isRequired
-                                        ? 'Required'
-                                        : 'Optional',
-                                  ),
-                                  MetadataStatusChip(
-                                    label: 'Sort order: ${link.sortOrder}',
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }),
                 ],
               ),
             ],

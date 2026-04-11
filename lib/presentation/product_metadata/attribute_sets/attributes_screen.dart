@@ -1,7 +1,6 @@
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/attribute.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/product_metadata_validation_exception.dart';
-import 'package:mobile_ai_erp/presentation/product_metadata/attribute_sets/attribute_relationships_tab.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_navigator.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_route_args.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
@@ -39,33 +38,16 @@ class ProductMetadataAttributesScreen extends StatefulWidget {
 }
 
 class _ProductMetadataAttributesScreenState
-    extends State<ProductMetadataAttributesScreen>
-    with SingleTickerProviderStateMixin {
+    extends State<ProductMetadataAttributesScreen> {
   final ProductMetadataStore _store = getIt<ProductMetadataStore>();
-  late final TabController _tabController;
-  int _currentTabIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this)
-      ..addListener(() {
-        if (_currentTabIndex != _tabController.index && mounted) {
-          setState(() {
-            _currentTabIndex = _tabController.index;
-          });
-        }
-      });
     Future<void>.microtask(() async {
       await _store.loadDashboard();
       await _store.loadAttributes();
     });
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
   }
 
   @override
@@ -80,32 +62,12 @@ class _ProductMetadataAttributesScreenState
             tooltip: 'Back to Product Metadata',
           ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const <Tab>[
-            Tab(text: 'List'),
-            Tab(text: 'Relationships'),
-          ],
-        ),
       ),
       floatingActionButton: Observer(
         builder: (context) => FloatingActionButton.extended(
-          onPressed: _currentTabIndex == 0
-              ? () => ProductMetadataNavigator.openAttributeForm(context)
-              : (_store.categories.isNotEmpty && _store.attributes.isNotEmpty)
-                  ? () => Navigator.of(context).push<void>(
-                        MaterialPageRoute<void>(
-                          builder: (_) =>
-                              const ProductMetadataCategoryRelationshipFormScreen(),
-                        ),
-                      )
-                  : null,
-          icon: Icon(
-            _currentTabIndex == 0 ? Icons.add : Icons.add_link_outlined,
-          ),
-          label: Text(
-            _currentTabIndex == 0 ? 'Add attribute' : 'Add relationship',
-          ),
+          onPressed: () => ProductMetadataNavigator.openAttributeForm(context),
+          icon: const Icon(Icons.add),
+          label: const Text('Add attribute'),
         ),
       ),
       body: Observer(
@@ -114,13 +76,7 @@ class _ProductMetadataAttributesScreenState
             return const Center(child: CircularProgressIndicator());
           }
 
-          return TabBarView(
-            controller: _tabController,
-            children: <Widget>[
-              _AttributesListTab(store: _store),
-              AttributeRelationshipsTab(store: _store),
-            ],
-          );
+          return _AttributesListTab(store: _store);
         },
       ),
     );
@@ -290,7 +246,7 @@ class _AttributesListTabState extends State<_AttributesListTab> {
                           ),
                         );
                       },
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      separatorBuilder: (_, _) => const SizedBox(height: 12),
                       itemCount:
                           visibleAttributes.length + (totalPages > 1 ? 1 : 0),
                     ),

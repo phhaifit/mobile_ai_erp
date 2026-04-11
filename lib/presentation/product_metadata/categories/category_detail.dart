@@ -42,8 +42,6 @@ class _ProductMetadataCategoryDetailScreenState
           );
         }
         final parent = _store.findCategoryById(category.parentId);
-        final attributeLinks =
-            _store.categoryAttributesForCategory(category.id);
 
         return Scaffold(
           appBar: AppBar(
@@ -107,43 +105,6 @@ class _ProductMetadataCategoryDetailScreenState
                         ? category.coverImageUrl!
                         : 'Not set',
                   ),
-                ],
-              ),
-              MetadataDetailSectionCard(
-                title: 'Linked attributes',
-                children: <Widget>[
-                  if (attributeLinks.isEmpty)
-                    const Text('No linked attributes yet.')
-                  else
-                    ...attributeLinks.map((link) {
-                      final attribute =
-                          _store.findAttributeById(link.attributeId);
-                      final name = attribute?.name ?? link.attributeId;
-                      final code = attribute?.code ?? '';
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Text('$name${code.isEmpty ? '' : ' ($code)'}'),
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: <Widget>[
-                                MetadataStatusChip(
-                                  label:
-                                      link.isRequired ? 'Required' : 'Optional',
-                                ),
-                                MetadataStatusChip(
-                                  label: 'Sort order: ${link.sortOrder}',
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      );
-                    }),
                 ],
               ),
             ],
