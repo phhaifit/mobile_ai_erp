@@ -64,7 +64,7 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
         }
         return Scaffold(
           appBar: AppBar(
-            title: Text(order.id),
+            title: Text(order.code),
             actions: [
               IconButton(
                 icon: const Icon(Icons.timeline),
@@ -129,10 +129,13 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
           ),
           const SizedBox(height: 12),
           _buildInfoRow(Icons.person_outline, 'Customer', order.customerName),
-          _buildInfoRow(Icons.phone_outlined, 'Phone', order.customerPhone),
-          _buildInfoRow(
-              Icons.location_on_outlined, 'Address', order.shippingAddress),
-          _buildInfoRow(Icons.storefront, 'Channel', order.channel),
+          if (order.customerPhone != null)
+            _buildInfoRow(Icons.phone_outlined, 'Phone', order.customerPhone!),
+          if (order.shippingAddress != null)
+            _buildInfoRow(
+                Icons.location_on_outlined, 'Address', order.shippingAddress!),
+          _buildInfoRow(Icons.storefront, 'Source', order.source),
+          _buildInfoRow(Icons.payment, 'Payment', order.paymentStatus),
           _buildInfoRow(Icons.calendar_today, 'Created',
               DateFormat('dd/MM/yyyy HH:mm').format(order.createdAt)),
           _buildInfoRow(Icons.attach_money, 'Total',
@@ -183,16 +186,13 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
                 ),
           ),
           const SizedBox(height: 12),
-          ...order.items.map((item) => _buildItemTile(order, item)),
+          ...order.items.map((item) => _buildItemTile(item)),
         ],
       ),
     );
   }
 
-  Widget _buildItemTile(FulfillmentOrder order, FulfillmentItem item) {
-    final canPick = order.status == FulfillmentStatus.picking ||
-        order.status == FulfillmentStatus.pending;
-
+  Widget _buildItemTile(FulfillmentItem item) {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: Padding(
@@ -225,137 +225,54 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
                   .bodySmall
                   ?.copyWith(color: Theme.of(context).hintColor),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             Row(
               children: [
-                _buildProgressIndicator(
-                    'Picked', item.pickedQuantity, item.quantity, Colors.blue),
+                Text(
+                  'Qty: ${item.quantity}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
                 const SizedBox(width: 12),
-                _buildProgressIndicator(
-                    'Packed', item.packedQuantity, item.quantity, Colors.purple),
-                const SizedBox(width: 12),
-                _buildProgressIndicator(
-                    'Shipped', item.shippedQuantity, item.quantity, Colors.teal),
+                Text(
+                  '× ${_currencyFormat.format(item.unitPrice)}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).hintColor,
+                      ),
+                ),
               ],
             ),
-            if (canPick) ...[
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  if (item.pickedQuantity > 0)
-                    IconButton(
-                      icon: const Icon(Icons.remove_circle_outline, size: 22),
-                      tooltip: 'Pick -1',
-                      onPressed: () => _store.updatePickedQuantity(
-                          order.id, item.id, item.pickedQuantity - 1),
-                    ),
-                  if (!item.isFullyPicked)
-                    IconButton(
-                      icon: const Icon(Icons.add_circle_outline, size: 22),
-                      tooltip: 'Pick +1',
-                      onPressed: () => _store.updatePickedQuantity(
-                          order.id, item.id, item.pickedQuantity + 1),
-                    ),
-                  if (!item.isFullyPicked)
-                    TextButton.icon(
-                      icon: const Icon(Icons.done_all, size: 18),
-                      label: const Text('Pick All'),
-                      onPressed: () => _store.updatePickedQuantity(
-                          order.id, item.id, item.quantity),
-                    ),
-                  if (item.isFullyPicked)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.green.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.check_circle,
-                              size: 16, color: Colors.green),
-                          SizedBox(width: 4),
-                          Text(
-                            'Fully Picked',
-                            style: TextStyle(
-                                color: Colors.green,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
-            ],
           ],
         ),
       ),
     );
   }
 
-  Widget _buildProgressIndicator(
-      String label, int current, int total, Color color) {
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '$label: $current/$total',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontSize: 11,
-                  color: Theme.of(context).hintColor,
-                ),
-          ),
-          const SizedBox(height: 4),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: total > 0 ? current / total : 0,
-              backgroundColor: color.withOpacity(0.1),
-              valueColor: AlwaysStoppedAnimation<Color>(color),
-              minHeight: 6,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildActionButtons(FulfillmentOrder order) {
     final nextStatus = _getNextStatus(order.status);
-    if (nextStatus == null) return const SizedBox.shrink();
+    if (nextStatus == null &&
+        order.status != FulfillmentStatus.pending &&
+        order.status != FulfillmentStatus.processing &&
+        order.status != FulfillmentStatus.shipped) {
+      return const SizedBox.shrink();
+    }
 
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          ElevatedButton.icon(
-            onPressed: () => _store.updateStatus(order.id, nextStatus),
-            icon: Icon(_getStatusIcon(nextStatus)),
-            label: Text('Mark as ${nextStatus.displayName}'),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-            ),
-          ),
-          if (order.status == FulfillmentStatus.shipped) ...[
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: () => _store.updateStatus(
-                  order.id, FulfillmentStatus.partiallyDelivered),
-              icon: const Icon(Icons.call_split),
-              label: const Text('Mark as Partially Delivered'),
-              style: OutlinedButton.styleFrom(
+          if (nextStatus != null)
+            ElevatedButton.icon(
+              onPressed: () => _store.updateStatus(order.id, nextStatus),
+              icon: Icon(_getStatusIcon(nextStatus)),
+              label: Text('Mark as ${nextStatus.displayName}'),
+              style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
             ),
-          ],
           if (order.status != FulfillmentStatus.cancelled &&
-              order.status != FulfillmentStatus.delivered) ...[
+              order.status != FulfillmentStatus.delivered &&
+              order.status != FulfillmentStatus.returned) ...[
             const SizedBox(height: 8),
             OutlinedButton.icon(
               onPressed: () => _confirmCancelOrder(order.id),
@@ -400,19 +317,14 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
   FulfillmentStatus? _getNextStatus(FulfillmentStatus current) {
     switch (current) {
       case FulfillmentStatus.pending:
-        return FulfillmentStatus.picking;
-      case FulfillmentStatus.picking:
-        return FulfillmentStatus.packing;
-      case FulfillmentStatus.packing:
-        return FulfillmentStatus.packed;
-      case FulfillmentStatus.packed:
+        return FulfillmentStatus.processing;
+      case FulfillmentStatus.processing:
         return FulfillmentStatus.shipped;
       case FulfillmentStatus.shipped:
         return FulfillmentStatus.delivered;
-      case FulfillmentStatus.partiallyDelivered:
-        return FulfillmentStatus.delivered;
       case FulfillmentStatus.delivered:
       case FulfillmentStatus.cancelled:
+      case FulfillmentStatus.returned:
         return null;
     }
   }
@@ -421,20 +333,16 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
     switch (status) {
       case FulfillmentStatus.pending:
         return Icons.hourglass_empty;
-      case FulfillmentStatus.picking:
-        return Icons.shopping_cart;
-      case FulfillmentStatus.packing:
-        return Icons.inventory;
-      case FulfillmentStatus.packed:
-        return Icons.check_box;
+      case FulfillmentStatus.processing:
+        return Icons.sync;
       case FulfillmentStatus.shipped:
         return Icons.local_shipping;
-      case FulfillmentStatus.partiallyDelivered:
-        return Icons.call_split;
       case FulfillmentStatus.delivered:
         return Icons.done_all;
       case FulfillmentStatus.cancelled:
         return Icons.cancel;
+      case FulfillmentStatus.returned:
+        return Icons.assignment_return;
     }
   }
 
@@ -460,20 +368,16 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
     switch (status) {
       case FulfillmentStatus.pending:
         return Colors.orange;
-      case FulfillmentStatus.picking:
+      case FulfillmentStatus.processing:
         return Colors.blue;
-      case FulfillmentStatus.packing:
-        return Colors.indigo;
-      case FulfillmentStatus.packed:
-        return Colors.purple;
       case FulfillmentStatus.shipped:
         return Colors.teal;
-      case FulfillmentStatus.partiallyDelivered:
-        return Colors.amber.shade800;
       case FulfillmentStatus.delivered:
         return Colors.green;
       case FulfillmentStatus.cancelled:
         return Colors.red;
+      case FulfillmentStatus.returned:
+        return Colors.grey;
     }
   }
 }

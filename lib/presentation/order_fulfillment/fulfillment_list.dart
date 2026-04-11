@@ -114,7 +114,7 @@ class _FulfillmentListScreenState extends State<FulfillmentListScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    order.id,
+                    order.code,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -138,7 +138,7 @@ class _FulfillmentListScreenState extends State<FulfillmentListScreen> {
                   Icon(Icons.storefront,
                       size: 16, color: Theme.of(context).hintColor),
                   const SizedBox(width: 4),
-                  Text(order.channel,
+                  Text(order.source,
                       style: Theme.of(context).textTheme.bodySmall),
                   const Spacer(),
                   Text(
@@ -195,20 +195,16 @@ class _FulfillmentListScreenState extends State<FulfillmentListScreen> {
     switch (status) {
       case FulfillmentStatus.pending:
         return Colors.orange;
-      case FulfillmentStatus.picking:
+      case FulfillmentStatus.processing:
         return Colors.blue;
-      case FulfillmentStatus.packing:
-        return Colors.indigo;
-      case FulfillmentStatus.packed:
-        return Colors.purple;
       case FulfillmentStatus.shipped:
         return Colors.teal;
-      case FulfillmentStatus.partiallyDelivered:
-        return Colors.amber.shade800;
       case FulfillmentStatus.delivered:
         return Colors.green;
       case FulfillmentStatus.cancelled:
         return Colors.red;
+      case FulfillmentStatus.returned:
+        return Colors.grey;
     }
   }
 }
