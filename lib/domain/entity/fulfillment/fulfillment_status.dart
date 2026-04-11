@@ -1,31 +1,49 @@
 enum FulfillmentStatus {
   pending,
-  picking,
-  packing,
-  packed,
+  processing,
   shipped,
-  partiallyDelivered,
   delivered,
-  cancelled;
+  cancelled,
+  returned;
 
   String get displayName {
     switch (this) {
       case FulfillmentStatus.pending:
         return 'Pending';
-      case FulfillmentStatus.picking:
-        return 'Picking';
-      case FulfillmentStatus.packing:
-        return 'Packing';
-      case FulfillmentStatus.packed:
-        return 'Packed';
+      case FulfillmentStatus.processing:
+        return 'Processing';
       case FulfillmentStatus.shipped:
         return 'Shipped';
-      case FulfillmentStatus.partiallyDelivered:
-        return 'Partially Delivered';
       case FulfillmentStatus.delivered:
         return 'Delivered';
       case FulfillmentStatus.cancelled:
         return 'Cancelled';
+      case FulfillmentStatus.returned:
+        return 'Returned';
     }
   }
+
+  /// Maps a BE API status string to the corresponding enum value.
+  static FulfillmentStatus? fromApiString(String? status) {
+    if (status == null) return null;
+    switch (status) {
+      case 'pending':
+        return FulfillmentStatus.pending;
+      case 'processing':
+        return FulfillmentStatus.processing;
+      case 'shipped':
+        return FulfillmentStatus.shipped;
+      case 'delivered':
+        return FulfillmentStatus.delivered;
+      case 'cancelled':
+        return FulfillmentStatus.cancelled;
+      case 'returned':
+        return FulfillmentStatus.returned;
+      default:
+        return null;
+    }
+  }
+
+  /// Converts the enum value to a BE API status string.
+  String get apiValue => name;
 }
