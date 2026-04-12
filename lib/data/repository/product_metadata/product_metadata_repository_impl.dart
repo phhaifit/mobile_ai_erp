@@ -1,71 +1,146 @@
-import 'package:mobile_ai_erp/data/local/datasources/product_metadata/product_metadata_datasource.dart';
+import 'package:mobile_ai_erp/data/network/apis/product_metadata/metadata_api_client.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/attribute.dart';
-import 'package:mobile_ai_erp/domain/entity/product_metadata/attribute_option.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/brand.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
+import 'package:mobile_ai_erp/domain/entity/product_metadata/metadata_page.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/tag.dart';
+import 'package:mobile_ai_erp/domain/entity/product_metadata/unit.dart';
 import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadata_repository.dart';
 
 class ProductMetadataRepositoryImpl extends ProductMetadataRepository {
-  ProductMetadataRepositoryImpl(this._dataSource);
+  ProductMetadataRepositoryImpl(this._apiClient);
 
-  final ProductMetadataDataSource _dataSource;
+  final MetadataApiClient _apiClient;
 
   @override
-  Future<List<Category>> getCategories() => _dataSource.getCategories();
+  Future<List<Category>> getCategories() => _apiClient.categories
+      .getCategories()
+      .then((page) => page.items);
+
+  @override
+  Future<List<Category>> getCategoryTree() => _apiClient.categories.getCategoryTree();
+
+  @override
+  Future<Category> getCategoryById(String categoryId) =>
+      _apiClient.categories.getCategoryById(categoryId);
 
   @override
   Future<Category> saveCategory(Category category) =>
-      _dataSource.saveCategory(category);
+      _apiClient.categories.saveCategory(category);
 
   @override
   Future<void> deleteCategory(String categoryId) =>
-      _dataSource.deleteCategory(categoryId);
+      _apiClient.categories.deleteCategory(categoryId);
 
   @override
-  Future<List<Attribute>> getAttributes() => _dataSource.getAttributes();
+  Future<List<AttributeSet>> getAttributeSets() => _apiClient.attributeSets
+      .getAttributeSets()
+      .then((page) => page.items);
 
   @override
-  Future<Attribute> saveAttribute(Attribute attribute) =>
-      _dataSource.saveAttribute(attribute);
+  Future<AttributeSet> getAttributeSetById(String attributeSetId) =>
+      _apiClient.attributeSets.getAttributeSetById(attributeSetId);
 
   @override
-  Future<void> deleteAttribute(String attributeId) =>
-      _dataSource.deleteAttribute(attributeId);
+  Future<AttributeSet> saveAttributeSet(AttributeSet attributeSet) =>
+      _apiClient.attributeSets.saveAttributeSet(attributeSet);
 
   @override
-  Future<List<AttributeOption>> getAttributeOptions(String attributeId) =>
-      _dataSource.getAttributeOptions(attributeId);
+  Future<void> deleteAttributeSet(String attributeSetId) =>
+      _apiClient.attributeSets.deleteAttributeSet(attributeSetId);
 
   @override
-  Future<Map<String, int>> getAttributeOptionCounts(
-          List<String> attributeIds) =>
-      _dataSource.getAttributeOptionCounts(attributeIds);
+  Future<List<AttributeValue>> getAttributeValues(String attributeSetId) =>
+      _apiClient.attributeSets.getAttributeSetById(attributeSetId).then(
+            (attributeSet) => attributeSet.values,
+          );
 
   @override
-  Future<AttributeOption> saveAttributeOption(
-          AttributeOption attributeOption) =>
-      _dataSource.saveAttributeOption(attributeOption);
+  Future<List<AttributeValue>> getAllAttributeValues() =>
+      _apiClient.attributeSets.getAllAttributeValues();
 
   @override
-  Future<void> deleteAttributeOption(String attributeOptionId) =>
-      _dataSource.deleteAttributeOption(attributeOptionId);
+  Future<Map<String, int>> getAttributeValueCounts(
+      List<String> attributeSetIds) async {
+    if (attributeSetIds.isEmpty) {
+      return <String, int>{};
+    }
+
+    // Parallelize API calls using Future.wait() instead of sequential awaits
+    // Reduces total time from O(N*latency) to O(latency) by firing all requests simultaneously
+    final futures = attributeSetIds.map(
+      (attributeSetId) => _apiClient.attributeSets
+          .getAttributeSetById(attributeSetId)
+          .then(
+            (attributeSet) => MapEntry(attributeSetId, attributeSet.values.length),
+          )
+          .catchError(
+            // If attribute set not found or error, count as 0
+            (dynamic _) => MapEntry(attributeSetId, 0),
+          ),
+    );
+
+    final results = await Future.wait(futures);
+    return <String, int>{for (final entry in results) entry.key: entry.value};
+  }
 
   @override
-  Future<List<Brand>> getBrands() => _dataSource.getBrands();
+  Future<AttributeValue> saveAttributeValue(
+      AttributeValue attributeValue) =>
+      _apiClient.attributeSets.saveAttributeValue(attributeValue);
 
   @override
-  Future<Brand> saveBrand(Brand brand) => _dataSource.saveBrand(brand);
+  Future<void> deleteAttributeOption(String attributeSetId, String optionId) =>
+      _apiClient.attributeSets.deleteAttributeOption(attributeSetId, optionId);
 
   @override
-  Future<void> deleteBrand(String brandId) => _dataSource.deleteBrand(brandId);
+  Future<MetadataPage<Brand>> getBrands({
+    int page = 1,
+    int pageSize = 20,
+    String? search,
+    bool includeInactive = false,
+  }) =>
+      _apiClient.brands.getBrands(
+        page: page,
+        pageSize: pageSize,
+        search: search,
+        includeInactive: includeInactive,
+      );
 
   @override
-  Future<List<Tag>> getTags() => _dataSource.getTags();
+  Future<Brand> getBrandById(String brandId) => _apiClient.brands.getBrandById(brandId);
 
   @override
-  Future<Tag> saveTag(Tag tag) => _dataSource.saveTag(tag);
+  Future<Brand> saveBrand(Brand brand) => _apiClient.brands.saveBrand(brand);
 
   @override
-  Future<void> deleteTag(String tagId) => _dataSource.deleteTag(tagId);
+  Future<void> deleteBrand(String brandId) => _apiClient.brands.deleteBrand(brandId);
+
+  @override
+  Future<List<Tag>> getTags() => _apiClient.tags
+      .getTags()
+      .then((page) => page.items);
+
+  @override
+  Future<Tag> getTagById(String tagId) => _apiClient.tags.getTagById(tagId);
+
+  @override
+  Future<Tag> saveTag(Tag tag) => _apiClient.tags.saveTag(tag);
+
+  @override
+  Future<void> deleteTag(String tagId) => _apiClient.tags.deleteTag(tagId);
+
+  @override
+  Future<List<Unit>> getUnits({bool includeInactive = false}) => _apiClient.units
+      .getUnits(includeInactive: includeInactive)
+      .then((page) => page.items);
+
+  @override
+  Future<Unit> getUnitById(String unitId) => _apiClient.units.getUnitById(unitId);
+
+  @override
+  Future<Unit> saveUnit(Unit unit) => _apiClient.units.saveUnit(unit);
+
+  @override
+  Future<void> deleteUnit(String unitId) => _apiClient.units.deleteUnit(unitId);
 }

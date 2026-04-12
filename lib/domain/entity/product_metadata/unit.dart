@@ -1,11 +1,11 @@
-class Category {
-  const Category({
+class Unit {
+  const Unit({
     required this.id,
     required this.tenantId,
     required this.name,
-    required this.slug,
-    this.parentId,
+    this.symbol,
     this.description,
+    required this.isActive,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -13,32 +13,31 @@ class Category {
   final String id;
   final String tenantId;
   final String name;
-  final String slug;
-  final String? parentId;
+  final String? symbol;
   final String? description;
+  final bool isActive;
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  Category copyWith({
+  Unit copyWith({
     String? id,
     String? tenantId,
     String? name,
-    String? slug,
-    Object? parentId = _sentinel,
+    Object? symbol = _sentinel,
     Object? description = _sentinel,
+    bool? isActive,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
-    return Category(
+    return Unit(
       id: id ?? this.id,
       tenantId: tenantId ?? this.tenantId,
       name: name ?? this.name,
-      slug: slug ?? this.slug,
-      parentId:
-          identical(parentId, _sentinel) ? this.parentId : parentId as String?,
+      symbol: identical(symbol, _sentinel) ? this.symbol : symbol as String?,
       description: identical(description, _sentinel)
           ? this.description
           : description as String?,
+      isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

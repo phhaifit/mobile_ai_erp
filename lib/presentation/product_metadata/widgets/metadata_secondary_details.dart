@@ -25,7 +25,12 @@ class MetadataSecondaryDetails extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         for (var index = 0; index < lines.length; index++) ...<Widget>[
-          Text(lines[index], style: textStyle),
+          Text(
+            lines[index],
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: textStyle,
+          ),
           if (index < lines.length - 1) ...<Widget>[
             const SizedBox(height: 4),
             Divider(

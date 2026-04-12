@@ -5,9 +5,14 @@ import 'package:mobile_ai_erp/data/local/datasources/customer/customer_datasourc
 import 'package:mobile_ai_erp/data/local/datasources/order_tracking/order_tracking_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/post/post_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/post_purchase/post_purchase_datasource.dart';
-import 'package:mobile_ai_erp/data/local/datasources/product_metadata/product_metadata_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/user/role_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/user/user_datasource.dart';
+import 'package:mobile_ai_erp/data/network/apis/product_metadata/brand_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/product_metadata/category_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/product_metadata/tag_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/product_metadata/unit_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/product_metadata/attribute_set_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/product_metadata/metadata_api_client.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
 import 'package:mobile_ai_erp/data/repository/checkout/checkout_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/customer/customer_repository_impl.dart';
@@ -89,17 +94,23 @@ class RepositoryModule {
       OrderTrackingRepositoryImpl(getIt<OrderTrackingDataSource>()),
     );
 
-    getIt.registerSingleton<ProductMetadataDataSource>(
-      ProductMetadataDataSource(),
+    getIt.registerSingleton<MetadataApiClient>(
+      MetadataApiClient(
+        brands: getIt<BrandApi>(),
+        categories: getIt<CategoryApi>(),
+        tags: getIt<TagApi>(),
+        units: getIt<UnitApi>(),
+        attributeSets: getIt<AttributeSetApi>(),
+      ),
     );
+
     getIt.registerSingleton<ProductMetadataRepository>(
-        ProductMetadataRepositoryImpl(
-      getIt<ProductMetadataDataSource>(),
-    ));
-    
+      ProductMetadataRepositoryImpl(getIt<MetadataApiClient>()),
+    );
+
     getIt.registerLazySingleton<AddressRepository>(
         () => AddressRepositoryImpl(getIt<AddressMockDataSource>()));
-        
+
     getIt.registerLazySingleton<OrderRepository>(
         () => OrderRepositoryImpl(getIt<OrderMockDataSource>()));
 
