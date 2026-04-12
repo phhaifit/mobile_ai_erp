@@ -6,9 +6,9 @@ import 'package:mobile_ai_erp/domain/entity/user/role.dart';
 
 class RoleDataSource {
   final List<Role> _roles = [
-    Role(id: 1, name: 'Admin', description: 'Full access'),
-    Role(id: 2, name: 'Manager', description: 'Manage operations'),
-    Role(id: 3, name: 'Staff', description: 'Basic access'),
+    Role(id: '1', tenantId: 'default-tenant', name: 'Admin', description: 'Full access'),
+    Role(id: '2', tenantId: 'default-tenant', name: 'Manager', description: 'Manage operations'),
+    Role(id: '3', tenantId: 'default-tenant', name: 'Staff', description: 'Basic access'),
   ];
 
   Future<List<Role>> getRoles() async {

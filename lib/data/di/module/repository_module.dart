@@ -6,8 +6,9 @@ import 'package:mobile_ai_erp/data/local/datasources/order_tracking/order_tracki
 import 'package:mobile_ai_erp/data/local/datasources/post/post_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/post_purchase/post_purchase_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/product_metadata/product_metadata_datasource.dart';
-import 'package:mobile_ai_erp/data/local/datasources/user/role_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/user/user_datasource.dart';
+import 'package:mobile_ai_erp/data/network/datasources/role/role_remote_datasource.dart';
+import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
 import 'package:mobile_ai_erp/data/repository/checkout/checkout_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/customer/customer_repository_impl.dart';
@@ -113,12 +114,14 @@ class RepositoryModule {
 
     // user:---------------------------------------------------------------------
     getIt.registerSingleton<UserDataSource>(UserDataSource());
-    getIt.registerSingleton<RoleDataSource>(RoleDataSource());
+    getIt.registerSingleton<RoleRemoteDataSource>(
+      RoleRemoteDataSourceImpl(dio: getIt<DioClient>().dio),
+    );
     getIt.registerSingleton<UserRepository>(
       UserRepositoryImpl(getIt<UserDataSource>()),
     );
     getIt.registerSingleton<RoleRepository>(
-      RoleRepositoryImpl(getIt<RoleDataSource>()),
+      RoleRepositoryImpl(getIt<RoleRemoteDataSource>()),
     );
 
     // web_builder:--------------------------------------------------------------

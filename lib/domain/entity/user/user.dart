@@ -6,7 +6,7 @@ class User {
   final String email;
   final String phone;
   final UserStatus status;
-  final int roleId;
+  final String roleId;
 
   User({
     required this.id,
@@ -22,7 +22,7 @@ class User {
     String? email,
     String? phone,
     UserStatus? status,
-    int? roleId,
+    String? roleId,
   }) {
     return User(
       id: id,

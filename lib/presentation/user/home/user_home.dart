@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:mobile_ai_erp/domain/entity/user/role.dart';
 import 'package:mobile_ai_erp/domain/entity/user/user.dart';
-import 'package:mobile_ai_erp/domain/entity/user/user_status.dart';
 import 'package:mobile_ai_erp/presentation/user/store/role_store.dart';
 import 'package:mobile_ai_erp/presentation/user/store/user_store.dart';
+import 'package:mobile_ai_erp/domain/entity/user/user_status.dart';
+import 'package:mobile_ai_erp/core/services/tenant_service.dart';
 
 class UserManagementScreen extends StatefulWidget {
   final UserStore userStore;
@@ -39,7 +40,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
     _tabController = TabController(length: 2, vsync: this);
   }
 
-  Role? _findRoleById(int id) {
+  Role? _findRoleById(String id) {
     return widget.roleStore.roleList
         .where((r) => r.id == id)
         .cast<Role?>()
@@ -153,7 +154,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
   }
 
   void _showGrantRoleDialog(BuildContext context, User user) {
-    int? selectedRoleId = user.roleId;
+    String? selectedRoleId = user.roleId;
 
     showDialog(
       context: context,
@@ -167,7 +168,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
                   return Column(
                     mainAxisSize: MainAxisSize.min,
                     children: widget.roleStore.roleList.map((role) {
-                      return RadioListTile<int>(
+                      return RadioListTile<String>(
                         title: Text(role.name),
                         value: role.id,
                         groupValue: selectedRoleId,
@@ -208,7 +209,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
     final emailController = TextEditingController();
     final phoneController = TextEditingController();
 
-    int? selectedRoleId;
+    String? selectedRoleId;
 
     showDialog(
       context: context,
@@ -236,7 +237,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
                     const SizedBox(height: 16),
                     Observer(
                       builder: (_) {
-                        return DropdownButtonFormField<int>(
+                        return DropdownButtonFormField<String>(
                           hint: const Text('Select Role'),
                           value: selectedRoleId,
                           items: widget.roleStore.roleList.map((role) {
@@ -295,7 +296,39 @@ class _UserManagementScreenState extends State<UserManagementScreen>
         }
 
         if (widget.roleStore.error != null) {
-          return Center(child: Text(widget.roleStore.error!));
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    size: 64,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Something went wrong',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    widget.roleStore.error!,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: () => widget.roleStore.loadRoles(),
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry'),
+                  ),
+                ],
+              ),
+            ),
+          );
         }
 
         return ListView.builder(
@@ -371,19 +404,64 @@ class _UserManagementScreenState extends State<UserManagementScreen>
               onPressed: () => Navigator.pop(context),
               child: const Text('Cancel'),
             ),
-            ElevatedButton(
-              onPressed: () {
-                final newRole = Role(
-                  id: DateTime.now().millisecondsSinceEpoch,
-                  name: nameController.text,
-                  description: descController.text,
-                );
+            StatefulBuilder(
+                builder: (context, setState) {
+                  return Observer(
+                    builder: (_) {
+                      return ElevatedButton(
+                        onPressed: widget.roleStore.loading ? null : () async {
+                          final tenantService = TenantService();
+                          final tenantId = await tenantService.getCurrentTenantId();
+                          
+                          if (tenantId == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Unable to get tenant ID')),
+                            );
+                            return;
+                          }
 
-                widget.roleStore.createRole(newRole);
-                Navigator.pop(context);
-              },
-              child: const Text('Create'),
-            ),
+                          if (nameController.text.trim().isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Please enter a role name')),
+                            );
+                            return;
+                          }
+
+                          final newRole = Role(
+                            id: DateTime.now().millisecondsSinceEpoch.toString(),
+                            tenantId: tenantId,
+                            name: nameController.text.trim(),
+                            description: descController.text.trim(),
+                          );
+
+                          await widget.roleStore.createRole(newRole);
+                          
+                          if (widget.roleStore.error == null) {
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Role created successfully')),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(widget.roleStore.error!),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                        child: widget.roleStore.loading 
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text('Create'),
+                      );
+                    },
+                  );
+                },
+              ),
           ],
         );
       },
