@@ -57,7 +57,7 @@ abstract class _UserStore with Store {
   }
 
   @action
-  Future<void> assignRole(int userId, int roleId) async {
+  Future<void> assignRole(int userId, String roleId) async {
     final user = userList.firstWhere((u) => u.id == userId);
 
     try {

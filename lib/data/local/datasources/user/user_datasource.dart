@@ -9,7 +9,7 @@ class UserDataSource {
       email: 'john@example.com',
       phone: '123456789',
       status: UserStatus.active,
-      roleId: 1,
+      roleId: '1',
     ),
     User(
       id: 2,
@@ -17,7 +17,7 @@ class UserDataSource {
       email: 'jane@example.com',
       phone: '987654321',
       status: UserStatus.active,
-      roleId: 2,
+      roleId: '2',
     ),
     User(
       id: 3,
@@ -25,7 +25,7 @@ class UserDataSource {
       email: 'alice@example.com',
       phone: '111222333',
       status: UserStatus.inactive,
-      roleId: 3,
+      roleId: '3',
     ),
     User(
       id: 4,
@@ -33,7 +33,7 @@ class UserDataSource {
       email: 'bob@example.com',
       phone: '444555666',
       status: UserStatus.active,
-      roleId: 1,
+      roleId: '1',
     ),
     User(
       id: 5,
@@ -41,7 +41,7 @@ class UserDataSource {
       email: 'charlie@example.com',
       phone: '777888999',
       status: UserStatus.inactive,
-      roleId: 2,
+      roleId: '2',
     ),
     User(
       id: 6,
@@ -49,7 +49,7 @@ class UserDataSource {
       email: 'diana@example.com',
       phone: '222333444',
       status: UserStatus.active,
-      roleId: 3,
+      roleId: '3',
     ),
     User(
       id: 7,
@@ -57,7 +57,7 @@ class UserDataSource {
       email: 'ethan@example.com',
       phone: '555666777',
       status: UserStatus.active,
-      roleId: 1,
+      roleId: '1',
     ),
     User(
       id: 8,
@@ -65,7 +65,7 @@ class UserDataSource {
       email: 'fiona@example.com',
       phone: '888999000',
       status: UserStatus.inactive,
-      roleId: 2,
+      roleId: '2',
     ),
     User(
       id: 9,
@@ -73,7 +73,7 @@ class UserDataSource {
       email: 'george@example.com',
       phone: '333444555',
       status: UserStatus.active,
-      roleId: 3,
+      roleId: '3',
     ),
     User(
       id: 10,
@@ -81,7 +81,7 @@ class UserDataSource {
       email: 'hannah@example.com',
       phone: '666777888',
       status: UserStatus.active,
-      roleId: 1,
+      roleId: '1',
     ),
   ];
 

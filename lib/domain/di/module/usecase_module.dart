@@ -52,6 +52,9 @@ import 'package:mobile_ai_erp/domain/usecase/post_purchase/update_exchange_notes
 import 'package:mobile_ai_erp/domain/usecase/post_purchase/update_refund_notes_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/assign_role_to_user_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/create_role_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/delete_role_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/get_all_roles_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/get_role_by_id_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/is_logged_in_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/login_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/save_login_in_status_usecase.dart';
@@ -91,6 +94,18 @@ class UseCaseModule {
 
     getIt.registerSingleton<UpdateRoleUseCase>(
       UpdateRoleUseCase(getIt<RoleRepository>()),
+    );
+
+    getIt.registerSingleton<DeleteRoleUseCase>(
+      DeleteRoleUseCase(getIt<RoleRepository>()),
+    );
+
+    getIt.registerSingleton<GetAllRolesUseCase>(
+      GetAllRolesUseCase(getIt<RoleRepository>()),
+    );
+
+    getIt.registerSingleton<GetRoleByIdUseCase>(
+      GetRoleByIdUseCase(getIt<RoleRepository>()),
     );
 
     // post:--------------------------------------------------------------------

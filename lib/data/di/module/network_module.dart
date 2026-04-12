@@ -2,6 +2,8 @@ import 'package:mobile_ai_erp/core/data/network/dio/configs/dio_configs.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/auth_interceptor.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/logging_interceptor.dart';
+import 'package:mobile_ai_erp/core/data/network/dio/interceptors/tenant_interceptor.dart';
+import 'package:mobile_ai_erp/core/services/tenant_service.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
 import 'package:mobile_ai_erp/data/network/interceptors/error_interceptor.dart';
@@ -24,6 +26,11 @@ class NetworkModule {
         accessToken: () async => await getIt<SharedPreferenceHelper>().authToken,
       ),
     );
+    getIt.registerSingleton<TenantInterceptor>(
+      TenantInterceptor(
+        tenantId: () async => await getIt<TenantService>().getCurrentTenantId(),
+      ),
+    );
 
     // rest client:-------------------------------------------------------------
     getIt.registerSingleton(RestClient());
@@ -41,11 +48,15 @@ class NetworkModule {
         ..addInterceptors(
           [
             getIt<AuthInterceptor>(),
+            getIt<TenantInterceptor>(),
             getIt<ErrorInterceptor>(),
             getIt<LoggingInterceptor>(),
           ],
         ),
     );
+
+    // services:----------------------------------------------------------------
+    getIt.registerSingleton<TenantService>(TenantService());
 
     // api's:-------------------------------------------------------------------
     getIt.registerSingleton(PostApi(getIt<DioClient>(), getIt<RestClient>()));
