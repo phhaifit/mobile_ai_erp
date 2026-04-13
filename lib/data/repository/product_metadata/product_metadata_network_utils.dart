@@ -61,3 +61,22 @@ String? sanitizeNullableMetadataJsonText(String? value) {
 String encodeMetadataJsonBody(Map<String, dynamic> payload) {
   return jsonEncode(payload);
 }
+
+DateTime parseRequiredMetadataTimestamp(
+  Map<String, dynamic> json,
+  String fieldName, {
+  required String contextLabel,
+}) {
+  final value = json[fieldName];
+  if (value is! String || value.isEmpty) {
+    throw FormatException('$contextLabel response is missing "$fieldName".');
+  }
+
+  try {
+    return DateTime.parse(value);
+  } on FormatException {
+    throw FormatException(
+      '$contextLabel response has an invalid "$fieldName" timestamp.',
+    );
+  }
+}

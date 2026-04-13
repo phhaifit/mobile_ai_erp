@@ -23,12 +23,16 @@ class BrandApi {
         queryParameters: <String, dynamic>{
           'page': normalizedPage,
           'pageSize': normalizedPageSize,
-          if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
-          if (includeInactive) 'includeInactive': true,
+          if (search != null && search.trim().isNotEmpty)
+            'search': search.trim(),
+          'includeInactive': includeInactive,
         },
       );
-      final data = response.data?['data'] as List<dynamic>? ?? const <dynamic>[];
-      final meta = response.data?['meta'] as Map<String, dynamic>? ?? const <String, dynamic>{};
+      final data =
+          response.data?['data'] as List<dynamic>? ?? const <dynamic>[];
+      final meta =
+          response.data?['meta'] as Map<String, dynamic>? ??
+          const <String, dynamic>{};
       return MetadataPage<Brand>(
         items: data
             .map((item) => _mapBrand(item as Map<String, dynamic>))
@@ -45,7 +49,9 @@ class BrandApi {
 
   Future<Brand> getBrandById(String brandId) async {
     try {
-      final response = await _dioClient.dio.get<Map<String, dynamic>>('/brands/$brandId');
+      final response = await _dioClient.dio.get<Map<String, dynamic>>(
+        '/brands/$brandId',
+      );
       return _mapBrand(response.data ?? const <String, dynamic>{});
     } on DioException catch (error) {
       throw mapMetadataWriteError(error);
@@ -100,8 +106,16 @@ class BrandApi {
       description: json['description'] as String?,
       logoUrl: json['logoUrl'] as String?,
       isActive: json['isActive'] as bool? ?? true,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      createdAt: parseRequiredMetadataTimestamp(
+        json,
+        'createdAt',
+        contextLabel: 'Brand',
+      ),
+      updatedAt: parseRequiredMetadataTimestamp(
+        json,
+        'updatedAt',
+        contextLabel: 'Brand',
+      ),
     );
   }
 }

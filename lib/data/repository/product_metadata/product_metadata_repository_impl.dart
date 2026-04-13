@@ -13,12 +13,20 @@ class ProductMetadataRepositoryImpl extends ProductMetadataRepository {
   final MetadataApiClient _apiClient;
 
   @override
-  Future<List<Category>> getCategories() => _apiClient.categories
-      .getCategories()
-      .then((page) => page.items);
+  Future<List<Category>> getCategories({
+    int page = 1,
+    int pageSize = 10,
+    String? search,
+  }) =>
+      _apiClient.categories.getCategories(
+        page: page,
+        pageSize: pageSize,
+        search: search,
+      ).then((page) => page.items);
 
   @override
-  Future<List<Category>> getCategoryTree() => _apiClient.categories.getCategoryTree();
+  Future<List<Category>> getCategoryTree() =>
+      _apiClient.categories.getCategoryTree();
 
   @override
   Future<Category> getCategoryById(String categoryId) =>
@@ -33,9 +41,15 @@ class ProductMetadataRepositoryImpl extends ProductMetadataRepository {
       _apiClient.categories.deleteCategory(categoryId);
 
   @override
-  Future<List<AttributeSet>> getAttributeSets() => _apiClient.attributeSets
-      .getAttributeSets()
-      .then((page) => page.items);
+  Future<MetadataPage<AttributeSet>> getAttributeSets({
+    int page = 1,
+    int pageSize = 10,
+    String? search,
+  }) => _apiClient.attributeSets.getAttributeSets(
+    page: page,
+    pageSize: pageSize,
+    search: search,
+  );
 
   @override
   Future<AttributeSet> getAttributeSetById(String attributeSetId) =>
@@ -51,75 +65,58 @@ class ProductMetadataRepositoryImpl extends ProductMetadataRepository {
 
   @override
   Future<List<AttributeValue>> getAttributeValues(String attributeSetId) =>
-      _apiClient.attributeSets.getAttributeSetById(attributeSetId).then(
-            (attributeSet) => attributeSet.values,
-          );
+      _apiClient.attributeSets
+          .getAttributeSetById(attributeSetId)
+          .then((attributeSet) => attributeSet.values);
 
   @override
   Future<List<AttributeValue>> getAllAttributeValues() =>
       _apiClient.attributeSets.getAllAttributeValues();
 
   @override
-  Future<Map<String, int>> getAttributeValueCounts(
-      List<String> attributeSetIds) async {
-    if (attributeSetIds.isEmpty) {
-      return <String, int>{};
-    }
-
-    // Parallelize API calls using Future.wait() instead of sequential awaits
-    // Reduces total time from O(N*latency) to O(latency) by firing all requests simultaneously
-    final futures = attributeSetIds.map(
-      (attributeSetId) => _apiClient.attributeSets
-          .getAttributeSetById(attributeSetId)
-          .then(
-            (attributeSet) => MapEntry(attributeSetId, attributeSet.values.length),
-          )
-          .catchError(
-            // If attribute set not found or error, count as 0
-            (dynamic _) => MapEntry(attributeSetId, 0),
-          ),
-    );
-
-    final results = await Future.wait(futures);
-    return <String, int>{for (final entry in results) entry.key: entry.value};
-  }
-
-  @override
-  Future<AttributeValue> saveAttributeValue(
-      AttributeValue attributeValue) =>
+  Future<AttributeValue> saveAttributeValue(AttributeValue attributeValue) =>
       _apiClient.attributeSets.saveAttributeValue(attributeValue);
 
   @override
-  Future<void> deleteAttributeOption(String attributeSetId, String optionId) =>
-      _apiClient.attributeSets.deleteAttributeOption(attributeSetId, optionId);
+  Future<void> deleteAttributeValue(String attributeSetId, String valueId) =>
+      _apiClient.attributeSets.deleteAttributeValue(attributeSetId, valueId);
 
   @override
   Future<MetadataPage<Brand>> getBrands({
     int page = 1,
-    int pageSize = 20,
+    int pageSize = 10,
     String? search,
     bool includeInactive = false,
-  }) =>
-      _apiClient.brands.getBrands(
-        page: page,
-        pageSize: pageSize,
-        search: search,
-        includeInactive: includeInactive,
-      );
+  }) => _apiClient.brands.getBrands(
+    page: page,
+    pageSize: pageSize,
+    search: search,
+    includeInactive: includeInactive,
+  );
 
   @override
-  Future<Brand> getBrandById(String brandId) => _apiClient.brands.getBrandById(brandId);
+  Future<Brand> getBrandById(String brandId) =>
+      _apiClient.brands.getBrandById(brandId);
 
   @override
   Future<Brand> saveBrand(Brand brand) => _apiClient.brands.saveBrand(brand);
 
   @override
-  Future<void> deleteBrand(String brandId) => _apiClient.brands.deleteBrand(brandId);
+  Future<void> deleteBrand(String brandId) =>
+      _apiClient.brands.deleteBrand(brandId);
 
   @override
-  Future<List<Tag>> getTags() => _apiClient.tags
-      .getTags()
-      .then((page) => page.items);
+  Future<MetadataPage<Tag>> getTags({
+    int page = 1,
+    int pageSize = 10,
+    String? search,
+    bool includeInactive = false,
+  }) => _apiClient.tags.getTags(
+    page: page,
+    pageSize: pageSize,
+    search: search,
+    includeInactive: includeInactive,
+  );
 
   @override
   Future<Tag> getTagById(String tagId) => _apiClient.tags.getTagById(tagId);
@@ -131,12 +128,21 @@ class ProductMetadataRepositoryImpl extends ProductMetadataRepository {
   Future<void> deleteTag(String tagId) => _apiClient.tags.deleteTag(tagId);
 
   @override
-  Future<List<Unit>> getUnits({bool includeInactive = false}) => _apiClient.units
-      .getUnits(includeInactive: includeInactive)
-      .then((page) => page.items);
+  Future<MetadataPage<Unit>> getUnits({
+    int page = 1,
+    int pageSize = 10,
+    String? search,
+    bool includeInactive = false,
+  }) => _apiClient.units.getUnits(
+    page: page,
+    pageSize: pageSize,
+    search: search,
+    includeInactive: includeInactive,
+  );
 
   @override
-  Future<Unit> getUnitById(String unitId) => _apiClient.units.getUnitById(unitId);
+  Future<Unit> getUnitById(String unitId) =>
+      _apiClient.units.getUnitById(unitId);
 
   @override
   Future<Unit> saveUnit(Unit unit) => _apiClient.units.saveUnit(unit);

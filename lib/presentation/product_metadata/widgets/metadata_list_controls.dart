@@ -157,7 +157,7 @@ class MetadataListControls extends StatelessWidget {
   }) {
     return ValueListenableBuilder<TextEditingValue>(
       valueListenable: searchController,
-      builder: (context, _, __) => TextField(
+      builder: (context, _, _) => TextField(
         controller: searchController,
         onChanged: onSearchChanged,
         decoration: _searchDecoration(
