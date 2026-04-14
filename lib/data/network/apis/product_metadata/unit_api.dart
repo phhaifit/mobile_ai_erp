@@ -11,24 +11,38 @@ class UnitApi {
 
   Future<MetadataPage<Unit>> getUnits({
     int page = 1,
-    int pageSize = 20,
+    int pageSize = 10,
     String? search,
     bool includeInactive = false,
+    String? sortBy,
+    String? sortOrder,
   }) async {
     try {
       final normalizedPage = page < 1 ? 1 : page;
       final normalizedPageSize = pageSize.clamp(1, 100);
+      final queryParams = <String, dynamic>{
+        'page': normalizedPage,
+        'pageSize': normalizedPageSize,
+        'includeInactive': includeInactive,
+      };
+      if (search != null && search.trim().isNotEmpty) {
+        queryParams['search'] = search.trim();
+      }
+      if (sortBy != null) {
+        queryParams['sortBy'] = sortBy;
+      }
+      if (sortOrder != null) {
+        queryParams['sortOrder'] = sortOrder;
+      }
       final response = await _dioClient.dio.get<Map<String, dynamic>>(
         '/units',
-        queryParameters: <String, dynamic>{
-          'page': normalizedPage,
-          'pageSize': normalizedPageSize,
-          if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
-          if (includeInactive) 'includeInactive': true,
-        },
+        queryParameters: queryParams,
       );
-      final data = response.data?['data'] as List<dynamic>? ?? const <dynamic>[];
-      final meta = response.data?['meta'] as Map<String, dynamic>? ?? const <String, dynamic>{};
+      final data =
+          response.data?['data'] as List<dynamic>? ?? const <dynamic>[];
+      final meta =
+          response.data?['meta'] as Map<String, dynamic>? ??
+          const <String, dynamic>{};
       return MetadataPage<Unit>(
         items: data
             .map((item) => _mapUnit(item as Map<String, dynamic>))
@@ -45,7 +59,9 @@ class UnitApi {
 
   Future<Unit> getUnitById(String unitId) async {
     try {
-      final response = await _dioClient.dio.get<Map<String, dynamic>>('/units/$unitId');
+      final response = await _dioClient.dio.get<Map<String, dynamic>>(
+        '/units/$unitId',
+      );
       return _mapUnit(response.data ?? const <String, dynamic>{});
     } on DioException catch (error) {
       throw mapMetadataWriteError(error);
@@ -58,7 +74,7 @@ class UnitApi {
       'symbol': sanitizeNullableMetadataJsonText(unit.symbol),
       'description': sanitizeNullableMetadataJsonText(unit.description),
       if (unit.id.isNotEmpty) 'isActive': unit.isActive,
-    }..removeWhere((key, value) => value == null);
+    };
 
     try {
       final response = unit.id.isEmpty
@@ -100,8 +116,16 @@ class UnitApi {
       symbol: json['symbol'] as String?,
       description: json['description'] as String?,
       isActive: json['isActive'] as bool? ?? true,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      createdAt: parseRequiredMetadataTimestamp(
+        json,
+        'createdAt',
+        contextLabel: 'Unit',
+      ),
+      updatedAt: parseRequiredMetadataTimestamp(
+        json,
+        'updatedAt',
+        contextLabel: 'Unit',
+      ),
     );
   }
 }
