@@ -8,10 +8,7 @@ import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metada
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_detail_section_card.dart';
 
 class ProductMetadataCategoryDetailScreen extends StatefulWidget {
-  const ProductMetadataCategoryDetailScreen({
-    super.key,
-    required this.args,
-  });
+  const ProductMetadataCategoryDetailScreen({super.key, required this.args});
 
   final CategoryDetailArgs args;
 
@@ -26,6 +23,7 @@ class _ProductMetadataCategoryDetailScreenState
   late Future<void> _loadCategoryFuture;
   Category? _category;
   Category? _parent;
+  bool _hasChanged = false;
 
   @override
   void initState() {
@@ -39,13 +37,26 @@ class _ProductMetadataCategoryDetailScreenState
       future: _loadCategoryFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Category detail'),
+              leading: BackButton(
+                onPressed: () => Navigator.of(context).pop(_hasChanged),
+              ),
+            ),
+            body: const Center(child: CircularProgressIndicator()),
+          );
         }
 
         final category = _category;
         if (category == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Category detail')),
+            appBar: AppBar(
+              title: const Text('Category detail'),
+              leading: BackButton(
+                onPressed: () => Navigator.of(context).pop(_hasChanged),
+              ),
+            ),
             body: const Center(child: Text('Category not found.')),
           );
         }
@@ -53,19 +64,12 @@ class _ProductMetadataCategoryDetailScreenState
         return Scaffold(
           appBar: AppBar(
             title: const Text('Category detail'),
+            leading: BackButton(
+              onPressed: () => Navigator.of(context).pop(_hasChanged),
+            ),
             actions: <Widget>[
               IconButton(
-                onPressed: () async {
-                  await ProductMetadataNavigator.openCategoryForm(
-                    context,
-                    args: CategoryFormArgs(categoryId: category.id),
-                  );
-                  if (mounted) {
-                    setState(() {
-                      _loadCategoryFuture = _loadCategory();
-                    });
-                  }
-                },
+                onPressed: () => _editCategory(category),
                 icon: const Icon(Icons.edit_outlined),
                 tooltip: 'Edit category',
               ),
@@ -113,13 +117,37 @@ class _ProductMetadataCategoryDetailScreenState
       final parentId = _category?.parentId;
       if (parentId != null && parentId.isNotEmpty) {
         _parent = _store.categoryTree.cast<Category?>().firstWhere(
-              (item) => item?.id == parentId,
-              orElse: () => null,
-            );
+          (item) => item?.id == parentId,
+          orElse: () => null,
+        );
       }
     } catch (_) {
       _category = null;
       _parent = null;
+    }
+  }
+
+  Future<void> _editCategory(Category category) async {
+    final didChange = await ProductMetadataNavigator.openCategoryForm<bool>(
+      context,
+      args: CategoryFormArgs(categoryId: category.id),
+    );
+    if (didChange == true && mounted) {
+      _hasChanged = true;
+      // Reload the category to get the latest state
+      await _loadCategory();
+      if (!mounted) {
+        return;
+      }
+      // If category was not found (deleted), go back to tree immediately
+      if (_category == null) {
+        Navigator.of(context).pop(true);
+        return;
+      }
+      // Otherwise, refresh the detail view
+      setState(() {
+        _loadCategoryFuture = _loadCategory();
+      });
     }
   }
 }

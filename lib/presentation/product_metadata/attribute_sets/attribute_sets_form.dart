@@ -3,6 +3,7 @@ import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/attribute.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_route_args.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/utils/metadata_error_formatter.dart';
 
 class _ValueField {
   _ValueField({this.id = '', required String initialText, int sortOrder = 0})
@@ -299,6 +300,21 @@ class _ProductMetadataAttributeFormScreenState
         await _store.updateAttributeSet(item);
       }
       if (mounted) Navigator.of(context).pop(true);
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              MetadataErrorFormatter.formatActionError(
+                error: error,
+                actionLabel: _editingItem == null
+                    ? 'create attribute set'
+                    : 'save attribute set',
+              ),
+            ),
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }

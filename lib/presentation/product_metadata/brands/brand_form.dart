@@ -10,6 +10,7 @@ import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_m
 import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_active_switch.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_form_decoration.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/utils/metadata_error_formatter.dart';
 
 /// Exception thrown when brand image operations fail (upload, delete).
 class BrandImageException implements Exception {
@@ -231,7 +232,14 @@ class _ProductMetadataBrandFormScreenState
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_buildUploadFallbackErrorMessage(error))),
+        SnackBar(
+          content: Text(
+            MetadataErrorFormatter.formatActionError(
+              error: error,
+              actionLabel: 'select brand image',
+            ),
+          ),
+        ),
       );
     }
   }
@@ -295,7 +303,14 @@ class _ProductMetadataBrandFormScreenState
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_buildFallbackErrorMessage(error))),
+        SnackBar(
+          content: Text(
+            MetadataErrorFormatter.formatActionError(
+              error: error,
+              actionLabel: _editingBrand == null ? 'create brand' : 'save brand',
+            ),
+          ),
+        ),
       );
     } finally {
       if (mounted) {
@@ -311,7 +326,12 @@ class _ProductMetadataBrandFormScreenState
       try {
         await _brandImageApi.deleteBrandImage(brandId);
       } catch (error) {
-        throw BrandImageException(_buildDeleteFallbackErrorMessage(error));
+        throw BrandImageException(
+          MetadataErrorFormatter.formatActionError(
+            error: error,
+            actionLabel: 'delete brand image',
+          ),
+        );
       }
     }
     if (_pendingLogoFile == null) {
@@ -385,30 +405,6 @@ class _ProductMetadataBrandFormScreenState
   String? _trimOrNull(String value) {
     final trimmed = value.trim();
     return trimmed.isEmpty ? null : trimmed;
-  }
-
-  String _buildFallbackErrorMessage(Object error) {
-    final message = error.toString().trim();
-    if (message.isEmpty || message.startsWith('Instance of ')) {
-      return 'Couldn\'t save brand. Try again.';
-    }
-    return message;
-  }
-
-  String _buildUploadFallbackErrorMessage(Object error) {
-    final message = error.toString().trim();
-    if (message.isEmpty || message.startsWith('Instance of ')) {
-      return 'Couldn\'t select brand image. Try again.';
-    }
-    return message;
-  }
-
-  String _buildDeleteFallbackErrorMessage(Object error) {
-    final message = error.toString().trim();
-    if (message.isEmpty || message.startsWith('Instance of ')) {
-      return 'Couldn\'t delete brand image. Try again.';
-    }
-    return 'Couldn\'t delete brand image. $message';
   }
 
   void _clearNameError() {

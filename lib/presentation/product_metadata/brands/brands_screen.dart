@@ -38,7 +38,8 @@ class _ProductMetadataBrandsScreenState
     super.initState();
     _disposers = [
       reaction((_) => _store.errorStore.errorMessage, (String message) {
-        if (message.isNotEmpty && mounted) {
+        final isCurrent = ModalRoute.of(context)?.isCurrent ?? false;
+        if (message.isNotEmpty && mounted && isCurrent) {
           final messenger = ScaffoldMessenger.of(context);
           messenger.clearSnackBars();
           messenger.showSnackBar(
@@ -52,7 +53,7 @@ class _ProductMetadataBrandsScreenState
             ),
           );
         }
-      }, delay: 200),
+      }),
     ];
     Future<void>.microtask(_loadBrands);
   }

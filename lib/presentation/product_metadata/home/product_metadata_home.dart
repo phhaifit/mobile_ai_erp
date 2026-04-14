@@ -45,9 +45,9 @@ class _ProductMetadataHomeScreenState extends State<ProductMetadataHomeScreen> {
                 onTap: () => ProductMetadataNavigator.openCategories(context),
               ),
               MetadataSectionCard(
-                title: 'Attributes',
-                description: 'Define fields, options, and rules for item data.',
-                countLabel: '${_store.attributes.length} attributes',
+                title: 'Attribute Sets',
+                description: 'Define attributes and values for item data.',
+                countLabel: '${_store.attributeSets.length} attribute sets',
                 icon: Icons.tune_outlined,
                 onTap: () => ProductMetadataNavigator.openAttributes(context),
               ),
@@ -65,6 +65,13 @@ class _ProductMetadataHomeScreenState extends State<ProductMetadataHomeScreen> {
                 countLabel: '${_store.tags.length} tags',
                 icon: Icons.sell_outlined,
                 onTap: () => ProductMetadataNavigator.openTags(context),
+              ),
+              MetadataSectionCard(
+                title: 'Units',
+                description: 'Manage reusable units for products.',
+                countLabel: '${_store.units.length} units',
+                icon: Icons.straighten_outlined,
+                onTap: () => ProductMetadataNavigator.openUnits(context),
               ),
             ],
           );

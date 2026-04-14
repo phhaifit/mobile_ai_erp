@@ -1,7 +1,8 @@
 class CategoriesArgs {
-  const CategoriesArgs({this.parentCategoryId});
+  const CategoriesArgs({this.parentCategoryId, this.initialTabIndex});
 
   final String? parentCategoryId;
+  final int? initialTabIndex;
 }
 
 class CategoryFormArgs {
@@ -82,4 +83,16 @@ class TagDetailArgs {
   const TagDetailArgs({required this.tagId});
 
   final String tagId;
+}
+
+class UnitFormArgs {
+  const UnitFormArgs({this.unitId});
+
+  final String? unitId;
+}
+
+class UnitDetailArgs {
+  const UnitDetailArgs({required this.unitId});
+
+  final String unitId;
 }

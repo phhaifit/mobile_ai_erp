@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:mobx/mobx.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/attribute.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/logic/metadata_pagination_logic.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/models/metadata_list_query.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_navigator.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_route_args.dart';
@@ -11,6 +13,7 @@ import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_lis
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_list_controls.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_list_layout.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_pagination_controls.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/utils/metadata_error_formatter.dart';
 
 class ProductMetadataAttributesScreen extends StatefulWidget {
   const ProductMetadataAttributesScreen({
@@ -30,15 +33,41 @@ class _ProductMetadataAttributesScreenState
   final ProductMetadataStore _store = getIt<ProductMetadataStore>();
   final TextEditingController _searchController = TextEditingController();
   MetadataListQuery _queryState = const MetadataListQuery();
+  late List<ReactionDisposer> _disposers;
 
   @override
   void initState() {
     super.initState();
+    _disposers = [
+      reaction(
+        (_) => _store.errorStore.errorMessage,
+        (String message) {
+          final isCurrent = ModalRoute.of(context)?.isCurrent ?? false;
+          if (message.isNotEmpty && mounted && isCurrent) {
+            final messenger = ScaffoldMessenger.of(context);
+            messenger.clearSnackBars();
+            messenger.showSnackBar(
+              SnackBar(
+                content: Text(
+                  MetadataErrorFormatter.formatActionError(
+                    error: message,
+                    actionLabel: 'load attribute sets',
+                  ),
+                ),
+              ),
+            );
+          }
+        },
+      ),
+    ];
     Future<void>.microtask(_loadAttributeSets);
   }
 
   @override
   void dispose() {
+    for (final d in _disposers) {
+      d();
+    }
     _searchController.dispose();
     super.dispose();
   }
@@ -159,10 +188,15 @@ class _ProductMetadataAttributesScreenState
                             ),
                           ],
                         ),
-                        onTap: () => ProductMetadataNavigator.openAttributeDetail(
-                          context,
-                          args: AttributeDetailArgs(attributeId: item.id),
-                        ),
+                        onTap: () async {
+                          await ProductMetadataNavigator.openAttributeDetail(
+                            context,
+                            args: AttributeDetailArgs(attributeId: item.id),
+                          );
+                          if (mounted) {
+                            await _loadAttributeSets();
+                          }
+                        },
                       );
                     },
                   ),
@@ -191,7 +225,7 @@ class _ProductMetadataAttributesScreenState
                 RadioListTile<String>(
                   value: 'name_asc',
                   groupValue: 'name_asc',
-                  // groupValue: '${_queryState.sortBy}_${_queryState.sortOrder}',
+                  activeColor: Theme.of(context).colorScheme.primary,
                   contentPadding: EdgeInsets.zero,
                   title: const Text('Name (A-Z)'),
                   onChanged: (value) {
@@ -257,7 +291,17 @@ class _ProductMetadataAttributesScreenState
     }
 
     try {
+      final previousTotalItems = _store.attributeSetTotalItems;
       await _store.deleteAttributeSet(item.id);
+      
+      _queryState = _queryState.copyWith(
+        page: resolveMetadataPageAfterDelete(
+          currentPage: _queryState.page,
+          pageSize: _queryState.pageSize,
+          totalItems: previousTotalItems,
+        ),
+      );
+      
       await _loadAttributeSets();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -269,7 +313,12 @@ class _ProductMetadataAttributesScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Couldn\'t delete attribute set. Try again.'),
+          content: Text(
+            MetadataErrorFormatter.formatActionError(
+              error: error,
+              actionLabel: 'delete attribute set',
+            ),
+          ),
         ),
       );
     }

@@ -4,6 +4,7 @@ import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_route_args.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_form_decoration.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/utils/metadata_error_formatter.dart';
 
 class ProductMetadataCategoryFormScreen extends StatefulWidget {
   const ProductMetadataCategoryFormScreen({
@@ -81,7 +82,13 @@ class _ProductMetadataCategoryFormScreenState
 
   @override
   Widget build(BuildContext context) {
-    final availableParents = _availableParents();
+    final editingId = _editingCategory?.id;
+    final categories = _store.categoryTree
+        .where((c) => c.id != editingId)
+        .toList()
+      ..sort((left, right) => _parentOptionLabel(left)
+          .toLowerCase()
+          .compareTo(_parentOptionLabel(right).toLowerCase()));
 
     return Scaffold(
       appBar: AppBar(
@@ -146,19 +153,37 @@ class _ProductMetadataCategoryFormScreenState
                     value: null,
                     child: _DropdownLabel('No parent (top-level category)'),
                   ),
-                  ...availableParents.map(
+                  ...categories.map(
                     (category) => DropdownMenuItem<String?>(
                       value: category.id,
                       child: _DropdownLabel(_parentOptionLabel(category)),
                     ),
                   ),
+                  if (_selectedParentId != null &&
+                      !categories.any((c) => c.id == _selectedParentId))
+                    DropdownMenuItem<String?>(
+                      value: _selectedParentId,
+                      child: _DropdownLabel(
+                        _findCategoryInTree(_selectedParentId)?.name ??
+                            'Current parent',
+                      ),
+                    ),
                 ],
-                selectedItemBuilder: (context) => <Widget>[
-                  const _DropdownLabel('No parent (top-level category)'),
-                  ...availableParents.map(
-                    (category) => _DropdownLabel(_parentOptionLabel(category)),
-                  ),
-                ],
+                selectedItemBuilder: (context) {
+                  return <Widget>[
+                    const _DropdownLabel('No parent (top-level category)'),
+                    ...categories.map(
+                      (category) =>
+                          _DropdownLabel(_parentOptionLabel(category)),
+                    ),
+                    if (_selectedParentId != null &&
+                        !categories.any((c) => c.id == _selectedParentId))
+                      _DropdownLabel(
+                        _findCategoryInTree(_selectedParentId)?.name ??
+                            'Current parent',
+                      ),
+                  ];
+                },
                 onChanged: (value) {
                   setState(() {
                     _selectedParentId = value;
@@ -201,26 +226,6 @@ class _ProductMetadataCategoryFormScreenState
     );
   }
 
-  List<Category> _availableParents() {
-    final editingCategoryId = _editingCategory?.id;
-    final descendantIds = editingCategoryId == null
-        ? <String>{}
-        : _descendantIds(editingCategoryId);
-
-    return _store.categoryTree.where((category) {
-      if (category.id == editingCategoryId) {
-        return false;
-      }
-      if (descendantIds.contains(category.id)) {
-        return false;
-      }
-      return true;
-    }).toList()
-      ..sort((left, right) => _parentOptionLabel(left)
-          .toLowerCase()
-          .compareTo(_parentOptionLabel(right).toLowerCase()));
-  }
-
   String _parentOptionLabel(Category category) {
     final path = <String>[category.name];
     var current = _findCategoryInTree(category.parentId);
@@ -231,24 +236,6 @@ class _ProductMetadataCategoryFormScreenState
     }
 
     return path.join(' / ');
-  }
-
-  Set<String> _descendantIds(String categoryId) {
-    final ids = <String>{};
-
-    void collect(String parentId) {
-      final children = _store.categoryTree
-          .where((cat) => cat.parentId == parentId)
-          .toList();
-      for (final child in children) {
-        if (ids.add(child.id)) {
-          collect(child.id);
-        }
-      }
-    }
-
-    collect(categoryId);
-    return ids;
   }
 
   Future<void> _save() async {
@@ -281,6 +268,21 @@ class _ProductMetadataCategoryFormScreenState
         return;
       }
       Navigator.of(context).pop(true);
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              MetadataErrorFormatter.formatActionError(
+                error: error,
+                actionLabel: _editingCategory == null
+                    ? 'create category'
+                    : 'save category',
+              ),
+            ),
+          ),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() {

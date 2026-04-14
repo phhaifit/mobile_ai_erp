@@ -27,6 +27,7 @@ class _ProductMetadataTagDetailScreenState
   final ProductMetadataStore _store = getIt<ProductMetadataStore>();
   late Future<void> _loadTagFuture;
   Tag? _tag;
+  bool _hasChanged = false;
 
   @override
   void initState() {
@@ -41,14 +42,24 @@ class _ProductMetadataTagDetailScreenState
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Tag detail')),
+            appBar: AppBar(
+              title: const Text('Tag detail'),
+              leading: BackButton(
+                onPressed: () => Navigator.of(context).pop(_hasChanged),
+              ),
+            ),
             body: const Center(child: CircularProgressIndicator()),
           );
         }
         final tag = _tag;
         if (tag == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Tag detail')),
+            appBar: AppBar(
+              title: const Text('Tag detail'),
+              leading: BackButton(
+                onPressed: () => Navigator.of(context).pop(_hasChanged),
+              ),
+            ),
             body: const Center(child: Text('Tag not found.')),
           );
         }
@@ -56,6 +67,9 @@ class _ProductMetadataTagDetailScreenState
         return Scaffold(
           appBar: AppBar(
             title: const Text('Tag detail'),
+            leading: BackButton(
+              onPressed: () => Navigator.of(context).pop(_hasChanged),
+            ),
             actions: <Widget>[
               IconButton(
                 onPressed: () => _editTag(tag),
@@ -118,12 +132,13 @@ class _ProductMetadataTagDetailScreenState
       args: TagFormArgs(tagId: tag.id),
     );
     if (didChange == true && mounted) {
+      _hasChanged = true;
       await _loadTag();
       final updatedTag = _tag;
       if (!mounted) {
         return;
       }
-      // If tag was deactivated or not found, go back to tags list
+      // If tag was deactivated or not found, go back to tags list immediately
       if (updatedTag == null || !updatedTag.isActive) {
         Navigator.of(context).pop(true);
         return;

@@ -8,10 +8,7 @@ import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metada
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_detail_section_card.dart';
 
 class ProductMetadataAttributeDetailScreen extends StatefulWidget {
-  const ProductMetadataAttributeDetailScreen({
-    super.key,
-    required this.args,
-  });
+  const ProductMetadataAttributeDetailScreen({super.key, required this.args});
 
   final AttributeDetailArgs args;
 
@@ -24,6 +21,7 @@ class _ProductMetadataAttributeDetailScreenState
     extends State<ProductMetadataAttributeDetailScreen> {
   final ProductMetadataStore _store = getIt<ProductMetadataStore>();
   late Future<AttributeSet?> _itemFuture;
+  bool _hasChanged = false;
 
   @override
   void initState() {
@@ -38,27 +36,39 @@ class _ProductMetadataAttributeDetailScreenState
       builder: (context, snapshot) {
         final item = snapshot.data;
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Attribute set detail'),
+              leading: BackButton(
+                onPressed: () => Navigator.of(context).pop(_hasChanged),
+              ),
+            ),
+            body: const Center(child: CircularProgressIndicator()),
+          );
         }
         if (item == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Attribute set detail')),
+            appBar: AppBar(
+              title: const Text('Attribute set detail'),
+              leading: BackButton(
+                onPressed: () => Navigator.of(context).pop(_hasChanged),
+              ),
+            ),
             body: const Center(child: Text('Attribute set not found.')),
           );
         }
         return Scaffold(
           appBar: AppBar(
             title: const Text('Attribute set detail'),
+            leading: BackButton(
+              onPressed: () => Navigator.of(context).pop(_hasChanged),
+            ),
             actions: <Widget>[
               IconButton(
-                onPressed: () => ProductMetadataNavigator.openAttributeForm(
-                  context,
-                  args: AttributeFormArgs(attributeId: item.id),
-                ),
+                onPressed: () => _editAttributeSet(item),
                 icon: const Icon(Icons.edit_outlined),
                 tooltip: 'Edit',
               ),
-
             ],
           ),
           body: ListView(
@@ -86,13 +96,19 @@ class _ProductMetadataAttributeDetailScreenState
                         ),
                         TextButton(
                           onPressed: () async {
-                            await ProductMetadataNavigator.openAttributeOptions(
-                              context,
-                              args: AttributeOptionsArgs(attributeId: item.id),
-                            );
-                            setState(() {
-                              _itemFuture = _loadItem();
-                            });
+                            final changed =
+                                await ProductMetadataNavigator.openAttributeOptions(
+                                  context,
+                                  args: AttributeOptionsArgs(
+                                    attributeId: item.id,
+                                  ),
+                                );
+                            if (changed == true && mounted) {
+                              _hasChanged = true;
+                              setState(() {
+                                _itemFuture = _loadItem();
+                              });
+                            }
                           },
                           child: const Text('Manage'),
                         ),
@@ -120,4 +136,27 @@ class _ProductMetadataAttributeDetailScreenState
     }
   }
 
+  Future<void> _editAttributeSet(AttributeSet item) async {
+    final changed = await ProductMetadataNavigator.openAttributeForm<bool>(
+      context,
+      args: AttributeFormArgs(attributeId: item.id),
+    );
+    if (changed == true && mounted) {
+      _hasChanged = true;
+      // Reload the item to get the latest state
+      final updatedItem = await _loadItem();
+      if (!mounted) {
+        return;
+      }
+      // If attribute set was not found (deleted), go back to list immediately
+      if (updatedItem == null) {
+        Navigator.of(context).pop(true);
+        return;
+      }
+      // Otherwise, refresh the detail view
+      setState(() {
+        _itemFuture = _loadItem();
+      });
+    }
+  }
 }

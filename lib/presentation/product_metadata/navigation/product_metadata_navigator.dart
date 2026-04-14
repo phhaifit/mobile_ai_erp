@@ -1,4 +1,5 @@
-import 'package:mobile_ai_erp/presentation/product_metadata/attribute_sets/attribute_options_screen.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/attribute_sets/attribute_sets_form.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/attribute_sets/attribute_values_screen.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/attribute_sets/attribute_detail.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/attribute_sets/attributes_screen.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/brands/brand_detail.dart';
@@ -12,6 +13,9 @@ import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_m
 import 'package:mobile_ai_erp/presentation/product_metadata/tags/tag_detail.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/tags/tag_form.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/tags/tags_screen.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/units/unit_detail.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/units/unit_form.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/units/units_screen.dart';
 import 'package:flutter/material.dart';
 
 class ProductMetadataNavigator {
@@ -36,6 +40,9 @@ class ProductMetadataNavigator {
   static const String tagsRoute = '/product-metadata/tags';
   static const String tagFormRoute = '/product-metadata/tags/form';
   static const String tagDetailRoute = '/product-metadata/tags/detail';
+  static const String unitsRoute = '/product-metadata/units';
+  static const String unitFormRoute = '/product-metadata/units/form';
+  static const String unitDetailRoute = '/product-metadata/units/detail';
 
   static Future<T?> openProductMetadataHome<T>(BuildContext context) {
     return _push<T>(
@@ -190,6 +197,36 @@ class ProductMetadataNavigator {
       context,
       ProductMetadataTagDetailScreen(args: args),
       routeName: tagDetailRoute,
+    );
+  }
+
+  static Future<T?> openUnits<T>(BuildContext context) {
+    return _push<T>(
+      context,
+      const ProductMetadataUnitsScreen(),
+      routeName: unitsRoute,
+    );
+  }
+
+  static Future<T?> openUnitForm<T>(
+    BuildContext context, {
+    UnitFormArgs? args,
+  }) {
+    return _push<T>(
+      context,
+      ProductMetadataUnitFormScreen(args: args),
+      routeName: unitFormRoute,
+    );
+  }
+
+  static Future<T?> openUnitDetail<T>(
+    BuildContext context, {
+    required UnitDetailArgs args,
+  }) {
+    return _push<T>(
+      context,
+      ProductMetadataUnitDetailScreen(args: args),
+      routeName: unitDetailRoute,
     );
   }
 

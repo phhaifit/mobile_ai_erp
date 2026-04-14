@@ -13,12 +13,14 @@ class CategoryTreeItem extends StatelessWidget {
     required this.hasChildren,
     required this.childrenCount,
     required this.onDelete,
+    required this.onReload,
   });
 
   final Category category;
   final bool hasChildren;
   final int childrenCount;
   final VoidCallback onDelete;
+  final Future<void> Function() onReload;
 
   @override
   Widget build(BuildContext context) {
@@ -31,11 +33,12 @@ class CategoryTreeItem extends StatelessWidget {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () {
-          ProductMetadataNavigator.openCategoryDetail(
+        onTap: () async {
+          await ProductMetadataNavigator.openCategoryDetail(
             context,
             args: CategoryDetailArgs(categoryId: category.id),
           );
+          await onReload();
         },
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -73,13 +76,13 @@ class CategoryTreeItem extends StatelessWidget {
                             args: CategoryFormArgs(
                               initialParentId: category.id,
                             ),
-                          );
+                          ).then((_) => onReload());
                           return;
                         case CategoryMenuAction.edit:
                           ProductMetadataNavigator.openCategoryForm(
                             context,
                             args: CategoryFormArgs(categoryId: category.id),
-                          );
+                          ).then((_) => onReload());
                           return;
                         case CategoryMenuAction.delete:
                           onDelete();

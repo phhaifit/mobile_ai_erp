@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:mobx/mobx.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/unit.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/logic/metadata_pagination_logic.dart';
@@ -22,15 +23,41 @@ class _ProductMetadataUnitsScreenState
   final ProductMetadataStore _store = getIt<ProductMetadataStore>();
   final TextEditingController _searchController = TextEditingController();
   MetadataListQuery _queryState = const MetadataListQuery();
+  late List<ReactionDisposer> _disposers;
 
   @override
   void initState() {
     super.initState();
+    _disposers = [
+      reaction(
+        (_) => _store.errorStore.errorMessage,
+        (String message) {
+          final isCurrent = ModalRoute.of(context)?.isCurrent ?? false;
+          if (message.isNotEmpty && mounted && isCurrent) {
+            final messenger = ScaffoldMessenger.of(context);
+            messenger.clearSnackBars();
+            messenger.showSnackBar(
+              SnackBar(
+                content: Text(
+                  MetadataErrorFormatter.formatActionError(
+                    error: message,
+                    actionLabel: 'load units',
+                  ),
+                ),
+              ),
+            );
+          }
+        },
+      ),
+    ];
     Future<void>.microtask(_loadUnits);
   }
 
   @override
   void dispose() {
+    for (final d in _disposers) {
+      d();
+    }
     _searchController.dispose();
     super.dispose();
   }

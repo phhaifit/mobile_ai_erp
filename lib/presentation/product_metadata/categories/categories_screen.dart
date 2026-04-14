@@ -2,13 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:mobx/mobx.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/logic/metadata_pagination_logic.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/models/metadata_list_query.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_navigator.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_route_args.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_empty_state.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/utils/metadata_error_formatter.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_list_controls.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_list_layout.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_pagination_controls.dart';
@@ -34,6 +37,7 @@ class _ProductMetadataCategoriesScreenState
   MetadataListQuery _queryState = const MetadataListQuery();
   late TabController _tabController;
   Timer? _searchDebounce;
+  late List<ReactionDisposer> _disposers;
 
   @override
   void initState() {
@@ -43,6 +47,28 @@ class _ProductMetadataCategoriesScreenState
     _tabController =
         TabController(length: 2, vsync: this, initialIndex: initialIndex);
     _tabController.addListener(_handleTabSelection);
+    _disposers = [
+      reaction(
+        (_) => _store.errorStore.errorMessage,
+        (String message) {
+          final isCurrent = ModalRoute.of(context)?.isCurrent ?? false;
+          if (message.isNotEmpty && mounted && isCurrent) {
+            final messenger = ScaffoldMessenger.of(context);
+            messenger.clearSnackBars();
+            messenger.showSnackBar(
+              SnackBar(
+                content: Text(
+                  MetadataErrorFormatter.formatActionError(
+                    error: message,
+                    actionLabel: 'load categories',
+                  ),
+                ),
+              ),
+            );
+          }
+        },
+      ),
+    ];
     Future<void>.microtask(() async {
       await Future.wait([
         _loadCategories(),
@@ -59,6 +85,9 @@ class _ProductMetadataCategoriesScreenState
 
   @override
   void dispose() {
+    for (final d in _disposers) {
+      d();
+    }
     _searchDebounce?.cancel();
     _tabController.dispose();
     _searchController.dispose();
@@ -260,6 +289,7 @@ class _ProductMetadataCategoriesScreenState
                     hasChildren: children.isNotEmpty,
                     childrenCount: children.length,
                     onDelete: () => _deleteCategory(category),
+                    onReload: _loadCategories,
                   ),
                 );
               },
@@ -368,19 +398,41 @@ class _ProductMetadataCategoriesScreenState
     }
 
     try {
+      final previousTotalItems = _store.categoryTotalItems;
       await _store.deleteCategory(category.id);
+      
+      _queryState = _queryState.copyWith(
+        page: resolveMetadataPageAfterDelete(
+          currentPage: _queryState.page,
+          pageSize: _queryState.pageSize,
+          totalItems: previousTotalItems,
+        ),
+      );
+      
+      await Future.wait([
+        _loadCategories(),
+        _store.loadCategoryTree(),
+      ]);
+      
       if (!mounted) {
         return;
       }
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Deleted "${category.name}".')));
-    } catch (_) {
+    } catch (error) {
       if (!mounted) {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Couldn\'t delete category. Try again.')),
+        SnackBar(
+          content: Text(
+            MetadataErrorFormatter.formatActionError(
+              error: error,
+              actionLabel: 'delete category',
+            ),
+          ),
+        ),
       );
     }
   }

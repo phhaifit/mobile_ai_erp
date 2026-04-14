@@ -6,6 +6,7 @@ import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_m
 import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_active_switch.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_form_decoration.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/utils/metadata_error_formatter.dart';
 
 class ProductMetadataTagFormScreen extends StatefulWidget {
   const ProductMetadataTagFormScreen({
@@ -158,7 +159,7 @@ class _ProductMetadataTagFormScreenState
     try {
       final input = Tag(
         id: _editingTag?.id ?? '',
-        tenantId: _editingTag?.tenantId ?? '',
+        tenantId: _editingTag?.tenantId ?? '', // TODO: Use actual tenant ID from auth context/current user's session
         name: _nameController.text.trim(),
         description: _trimOrNull(_descriptionController.text),
         isActive: _isActive,
@@ -184,13 +185,18 @@ class _ProductMetadataTagFormScreenState
         _isSaving = false;
         _nameErrorText = error.message;
       });
-    } catch (_) {
+    } catch (error) {
       if (!mounted) {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Couldn\'t save tag. Try again.'),
+        SnackBar(
+          content: Text(
+            MetadataErrorFormatter.formatActionError(
+              error: error,
+              actionLabel: _editingTag == null ? 'create tag' : 'save tag',
+            ),
+          ),
         ),
       );
     } finally {

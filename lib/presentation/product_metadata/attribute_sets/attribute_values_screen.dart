@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/attribute.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_route_args.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/utils/metadata_error_formatter.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_empty_state.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_list_card.dart';
@@ -24,6 +25,7 @@ class _ProductMetadataAttributeOptionsScreenState
     extends State<ProductMetadataAttributeOptionsScreen> {
   final ProductMetadataStore _store = getIt<ProductMetadataStore>();
   AttributeSet? _attributeSet;
+  bool _hasChanged = false;
 
   @override
   void initState() {
@@ -40,7 +42,12 @@ class _ProductMetadataAttributeOptionsScreenState
   Widget build(BuildContext context) {
     final item = _attributeSet;
     return Scaffold(
-      appBar: AppBar(title: Text(item?.name ?? 'Attribute values')),
+      appBar: AppBar(
+        title: Text(item?.name ?? 'Attribute values'),
+        leading: BackButton(
+          onPressed: () => Navigator.of(context).pop(_hasChanged),
+        ),
+      ),
       floatingActionButton: item == null
           ? null
           : FloatingActionButton.extended(
@@ -183,6 +190,7 @@ class _ProductMetadataAttributeOptionsScreenState
     } else {
       await _store.updateAttributeValue(payload);
     }
+    _hasChanged = true;
     await _refresh();
   }
 
@@ -219,6 +227,7 @@ class _ProductMetadataAttributeOptionsScreenState
 
     try {
       await _store.deleteAttributeValue(set.id, value.id);
+      _hasChanged = true;
       await _refresh();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -231,7 +240,10 @@ class _ProductMetadataAttributeOptionsScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Couldn\'t delete value: ${error.toString()}',
+            MetadataErrorFormatter.formatActionError(
+              error: error,
+              actionLabel: 'delete value',
+            ),
           ),
         ),
       );
