@@ -50,6 +50,7 @@ import 'package:mobile_ai_erp/presentation/web_builder/theme_engine/theme_detail
 import 'package:mobile_ai_erp/presentation/web_builder/theme_engine/theme_list_screen.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/web_builder_dashboard.dart';
 import 'cart_routes.dart';
+import 'product_metadata_routes.dart';
 
 class Routes {
   Routes._();
@@ -176,6 +177,10 @@ class Routes {
 
   // Handle dynamic routes
   static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
+    if (ProductMetadataRoutes.isMetadataRoute(settings.name)) {
+      return ProductMetadataRoutes.onGenerateRoute(settings);
+    }
+
     switch (settings.name) {
       case productManagementInfo:
         if (settings.arguments is int) {
