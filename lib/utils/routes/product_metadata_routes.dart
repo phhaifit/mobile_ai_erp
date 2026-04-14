@@ -53,13 +53,11 @@ class ProductMetadataRoutes {
         );
 
       case ProductMetadataNavigator.categoryDetailRoute:
-        if (args is CategoryDetailArgs) {
-          return MaterialPageRoute(
-            settings: settings,
-            builder: (context) => ProductMetadataCategoryDetailScreen(args: args),
-          );
-        }
-        return null;
+        return _buildMetadataRoute<CategoryDetailArgs>(
+          settings: settings,
+          builder: (args) => ProductMetadataCategoryDetailScreen(args: args),
+          fallbackBuilder: () => ProductMetadataCategoriesScreen(),
+        );
 
       case ProductMetadataNavigator.attributesRoute:
         return MaterialPageRoute(
@@ -78,31 +76,25 @@ class ProductMetadataRoutes {
         );
 
       case ProductMetadataNavigator.attributeDetailRoute:
-        if (args is AttributeDetailArgs) {
-          return MaterialPageRoute(
-            settings: settings,
-            builder: (context) => ProductMetadataAttributeDetailScreen(args: args),
-          );
-        }
-        return null;
+        return _buildMetadataRoute<AttributeDetailArgs>(
+          settings: settings,
+          builder: (args) => ProductMetadataAttributeDetailScreen(args: args),
+          fallbackBuilder: () => const ProductMetadataAttributesScreen(),
+        );
 
       case ProductMetadataNavigator.attributeOptionsRoute:
-        if (args is AttributeOptionsArgs) {
-          return MaterialPageRoute(
-            settings: settings,
-            builder: (context) => ProductMetadataAttributeOptionsScreen(args: args),
-          );
-        }
-        return null;
+        return _buildMetadataRoute<AttributeOptionsArgs>(
+          settings: settings,
+          builder: (args) => ProductMetadataAttributeOptionsScreen(args: args),
+          fallbackBuilder: () => const ProductMetadataAttributesScreen(),
+        );
 
       case ProductMetadataNavigator.attributeOptionFormRoute:
-        if (args is AttributeOptionFormArgs) {
-          return MaterialPageRoute(
-            settings: settings,
-            builder: (context) => ProductMetadataAttributeOptionFormScreen(args: args),
-          );
-        }
-        return null;
+        return _buildMetadataRoute<AttributeOptionFormArgs>(
+          settings: settings,
+          builder: (args) => ProductMetadataAttributeOptionFormScreen(args: args),
+          fallbackBuilder: () => const ProductMetadataAttributesScreen(),
+        );
 
       case ProductMetadataNavigator.brandsRoute:
         return MaterialPageRoute(
@@ -119,13 +111,11 @@ class ProductMetadataRoutes {
         );
 
       case ProductMetadataNavigator.brandDetailRoute:
-        if (args is BrandDetailArgs) {
-          return MaterialPageRoute(
-            settings: settings,
-            builder: (context) => ProductMetadataBrandDetailScreen(args: args),
-          );
-        }
-        return null;
+        return _buildMetadataRoute<BrandDetailArgs>(
+          settings: settings,
+          builder: (args) => ProductMetadataBrandDetailScreen(args: args),
+          fallbackBuilder: () => const ProductMetadataBrandsScreen(),
+        );
 
       case ProductMetadataNavigator.tagsRoute:
         return MaterialPageRoute(
@@ -142,13 +132,11 @@ class ProductMetadataRoutes {
         );
 
       case ProductMetadataNavigator.tagDetailRoute:
-        if (args is TagDetailArgs) {
-          return MaterialPageRoute(
-            settings: settings,
-            builder: (context) => ProductMetadataTagDetailScreen(args: args),
-          );
-        }
-        return null;
+        return _buildMetadataRoute<TagDetailArgs>(
+          settings: settings,
+          builder: (args) => ProductMetadataTagDetailScreen(args: args),
+          fallbackBuilder: () => const ProductMetadataTagsScreen(),
+        );
 
       case ProductMetadataNavigator.unitsRoute:
         return MaterialPageRoute(
@@ -165,16 +153,43 @@ class ProductMetadataRoutes {
         );
 
       case ProductMetadataNavigator.unitDetailRoute:
-        if (args is UnitDetailArgs) {
-          return MaterialPageRoute(
-            settings: settings,
-            builder: (context) => ProductMetadataUnitDetailScreen(args: args),
-          );
-        }
-        return null;
+        return _buildMetadataRoute<UnitDetailArgs>(
+          settings: settings,
+          builder: (args) => ProductMetadataUnitDetailScreen(args: args),
+          fallbackBuilder: () => const ProductMetadataUnitsScreen(),
+        );
 
       default:
         return null;
     }
   }
+
+  /// Helper to build routes with hot restart fallback support.
+  static Route<dynamic>? _buildMetadataRoute<T>({
+    required RouteSettings settings,
+    required Widget Function(T) builder,
+    required Widget Function() fallbackBuilder,
+  }) {
+    final args = settings.arguments;
+
+    // Support for hot restart/refresh where arguments are lost
+    if (args == null) {
+      return MaterialPageRoute(
+        settings: settings,
+        builder: (context) => fallbackBuilder(),
+      );
+    }
+
+    // Type-safe argument passing
+    if (args is T) {
+      return MaterialPageRoute(
+        settings: settings,
+        builder: (context) => builder(args as T),
+      );
+    }
+
+    // Allow framework to catch invalid argument types
+    return null;
+  }
 }
+
