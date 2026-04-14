@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:mobx/mobx.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/brand.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/brand_extensions.dart';
-import 'package:mobile_ai_erp/presentation/product_metadata/brands/brand_list_logic.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/logic/metadata_pagination_logic.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/models/metadata_list_query.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_navigator.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_route_args.dart';
@@ -11,10 +12,11 @@ import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metada
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_empty_state.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_list_card.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_list_controls.dart';
-import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_loading_overlay.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_list_layout.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_pagination_controls.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_status_chip.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_inactive_snackbar.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/utils/metadata_error_formatter.dart';
 
 class ProductMetadataBrandsScreen extends StatefulWidget {
   const ProductMetadataBrandsScreen({super.key});
@@ -29,15 +31,37 @@ class _ProductMetadataBrandsScreenState
   final ProductMetadataStore _store = getIt<ProductMetadataStore>();
   final TextEditingController _searchController = TextEditingController();
   MetadataListQuery _queryState = const MetadataListQuery();
+  late List<ReactionDisposer> _disposers;
 
   @override
   void initState() {
     super.initState();
+    _disposers = [
+      reaction((_) => _store.errorStore.errorMessage, (String message) {
+        if (message.isNotEmpty && mounted) {
+          final messenger = ScaffoldMessenger.of(context);
+          messenger.clearSnackBars();
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text(
+                MetadataErrorFormatter.formatActionError(
+                  error: message,
+                  actionLabel: 'load brands',
+                ),
+              ),
+            ),
+          );
+        }
+      }, delay: 200),
+    ];
     Future<void>.microtask(_loadBrands);
   }
 
   @override
   void dispose() {
+    for (final d in _disposers) {
+      d();
+    }
     _searchController.dispose();
     super.dispose();
   }
@@ -66,126 +90,111 @@ class _ProductMetadataBrandsScreenState
           final totalPages = _store.brandTotalPages;
           final currentPage = _store.brandCurrentPage;
 
-          return Column(
-            children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: MetadataListControls(
-                  searchController: _searchController,
-                  onSearchChanged: (value) {
-                    _setQueryState(
-                      _queryState.copyWith(search: value.trim(), page: 1),
-                    );
-                    _loadBrands();
-                  },
-                  searchHint: 'Search by brand name',
-                  resultLabel:
-                      'Showing ${brands.length} of ${_store.brandTotalItems} brands',
-                  hasActiveFilter: _queryState.includeInactive,
-                  hasCustomSort: _queryState.hasCustomSort,
-                  onOpenFilter: _openFilterSheet,
-                  onOpenSort: _openSortSheet,
-                ),
-              ),
-              Expanded(
-                child: MetadataLoadingOverlay(
-                  isLoading: _store.isLoading,
-                  child: brands.isEmpty
-                      ? MetadataEmptyState(
-                          icon: Icons.workspace_premium_outlined,
-                          title: _store.brandTotalItems == 0
-                              ? 'No brands yet'
-                              : 'No matching brands',
-                          message: _store.brandTotalItems == 0
-                              ? 'Add your first brand to keep product data consistent.'
-                              : 'Try a different search keyword.',
-                        )
-                      : ListView.separated(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-                          itemCount: brands.length + (totalPages > 1 ? 1 : 0),
-                          separatorBuilder: (_, _) =>
-                              const SizedBox(height: 12),
-                          itemBuilder: (context, index) {
-                            if (index >= brands.length) {
-                              return MetadataPaginationControls(
-                                currentPage: currentPage,
-                                totalPages: totalPages,
-                                onPrevious: currentPage > 1
-                                    ? () {
-                                        _setQueryState(
-                                          _queryState.copyWith(
-                                            page: currentPage - 1,
-                                          ),
-                                        );
-                                        _loadBrands();
-                                      }
-                                    : null,
-                                onNext: currentPage < totalPages
-                                    ? () {
-                                        _setQueryState(
-                                          _queryState.copyWith(
-                                            page: currentPage + 1,
-                                          ),
-                                        );
-                                        _loadBrands();
-                                      }
-                                    : null,
-                              );
-                            }
+          return MetadataListLayout(
+            isLoading: _store.isLoading,
+            controls: MetadataListControls(
+              searchController: _searchController,
+              onSearchChanged: (value) {
+                _setQueryState(
+                  _queryState.copyWith(search: value.trim(), page: 1),
+                );
+                _loadBrands();
+              },
+              searchHint: 'Search by brand name',
+              resultLabel:
+                  'Showing ${brands.length} of ${_store.brandTotalItems} brands',
+              hasActiveFilter: _queryState.includeInactive,
+              hasCustomSort: _queryState.hasCustomSort,
+              onOpenFilter: _openFilterSheet,
+              onOpenSort: _openSortSheet,
+            ),
+            child: brands.isEmpty
+                ? MetadataEmptyState(
+                    icon: Icons.workspace_premium_outlined,
+                    title: _store.brandTotalItems == 0
+                        ? 'No brands yet'
+                        : 'No matching brands',
+                    message: _store.brandTotalItems == 0
+                        ? 'Add your first brand to keep product data consistent.'
+                        : 'Try a different search keyword.',
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+                    itemCount: brands.length + (totalPages > 1 ? 1 : 0),
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      if (index >= brands.length) {
+                        return MetadataPaginationControls(
+                          currentPage: currentPage,
+                          totalPages: totalPages,
+                          onPrevious: currentPage > 1
+                              ? () {
+                                  _setQueryState(
+                                    _queryState.copyWith(page: currentPage - 1),
+                                  );
+                                  _loadBrands();
+                                }
+                              : null,
+                          onNext: currentPage < totalPages
+                              ? () {
+                                  _setQueryState(
+                                    _queryState.copyWith(page: currentPage + 1),
+                                  );
+                                  _loadBrands();
+                                }
+                              : null,
+                        );
+                      }
 
-                            final brand = brands[index];
-                            return MetadataListCard(
-                              title: brand.name,
-                              leading: Icon(                                
-                                Icons.workspace_premium_outlined,
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              ),
-                              detailLines: _brandSummary(brand),
-                              chips: <Widget>[
-                                MetadataStatusChip(
-                                  label: brand.isActive ? 'Active' : 'Inactive',
-                                ),
-                              ],
-                              trailing: brand.isActive
-                                  ? PopupMenuButton<String>(
-                                      onSelected: (value) {
-                                        switch (value) {
-                                          case 'edit':
-                                            _openBrandForm(
-                                              args:
-                                                  BrandFormArgs(brandId: brand.id),
-                                            );
-                                            break;
-                                          case 'delete':
-                                            _deleteBrand(brand);
-                                            break;
-                                        }
-                                      },
-                                      itemBuilder: (context) =>
-                                          <PopupMenuEntry<String>>[
-                                            const PopupMenuItem<String>(
-                                              value: 'edit',
-                                              child: Text('Edit'),
-                                            ),
-                                            const PopupMenuItem<String>(
-                                              value: 'delete',
-                                              child: Text('Deactivate'),
-                                            ),
-                                          ],
-                                    )
-                                  : null,
-                              onTap: brand.isActive
-                                  ? () => _openBrandDetail(brand)
-                                  : () => showMetadataInactiveSnackbar(
-                                        context,
-                                        itemType: 'brand',
-                                      ),
-                            );
-                          },
+                      final brand = brands[index];
+                      return MetadataListCard(
+                        title: brand.name,
+                        leading: Icon(
+                          Icons.workspace_premium_outlined,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
-                ),
-              ),
-            ],
+                        detailLines: _brandSummary(brand),
+                        chips: <Widget>[
+                          MetadataStatusChip(
+                            label: brand.isActive ? 'Active' : 'Inactive',
+                          ),
+                        ],
+                        trailing: brand.isActive
+                            ? PopupMenuButton<String>(
+                                onSelected: (value) {
+                                  switch (value) {
+                                    case 'edit':
+                                      _openBrandForm(
+                                        args: BrandFormArgs(brandId: brand.id),
+                                      );
+                                      break;
+                                    case 'delete':
+                                      _deleteBrand(brand);
+                                      break;
+                                  }
+                                },
+                                itemBuilder: (context) =>
+                                    <PopupMenuEntry<String>>[
+                                      const PopupMenuItem<String>(
+                                        value: 'edit',
+                                        child: Text('Edit'),
+                                      ),
+                                      const PopupMenuItem<String>(
+                                        value: 'delete',
+                                        child: Text('Deactivate'),
+                                      ),
+                                    ],
+                              )
+                            : null,
+                        onTap: brand.isActive
+                            ? () => _openBrandDetail(brand)
+                            : () => showMetadataInactiveSnackbar(
+                                context,
+                                itemType: 'brand',
+                              ),
+                      );
+                    },
+                  ),
           );
         },
       ),
@@ -261,6 +270,7 @@ class _ProductMetadataBrandsScreenState
                 RadioListTile<String>(
                   value: 'name_asc',
                   groupValue: 'name_asc',
+                  activeColor: Theme.of(context).colorScheme.primary,
                   contentPadding: EdgeInsets.zero,
                   title: const Text('Name (A-Z)'),
                   onChanged: (value) {
@@ -355,12 +365,11 @@ class _ProductMetadataBrandsScreenState
     try {
       final previousTotalItems = _store.brandTotalItems;
       await _store.deleteBrand(brand.id);
-      final effectiveTotalItems =
-          _queryState.includeInactive
-              ? previousTotalItems
-              : (previousTotalItems > 0 ? previousTotalItems - 1 : 0);
+      final effectiveTotalItems = _queryState.includeInactive
+          ? previousTotalItems
+          : (previousTotalItems > 0 ? previousTotalItems - 1 : 0);
       _queryState = _queryState.copyWith(
-        page: resolveBrandPageAfterDelete(
+        page: resolveMetadataPageAfterDelete(
           currentPage: _queryState.page,
           pageSize: _queryState.pageSize,
           totalItems: effectiveTotalItems,
@@ -371,11 +380,9 @@ class _ProductMetadataBrandsScreenState
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Deactivated "${brand.name}".'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Deactivated "${brand.name}".')));
     } catch (error) {
       if (!mounted) {
         return;
@@ -383,7 +390,7 @@ class _ProductMetadataBrandsScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _buildFallbackActionErrorMessage(
+            MetadataErrorFormatter.formatActionError(
               error: error,
               actionLabel: 'deactivate brand',
             ),
@@ -391,17 +398,6 @@ class _ProductMetadataBrandsScreenState
         ),
       );
     }
-  }
-
-  String _buildFallbackActionErrorMessage({
-    required Object error,
-    required String actionLabel,
-  }) {
-    final message = error.toString().trim();
-    if (message.isEmpty || message.startsWith('Instance of ')) {
-      return 'Couldn\'t $actionLabel. Try again.';
-    }
-    return message;
   }
 
   void _setQueryState(MetadataListQuery nextQuery) {
@@ -418,5 +414,7 @@ class _ProductMetadataBrandsScreenState
     pageSize: _queryState.pageSize,
     search: _queryState.search,
     includeInactive: _queryState.includeInactive,
+    sortBy: _queryState.sortBy,
+    sortOrder: _queryState.sortOrder,
   );
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_ai_erp/core/utils/date_formatter.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/brand.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/brand_extensions.dart';
@@ -24,6 +25,7 @@ class _ProductMetadataBrandDetailScreenState
   final ProductMetadataStore _store = getIt<ProductMetadataStore>();
   late Future<void> _loadBrandFuture;
   Brand? _brand;
+  bool _hasChanged = false;
 
   @override
   void initState() {
@@ -38,14 +40,24 @@ class _ProductMetadataBrandDetailScreenState
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Brand detail')),
+            appBar: AppBar(
+              title: const Text('Brand detail'),
+              leading: BackButton(
+                onPressed: () => Navigator.of(context).pop(_hasChanged),
+              ),
+            ),
             body: const Center(child: CircularProgressIndicator()),
           );
         }
         final brand = _brand;
         if (brand == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Brand detail')),
+            appBar: AppBar(
+              title: const Text('Brand detail'),
+              leading: BackButton(
+                onPressed: () => Navigator.of(context).pop(_hasChanged),
+              ),
+            ),
             body: const Center(child: Text('Brand not found.')),
           );
         }
@@ -53,6 +65,9 @@ class _ProductMetadataBrandDetailScreenState
         return Scaffold(
           appBar: AppBar(
             title: const Text('Brand detail'),
+            leading: BackButton(
+              onPressed: () => Navigator.of(context).pop(_hasChanged),
+            ),
             actions: <Widget>[
               IconButton(
                 onPressed: () => _editBrand(brand),
@@ -96,6 +111,10 @@ class _ProductMetadataBrandDetailScreenState
                     label: 'Description',
                     value: brand.descriptionOrNull ?? 'Not set',
                   ),
+                  MetadataDetailRow(
+                    label: 'Created at',
+                    value: DateFormatter.formatFull(brand.createdAt),
+                  ),
                 ],
               ),
               MetadataDetailSectionCard(
@@ -130,15 +149,16 @@ class _ProductMetadataBrandDetailScreenState
       args: BrandFormArgs(brandId: brand.id),
     );
     if (didChange == true && mounted) {
+      _hasChanged = true;
       // Reload the brand to get the latest state
       await _loadBrand();
       final updatedBrand = _brand;
       if (!mounted) {
         return;
       }
-      // If brand was deactivated, go back to brands list
-      if (updatedBrand != null && !updatedBrand.isActive) {
-        Navigator.of(context).pop();
+      // If brand was deactivated or not found, go back to brands list immediately
+      if (updatedBrand == null || !updatedBrand.isActive) {
+        Navigator.of(context).pop(true);
         return;
       }
       // Otherwise, refresh the detail view

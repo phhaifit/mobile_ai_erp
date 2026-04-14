@@ -130,10 +130,12 @@ class _ProductMetadataBrandFormScreenState
                         'Selected image: ${_pendingLogoFile!.name}.',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
-                    ] else if (_editingBrand == null) ...<Widget>[
+                    ] else ...<Widget>[
                       const SizedBox(height: 8),
                       Text(
-                        'For new brands, saving first creates the brand, then uploads the selected local image immediately afterward.',
+                        _canRemoveCurrentImage
+                            ? 'No new image selected. If you replace the current image, it must be JPEG, PNG, or WebP and no larger than 10MB.'
+                            : 'Adding an image is optional. If you choose one, it must be JPEG, PNG, or WebP and no larger than 10MB.',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
@@ -148,13 +150,16 @@ class _ProductMetadataBrandFormScreenState
                       ),
                     ],
                     const SizedBox(height: 16),
-                    MetadataActiveSwitch(
-                      value: _isActive,
-                      resourceLabel: 'brand',
-                      onChanged: (value) => setState(() {
-                        _isActive = value;
-                      }),
-                    ),
+                    if (_editingBrand != null) ...[
+                      const SizedBox(height: 16),
+                      MetadataActiveSwitch(
+                        value: _isActive,
+                        resourceLabel: 'brand',
+                        onChanged: (value) => setState(() {
+                          _isActive = value;
+                        }),
+                      ),
+                    ],
                     const SizedBox(height: 24),
                     FilledButton.icon(
                       onPressed: _isSaving || _isUploadingLogo ? null : _save,

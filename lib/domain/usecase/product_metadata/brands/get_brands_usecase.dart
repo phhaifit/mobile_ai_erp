@@ -16,6 +16,8 @@ class GetBrandsUseCase
       pageSize: params.pageSize,
       search: params.search,
       includeInactive: params.includeInactive,
+      sortBy: params.sortBy,
+      sortOrder: params.sortOrder,
     );
   }
 }
@@ -23,13 +25,17 @@ class GetBrandsUseCase
 class GetBrandsParams {
   const GetBrandsParams({
     this.page = 1,
-    this.pageSize = 20,
+    this.pageSize = 10,
     this.search,
     this.includeInactive = false,
+    this.sortBy,
+    this.sortOrder,
   });
 
   final int page;
   final int pageSize;
   final String? search;
   final bool includeInactive;
+  final String? sortBy;
+  final String? sortOrder;
 }
