@@ -13,7 +13,7 @@ import 'package:mobile_ai_erp/constants/strings.dart';
 class ProductForm extends StatefulWidget {
   final ProductFormStore formStore;
 
-  const ProductForm({Key? key, required this.formStore}) : super(key: key);
+  const ProductForm({super.key, required this.formStore});
 
   @override
   State<ProductForm> createState() => _ProductFormState();
@@ -24,6 +24,20 @@ class _ProductFormState extends State<ProductForm> {
   late TextEditingController _skuController;
   late TextEditingController _priceController;
   late TextEditingController _descriptionController;
+  late TextEditingController _barcodeController;
+  late TextEditingController _sellingPriceController;
+  late TextEditingController _webTitleController;
+  late TextEditingController _webDescriptionController;
+  late TextEditingController _warranteeMonthsController;
+  late TextEditingController _weightController;
+
+  // Mock weight units data
+  final List<Map<String, dynamic>> weightUnits = [
+    {'id': 1, 'name': 'kg'},
+    {'id': 2, 'name': 'g'},
+    {'id': 3, 'name': 'lb'},
+    {'id': 4, 'name': 'oz'},
+  ];
 
   @override
   void initState() {
@@ -43,6 +57,12 @@ class _ProductFormState extends State<ProductForm> {
     _skuController = TextEditingController(text: widget.formStore.sku);
     _priceController = TextEditingController(text: widget.formStore.price);
     _descriptionController = TextEditingController(text: widget.formStore.description);
+    _barcodeController = TextEditingController(text: widget.formStore.barcode ?? '');
+    _sellingPriceController = TextEditingController(text: widget.formStore.sellingPrice ?? '');
+    _webTitleController = TextEditingController(text: widget.formStore.webTitle ?? '');
+    _webDescriptionController = TextEditingController(text: widget.formStore.webDescription ?? '');
+    _warranteeMonthsController = TextEditingController(text: widget.formStore.warranteeMonths ?? '');
+    _weightController = TextEditingController(text: widget.formStore.weight ?? '');
   }
 
   void _syncControllers() {
@@ -51,6 +71,12 @@ class _ProductFormState extends State<ProductForm> {
     _skuController.text = widget.formStore.sku;
     _priceController.text = widget.formStore.price;
     _descriptionController.text = widget.formStore.description;
+    _barcodeController.text = widget.formStore.barcode ?? '';
+    _sellingPriceController.text = widget.formStore.sellingPrice ?? '';
+    _webTitleController.text = widget.formStore.webTitle ?? '';
+    _webDescriptionController.text = widget.formStore.webDescription ?? '';
+    _warranteeMonthsController.text = widget.formStore.warranteeMonths ?? '';
+    _weightController.text = widget.formStore.weight ?? '';
   }
 
   @override
@@ -62,6 +88,12 @@ class _ProductFormState extends State<ProductForm> {
       _skuController.dispose();
       _priceController.dispose();
       _descriptionController.dispose();
+      _barcodeController.dispose();
+      _sellingPriceController.dispose();
+      _webTitleController.dispose();
+      _webDescriptionController.dispose();
+      _warranteeMonthsController.dispose();
+      _weightController.dispose();
       _initializeControllers();
     }
   }
@@ -72,6 +104,12 @@ class _ProductFormState extends State<ProductForm> {
     _skuController.dispose();
     _priceController.dispose();
     _descriptionController.dispose();
+    _barcodeController.dispose();
+    _sellingPriceController.dispose();
+    _webTitleController.dispose();
+    _webDescriptionController.dispose();
+    _warranteeMonthsController.dispose();
+    _weightController.dispose();
     super.dispose();
   }
 
@@ -162,6 +200,145 @@ class _ProductFormState extends State<ProductForm> {
                 maxLines: 4,
                 onChanged: widget.formStore.setDescription,
                 maxLength: 300,
+              ),
+              SizedBox(height: 16),
+
+              // Barcode
+              TextField(
+                controller: _barcodeController,
+                maxLength: 100,
+                decoration: InputDecoration(
+                  labelText: 'Barcode',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.barcode_reader),
+                ),
+                onChanged: widget.formStore.setBarcode,
+              ),
+              SizedBox(height: 16),
+
+              // Selling Price
+              TextField(
+                controller: _sellingPriceController,
+                decoration: InputDecoration(
+                  labelText: 'Selling Price',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.sell),
+                  // errorText: widget.formStore.sellingPriceError.isEmpty
+                  //     ? null
+                  //     : widget.formStore.sellingPriceError,
+                ),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(
+                    RegExp(r'^\d*\.?\d{0,2}'),
+                  ),
+                ],
+                onChanged: widget.formStore.setSellingPrice,
+              ),
+              SizedBox(height: 16),
+
+              // Web Title
+              TextField(
+                controller: _webTitleController,
+                decoration: InputDecoration(
+                  labelText: 'Web Title',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.language),
+                ),
+                onChanged: widget.formStore.setWebTitle,
+                maxLength: 255,
+              ),
+              SizedBox(height: 16),
+
+              // Web Description
+              TextField(
+                controller: _webDescriptionController,
+                decoration: InputDecoration(
+                  labelText: 'Web Description',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.description),
+                ),
+                maxLines: 4,
+                onChanged: widget.formStore.setWebDescription,
+                maxLength: 1000,
+              ),
+              SizedBox(height: 16),
+
+              // Warranty Months
+              TextField(
+                controller: _warranteeMonthsController,
+                decoration: InputDecoration(
+                  labelText: 'Warranty (Months)',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.assignment),
+                ),
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                onChanged: widget.formStore.setWarranteeMonths,
+              ),
+              SizedBox(height: 16),
+
+              // Weight and Weight Unit
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Observer(
+                      builder: (context) {
+                        return TextField(
+                          controller: _weightController,
+                          decoration: InputDecoration(
+                            labelText: 'Weight',
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.scale),
+                            errorText: widget.formStore.weightError.isEmpty
+                                ? null
+                                : widget.formStore.weightError,
+                          ),
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                              RegExp(r'^\d*\.?\d{0,4}'),
+                            ),
+                          ],
+                          onChanged: widget.formStore.setWeight,
+                        );
+                      }
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    flex: 1,
+                    child: Observer(
+                      builder: (context) {
+                        return DropdownButtonFormField<int?>(
+                          initialValue: widget.formStore.weightUnitId,
+                          decoration: InputDecoration(
+                            labelText: 'Unit',
+                            border: OutlineInputBorder(),
+                            errorText: widget.formStore.weightUnitError.isEmpty
+                                ? null
+                                : widget.formStore.weightUnitError,
+                          ),
+                          items: [
+                            const DropdownMenuItem<int?>(
+                              value: null,
+                              child: Text('None'),
+                            ),
+                            ...weightUnits.map((unit) {
+                              return DropdownMenuItem<int?>(
+                                value: unit['id'] as int,
+                                child: Text(unit['name'] as String),
+                              );
+                            }),
+                          ],
+                          onChanged: widget.formStore.setWeightUnitId,
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
               SizedBox(height: 16),
 

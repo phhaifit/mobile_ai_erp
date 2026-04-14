@@ -1,4 +1,5 @@
-import 'package:flutter/cupertino.dart';
+import 'dart:developer';
+
 import 'package:mobile_ai_erp/core/stores/error/error_store.dart';
 import 'package:mobile_ai_erp/domain/entity/product/product.dart';
 import 'package:mobile_ai_erp/domain/entity/product/product_status.dart';
@@ -23,16 +24,28 @@ abstract class _ProductFormStore with Store {
 
   // store variables:-----------------------------------------------------------
   @observable
-  String name = "";
+  String name = ""; // internal product name
 
   @observable
   String sku = "";
 
   @observable
-  String price = "";
+  String? barcode;
 
   @observable
-  String description = "";
+  String price = ""; // base price
+
+  @observable
+  String? sellingPrice;
+
+  @observable
+  String description = ""; // internal product description
+
+  @observable
+  String? webTitle; // product name (title) displayed to customers
+
+  @observable
+  String? webDescription; // product description displayed to customers and for SEO
 
   @observable
   ProductStatus status = ProductStatus.ACTIVE;
@@ -42,6 +55,15 @@ abstract class _ProductFormStore with Store {
 
   @observable
   int brandId = 1;
+
+  @observable
+  String? warranteeMonths; // warrantee time for product, in months
+
+  @observable
+  String? weight;
+
+  @observable
+  int? weightUnitId;
 
   @observable
   List<int> tagIds = [];
@@ -68,8 +90,17 @@ abstract class _ProductFormStore with Store {
   @observable
   String priceError = "";
 
+  // @observable
+  // String sellingPriceError = "";
+
   @observable
   String categoryBrandError = "";
+
+  @observable
+  String weightError = "";
+
+  @observable
+  String weightUnitError = "";
 
   // computed:------------------------------------------------------------------
   @computed
@@ -131,12 +162,39 @@ abstract class _ProductFormStore with Store {
       }
     }
 
+    // Validate selling price
+    // if (sellingPrice != null && sellingPrice!.isNotEmpty) {
+    //   final parsedSellingPrice = double.tryParse(sellingPrice!);
+    //   if (parsedSellingPrice == null || parsedSellingPrice < 0) {
+    //     sellingPriceError = "Selling price must not be negative";
+    //   }
+    // } else {
+    //   sellingPriceError = "";
+    // }
+
     // Validate category and brand
     if (categoryId <= 0 || brandId <= 0) {
       categoryBrandError = 'Please select a category and brand';
     } else {
       categoryBrandError = "";
     }
+
+    // Validate weight and unit
+    weightError = "";
+    weightUnitError = "";
+    if (weight != null && weight!.isNotEmpty) {
+      if (weightUnitId == null) { // weight unit only required if weight is provided, unit is dropped if weight is empty
+        weightUnitError = 'Please select a weight unit.';
+      }
+
+      final parsedWeight = double.tryParse(weight!);
+      if (parsedWeight == null || parsedWeight <= 0) {
+        weightError = 'Weight must be greater than 0.';
+      }
+      log(weightError + " " + weightUnitError);
+    }
+    log('Validating weight: weight="$weight", weightUnitId="$weightUnitId"', name: TAG);
+
   }
 
   /// Check SKU uniqueness - only called during form submission
@@ -248,6 +306,48 @@ abstract class _ProductFormStore with Store {
   }
 
   @action
+  void setBarcode(String value) {
+    barcode = value.isEmpty ? null : value;
+    validateForm();
+  }
+
+  @action
+  void setSellingPrice(String value) {
+    sellingPrice = value.isEmpty ? null : value;
+    validateForm();
+  }
+
+  @action
+  void setWebTitle(String value) {
+    webTitle = value.isEmpty ? null : value;
+    validateForm();
+  }
+
+  @action
+  void setWebDescription(String value) {
+    webDescription = value.isEmpty ? null : value;
+    validateForm();
+  }
+
+  @action
+  void setWarranteeMonths(String value) {
+    warranteeMonths = value.isEmpty ? null : value;
+    validateForm();
+  }
+
+  @action
+  void setWeight(String value) {
+    weight = value.isEmpty ? null : value;
+    validateForm();
+  }
+
+  @action
+  void setWeightUnitId(int? value) {
+    weightUnitId = value;
+    validateForm();
+  }
+
+  @action
   void initializeForEdit(Product product) {
     editingProduct = product;
     name = product.name;
@@ -259,6 +359,13 @@ abstract class _ProductFormStore with Store {
     brandId = product.brandId;
     tagIds = List.from(product.tagIds);
     imageUrls = List.from(product.imageUrls);
+    // barcode = product.barcode;
+    // sellingPrice = product.sellingPrice;
+    // webTitle = product.webTitle;
+    // webDescription = product.webDescription;
+    // warranteeMonths = product.warranteeMonths;
+    // weight = product.weight;
+    // weightUnitId = product.weightUnitId;
     
     // Clear validation errors when initializing for edit
     nameError = "";
@@ -306,6 +413,13 @@ abstract class _ProductFormStore with Store {
         brandId: brandId,
         tagIds: tagIds,
         imageUrls: imageUrls,
+        // barcode: barcode,
+        // sellingPrice: sellingPrice,
+        // webTitle: webTitle,
+        // webDescription: webDescription,
+        // warranteeMonths: warranteeMonths,
+        // weight: weight,
+        // weightUnitId: weightUnitId,
         createdAt: editingProduct?.createdAt,
       );
 
@@ -333,6 +447,13 @@ abstract class _ProductFormStore with Store {
     sku = "";
     price = "";
     description = "";
+    barcode = null;
+    sellingPrice = null;
+    webTitle = null;
+    webDescription = null;
+    warranteeMonths = null;
+    weight = null;
+    weightUnitId = null;
     status = ProductStatus.ACTIVE;
     categoryId = 1;
     brandId = 1;
