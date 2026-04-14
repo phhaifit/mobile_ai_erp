@@ -1,12 +1,11 @@
+import 'package:flutter/material.dart';
+import 'package:mobile_ai_erp/core/utils/date_formatter.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/attribute.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_navigator.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_route_args.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_detail_section_card.dart';
-import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_status_chip.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_mobx/flutter_mobx.dart';
 
 class ProductMetadataAttributeDetailScreen extends StatefulWidget {
   const ProductMetadataAttributeDetailScreen({
@@ -24,96 +23,85 @@ class ProductMetadataAttributeDetailScreen extends StatefulWidget {
 class _ProductMetadataAttributeDetailScreenState
     extends State<ProductMetadataAttributeDetailScreen> {
   final ProductMetadataStore _store = getIt<ProductMetadataStore>();
+  late Future<AttributeSet?> _itemFuture;
 
   @override
   void initState() {
     super.initState();
-    Future<void>.microtask(() => _store.loadDashboard());
+    _itemFuture = _loadItem();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Observer(
-      builder: (context) {
-        final attribute = _store.findAttributeById(widget.args.attributeId);
-        if (attribute == null) {
+    return FutureBuilder<AttributeSet?>(
+      future: _itemFuture,
+      builder: (context, snapshot) {
+        final item = snapshot.data;
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        }
+        if (item == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Attribute detail')),
-            body: const Center(child: Text('Attribute not found.')),
+            appBar: AppBar(title: const Text('Attribute set detail')),
+            body: const Center(child: Text('Attribute set not found.')),
           );
         }
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Attribute detail'),
+            title: const Text('Attribute set detail'),
             actions: <Widget>[
               IconButton(
                 onPressed: () => ProductMetadataNavigator.openAttributeForm(
                   context,
-                  args: AttributeFormArgs(attributeId: attribute.id),
+                  args: AttributeFormArgs(attributeId: item.id),
                 ),
                 icon: const Icon(Icons.edit_outlined),
-                tooltip: 'Edit attribute',
+                tooltip: 'Edit',
               ),
+
             ],
           ),
           body: ListView(
             padding: const EdgeInsets.all(16),
             children: <Widget>[
-              Text(
-                attribute.name,
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: <Widget>[
-                  MetadataStatusChip(label: attribute.valueType.label),
-                  if (attribute.isFilterable)
-                    const MetadataStatusChip(label: 'Filterable'),
-                ],
-              ),
+              Text(item.name, style: Theme.of(context).textTheme.headlineSmall),
               const SizedBox(height: 16),
               MetadataDetailSectionCard(
                 title: 'Main information',
                 children: <Widget>[
-                  MetadataDetailRow(label: 'Code', value: attribute.code),
                   MetadataDetailRow(
                     label: 'Description',
-                    value: attribute.description?.trim().isNotEmpty == true
-                        ? attribute.description!
+                    value: item.description?.trim().isNotEmpty == true
+                        ? item.description!
                         : 'Not set',
                   ),
                   MetadataDetailRow(
-                    label: 'Sort order',
-                    value: attribute.sortOrder.toString(),
-                  ),
-                  if (attribute.effectiveUnitLabels.isNotEmpty)
-                    MetadataDetailRow(
-                      label: 'Units',
-                      value: attribute.effectiveUnitLabels.join(', '),
-                    ),
-                ],
-              ),
-              MetadataDetailSectionCard(
-                title: 'Constraint',
-                children: _buildConstraintRows(attribute),
-              ),
-              MetadataDetailSectionCard(
-                title: 'Usage',
-                children: <Widget>[
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: <Widget>[
-                      if (attribute.valueType.supportsOptions)
-                        _UsageMetricChip(
-                          label: 'Options',
-                          value: _store
-                              .optionCountForAttribute(attribute.id)
-                              .toString(),
+                    label: 'Values',
+                    valueChild: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          item.values.length.toString(),
+                          style: Theme.of(context).textTheme.bodyLarge,
                         ),
-                    ],
+                        TextButton(
+                          onPressed: () async {
+                            await ProductMetadataNavigator.openAttributeOptions(
+                              context,
+                              args: AttributeOptionsArgs(attributeId: item.id),
+                            );
+                            setState(() {
+                              _itemFuture = _loadItem();
+                            });
+                          },
+                          child: const Text('Manage'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  MetadataDetailRow(
+                    label: 'Created at',
+                    value: DateFormatter.formatFull(item.createdAt),
                   ),
                 ],
               ),
@@ -124,87 +112,12 @@ class _ProductMetadataAttributeDetailScreenState
     );
   }
 
-  List<Widget> _buildConstraintRows(Attribute attribute) {
-    switch (attribute.valueType) {
-      case AttributeValueType.dropdown:
-      case AttributeValueType.multiselect:
-        return <Widget>[
-          MetadataDetailRow(
-            label: 'Selection mode',
-            value: attribute.valueType == AttributeValueType.dropdown
-                ? 'Single selection'
-                : 'Multiple selection',
-          ),
-        ];
-      case AttributeValueType.text:
-        return <Widget>[
-          MetadataDetailRow(
-            label: 'Min length',
-            value: attribute.minLength?.toString() ?? 'Not set',
-          ),
-          MetadataDetailRow(
-            label: 'Max length',
-            value: attribute.maxLength?.toString() ?? 'Not set',
-          ),
-          MetadataDetailRow(
-            label: 'Input pattern',
-            value: attribute.inputPattern?.trim().isNotEmpty == true
-                ? attribute.inputPattern!
-                : 'Not set',
-          ),
-        ];
-      case AttributeValueType.number:
-        return <Widget>[
-          MetadataDetailRow(
-            label: 'Min value',
-            value: attribute.minValue?.toString() ?? 'Not set',
-          ),
-          MetadataDetailRow(
-            label: 'Max value',
-            value: attribute.maxValue?.toString() ?? 'Not set',
-          ),
-          MetadataDetailRow(
-            label: 'Decimal places',
-            value: attribute.decimalPlaces?.toString() ?? 'Not set',
-          ),
-        ];
+  Future<AttributeSet?> _loadItem() async {
+    try {
+      return await _store.getAttributeSetById(widget.args.attributeId);
+    } catch (_) {
+      return null;
     }
   }
-}
 
-class _UsageMetricChip extends StatelessWidget {
-  const _UsageMetricChip({
-    required this.label,
-    required this.value,
-  });
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: colorScheme.secondaryContainer,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: RichText(
-        text: TextSpan(
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSecondaryContainer,
-              ),
-          children: <InlineSpan>[
-            TextSpan(
-              text: '$value ',
-              style: const TextStyle(fontWeight: FontWeight.w700),
-            ),
-            TextSpan(text: label),
-          ],
-        ),
-      ),
-    );
-  }
 }

@@ -17,11 +17,15 @@ class ProductMetadataRepositoryImpl extends ProductMetadataRepository {
     int page = 1,
     int pageSize = 10,
     String? search,
+    String? sortBy,
+    String? sortOrder,
   }) =>
       _apiClient.categories.getCategories(
         page: page,
         pageSize: pageSize,
         search: search,
+        sortBy: sortBy,
+        sortOrder: sortOrder,
       ).then((page) => page.items);
 
   @override
@@ -45,10 +49,14 @@ class ProductMetadataRepositoryImpl extends ProductMetadataRepository {
     int page = 1,
     int pageSize = 10,
     String? search,
+    String? sortBy,
+    String? sortOrder,
   }) => _apiClient.attributeSets.getAttributeSets(
     page: page,
     pageSize: pageSize,
     search: search,
+    sortBy: sortBy,
+    sortOrder: sortOrder,
   );
 
   @override
@@ -87,11 +95,15 @@ class ProductMetadataRepositoryImpl extends ProductMetadataRepository {
     int pageSize = 10,
     String? search,
     bool includeInactive = false,
+    String? sortBy,
+    String? sortOrder,
   }) => _apiClient.brands.getBrands(
     page: page,
     pageSize: pageSize,
     search: search,
     includeInactive: includeInactive,
+    sortBy: sortBy,
+    sortOrder: sortOrder,
   );
 
   @override
@@ -111,11 +123,15 @@ class ProductMetadataRepositoryImpl extends ProductMetadataRepository {
     int pageSize = 10,
     String? search,
     bool includeInactive = false,
+    String? sortBy,
+    String? sortOrder,
   }) => _apiClient.tags.getTags(
     page: page,
     pageSize: pageSize,
     search: search,
     includeInactive: includeInactive,
+    sortBy: sortBy,
+    sortOrder: sortOrder,
   );
 
   @override
@@ -133,11 +149,15 @@ class ProductMetadataRepositoryImpl extends ProductMetadataRepository {
     int pageSize = 10,
     String? search,
     bool includeInactive = false,
+    String? sortBy,
+    String? sortOrder,
   }) => _apiClient.units.getUnits(
     page: page,
     pageSize: pageSize,
     search: search,
     includeInactive: includeInactive,
+    sortBy: sortBy,
+    sortOrder: sortOrder,
   );
 
   @override

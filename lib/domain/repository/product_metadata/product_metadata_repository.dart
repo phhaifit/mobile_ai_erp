@@ -10,6 +10,8 @@ abstract class ProductMetadataRepository {
     int page = 1,
     int pageSize = 10,
     String? search,
+    String? sortBy,
+    String? sortOrder,
   });
   Future<List<Category>> getCategoryTree();
   Future<Category> getCategoryById(String categoryId);
@@ -20,6 +22,8 @@ abstract class ProductMetadataRepository {
     int page = 1,
     int pageSize = 10,
     String? search,
+    String? sortBy,
+    String? sortOrder,
   });
   Future<AttributeSet> getAttributeSetById(String attributeSetId);
   Future<AttributeSet> saveAttributeSet(AttributeSet attributeSet);
@@ -38,6 +42,8 @@ abstract class ProductMetadataRepository {
     int pageSize = 10,
     String? search,
     bool includeInactive = false,
+    String? sortBy,
+    String? sortOrder,
   });
   Future<Brand> getBrandById(String brandId);
   Future<Brand> saveBrand(Brand brand);
@@ -48,6 +54,8 @@ abstract class ProductMetadataRepository {
     int pageSize = 10,
     String? search,
     bool includeInactive = false,
+    String? sortBy,
+    String? sortOrder,
   });
   Future<Tag> getTagById(String tagId);
   Future<Tag> saveTag(Tag tag);
@@ -58,6 +66,8 @@ abstract class ProductMetadataRepository {
     int pageSize = 10,
     String? search,
     bool includeInactive = false,
+    String? sortBy,
+    String? sortOrder,
   });
   Future<Unit> getUnitById(String unitId);
   Future<Unit> saveUnit(Unit unit);

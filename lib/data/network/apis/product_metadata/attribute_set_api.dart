@@ -11,19 +11,30 @@ class AttributeSetApi {
 
   Future<MetadataPage<AttributeSet>> getAttributeSets({
     int page = 1,
-    int pageSize = 20,
+    int pageSize = 10,
     String? search,
+    String? sortBy,
+    String? sortOrder,
   }) async {
     try {
       final normalizedPage = page < 1 ? 1 : page;
       final normalizedPageSize = pageSize.clamp(1, 100);
+      final queryParams = <String, dynamic>{
+        'page': normalizedPage,
+        'pageSize': normalizedPageSize,
+      };
+      if (search != null && search.trim().isNotEmpty) {
+        queryParams['search'] = search.trim();
+      }
+      if (sortBy != null) {
+        queryParams['sortBy'] = sortBy;
+      }
+      if (sortOrder != null) {
+        queryParams['sortOrder'] = sortOrder;
+      }
       final response = await _dioClient.dio.get<Map<String, dynamic>>(
         '/attribute-sets',
-        queryParameters: <String, dynamic>{
-          'page': normalizedPage,
-          'pageSize': normalizedPageSize,
-          if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
-        },
+        queryParameters: queryParams,
       );
       final data = response.data?['data'] as List<dynamic>? ?? const <dynamic>[];
       final meta = response.data?['meta'] as Map<String, dynamic>? ?? const <String, dynamic>{};
@@ -69,6 +80,15 @@ class AttributeSetApi {
       'description': sanitizeNullableMetadataJsonText(attributeSet.description),
     }..removeWhere((key, value) => value == null);
 
+    if (attributeSet.values.isNotEmpty || attributeSet.id.isNotEmpty) {
+      // For create, send values if present. For update, ALWAYS send values to ensure deletes sync properly.
+      payload['values'] = attributeSet.values.map((v) => {
+        if (v.id.isNotEmpty) 'id': v.id,
+        'value': sanitizeMetadataJsonText(v.value),
+        'sortOrder': v.sortOrder,
+      }).toList();
+    }
+
     try {
       final response = attributeSet.id.isEmpty
           ? await _dioClient.dio.post<Map<String, dynamic>>(
@@ -97,63 +117,61 @@ class AttributeSetApi {
 
   Future<AttributeValue> saveAttributeValue(
       AttributeValue attributeValue) async {
-    // Attribute values are persisted by patching the parent attribute set's
-    // `values` array.
     try {
+      // Fetch current attribute set to get existing values
+      final getResponse = await _dioClient.dio.get<Map<String, dynamic>>(
+        '/attribute-sets/${attributeValue.attributeSetId}',
+      );
+      final currentAttributeSet = getResponse.data ?? const <String, dynamic>{};
+      final currentValuesData = currentAttributeSet['values'] as List<dynamic>? ?? const <dynamic>[];
+      
+      final currentValues = currentValuesData
+          .whereType<Map<String, dynamic>>()
+          .map((v) => _mapAttributeValue(v))
+          .toList();
+
+      List<AttributeValue> updatedValues;
+      if (attributeValue.id.isNotEmpty) {
+        // Update case: replace existing value by ID
+        updatedValues = currentValues.map((v) {
+          return v.id == attributeValue.id ? attributeValue : v;
+        }).toList();
+      } else {
+        // Create case: append new value
+        updatedValues = [...currentValues, attributeValue];
+      }
+
       final payload = <String, dynamic>{
-        'values': <Map<String, dynamic>>[
-          {
-            if (attributeValue.id.isNotEmpty) 'id': attributeValue.id,
-            'value': sanitizeMetadataJsonText(attributeValue.value),
-            'sortOrder': attributeValue.sortOrder,
-          }
-        ]
+        'values': updatedValues.map((v) => {
+          if (v.id.isNotEmpty) 'id': v.id,
+          'value': sanitizeMetadataJsonText(v.value),
+          'sortOrder': v.sortOrder,
+        }).toList()
       };
+
       final response = await _dioClient.dio.patch<Map<String, dynamic>>(
         '/attribute-sets/${attributeValue.attributeSetId}',
         data: encodeMetadataJsonBody(payload),
         options: Options(contentType: Headers.jsonContentType),
       );
-      final values = response.data?['values'] as List<dynamic>? ?? const <dynamic>[];
-      
-      final mappedValues = values
+
+      final returnedValues = response.data?['values'] as List<dynamic>? ?? const <dynamic>[];
+      final mappedReturnedValues = returnedValues
           .map((item) => _mapAttributeValue(item as Map<String, dynamic>))
           .toList();
       
-      // For updates (has ID): match by ID (most reliable)
-      // For creates (no ID): match by value AND verify it has an ID (server-assigned)
       if (attributeValue.id.isNotEmpty) {
-        // Update case: ID must exist in response
-        AttributeValue? savedValue;
-        try {
-          savedValue = mappedValues.firstWhere((val) => val.id == attributeValue.id);
-        } catch (e) {
-          // Not found in response
-        }
-        if (savedValue == null) {
-          throw StateError(
-            'Updated AttributeValue with ID ${attributeValue.id} not found in server response. '
-            'This may indicate a server-side issue or data corruption.',
-          );
-        }
-        return savedValue;
+        return mappedReturnedValues.firstWhere(
+          (val) => val.id == attributeValue.id,
+          orElse: () => throw StateError('Updated value not found in response'),
+        );
       } else {
-        // Create case: must find value in response AND it must have been assigned a server ID
-        AttributeValue? savedValue;
-        try {
-          savedValue = mappedValues.firstWhere(
-            (val) => val.value == attributeValue.value && val.id.isNotEmpty,
-          );
-        } catch (e) {
-          // Not found in response
-        }
-        if (savedValue == null) {
-          throw StateError(
-            'Created AttributeValue with value "${attributeValue.value}" not found in server response '
-            'or was not assigned a server ID. This indicates a server-side issue or failed persistence.',
-          );
-        }
-        return savedValue;
+        // For creates, match by value and lack of ID in the original (or just find the one that didn't have an ID before)
+        // More robust: find the one that exists in updated but matched the new value
+        return mappedReturnedValues.lastWhere(
+          (val) => val.value == attributeValue.value,
+          orElse: () => throw StateError('Created value not found in response'),
+        );
       }
     } on DioException catch (error) {
       throw mapMetadataWriteError(error);
@@ -162,11 +180,11 @@ class AttributeSetApi {
 
   /// Remove an attribute value from an attribute set.
   ///
-  /// (READ-MODIFY-WRITE pattern):
+  /// Delete an attribute value via read-modify-write pattern:
   /// 1. GET /attribute-sets/{attributeSetId} to fetch current values array
-  /// 2. Filter out the value with matching optionId
+  /// 2. Filter out the value with matching valueId
   /// 3. PATCH /attribute-sets/{attributeSetId} with updated values array
-  Future<void> deleteAttributeOption(String attributeSetId, String optionId) async {
+  Future<void> deleteAttributeValue(String attributeSetId, String valueId) async {
     try {
       final getResponse = await _dioClient.dio.get<Map<String, dynamic>>(
         '/attribute-sets/$attributeSetId',
@@ -178,7 +196,7 @@ class AttributeSetApi {
 
       final updatedValues = currentValues
           .whereType<Map<String, dynamic>>()
-          .where((value) => (value['id'] as String? ?? '') != optionId)
+          .where((value) => (value['id'] as String? ?? '') != valueId)
           .map(
             (value) => <String, dynamic>{
               if ((value['id'] as String? ?? '').isNotEmpty)
