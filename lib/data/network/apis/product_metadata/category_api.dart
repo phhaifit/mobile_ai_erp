@@ -11,22 +11,36 @@ class CategoryApi {
 
   Future<MetadataPage<Category>> getCategories({
     int page = 1,
-    int pageSize = 20,
-    String? search,
+    int pageSize = 10,
+    String? search, 
+    String? sortBy, 
+    String? sortOrder,
   }) async {
     try {
       final normalizedPage = page < 1 ? 1 : page;
       final normalizedPageSize = pageSize.clamp(1, 100);
+      final queryParams = <String, dynamic>{
+        'page': normalizedPage,
+        'pageSize': normalizedPageSize,
+      };
+      if (search != null && search.trim().isNotEmpty) {
+        queryParams['search'] = search.trim();
+      }
+      if (sortBy != null) {
+        queryParams['sortBy'] = sortBy;
+      }
+      if (sortOrder != null) {
+        queryParams['sortOrder'] = sortOrder;
+      }
       final response = await _dioClient.dio.get<Map<String, dynamic>>(
         '/categories',
-        queryParameters: <String, dynamic>{
-          'page': normalizedPage,
-          'pageSize': normalizedPageSize,
-          if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
-        },
+        queryParameters: queryParams,
       );
-      final data = response.data?['data'] as List<dynamic>? ?? const <dynamic>[];
-      final meta = response.data?['meta'] as Map<String, dynamic>? ?? const <String, dynamic>{};
+      final data =
+          response.data?['data'] as List<dynamic>? ?? const <dynamic>[];
+      final meta =
+          response.data?['meta'] as Map<String, dynamic>? ??
+          const <String, dynamic>{};
       return MetadataPage<Category>(
         items: data
             .map((item) => _mapCategory(item as Map<String, dynamic>))
@@ -43,11 +57,25 @@ class CategoryApi {
 
   Future<List<Category>> getCategoryTree() async {
     try {
-      final response = await _dioClient.dio.get<List<dynamic>>('/categories/tree');
+      final response = await _dioClient.dio.get<List<dynamic>>(
+        '/categories/tree',
+      );
       final data = response.data ?? const <dynamic>[];
-      return data
-          .map((item) => _mapCategory(item as Map<String, dynamic>))
-          .toList(growable: false);
+      final List<Category> flattened = [];
+
+      void traverse(List<dynamic> nodes) {
+        for (final node in nodes) {
+          final item = node as Map<String, dynamic>;
+          flattened.add(_mapCategory(item));
+          final children = item['children'] as List<dynamic>?;
+          if (children != null && children.isNotEmpty) {
+            traverse(children);
+          }
+        }
+      }
+
+      traverse(data);
+      return flattened;
     } on DioException catch (error) {
       throw mapMetadataWriteError(error);
     }
@@ -55,8 +83,9 @@ class CategoryApi {
 
   Future<Category> getCategoryById(String categoryId) async {
     try {
-      final response =
-          await _dioClient.dio.get<Map<String, dynamic>>('/categories/$categoryId');
+      final response = await _dioClient.dio.get<Map<String, dynamic>>(
+        '/categories/$categoryId',
+      );
       return _mapCategory(response.data ?? const <String, dynamic>{});
     } on DioException catch (error) {
       throw mapMetadataWriteError(error);
@@ -68,8 +97,8 @@ class CategoryApi {
       'name': sanitizeMetadataJsonText(category.name),
       'slug': sanitizeMetadataJsonText(category.slug),
       'description': sanitizeNullableMetadataJsonText(category.description),
-      if (category.parentId != null) 'parentId': category.parentId,
-    }..removeWhere((key, value) => value == null);
+      'parentId': category.parentId,
+    };
 
     try {
       final response = category.id.isEmpty
@@ -99,10 +128,14 @@ class CategoryApi {
 
   Category _mapCategory(Map<String, dynamic> json) {
     if (json['createdAt'] == null) {
-      throw FormatException('Category response missing required field: createdAt');
+      throw FormatException(
+        'Category response missing required field: createdAt',
+      );
     }
     if (json['updatedAt'] == null) {
-      throw FormatException('Category response missing required field: updatedAt');
+      throw FormatException(
+        'Category response missing required field: updatedAt',
+      );
     }
     return Category(
       id: json['id'] as String? ?? '',
@@ -111,8 +144,16 @@ class CategoryApi {
       name: json['name'] as String? ?? '',
       slug: json['slug'] as String? ?? '',
       description: json['description'] as String?,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      createdAt: parseRequiredMetadataTimestamp(
+        json,
+        'createdAt',
+        contextLabel: 'Category',
+      ),
+      updatedAt: parseRequiredMetadataTimestamp(
+        json,
+        'updatedAt',
+        contextLabel: 'Category',
+      ),
     );
   }
 }

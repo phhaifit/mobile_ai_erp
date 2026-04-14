@@ -1,11 +1,9 @@
+import 'package:flutter/material.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
-import 'package:mobile_ai_erp/domain/entity/product_metadata/product_metadata_validation_exception.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_route_args.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_form_decoration.dart';
-import 'package:mobile_ai_erp/core/utils/slug_util.dart';
-import 'package:flutter/material.dart';
 
 class ProductMetadataCategoryFormScreen extends StatefulWidget {
   const ProductMetadataCategoryFormScreen({
@@ -25,44 +23,46 @@ class _ProductMetadataCategoryFormScreenState
   final ProductMetadataStore _store = getIt<ProductMetadataStore>();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _codeController = TextEditingController();
   final TextEditingController _slugController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-  final TextEditingController _coverImageUrlController =
-      TextEditingController();
-  final TextEditingController _sortOrderController = TextEditingController();
 
   String? _selectedParentId;
-  CategoryStatus _status = CategoryStatus.active;
   bool _isSaving = false;
+  bool _isSlugDirty = false;
+  String _lastGeneratedSlug = '';
   Category? _editingCategory;
 
   @override
   void initState() {
     super.initState();
-    _nameController.addListener(_syncSlug);
+    _nameController.addListener(_syncSlugIfPristine);
+    _slugController.addListener(_trackSlugOverride);
     Future<void>.microtask(_initialize);
   }
 
   Future<void> _initialize() async {
-    await _store.loadDashboard();
-    _editingCategory = _store.findCategoryById(widget.args?.categoryId);
+    await Future.wait([
+      _store.loadDashboard(),
+      _store.loadCategoryTree(),
+    ]);
+    final categoryId = widget.args?.categoryId;
+    if (categoryId != null) {
+      try {
+        _editingCategory = await _store.getCategoryById(categoryId);
+      } catch (_) {
+        _editingCategory = null;
+      }
+    }
 
     if (_editingCategory != null) {
       _nameController.text = _editingCategory!.name;
-      _codeController.text = _editingCategory!.code;
       _slugController.text = _editingCategory!.slug;
       _descriptionController.text = _editingCategory!.description ?? '';
-      _coverImageUrlController.text = _editingCategory!.coverImageUrl ?? '';
-      _sortOrderController.text = _editingCategory!.sortOrder.toString();
       _selectedParentId = _editingCategory!.parentId;
-      _status = _editingCategory!.status;
     } else {
       _selectedParentId = widget.args?.initialParentId;
-      _sortOrderController.text = '0';
+      _syncGeneratedSlug();
     }
-
-    _syncSlug();
 
     if (mounted) {
       setState(() {});
@@ -71,13 +71,11 @@ class _ProductMetadataCategoryFormScreenState
 
   @override
   void dispose() {
-    _nameController.removeListener(_syncSlug);
+    _nameController.removeListener(_syncSlugIfPristine);
+    _slugController.removeListener(_trackSlugOverride);
     _nameController.dispose();
-    _codeController.dispose();
     _slugController.dispose();
     _descriptionController.dispose();
-    _coverImageUrlController.dispose();
-    _sortOrderController.dispose();
     super.dispose();
   }
 
@@ -102,34 +100,39 @@ class _ProductMetadataCategoryFormScreenState
                   labelText: 'Name',
                 ),
                 validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
+                  final trimmed = value?.trim() ?? '';
+                  if (trimmed.isEmpty) {
                     return 'Name is required.';
                   }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _codeController,
-                decoration: metadataFormDecoration(
-                  labelText: 'Code',
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Code is required.';
+                  if (trimmed.length > 150) {
+                    return 'Name must be 150 characters or fewer.';
                   }
+
+                  // Duplicate detection must be enforced by the server.
                   return null;
                 },
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _slugController,
-                enabled: false,
                 decoration: metadataFormDecoration(
                   labelText: 'Slug',
-                  helperText:
-                      'Slug is generated automatically from the category path.',
+                  helperText: 'Lowercase letters, numbers, and hyphens only.',
                 ),
+                validator: (value) {
+                  final trimmed = value?.trim() ?? '';
+                  if (trimmed.isEmpty) {
+                    return 'Slug is required.';
+                  }
+                  if (trimmed.length > 150) {
+                    return 'Slug must be 150 characters or fewer.';
+                  }
+                  if (!RegExp(r'^[a-z0-9]+(?:-[a-z0-9]+)*$')
+                      .hasMatch(trimmed)) {
+                    return 'Use lowercase letters, numbers, and hyphens only.';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String?>(
@@ -159,30 +162,6 @@ class _ProductMetadataCategoryFormScreenState
                 onChanged: (value) {
                   setState(() {
                     _selectedParentId = value;
-                    _syncSlug();
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<CategoryStatus>(
-                initialValue: _status,
-                decoration: metadataFormDecoration(
-                  labelText: 'Status',
-                ),
-                items: CategoryStatus.values
-                    .map(
-                      (status) => DropdownMenuItem<CategoryStatus>(
-                        value: status,
-                        child: Text(status.label),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (value) {
-                  if (value == null) {
-                    return;
-                  }
-                  setState(() {
-                    _status = value;
                   });
                 },
               ),
@@ -194,27 +173,9 @@ class _ProductMetadataCategoryFormScreenState
                 ),
                 minLines: 2,
                 maxLines: 4,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _coverImageUrlController,
-                decoration: metadataFormDecoration(
-                  labelText: 'Cover image URL',
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _sortOrderController,
-                keyboardType: TextInputType.number,
-                decoration: metadataFormDecoration(
-                  labelText: 'Sort order',
-                ),
                 validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Sort order is required.';
-                  }
-                  if (int.tryParse(value.trim()) == null) {
-                    return 'Sort order must be a number.';
+                  if ((value?.trim().length ?? 0) > 1000) {
+                    return 'Description must be 1000 characters or fewer.';
                   }
                   return null;
                 },
@@ -246,7 +207,7 @@ class _ProductMetadataCategoryFormScreenState
         ? <String>{}
         : _descendantIds(editingCategoryId);
 
-    return _store.categories.where((category) {
+    return _store.categoryTree.where((category) {
       if (category.id == editingCategoryId) {
         return false;
       }
@@ -262,11 +223,11 @@ class _ProductMetadataCategoryFormScreenState
 
   String _parentOptionLabel(Category category) {
     final path = <String>[category.name];
-    var current = _store.findCategoryById(category.parentId);
+    var current = _findCategoryInTree(category.parentId);
 
     while (current != null) {
       path.insert(0, current.name);
-      current = _store.findCategoryById(current.parentId);
+      current = _findCategoryInTree(current.parentId);
     }
 
     return path.join(' / ');
@@ -276,7 +237,9 @@ class _ProductMetadataCategoryFormScreenState
     final ids = <String>{};
 
     void collect(String parentId) {
-      final children = _store.childrenOf(parentId);
+      final children = _store.categoryTree
+          .where((cat) => cat.parentId == parentId)
+          .toList();
       for (final child in children) {
         if (ids.add(child.id)) {
           collect(child.id);
@@ -298,40 +261,26 @@ class _ProductMetadataCategoryFormScreenState
     });
 
     try {
-      await _store.saveCategory(
-        Category(
-          id: _editingCategory?.id ?? '',
-          name: _nameController.text.trim(),
-          code: _codeController.text.trim(),
-          slug: _slugController.text.trim(),
-          parentId: _selectedParentId,
-          sortOrder: int.parse(_sortOrderController.text.trim()),
-          status: _status,
-          description: _trimOrNull(_descriptionController.text),
-          coverImageUrl: _trimOrNull(_coverImageUrlController.text),
-        ),
+      final category = Category(
+        id: _editingCategory?.id ?? '',
+        tenantId: _editingCategory?.tenantId ?? '',  // TODO: Use actual tenant ID from auth context/current user's session
+        name: _nameController.text.trim(),
+        slug: _slugController.text.trim(),
+        parentId: _selectedParentId,
+        description: _trimOrNull(_descriptionController.text),
+        createdAt: _editingCategory?.createdAt ?? DateTime.now(),
+        updatedAt: _editingCategory?.updatedAt ?? DateTime.now(),
       );
+      if (_editingCategory == null) {
+        await _store.createCategory(category);
+      } else {
+        await _store.updateCategory(category);
+      }
 
       if (!mounted) {
         return;
       }
-      Navigator.of(context).pop();
-    } on ProductMetadataValidationException catch (error) {
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
-    } catch (error) {
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Couldn\'t save category. Try again.'),
-        ),
-      );
+      Navigator.of(context).pop(true);
     } finally {
       if (mounted) {
         setState(() {
@@ -341,37 +290,50 @@ class _ProductMetadataCategoryFormScreenState
     }
   }
 
-  void _syncSlug() {
-    _slugController.text = _buildSlugPreview();
+  void _syncSlugIfPristine() {
+    if (_isSlugDirty) {
+      return;
+    }
+    _syncGeneratedSlug();
   }
 
-  String _buildSlugPreview() {
-    final ownSlug = SlugUtil.slugify(_nameController.text);
-    if (_selectedParentId == null) {
-      return ownSlug;
-    }
+  void _syncGeneratedSlug() {
+    _lastGeneratedSlug = _generateSlug(_nameController.text);
+    _slugController.value = TextEditingValue(
+      text: _lastGeneratedSlug,
+      selection: TextSelection.collapsed(offset: _lastGeneratedSlug.length),
+    );
+  }
 
-    final parentSegments = <String>[];
-    final visitedIds = <String>{
-      if (_editingCategory != null) _editingCategory!.id,
-    };
-    String? cursor = _selectedParentId;
+  void _trackSlugOverride() {
+    _isSlugDirty = _slugController.text.trim() != _lastGeneratedSlug;
+  }
 
-    while (cursor != null) {
-      final parent = _store.findCategoryById(cursor);
-      if (parent == null || !visitedIds.add(parent.id)) {
-        break;
-      }
-      parentSegments.insert(0, SlugUtil.slugify(parent.name));
-      cursor = parent.parentId;
-    }
-
-    return <String>[...parentSegments, ownSlug].join('/');
+  String _generateSlug(String value) {
+    final normalized = value
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+        .replaceAll(RegExp(r'-{2,}'), '-')
+        .replaceAll(RegExp(r'^-|-$'), '');
+    return normalized;
   }
 
   String? _trimOrNull(String value) {
     final trimmed = value.trim();
     return trimmed.isEmpty ? null : trimmed;
+  }
+
+  Category? _findCategoryInTree(String? categoryId) {
+    if (categoryId == null || categoryId.isEmpty) {
+      return null;
+    }
+    for (final category in _store.categoryTree) {
+      if (category.id == categoryId) {
+        return category;
+      }
+    }
+    return null;
   }
 }
 

@@ -6,7 +6,7 @@ import 'package:mobile_ai_erp/domain/entity/product_metadata/tag.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/unit.dart';
 
 abstract class ProductMetadataRepository {
-  Future<List<Category>> getCategories({
+  Future<MetadataPage<Category>> getCategories({
     int page = 1,
     int pageSize = 10,
     String? search,

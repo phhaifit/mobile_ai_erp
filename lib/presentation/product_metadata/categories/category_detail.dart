@@ -1,11 +1,11 @@
+import 'package:flutter/material.dart';
+import 'package:mobile_ai_erp/core/utils/date_formatter.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
+import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_navigator.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_route_args.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_detail_section_card.dart';
-import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_status_chip.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_mobx/flutter_mobx.dart';
 
 class ProductMetadataCategoryDetailScreen extends StatefulWidget {
   const ProductMetadataCategoryDetailScreen({
@@ -23,35 +23,49 @@ class ProductMetadataCategoryDetailScreen extends StatefulWidget {
 class _ProductMetadataCategoryDetailScreenState
     extends State<ProductMetadataCategoryDetailScreen> {
   final ProductMetadataStore _store = getIt<ProductMetadataStore>();
+  late Future<void> _loadCategoryFuture;
+  Category? _category;
+  Category? _parent;
 
   @override
   void initState() {
     super.initState();
-    Future<void>.microtask(() => _store.loadDashboard());
+    _loadCategoryFuture = _loadCategory();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Observer(
-      builder: (context) {
-        final category = _store.findCategoryById(widget.args.categoryId);
+    return FutureBuilder<void>(
+      future: _loadCategoryFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        }
+
+        final category = _category;
         if (category == null) {
           return Scaffold(
             appBar: AppBar(title: const Text('Category detail')),
             body: const Center(child: Text('Category not found.')),
           );
         }
-        final parent = _store.findCategoryById(category.parentId);
 
         return Scaffold(
           appBar: AppBar(
             title: const Text('Category detail'),
             actions: <Widget>[
               IconButton(
-                onPressed: () => ProductMetadataNavigator.openCategoryForm(
-                  context,
-                  args: CategoryFormArgs(categoryId: category.id),
-                ),
+                onPressed: () async {
+                  await ProductMetadataNavigator.openCategoryForm(
+                    context,
+                    args: CategoryFormArgs(categoryId: category.id),
+                  );
+                  if (mounted) {
+                    setState(() {
+                      _loadCategoryFuture = _loadCategory();
+                    });
+                  }
+                },
                 icon: const Icon(Icons.edit_outlined),
                 tooltip: 'Edit category',
               ),
@@ -68,25 +82,10 @@ class _ProductMetadataCategoryDetailScreenState
               MetadataDetailSectionCard(
                 title: 'Main information',
                 children: <Widget>[
-                  MetadataDetailRow(
-                    label: 'Status',
-                    valueChild: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: <Widget>[
-                        MetadataStatusChip(label: category.status.label),
-                      ],
-                    ),
-                  ),
-                  MetadataDetailRow(label: 'Code', value: category.code),
                   MetadataDetailRow(label: 'Slug', value: category.slug),
                   MetadataDetailRow(
                     label: 'Parent',
-                    value: parent?.name ?? 'Top-level category',
-                  ),
-                  MetadataDetailRow(
-                    label: 'Sort order',
-                    value: category.sortOrder.toString(),
+                    value: _parent?.name ?? 'Top-level category',
                   ),
                   MetadataDetailRow(
                     label: 'Description',
@@ -94,16 +93,9 @@ class _ProductMetadataCategoryDetailScreenState
                         ? category.description!
                         : 'Not set',
                   ),
-                ],
-              ),
-              MetadataDetailSectionCard(
-                title: 'Media',
-                children: <Widget>[
                   MetadataDetailRow(
-                    label: 'Cover image URL',
-                    value: category.coverImageUrl?.trim().isNotEmpty == true
-                        ? category.coverImageUrl!
-                        : 'Not set',
+                    label: 'Created at',
+                    value: DateFormatter.formatFull(category.createdAt),
                   ),
                 ],
               ),
@@ -112,5 +104,22 @@ class _ProductMetadataCategoryDetailScreenState
         );
       },
     );
+  }
+
+  Future<void> _loadCategory() async {
+    try {
+      _category = await _store.getCategoryById(widget.args.categoryId);
+      await _store.loadCategoryTree();
+      final parentId = _category?.parentId;
+      if (parentId != null && parentId.isNotEmpty) {
+        _parent = _store.categoryTree.cast<Category?>().firstWhere(
+              (item) => item?.id == parentId,
+              orElse: () => null,
+            );
+      }
+    } catch (_) {
+      _category = null;
+      _parent = null;
+    }
   }
 }

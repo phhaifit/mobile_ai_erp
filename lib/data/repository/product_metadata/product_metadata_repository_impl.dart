@@ -13,7 +13,7 @@ class ProductMetadataRepositoryImpl extends ProductMetadataRepository {
   final MetadataApiClient _apiClient;
 
   @override
-  Future<List<Category>> getCategories({
+  Future<MetadataPage<Category>> getCategories({
     int page = 1,
     int pageSize = 10,
     String? search,
@@ -26,7 +26,7 @@ class ProductMetadataRepositoryImpl extends ProductMetadataRepository {
         search: search,
         sortBy: sortBy,
         sortOrder: sortOrder,
-      ).then((page) => page.items);
+      );
 
   @override
   Future<List<Category>> getCategoryTree() =>
