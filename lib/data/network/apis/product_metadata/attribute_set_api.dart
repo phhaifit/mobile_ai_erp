@@ -78,7 +78,7 @@ class AttributeSetApi {
     final payload = <String, dynamic>{
       'name': sanitizeMetadataJsonText(attributeSet.name),
       'description': sanitizeNullableMetadataJsonText(attributeSet.description),
-    }..removeWhere((key, value) => value == null);
+    };
 
     if (attributeSet.values.isNotEmpty || attributeSet.id.isNotEmpty) {
       // For create, send values if present. For update, ALWAYS send values to ensure deletes sync properly.
@@ -221,14 +221,19 @@ class AttributeSetApi {
 
   AttributeSet _mapAttributeSet(Map<String, dynamic> json) {
     if (json['createdAt'] == null) {
-      throw FormatException('AttributeSet response missing required field: createdAt');
+      throw FormatException(
+          'AttributeSet response missing required field: createdAt');
     }
     return AttributeSet(
       id: json['id'] as String? ?? '',
       tenantId: json['tenantId'] as String? ?? '',
       name: json['name'] as String? ?? '',
       description: json['description'] as String?,
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      createdAt: parseRequiredMetadataTimestamp(
+        json,
+        'createdAt',
+        contextLabel: 'AttributeSet',
+      ),
       values: (json['values'] as List<dynamic>?)
               ?.map((v) => _mapAttributeValue(v as Map<String, dynamic>))
               .toList() ??
@@ -238,14 +243,19 @@ class AttributeSetApi {
 
   AttributeValue _mapAttributeValue(Map<String, dynamic> json) {
     if (json['createdAt'] == null) {
-      throw FormatException('AttributeValue response missing required field: createdAt');
+      throw FormatException(
+          'AttributeValue response missing required field: createdAt');
     }
     return AttributeValue(
       id: json['id'] as String? ?? '',
       attributeSetId: json['attributeSetId'] as String? ?? '',
       value: json['value'] as String? ?? '',
       sortOrder: json['sortOrder'] as int? ?? 0,
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      createdAt: parseRequiredMetadataTimestamp(
+        json,
+        'createdAt',
+        contextLabel: 'AttributeValue',
+      ),
     );
   }
 }

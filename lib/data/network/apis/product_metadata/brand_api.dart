@@ -11,22 +11,32 @@ class BrandApi {
 
   Future<MetadataPage<Brand>> getBrands({
     int page = 1,
-    int pageSize = 20,
+    int pageSize = 10,
     String? search,
     bool includeInactive = false,
+    String? sortBy,
+    String? sortOrder,
   }) async {
     try {
       final normalizedPage = page < 1 ? 1 : page;
       final normalizedPageSize = pageSize.clamp(1, 100);
+      final queryParams = <String, dynamic>{
+        'page': normalizedPage,
+        'pageSize': normalizedPageSize,
+        'includeInactive': includeInactive,
+      };
+      if (search != null && search.trim().isNotEmpty) {
+        queryParams['search'] = search.trim();
+      }
+      if (sortBy != null) {
+        queryParams['sortBy'] = sortBy;
+      }
+      if (sortOrder != null) {
+        queryParams['sortOrder'] = sortOrder;
+      }
       final response = await _dioClient.dio.get<Map<String, dynamic>>(
         '/brands',
-        queryParameters: <String, dynamic>{
-          'page': normalizedPage,
-          'pageSize': normalizedPageSize,
-          if (search != null && search.trim().isNotEmpty)
-            'search': search.trim(),
-          'includeInactive': includeInactive,
-        },
+        queryParameters: queryParams,
       );
       final data =
           response.data?['data'] as List<dynamic>? ?? const <dynamic>[];
@@ -64,7 +74,7 @@ class BrandApi {
       'description': sanitizeNullableMetadataJsonText(brand.description),
       'logoUrl': sanitizeNullableMetadataJsonText(brand.logoUrl),
       if (brand.id.isNotEmpty) 'isActive': brand.isActive,
-    }..removeWhere((key, value) => value == null);
+    };
 
     try {
       final response = brand.id.isEmpty

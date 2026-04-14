@@ -24,9 +24,22 @@ String? extractMetadataErrorMessage(Object? data) {
 }
 
 Exception mapMetadataWriteError(DioException error) {
+  // Handle connection errors specifically
+  if (error.type == DioExceptionType.connectionError ||
+      error.type == DioExceptionType.connectionTimeout ||
+      error.type == DioExceptionType.sendTimeout ||
+      error.type == DioExceptionType.receiveTimeout) {
+    return ProductMetadataValidationException(
+      'Unable to connect to the server. Please check your internet connection.',
+    );
+  }
+
   final message = extractMetadataErrorMessage(error.response?.data);
   if (message == null || message.isEmpty) {
-    return error;
+    // Return a readable message even for unknown server errors
+    return ProductMetadataValidationException(
+      error.message ?? 'An unknown system error occurred.',
+    );
   }
   return ProductMetadataValidationException(message);
 }
