@@ -11,24 +11,38 @@ class TagApi {
 
   Future<MetadataPage<Tag>> getTags({
     int page = 1,
-    int pageSize = 20,
+    int pageSize = 10,
     String? search,
-    bool includeInactive = false,
+    bool includeInactive = false, 
+    String? sortBy, 
+    String? sortOrder,
   }) async {
     try {
       final normalizedPage = page < 1 ? 1 : page;
       final normalizedPageSize = pageSize.clamp(1, 100);
+      final queryParams = <String, dynamic>{
+        'page': normalizedPage,
+        'pageSize': normalizedPageSize,
+        'includeInactive': includeInactive,
+      };
+      if (search != null && search.trim().isNotEmpty) {
+        queryParams['search'] = search.trim();
+      }
+      if (sortBy != null) {
+        queryParams['sortBy'] = sortBy;
+      }
+      if (sortOrder != null) {
+        queryParams['sortOrder'] = sortOrder;
+      }
       final response = await _dioClient.dio.get<Map<String, dynamic>>(
         '/tags',
-        queryParameters: <String, dynamic>{
-          'page': normalizedPage,
-          'pageSize': normalizedPageSize,
-          if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
-          if (includeInactive) 'includeInactive': true,
-        },
+        queryParameters: queryParams,
       );
-      final data = response.data?['data'] as List<dynamic>? ?? const <dynamic>[];
-      final meta = response.data?['meta'] as Map<String, dynamic>? ?? const <String, dynamic>{};
+      final data =
+          response.data?['data'] as List<dynamic>? ?? const <dynamic>[];
+      final meta =
+          response.data?['meta'] as Map<String, dynamic>? ??
+          const <String, dynamic>{};
       return MetadataPage<Tag>(
         items: data
             .map((item) => _mapTag(item as Map<String, dynamic>))
@@ -45,7 +59,9 @@ class TagApi {
 
   Future<Tag> getTagById(String tagId) async {
     try {
-      final response = await _dioClient.dio.get<Map<String, dynamic>>('/tags/$tagId');
+      final response = await _dioClient.dio.get<Map<String, dynamic>>(
+        '/tags/$tagId',
+      );
       return _mapTag(response.data ?? const <String, dynamic>{});
     } on DioException catch (error) {
       throw mapMetadataWriteError(error);
@@ -57,7 +73,7 @@ class TagApi {
       'name': sanitizeMetadataJsonText(tag.name),
       'description': sanitizeNullableMetadataJsonText(tag.description),
       if (tag.id.isNotEmpty) 'isActive': tag.isActive,
-    }..removeWhere((key, value) => value == null);
+    };
 
     try {
       final response = tag.id.isEmpty
@@ -98,8 +114,16 @@ class TagApi {
       name: json['name'] as String? ?? '',
       description: json['description'] as String?,
       isActive: json['isActive'] as bool? ?? true,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      createdAt: parseRequiredMetadataTimestamp(
+        json,
+        'createdAt',
+        contextLabel: 'Tag',
+      ),
+      updatedAt: parseRequiredMetadataTimestamp(
+        json,
+        'updatedAt',
+        contextLabel: 'Tag',
+      ),
     );
   }
 }

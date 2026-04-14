@@ -1,26 +1,21 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/tag.dart';
+import 'package:mobile_ai_erp/domain/entity/product_metadata/tag_extensions.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/models/metadata_list_query.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_navigator.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_route_args.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
-import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_color_utils.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/logic/metadata_pagination_logic.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_empty_state.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_list_card.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_list_controls.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_list_layout.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_pagination_controls.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_status_chip.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_mobx/flutter_mobx.dart';
-
-enum _TagSortOption {
-  sortOrder('Sort order'),
-  nameAsc('Name A-Z'),
-  nameDesc('Name Z-A');
-
-  const _TagSortOption(this.label);
-
-  final String label;
-}
+import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_inactive_snackbar.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/utils/metadata_error_formatter.dart';
 
 class ProductMetadataTagsScreen extends StatefulWidget {
   const ProductMetadataTagsScreen({super.key});
@@ -31,19 +26,14 @@ class ProductMetadataTagsScreen extends StatefulWidget {
 }
 
 class _ProductMetadataTagsScreenState extends State<ProductMetadataTagsScreen> {
-  static const int _pageSize = 10;
-
   final ProductMetadataStore _store = getIt<ProductMetadataStore>();
   final TextEditingController _searchController = TextEditingController();
-  String _query = '';
-  TagStatus? _statusFilter;
-  _TagSortOption _sortOption = _TagSortOption.sortOrder;
-  int _currentPage = 1;
+  MetadataListQuery _queryState = const MetadataListQuery();
 
   @override
   void initState() {
     super.initState();
-    Future<void>.microtask(() => _store.loadDashboard());
+    Future<void>.microtask(_loadTags);
   }
 
   @override
@@ -66,89 +56,89 @@ class _ProductMetadataTagsScreenState extends State<ProductMetadataTagsScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => ProductMetadataNavigator.openTagForm(context),
+        onPressed: _openTagForm,
         icon: const Icon(Icons.add),
         label: const Text('Add tag'),
       ),
       body: Observer(
         builder: (context) {
-          if (_store.isLoading && !_store.hasLoadedDashboard) {
-            return const Center(child: CircularProgressIndicator());
-          }
+          final tags = _store.tags.toList(growable: false);
+          final totalPages = _store.tagTotalPages;
+          final currentPage = _store.tagCurrentPage;
 
-          final filteredTags = _applyFilters(_store.tags.toList());
-          final totalPages = _totalPages(filteredTags.length);
-          final currentPage =
-              totalPages == 0 ? 1 : _currentPage.clamp(1, totalPages);
-          final visibleTags = _pageItems(filteredTags, currentPage, _pageSize);
+          return MetadataListLayout(
+            isLoading: _store.isLoading,
+            controls: MetadataListControls(
+              searchController: _searchController,
+              onSearchChanged: (value) => setState(() {
+                _queryState = _queryState.copyWith(
+                  search: value.trim(),
+                  page: 1,
+                );
+                _loadTags();
+              }),
+              searchHint: 'Search by tag name',
+              resultLabel:
+                  'Showing ${tags.length} of ${_store.tagTotalItems} tags',
+              hasActiveFilter: _queryState.includeInactive,
+              hasCustomSort: _queryState.hasCustomSort,
+              onOpenFilter: _openFilterSheet,
+              onOpenSort: _openSortSheet,
+            ),
+            child: tags.isEmpty
+                ? MetadataEmptyState(
+                    icon: Icons.sell_outlined,
+                    title: _store.tagTotalItems == 0
+                        ? 'No tags yet'
+                        : 'No matching tags',
+                    message: _store.tagTotalItems == 0
+                        ? 'Add your first tag to classify products faster.'
+                        : 'Try a different search keyword.',
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+                    itemCount: tags.length + (totalPages > 1 ? 1 : 0),
+                  separatorBuilder: (_, _) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    if (index >= tags.length) {
+                      return MetadataPaginationControls(
+                        currentPage: currentPage,
+                        totalPages: totalPages,
+                        onPrevious: currentPage > 1
+                            ? () => setState(() {
+                                  _queryState = _queryState.copyWith(
+                                    page: currentPage - 1,
+                                  );
+                                  _loadTags();
+                                })
+                            : null,
+                        onNext: currentPage < totalPages
+                            ? () => setState(() {
+                                  _queryState = _queryState.copyWith(
+                                    page: currentPage + 1,
+                                  );
+                                  _loadTags();
+                                })
+                            : null,
+                      );
+                    }
 
-          return Column(
-            children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: MetadataListControls(
-                  searchController: _searchController,
-                  onSearchChanged: (value) => setState(() {
-                    _query = value.trim();
-                    _currentPage = 1;
-                  }),
-                  searchHint: 'Search by tag or color',
-                  resultLabel:
-                      'Showing ${visibleTags.length} of ${filteredTags.length} tags',
-                  hasActiveFilter: _statusFilter != null,
-                  hasCustomSort: _sortOption != _TagSortOption.sortOrder,
-                  onOpenFilter: _openFilterSheet,
-                  onOpenSort: _openSortSheet,
-                ),
-              ),
-              Expanded(
-                child: filteredTags.isEmpty
-                    ? MetadataEmptyState(
-                        icon: Icons.sell_outlined,
-                        title: _store.tags.isEmpty
-                            ? 'No tags yet'
-                            : 'No matching tags',
-                        message: _store.tags.isEmpty
-                            ? 'Add your first tag to classify products faster.'
-                            : 'Try changing your search, filter, or sort settings.',
-                      )
-                    : ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-                        itemCount:
-                            visibleTags.length + (totalPages > 1 ? 1 : 0),
-                        separatorBuilder: (_, __) => const SizedBox(height: 12),
-                        itemBuilder: (context, index) {
-                          if (index >= visibleTags.length) {
-                            return MetadataPaginationControls(
-                              currentPage: currentPage,
-                              totalPages: totalPages,
-                              onPrevious: currentPage > 1
-                                  ? () => setState(() {
-                                        _currentPage = currentPage - 1;
-                                      })
-                                  : null,
-                              onNext: currentPage < totalPages
-                                  ? () => setState(() {
-                                        _currentPage = currentPage + 1;
-                                      })
-                                  : null,
-                            );
-                          }
-
-                          final tag = visibleTags[index];
-                          return MetadataListCard(
-                            title: tag.name,
-                            leading: _TagColorDot(colorHex: tag.colorHex),
-                            detailLines: _tagSummary(tag),
-                            chips: <Widget>[
-                              MetadataStatusChip(label: tag.status.label),
-                            ],
-                            trailing: PopupMenuButton<String>(
+                    final tag = tags[index];
+                    return MetadataListCard(
+                      title: tag.name,
+                      leading: const Icon(Icons.sell_outlined),
+                      detailLines: _tagSummary(tag),
+                      chips: <Widget>[
+                        MetadataStatusChip(
+                          label: tag.isActive ? 'Active' : 'Inactive',
+                        ),
+                      ],
+                      trailing: tag.isActive
+                          ? PopupMenuButton<String>(
                               onSelected: (value) {
                                 switch (value) {
                                   case 'edit':
-                                    ProductMetadataNavigator.openTagForm(
-                                      context,
+                                    _openTagForm(
                                       args: TagFormArgs(tagId: tag.id),
                                     );
                                     break;
@@ -157,69 +147,38 @@ class _ProductMetadataTagsScreenState extends State<ProductMetadataTagsScreen> {
                                     break;
                                 }
                               },
-                              itemBuilder: (context) =>
-                                  const <PopupMenuEntry<String>>[
-                                PopupMenuItem<String>(
+                              itemBuilder: (context) => <PopupMenuEntry<String>>[
+                                const PopupMenuItem<String>(
                                   value: 'edit',
                                   child: Text('Edit'),
                                 ),
-                                PopupMenuItem<String>(
+                                const PopupMenuItem<String>(
                                   value: 'delete',
-                                  child: Text('Delete'),
+                                  child: Text('Deactivate'),
                                 ),
                               ],
-                            ),
-                            onTap: () => ProductMetadataNavigator.openTagDetail(
-                              context,
-                              args: TagDetailArgs(tagId: tag.id),
-                            ),
-                          );
-                        },
-                      ),
-              ),
-            ],
+                            )
+                          : null,
+                      onTap: tag.isActive
+                          ? () => _openTagDetail(tag)
+                          : () => showMetadataInactiveSnackbar(
+                                context,
+                                itemType: 'tag',
+                              ),
+                    );
+                  },
+                ),
           );
         },
       ),
     );
   }
 
-  List<Tag> _applyFilters(List<Tag> tags) {
-    final query = _query.toLowerCase();
-    final filtered = tags.where((tag) {
-      if (_statusFilter != null && tag.status != _statusFilter) {
-        return false;
-      }
-      if (query.isEmpty) {
-        return true;
-      }
-      return tag.name.toLowerCase().contains(query) ||
-          (tag.colorHex?.toLowerCase().contains(query) ?? false);
-    }).toList();
-
-    filtered.sort((left, right) {
-      switch (_sortOption) {
-        case _TagSortOption.sortOrder:
-          final orderCompare = left.sortOrder.compareTo(right.sortOrder);
-          if (orderCompare != 0) {
-            return orderCompare;
-          }
-          return left.name.toLowerCase().compareTo(right.name.toLowerCase());
-        case _TagSortOption.nameAsc:
-          return left.name.toLowerCase().compareTo(right.name.toLowerCase());
-        case _TagSortOption.nameDesc:
-          return right.name.toLowerCase().compareTo(left.name.toLowerCase());
-      }
-    });
-
-    return filtered;
-  }
-
   Future<void> _openFilterSheet() async {
-    final result = await showModalBottomSheet<_TagFilterResult>(
+    final includeInactive = await showModalBottomSheet<bool>(
       context: context,
       builder: (context) {
-        TagStatus? tempStatus = _statusFilter;
+        var tempValue = _queryState.includeInactive;
         return StatefulBuilder(
           builder: (context, setModalState) {
             return SafeArea(
@@ -233,32 +192,18 @@ class _ProductMetadataTagsScreenState extends State<ProductMetadataTagsScreen> {
                       'Filter tags',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
-                    const SizedBox(height: 16),
-                    ListTile(
+                    const SizedBox(height: 12),
+                    SwitchListTile.adaptive(
+                      value: tempValue,
                       contentPadding: EdgeInsets.zero,
-                      title: const Text('All statuses'),
-                      trailing:
-                          tempStatus == null ? const Icon(Icons.check) : null,
-                      onTap: () => setModalState(() {
-                        tempStatus = null;
+                      title: const Text('Include inactive'),
+                      onChanged: (value) => setModalState(() {
+                        tempValue = value;
                       }),
                     ),
-                    for (final status in TagStatus.values)
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(status.label),
-                        trailing: tempStatus == status
-                            ? const Icon(Icons.check)
-                            : null,
-                        onTap: () => setModalState(() {
-                          tempStatus = status;
-                        }),
-                      ),
                     const SizedBox(height: 8),
                     FilledButton(
-                      onPressed: () => Navigator.of(context).pop(
-                        _TagFilterResult(status: tempStatus),
-                      ),
+                      onPressed: () => Navigator.of(context).pop(tempValue),
                       child: const Text('Apply'),
                     ),
                   ],
@@ -270,69 +215,64 @@ class _ProductMetadataTagsScreenState extends State<ProductMetadataTagsScreen> {
       },
     );
 
-    if (result == null || !mounted) {
+    if (includeInactive == null || !mounted) {
       return;
     }
     setState(() {
-      _statusFilter = result.status;
-      _currentPage = 1;
+      _queryState = _queryState.copyWith(
+        includeInactive: includeInactive,
+        page: 1,
+      );
+      _loadTags();
     });
   }
 
   Future<void> _openSortSheet() async {
-    final selected = await showModalBottomSheet<_TagSortOption>(
+    await showModalBottomSheet<void>(
       context: context,
       builder: (context) {
-        _TagSortOption tempSort = _sortOption;
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      'Sort tags',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 16),
-                    for (final option in _TagSortOption.values)
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(option.label),
-                        trailing:
-                            tempSort == option ? const Icon(Icons.check) : null,
-                        onTap: () => setModalState(() {
-                          tempSort = option;
-                        }),
-                      ),
-                    const SizedBox(height: 8),
-                    FilledButton(
-                      onPressed: () => Navigator.of(context).pop(tempSort),
-                      child: const Text('Apply'),
-                    ),
-                  ],
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  'Sort tags',
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
-              ),
-            );
-          },
+                const SizedBox(height: 12),
+                RadioListTile<String>(
+                  value: 'name_asc',
+                  groupValue: 'name_asc',
+                  activeColor: Theme.of(context).colorScheme.primary,
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Name (A-Z)'),
+                  onChanged: (value) {
+                    Navigator.of(context).pop();
+                    setState(() {
+                      _queryState = _queryState.copyWith(
+                        sortBy: 'name',
+                        sortOrder: 'asc',
+                        page: 1,
+                      );
+                    });
+                    _loadTags();
+                  },
+                ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+              ],
+            ),
+          ),
         );
       },
     );
-
-    if (selected == null || !mounted) {
-      return;
-    }
-    setState(() {
-      _sortOption = selected;
-      _currentPage = 1;
-    });
   }
-
-  int _totalPages(int itemCount) =>
-      itemCount == 0 ? 0 : ((itemCount - 1) ~/ _pageSize) + 1;
 
   void _goToProductMetadataHome() {
     Navigator.of(context).popUntil(
@@ -343,20 +283,29 @@ class _ProductMetadataTagsScreenState extends State<ProductMetadataTagsScreen> {
     );
   }
 
-  List<Tag> _pageItems(List<Tag> items, int page, int pageSize) {
-    final start = (page - 1) * pageSize;
-    if (start >= items.length) {
-      return const <Tag>[];
+  Future<void> _openTagForm({TagFormArgs? args}) async {
+    final didChange = await ProductMetadataNavigator.openTagForm<bool>(
+      context,
+      args: args,
+    );
+    if (didChange == true && mounted) {
+      await _loadTags();
     }
-    final end = (start + pageSize).clamp(0, items.length);
-    return items.sublist(start, end);
+  }
+
+  Future<void> _openTagDetail(Tag tag) async {
+    await ProductMetadataNavigator.openTagDetail<void>(
+      context,
+      args: TagDetailArgs(tagId: tag.id),
+    );
+    if (mounted) {
+      await _loadTags();
+    }
   }
 
   List<String> _tagSummary(Tag tag) {
     return <String>[
-      if (tag.colorHex != null && tag.colorHex!.trim().isNotEmpty)
-        'Color: ${tag.colorHex}',
-      'Sort order: ${tag.sortOrder}',
+      if (tag.descriptionOrNull != null) tag.descriptionOrNull!,
     ];
   }
 
@@ -365,8 +314,10 @@ class _ProductMetadataTagsScreenState extends State<ProductMetadataTagsScreen> {
           context: context,
           builder: (context) {
             return AlertDialog(
-              title: const Text('Delete tag?'),
-              content: Text('Delete "${tag.name}"? This can\'t be undone.'),
+              title: const Text('Deactivate tag?'),
+              content: Text(
+                'Deactivate "${tag.name}"? This tag will be marked as inactive.',
+              ),
               actions: <Widget>[
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(false),
@@ -374,7 +325,7 @@ class _ProductMetadataTagsScreenState extends State<ProductMetadataTagsScreen> {
                 ),
                 FilledButton(
                   onPressed: () => Navigator.of(context).pop(true),
-                  child: const Text('Delete'),
+                  child: const Text('Deactivate'),
                 ),
               ],
             );
@@ -387,54 +338,49 @@ class _ProductMetadataTagsScreenState extends State<ProductMetadataTagsScreen> {
     }
 
     try {
+      final previousTotalItems = _store.tagTotalItems;
       await _store.deleteTag(tag.id);
+      final effectiveTotalItems = _queryState.includeInactive
+          ? previousTotalItems
+          : (previousTotalItems > 0 ? previousTotalItems - 1 : 0);
+      _queryState = _queryState.copyWith(
+        page: resolveMetadataPageAfterDelete(
+          currentPage: _queryState.page,
+          pageSize: _queryState.pageSize,
+          totalItems: effectiveTotalItems,
+          includeInactive: _queryState.includeInactive,
+        ),
+      );
+      await _loadTags();
       if (!mounted) {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Deleted "${tag.name}".')),
+        SnackBar(content: Text('Deactivated "${tag.name}".')),
       );
     } catch (error) {
       if (!mounted) {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Couldn\'t delete tag. Try again.'),
+        SnackBar(
+          content: Text(
+            MetadataErrorFormatter.formatActionError(
+              error: error,
+              actionLabel: 'deactivate tag',
+            ),
+          ),
         ),
       );
     }
   }
-}
 
-class _TagFilterResult {
-  const _TagFilterResult({required this.status});
-
-  final TagStatus? status;
-}
-
-class _TagColorDot extends StatelessWidget {
-  const _TagColorDot({required this.colorHex});
-
-  final String? colorHex;
-
-  @override
-  Widget build(BuildContext context) {
-    final parsedColor = tryParseHexColor(colorHex);
-    if (parsedColor == null) {
-      return const Icon(Icons.sell_outlined);
-    }
-
-    return Container(
-      width: 20,
-      height: 20,
-      decoration: BoxDecoration(
-        color: parsedColor,
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outlineVariant,
-        ),
-      ),
+  Future<void> _loadTags() {
+    return _store.loadTags(
+      page: _queryState.page,
+      pageSize: _queryState.pageSize,
+      search: _queryState.search,
+      includeInactive: _queryState.includeInactive,
     );
   }
 }
