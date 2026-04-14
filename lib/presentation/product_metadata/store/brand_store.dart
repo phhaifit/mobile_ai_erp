@@ -37,7 +37,7 @@ abstract class BrandStoreBase with Store {
   int currentPage = 1;
 
   @observable
-  int pageSize = 20;
+  int pageSize = 10;
 
   @observable
   int totalItems = 0;
@@ -57,12 +57,20 @@ abstract class BrandStoreBase with Store {
   @observable
   bool includeInactive = false;
 
+  @observable
+  String? sortBy;
+
+  @observable
+  String? sortOrder;
+
   @action
   Future<void> loadBrands({
     int page = 1,
-    int pageSize = 20,
+    int pageSize = 10,
     String? search,
     bool includeInactive = false,
+    String? sortBy,
+    String? sortOrder,
   }) async {
     await _runWithLoading(() async {
       try {
@@ -72,50 +80,54 @@ abstract class BrandStoreBase with Store {
             pageSize: pageSize,
             search: search,
             includeInactive: includeInactive,
+            sortBy: sortBy,
+            sortOrder: sortOrder,
           ),
         );
         _applyMetadataPage(result);
         searchQuery = search;
         this.includeInactive = includeInactive;
+        this.sortBy = sortBy;
+        this.sortOrder = sortOrder;
         error = null;
       } catch (e) {
         error = e.toString();
+        errorStore.setErrorMessage(e.toString());
+        rethrow;
       }
     });
   }
 
   @action
   Future<Brand> createBrand(Brand brand) async {
-    late final Brand createdBrand;
-    await _runWithLoading(() async {
+    return await _runWithLoading(() async {
       try {
-        createdBrand = await _createBrandUseCase.call(params: brand);
+        final result = await _createBrandUseCase.call(params: brand);
         await _reloadCurrentQuery();
         error = null;
+        return result;
       } catch (e) {
         error = e.toString();
         errorStore.setErrorMessage(e.toString());
         rethrow;
       }
     });
-    return createdBrand;
   }
 
   @action
   Future<Brand> updateBrand(Brand brand) async {
-    late final Brand updatedBrand;
-    await _runWithLoading(() async {
+    return await _runWithLoading(() async {
       try {
-        updatedBrand = await _updateBrandUseCase.call(params: brand);
+        final result = await _updateBrandUseCase.call(params: brand);
         await _reloadCurrentQuery();
         error = null;
+        return result;
       } catch (e) {
         error = e.toString();
         errorStore.setErrorMessage(e.toString());
         rethrow;
       }
     });
-    return updatedBrand;
   }
 
   @action
@@ -123,6 +135,7 @@ abstract class BrandStoreBase with Store {
     await _runWithLoading(() async {
       try {
         await _deleteBrandUseCase.call(params: brandId);
+        await _reloadCurrentQuery();
         error = null;
       } catch (e) {
         error = e.toString();
@@ -148,10 +161,10 @@ abstract class BrandStoreBase with Store {
     isLoading = _loadingOperations > 0;
   }
 
-  Future<void> _runWithLoading(Future<void> Function() fn) async {
+  Future<T> _runWithLoading<T>(Future<T> Function() fn) async {
     _beginLoadingOperation();
     try {
-      await fn();
+      return await fn();
     } finally {
       _endLoadingOperation();
     }
@@ -165,6 +178,8 @@ abstract class BrandStoreBase with Store {
           pageSize: pageSize,
           search: searchQuery,
           includeInactive: includeInactive,
+          sortBy: sortBy,
+          sortOrder: sortOrder,
         ),
       );
       _applyMetadataPage(result);

@@ -58,22 +58,6 @@ abstract class CategoryStoreBase with Store {
   @observable
   String? error;
 
-  int _loadingOperations = 0;
-
-  @action
-  void _beginLoadingOperation() {
-    _loadingOperations++;
-    isLoading = _loadingOperations > 0;
-  }
-
-  @action
-  void _endLoadingOperation() {
-    if (_loadingOperations > 0) {
-      _loadingOperations--;
-    }
-    isLoading = _loadingOperations > 0;
-  }
-
   @observable
   String? searchQuery;
 
@@ -131,13 +115,14 @@ abstract class CategoryStoreBase with Store {
   }
 
   @action
-  Future<void> createCategory(Category category) async {
-    await _runWithLoading(() async {
+  Future<Category> createCategory(Category category) async {
+    return await _runWithLoading(() async {
       try {
-        await _createCategoryUseCase.call(params: category);
+        final result = await _createCategoryUseCase.call(params: category);
         await loadCategoryTree();
         await _reloadCurrentQuery();
         error = null;
+        return result;
       } catch (e) {
         error = e.toString();
         errorStore.setErrorMessage(e.toString());
@@ -147,13 +132,14 @@ abstract class CategoryStoreBase with Store {
   }
 
   @action
-  Future<void> updateCategory(Category category) async {
-    await _runWithLoading(() async {
+  Future<Category> updateCategory(Category category) async {
+    return await _runWithLoading(() async {
       try {
-        await _updateCategoryUseCase.call(params: category);
+        final result = await _updateCategoryUseCase.call(params: category);
         await loadCategoryTree();
         await _reloadCurrentQuery();
         error = null;
+        return result;
       } catch (e) {
         error = e.toString();
         errorStore.setErrorMessage(e.toString());
@@ -178,10 +164,26 @@ abstract class CategoryStoreBase with Store {
     });
   }
 
-  Future<void> _runWithLoading(Future<void> Function() fn) async {
+  int _loadingOperations = 0;
+
+  @action
+  void _beginLoadingOperation() {
+    _loadingOperations++;
+    isLoading = _loadingOperations > 0;
+  }
+
+  @action
+  void _endLoadingOperation() {
+    if (_loadingOperations > 0) {
+      _loadingOperations--;
+    }
+    isLoading = _loadingOperations > 0;
+  }
+
+  Future<T> _runWithLoading<T>(Future<T> Function() fn) async {
     _beginLoadingOperation();
     try {
-      await fn();
+      return await fn();
     } finally {
       _endLoadingOperation();
     }

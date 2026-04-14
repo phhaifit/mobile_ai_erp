@@ -7,6 +7,7 @@ import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/del
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/delete_attribute_value_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/get_attribute_sets_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/update_attribute_set_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/get_attribute_values_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/update_attribute_value_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/get_all_attribute_values_usecase.dart';
 import 'package:mobx/mobx.dart';
@@ -24,6 +25,7 @@ abstract class AttributeSetStoreBase with Store {
     required CreateAttributeValueUseCase createAttributeValueUseCase,
     required UpdateAttributeValueUseCase updateAttributeValueUseCase,
     required DeleteAttributeValueUseCase deleteAttributeValueUseCase,
+    required GetAttributeValuesUseCase getAttributeValuesUseCase,
     required GetAllAttributeValuesUseCase getAllAttributeValuesUseCase,
     required this.errorStore,
   })  : _getAttributeSetsUseCase = getAttributeSetsUseCase,
@@ -33,6 +35,7 @@ abstract class AttributeSetStoreBase with Store {
         _createAttributeValueUseCase = createAttributeValueUseCase,
         _updateAttributeValueUseCase = updateAttributeValueUseCase,
         _deleteAttributeValueUseCase = deleteAttributeValueUseCase,
+        _getAttributeValuesUseCase = getAttributeValuesUseCase,
         _getAllAttributeValuesUseCase = getAllAttributeValuesUseCase;
 
   final GetAttributeSetsUseCase _getAttributeSetsUseCase;
@@ -42,6 +45,7 @@ abstract class AttributeSetStoreBase with Store {
   final CreateAttributeValueUseCase _createAttributeValueUseCase;
   final UpdateAttributeValueUseCase _updateAttributeValueUseCase;
   final DeleteAttributeValueUseCase _deleteAttributeValueUseCase;
+  final GetAttributeValuesUseCase _getAttributeValuesUseCase;
   final GetAllAttributeValuesUseCase _getAllAttributeValuesUseCase;
 
   final ErrorStore errorStore;
@@ -54,13 +58,19 @@ abstract class AttributeSetStoreBase with Store {
   ObservableList<AttributeSet> attributeSets = ObservableList<AttributeSet>();
 
   @observable
+  ObservableList<AttributeValue> attributeValues = ObservableList<AttributeValue>();
+
+  @observable
   ObservableList<AttributeValue> allAttributeValues = ObservableList<AttributeValue>();
+
+  @observable
+  String? activeAttributeSetId;
 
   @observable
   int currentPage = 1;
 
   @observable
-  int pageSize = 20;
+  int pageSize = 10;
 
   @observable
   int totalItems = 0;
@@ -73,6 +83,22 @@ abstract class AttributeSetStoreBase with Store {
 
   @observable
   String? error;
+
+  int _loadingOperations = 0;
+
+  @action
+  void _beginLoadingOperation() {
+    _loadingOperations++;
+    isLoading = _loadingOperations > 0;
+  }
+
+  @action
+  void _endLoadingOperation() {
+    if (_loadingOperations > 0) {
+      _loadingOperations--;
+    }
+    isLoading = _loadingOperations > 0;
+  }
 
   @observable
   String? searchQuery;
@@ -90,7 +116,7 @@ abstract class AttributeSetStoreBase with Store {
   @action
   Future<void> loadAttributeSets({
     int page = 1,
-    int pageSize = 20,
+    int pageSize = 10,
     String? search,
     String? sortBy,
     String? sortOrder,
@@ -135,14 +161,15 @@ abstract class AttributeSetStoreBase with Store {
   }
 
   @action
-  Future<void> createAttributeSet(AttributeSet attributeSet) async {
-    await _runWithLoading(() async {
+  Future<AttributeSet> createAttributeSet(AttributeSet attributeSet) async {
+    return await _runWithLoading(() async {
       try {
-        await _createAttributeSetUseCase.call(
+        final result = await _createAttributeSetUseCase.call(
           params: attributeSet,
         );
         await _reloadCurrentQuery();
         error = null;
+        return result;
       } catch (e) {
         error = e.toString();
         errorStore.setErrorMessage(e.toString());
@@ -152,14 +179,15 @@ abstract class AttributeSetStoreBase with Store {
   }
 
   @action
-  Future<void> updateAttributeSet(AttributeSet attributeSet) async {
-    await _runWithLoading(() async {
+  Future<AttributeSet> updateAttributeSet(AttributeSet attributeSet) async {
+    return await _runWithLoading(() async {
       try {
-        await _updateAttributeSetUseCase.call(
+        final result = await _updateAttributeSetUseCase.call(
           params: attributeSet,
         );
         await _reloadCurrentQuery();
         error = null;
+        return result;
       } catch (e) {
         error = e.toString();
         errorStore.setErrorMessage(e.toString());
@@ -188,22 +216,14 @@ abstract class AttributeSetStoreBase with Store {
   // ============================================================================
 
   @action
-  Future<void> createAttributeValue(AttributeValue value) async {
+  Future<void> loadAttributeValues(String attributeSetId) async {
     await _runWithLoading(() async {
       try {
-        final result = await _createAttributeValueUseCase.call(params: value);
-        
-        // Update in attributeSets
-        final setIndex = attributeSets.indexWhere(
-          (set) => set.id == value.attributeSetId,
+        final result = await _getAttributeValuesUseCase.call(
+          params: attributeSetId,
         );
-        if (setIndex >= 0) {
-          final updatedSet = attributeSets[setIndex];
-          attributeSets[setIndex] = updatedSet.copyWith(
-            values: [...updatedSet.values, result],
-          );
-        }
-        
+        attributeValues = ObservableList.of(result);
+        activeAttributeSetId = attributeSetId;
         error = null;
       } catch (e) {
         error = e.toString();
@@ -214,12 +234,50 @@ abstract class AttributeSetStoreBase with Store {
   }
 
   @action
-  Future<void> updateAttributeValue(AttributeValue value) async {
-    await _runWithLoading(() async {
+  Future<AttributeValue> createAttributeValue(AttributeValue value) async {
+    return await _runWithLoading(() async {
+      try {
+        final result = await _createAttributeValueUseCase.call(params: value);
+
+        // Update in active list if viewing the same set
+        if (value.attributeSetId == activeAttributeSetId) {
+          attributeValues.add(result);
+        }
+
+        // Update in main attributeSets list (Find set and update nested values)
+        final setIndex = attributeSets.indexWhere(
+          (set) => set.id == value.attributeSetId,
+        );
+        if (setIndex >= 0) {
+          final updatedSet = attributeSets[setIndex];
+          attributeSets[setIndex] = updatedSet.copyWith(
+            values: [...updatedSet.values, result],
+          );
+        }
+
+        error = null;
+        return result;
+      } catch (e) {
+        error = e.toString();
+        errorStore.setErrorMessage(e.toString());
+        rethrow;
+      }
+    });
+  }
+
+  @action
+  Future<AttributeValue> updateAttributeValue(AttributeValue value) async {
+    return await _runWithLoading(() async {
       try {
         final result = await _updateAttributeValueUseCase.call(params: value);
-        
-        // Update in attributeSets
+
+        // Update in active list
+        final valIndex = attributeValues.indexWhere((v) => v.id == value.id);
+        if (valIndex >= 0) {
+          attributeValues[valIndex] = result;
+        }
+
+        // Update in main list
         final setIndex = attributeSets.indexWhere(
           (set) => set.id == value.attributeSetId,
         );
@@ -229,17 +287,16 @@ abstract class AttributeSetStoreBase with Store {
             (v) => v.id == value.id,
           );
           if (valueIndex >= 0) {
+            final updatedValues = [...updatedSet.values];
+            updatedValues[valueIndex] = result;
             attributeSets[setIndex] = updatedSet.copyWith(
-              values: [
-                ...updatedSet.values.sublist(0, valueIndex),
-                result,
-                ...updatedSet.values.sublist(valueIndex + 1),
-              ],
+              values: updatedValues,
             );
           }
         }
-        
+
         error = null;
+        return result;
       } catch (e) {
         error = e.toString();
         errorStore.setErrorMessage(e.toString());
@@ -261,8 +318,11 @@ abstract class AttributeSetStoreBase with Store {
             valueId: valueId,
           ),
         );
-        
-        // Update in attributeSets
+
+        // Update in active list
+        attributeValues.removeWhere((v) => v.id == valueId);
+
+        // Update in main list
         final setIndex = attributeSets.indexWhere(
           (set) => set.id == attributeSetId,
         );
@@ -274,7 +334,7 @@ abstract class AttributeSetStoreBase with Store {
                 .toList(),
           );
         }
-        
+
         error = null;
       } catch (e) {
         error = e.toString();
@@ -284,12 +344,12 @@ abstract class AttributeSetStoreBase with Store {
     });
   }
 
-  Future<void> _runWithLoading(Future<void> Function() fn) async {
-    isLoading = true;
+  Future<T> _runWithLoading<T>(Future<T> Function() fn) async {
+    _beginLoadingOperation();
     try {
-      await fn();
+      return await fn();
     } finally {
-      isLoading = false;
+      _endLoadingOperation();
     }
   }
 

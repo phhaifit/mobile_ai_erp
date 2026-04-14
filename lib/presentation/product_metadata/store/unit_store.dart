@@ -52,32 +52,16 @@ abstract class UnitStoreBase with Store {
   String? error;
 
   @observable
-  bool includeInactive = false;
+  String? searchQuery;
 
   @observable
-  String? searchQuery;
+  bool includeInactive = false;
 
   @observable
   String? sortBy;
 
   @observable
   String? sortOrder;
-
-  int _loadingOperations = 0;
-
-  @action
-  void _beginLoadingOperation() {
-    _loadingOperations++;
-    isLoading = _loadingOperations > 0;
-  }
-
-  @action
-  void _endLoadingOperation() {
-    if (_loadingOperations > 0) {
-      _loadingOperations--;
-    }
-    isLoading = _loadingOperations > 0;
-  }
 
   @action
   Future<void> loadUnits({
@@ -101,15 +85,14 @@ abstract class UnitStoreBase with Store {
           ),
         );
         _applyMetadataPage(result);
-        this.includeInactive = includeInactive;
         searchQuery = search;
+        this.includeInactive = includeInactive;
         this.sortBy = sortBy;
         this.sortOrder = sortOrder;
         error = null;
       } catch (e) {
         error = e.toString();
         errorStore.setErrorMessage(e.toString());
-        await _reloadCurrentQuery();
         rethrow;
       }
     });
@@ -126,7 +109,6 @@ abstract class UnitStoreBase with Store {
       } catch (e) {
         error = e.toString();
         errorStore.setErrorMessage(e.toString());
-        await _reloadCurrentQuery();
         rethrow;
       }
     });
@@ -143,7 +125,6 @@ abstract class UnitStoreBase with Store {
       } catch (e) {
         error = e.toString();
         errorStore.setErrorMessage(e.toString());
-        await _reloadCurrentQuery();
         rethrow;
       }
     });
@@ -159,10 +140,25 @@ abstract class UnitStoreBase with Store {
       } catch (e) {
         error = e.toString();
         errorStore.setErrorMessage(e.toString());
-        await _reloadCurrentQuery();
         rethrow;
       }
     });
+  }
+
+  int _loadingOperations = 0;
+
+  @action
+  void _beginLoadingOperation() {
+    _loadingOperations++;
+    isLoading = _loadingOperations > 0;
+  }
+
+  @action
+  void _endLoadingOperation() {
+    if (_loadingOperations > 0) {
+      _loadingOperations--;
+    }
+    isLoading = _loadingOperations > 0;
   }
 
   Future<T> _runWithLoading<T>(Future<T> Function() fn) async {

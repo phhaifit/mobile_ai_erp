@@ -1,10 +1,19 @@
 import 'package:mobile_ai_erp/core/stores/error/error_store.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/attribute.dart';
-import 'package:mobile_ai_erp/domain/entity/product_metadata/attribute_option.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/brand.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/tag.dart';
-import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadata_repository.dart';
+import 'package:mobile_ai_erp/domain/entity/product_metadata/unit.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/get_attribute_set_by_id_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/brands/get_brand_by_id_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/tags/get_tag_by_id_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/categories/get_category_by_id_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/units/get_unit_by_id_usecase.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/store/attribute_set_store.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/store/brand_store.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/store/category_store.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/store/tag_store.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/store/unit_store.dart';
 import 'package:mobx/mobx.dart';
 
 part 'product_metadata_store.g.dart';
@@ -12,342 +21,240 @@ part 'product_metadata_store.g.dart';
 class ProductMetadataStore = ProductMetadataStoreBase
     with _$ProductMetadataStore;
 
+/// Main coordinator store for all product metadata resources.
+/// Thin delegation layer - all business logic resides in sub-stores.
 abstract class ProductMetadataStoreBase with Store {
-  ProductMetadataStoreBase(this._repository, this.errorStore);
+  ProductMetadataStoreBase({
+    required CategoryStore categoryStore,
+    required BrandStore brandStore,
+    required TagStore tagStore,
+    required UnitStore unitStore,
+    required AttributeSetStore attributeSetStore,
+    required GetBrandByIdUseCase getBrandByIdUseCase,
+    required GetTagByIdUseCase getTagByIdUseCase,
+    required GetCategoryByIdUseCase getCategoryByIdUseCase,
+    required GetAttributeSetByIdUseCase getAttributeSetByIdUseCase,
+    required GetUnitByIdUseCase getUnitByIdUseCase,
+    required this.errorStore,
+  }) : _categoryStore = categoryStore,
+       _brandStore = brandStore,
+       _tagStore = tagStore,
+       _unitStore = unitStore,
+       _attributeSetStore = attributeSetStore,
+       _getBrandByIdUseCase = getBrandByIdUseCase,
+       _getTagByIdUseCase = getTagByIdUseCase,
+       _getCategoryByIdUseCase = getCategoryByIdUseCase,
+       _getAttributeSetByIdUseCase = getAttributeSetByIdUseCase,
+       _getUnitByIdUseCase = getUnitByIdUseCase;
 
-  final ProductMetadataRepository _repository;
+  final CategoryStore _categoryStore;
+  final BrandStore _brandStore;
+  final TagStore _tagStore;
+  final UnitStore _unitStore;
+  final AttributeSetStore _attributeSetStore;
+  final GetBrandByIdUseCase _getBrandByIdUseCase;
+  final GetTagByIdUseCase _getTagByIdUseCase;
+  final GetCategoryByIdUseCase _getCategoryByIdUseCase;
+  final GetAttributeSetByIdUseCase _getAttributeSetByIdUseCase;
+  final GetUnitByIdUseCase _getUnitByIdUseCase;
   final ErrorStore errorStore;
-
-  @observable
-  bool isLoading = false;
 
   @observable
   bool hasLoadedDashboard = false;
 
-  @observable
-  ObservableList<Category> categories = ObservableList<Category>();
+  // Category delegation
+  ObservableList<Category> get categories => _categoryStore.categories;
+  ObservableList<Category> get categoryTree => _categoryStore.categoryTree;
+  int get categoryCurrentPage => _categoryStore.currentPage;
+  int get categoryPageSize => _categoryStore.pageSize;
+  int get categoryTotalItems => _categoryStore.totalItems;
+  int get categoryTotalPages => _categoryStore.totalPages;
+  Future<void> loadCategories({
+    int page = 1,
+    int pageSize = 10,
+    String? search,
+    String? sortBy,
+    String? sortOrder,
+  }) => _categoryStore.loadCategories(
+    page: page,
+    pageSize: pageSize,
+    search: search,
+    sortBy: sortBy,
+    sortOrder: sortOrder,
+  );
+  Future<void> loadCategoryTree() => _categoryStore.loadCategoryTree();
+  Future<Category> createCategory(Category category) =>
+      _categoryStore.createCategory(category);
+  Future<Category> updateCategory(Category category) =>
+      _categoryStore.updateCategory(category);
+  Future<void> deleteCategory(String categoryId) =>
+      _categoryStore.deleteCategory(categoryId);
+  Future<Category> getCategoryById(String categoryId) =>
+      _getCategoryByIdUseCase.call(params: categoryId);
 
-  @observable
-  ObservableList<Attribute> attributes = ObservableList<Attribute>();
+  // Brand delegation
+  ObservableList<Brand> get brands => _brandStore.brands;
+  int get brandCurrentPage => _brandStore.currentPage;
+  int get brandPageSize => _brandStore.pageSize;
+  int get brandTotalItems => _brandStore.totalItems;
+  int get brandTotalPages => _brandStore.totalPages;
+  Future<void> loadBrands({
+    int page = 1,
+    int pageSize = 10,
+    String? search,
+    bool includeInactive = false,
+    String? sortBy,
+    String? sortOrder,
+  }) => _brandStore.loadBrands(
+    page: page,
+    pageSize: pageSize,
+    search: search,
+    includeInactive: includeInactive,
+    sortBy: sortBy,
+    sortOrder: sortOrder,
+  );
+  Future<Brand> createBrand(Brand brand) => _brandStore.createBrand(brand);
+  Future<Brand> updateBrand(Brand brand) => _brandStore.updateBrand(brand);
+  Future<void> deleteBrand(String brandId) => _brandStore.deleteBrand(brandId);
+  Future<Brand> getBrandById(String brandId) =>
+      _getBrandByIdUseCase.call(params: brandId);
 
-  @observable
-  ObservableList<AttributeOption> attributeOptions =
-      ObservableList<AttributeOption>();
+  // Tag delegation
+  ObservableList<Tag> get tags => _tagStore.tags;
+  int get tagCurrentPage => _tagStore.currentPage;
+  int get tagPageSize => _tagStore.pageSize;
+  int get tagTotalItems => _tagStore.totalItems;
+  int get tagTotalPages => _tagStore.totalPages;
+  Future<void> loadTags({
+    int page = 1,
+    int pageSize = 10,
+    String? search,
+    bool includeInactive = false,
+    String? sortBy,
+    String? sortOrder,
+  }) => _tagStore.loadTags(
+    page: page,
+    pageSize: pageSize,
+    search: search,
+    includeInactive: includeInactive,
+    sortBy: sortBy,
+    sortOrder: sortOrder,
+  );
+  Future<Tag> createTag(Tag tag) => _tagStore.createTag(tag);
+  Future<Tag> updateTag(Tag tag) => _tagStore.updateTag(tag);
+  Future<void> deleteTag(String tagId) => _tagStore.deleteTag(tagId);
+  Future<Tag> getTagById(String tagId) =>
+      _getTagByIdUseCase.call(params: tagId);
 
-  @observable
-  ObservableMap<String, int> attributeOptionCounts =
-      ObservableMap<String, int>();
+  // Unit delegation
+  ObservableList<Unit> get units => _unitStore.units;
+  int get unitCurrentPage => _unitStore.currentPage;
+  int get unitPageSize => _unitStore.pageSize;
+  int get unitTotalItems => _unitStore.totalItems;
+  int get unitTotalPages => _unitStore.totalPages;
+  Future<void> loadUnits({
+    int page = 1,
+    int pageSize = 10,
+    String? search,
+    bool includeInactive = false,
+    String? sortBy,
+    String? sortOrder,
+  }) => _unitStore.loadUnits(
+    page: page,
+    pageSize: pageSize,
+    search: search,
+    includeInactive: includeInactive,
+    sortBy: sortBy,
+    sortOrder: sortOrder,
+  );
+  Future<Unit> createUnit(Unit unit) => _unitStore.createUnit(unit);
+  Future<Unit> updateUnit(Unit unit) => _unitStore.updateUnit(unit);
+  Future<void> deleteUnit(String unitId) => _unitStore.deleteUnit(unitId);
+  Future<Unit> getUnitById(String unitId) =>
+      _getUnitByIdUseCase.call(params: unitId);
 
-  @observable
-  ObservableList<Brand> brands = ObservableList<Brand>();
+  // AttributeSet delegation
+  ObservableList<AttributeSet> get attributeSets =>
+      _attributeSetStore.attributeSets;
+  int get attributeSetCurrentPage => _attributeSetStore.currentPage;
+  int get attributeSetPageSize => _attributeSetStore.pageSize;
+  int get attributeSetTotalItems => _attributeSetStore.totalItems;
+  int get attributeSetTotalPages => _attributeSetStore.totalPages;
+  ObservableList<AttributeValue> get allAttributeValues =>
+      _attributeSetStore.allAttributeValues;
+  Future<void> loadAllAttributeValues() =>
+      _attributeSetStore.loadAllAttributeValues();
+  Future<void> loadAttributeSets({
+    int page = 1,
+    int pageSize = 10,
+    String? search,
+    String? sortBy,
+    String? sortOrder,
+  }) => _attributeSetStore.loadAttributeSets(
+    page: page,
+    pageSize: pageSize,
+    search: search,
+    sortBy: sortBy,
+    sortOrder: sortOrder,
+  );
+  Future<AttributeSet> createAttributeSet(AttributeSet attributeSet) =>
+      _attributeSetStore.createAttributeSet(attributeSet);
+  Future<AttributeSet> updateAttributeSet(AttributeSet attributeSet) =>
+      _attributeSetStore.updateAttributeSet(attributeSet);
+  Future<void> deleteAttributeSet(String attributeSetId) =>
+      _attributeSetStore.deleteAttributeSet(attributeSetId);
+  Future<AttributeSet> getAttributeSetById(String attributeSetId) =>
+      _getAttributeSetByIdUseCase.call(params: attributeSetId);
 
-  @observable
-  ObservableList<Tag> tags = ObservableList<Tag>();
+  // AttributeValue delegation
+  ObservableList<AttributeValue> get attributeValues =>
+      _attributeSetStore.attributeValues;
+  Future<void> loadAttributeValues(String attributeSetId) =>
+      _attributeSetStore.loadAttributeValues(attributeSetId);
+  Future<AttributeValue> createAttributeValue(AttributeValue value) =>
+      _attributeSetStore.createAttributeValue(value);
+  Future<AttributeValue> updateAttributeValue(AttributeValue value) =>
+      _attributeSetStore.updateAttributeValue(value);
+  Future<void> deleteAttributeValue(String attributeSetId, String valueId) =>
+      _attributeSetStore.deleteAttributeValue(attributeSetId, valueId);
 
-  @observable
-  String? activeAttributeId;
+  // Aggregated state
+  @computed
+  bool get isLoading =>
+      _categoryStore.isLoading ||
+      _brandStore.isLoading ||
+      _tagStore.isLoading ||
+      _unitStore.isLoading ||
+      _attributeSetStore.isLoading;
 
+  @computed
+  String? get error =>
+      _categoryStore.error ??
+      _brandStore.error ??
+      _tagStore.error ??
+      _unitStore.error ??
+      _attributeSetStore.error;
+
+  // Dashboard load - parallel Future.wait for all resources
   @action
   Future<void> loadDashboard({bool force = false}) async {
     if (hasLoadedDashboard && !force) {
       return;
     }
 
-    await _runWithLoading(() async {
-      final results = await Future.wait<dynamic>(<Future<dynamic>>[
-        _repository.getCategories(),
-        _repository.getAttributes(),
-        _repository.getBrands(),
-        _repository.getTags(),
-      ]);
-
-      categories = ObservableList<Category>.of(results[0] as List<Category>);
-      attributes = ObservableList<Attribute>.of(results[1] as List<Attribute>);
-      brands = ObservableList<Brand>.of(results[2] as List<Brand>);
-      tags = ObservableList<Tag>.of(results[3] as List<Tag>);
-      attributeOptionCounts = ObservableMap<String, int>.of(
-        await _repository.getAttributeOptionCounts(
-          attributes.map((attribute) => attribute.id).toList(),
-        ),
-      );
-      hasLoadedDashboard = true;
-      errorStore.errorMessage = '';
-    });
-  }
-
-  @action
-  Future<void> loadAttributes() async {
-    activeAttributeId = null;
-    await _runWithLoading(() async {
-      final loadedAttributes = await _repository.getAttributes();
-      attributes = ObservableList<Attribute>.of(loadedAttributes);
-      attributeOptionCounts = ObservableMap<String, int>.of(
-        await _repository.getAttributeOptionCounts(
-          loadedAttributes.map((attribute) => attribute.id).toList(),
-        ),
-      );
-      attributeOptions.clear();
-      errorStore.errorMessage = '';
-    });
-  }
-
-  @action
-  Future<void> loadAttributeOptions(String attributeId) async {
-    activeAttributeId = attributeId;
-    await _runWithLoading(() async {
-      final loadedOptions = await _repository.getAttributeOptions(attributeId);
-      attributeOptions = ObservableList<AttributeOption>.of(loadedOptions);
-      errorStore.errorMessage = '';
-    });
-  }
-
-  @action
-  Future<void> saveCategory(Category category) async {
-    await _repository.saveCategory(category);
-    categories = ObservableList<Category>.of(await _repository.getCategories());
-  }
-
-  @action
-  Future<void> deleteCategory(String categoryId) async {
-    await _repository.deleteCategory(categoryId);
-    categories.removeWhere((category) => category.id == categoryId);
-  }
-
-  @action
-  Future<void> saveAttribute(Attribute attribute) async {
-    final savedAttribute = await _repository.saveAttribute(attribute);
-    _upsertAttribute(savedAttribute);
-    if (savedAttribute.valueType.supportsOptions) {
-      attributeOptionCounts.putIfAbsent(savedAttribute.id, () => 0);
-    } else {
-      attributeOptionCounts.remove(savedAttribute.id);
-    }
-  }
-
-  @action
-  Future<void> deleteAttribute(String attributeId) async {
-    await _repository.deleteAttribute(attributeId);
-    attributes.removeWhere((attribute) => attribute.id == attributeId);
-    attributeOptionCounts.remove(attributeId);
-    if (activeAttributeId == attributeId) {
-      activeAttributeId = null;
-      attributeOptions.clear();
-    }
-  }
-
-  @action
-  Future<void> saveAttributeOption(AttributeOption attributeOption) async {
-    final savedOption = await _repository.saveAttributeOption(attributeOption);
-    if (activeAttributeId == savedOption.attributeId) {
-      _upsertAttributeOption(savedOption);
-    }
-    await _refreshAttributeOptionCount(savedOption.attributeId);
-  }
-
-  @action
-  Future<void> deleteAttributeOption(String attributeOptionId) async {
-    String? affectedAttributeId;
-    for (final option in attributeOptions) {
-      if (option.id == attributeOptionId) {
-        affectedAttributeId = option.attributeId;
-        break;
-      }
-    }
-    await _repository.deleteAttributeOption(attributeOptionId);
-    attributeOptions.removeWhere((option) => option.id == attributeOptionId);
-    if (affectedAttributeId != null) {
-      await _refreshAttributeOptionCount(affectedAttributeId);
-    }
-  }
-
-  @action
-  Future<void> saveBrand(Brand brand) async {
-    final savedBrand = await _repository.saveBrand(brand);
-    _upsertBrand(savedBrand);
-  }
-
-  @action
-  Future<void> deleteBrand(String brandId) async {
-    await _repository.deleteBrand(brandId);
-    brands.removeWhere((brand) => brand.id == brandId);
-  }
-
-  @action
-  Future<void> saveTag(Tag tag) async {
-    final savedTag = await _repository.saveTag(tag);
-    _upsertTag(savedTag);
-  }
-
-  @action
-  Future<void> deleteTag(String tagId) async {
-    await _repository.deleteTag(tagId);
-    tags.removeWhere((tag) => tag.id == tagId);
-  }
-
-  List<Category> childrenOf(String? parentId) {
-    final items =
-        categories.where((category) => category.parentId == parentId).toList();
-    items.sort((left, right) {
-      final orderCompare = left.sortOrder.compareTo(right.sortOrder);
-      if (orderCompare != 0) {
-        return orderCompare;
-      }
-      return left.name.toLowerCase().compareTo(right.name.toLowerCase());
-    });
-    return items;
-  }
-
-  Category? findCategoryById(String? id) =>
-      _findById(categories, id, (item) => item.id);
-
-  Brand? findBrandById(String? id) => _findById(brands, id, (item) => item.id);
-
-  Tag? findTagById(String? id) => _findById(tags, id, (item) => item.id);
-
-  Attribute? findAttributeById(String? id) =>
-      _findById(attributes, id, (item) => item.id);
-
-  int optionCountForAttribute(String attributeId) =>
-      attributeOptionCounts[attributeId] ?? 0;
-
-  @action
-  Future<void> _runWithLoading(Future<void> Function() callback) async {
-    isLoading = true;
     try {
-      await callback();
-    } catch (error) {
-      errorStore.errorMessage = error.toString();
+      await Future.wait([
+        loadCategories(),
+        loadCategoryTree(),
+        loadTags(),
+        loadUnits(),
+        loadAttributeSets(),
+        loadBrands(),
+      ]);
+      hasLoadedDashboard = true;
+    } catch (e) {
+      hasLoadedDashboard = false;
       rethrow;
-    } finally {
-      isLoading = false;
     }
-  }
-
-  @action
-  void _upsertCategory(Category category) {
-    _upsert<Category>(
-      list: categories,
-      item: category,
-      idSelector: (item) => item.id,
-      compare: (left, right) {
-        final parentCompare =
-            (left.parentId ?? '').compareTo(right.parentId ?? '');
-        if (parentCompare != 0) {
-          return parentCompare;
-        }
-        final orderCompare = left.sortOrder.compareTo(right.sortOrder);
-        if (orderCompare != 0) {
-          return orderCompare;
-        }
-        return left.name.toLowerCase().compareTo(right.name.toLowerCase());
-      },
-    );
-  }
-
-  @action
-  void _upsertAttribute(Attribute attribute) {
-    _upsert<Attribute>(
-      list: attributes,
-      item: attribute,
-      idSelector: (item) => item.id,
-      compare: (left, right) {
-        final orderCompare = left.sortOrder.compareTo(right.sortOrder);
-        if (orderCompare != 0) {
-          return orderCompare;
-        }
-        return left.name.toLowerCase().compareTo(right.name.toLowerCase());
-      },
-    );
-  }
-
-  @action
-  void _upsertAttributeOption(AttributeOption attributeOption) {
-    _upsert<AttributeOption>(
-      list: attributeOptions,
-      item: attributeOption,
-      idSelector: (item) => item.id,
-      compare: (left, right) {
-        final orderCompare = left.sortOrder.compareTo(right.sortOrder);
-        if (orderCompare != 0) {
-          return orderCompare;
-        }
-        return left.value.toLowerCase().compareTo(right.value.toLowerCase());
-      },
-    );
-  }
-
-  @action
-  void _upsertBrand(Brand brand) {
-    _upsert<Brand>(
-      list: brands,
-      item: brand,
-      idSelector: (item) => item.id,
-      compare: (left, right) {
-        final orderCompare = left.sortOrder.compareTo(right.sortOrder);
-        if (orderCompare != 0) {
-          return orderCompare;
-        }
-        return left.name.toLowerCase().compareTo(right.name.toLowerCase());
-      },
-    );
-  }
-
-  @action
-  void _upsertTag(Tag tag) {
-    _upsert<Tag>(
-      list: tags,
-      item: tag,
-      idSelector: (item) => item.id,
-      compare: (left, right) {
-        final orderCompare = left.sortOrder.compareTo(right.sortOrder);
-        if (orderCompare != 0) {
-          return orderCompare;
-        }
-        return left.name.toLowerCase().compareTo(right.name.toLowerCase());
-      },
-    );
-  }
-
-  @action
-  void _upsert<T>({
-    required ObservableList<T> list,
-    required T item,
-    required String Function(T item) idSelector,
-    required int Function(T left, T right) compare,
-  }) {
-    final index =
-        list.indexWhere((existing) => idSelector(existing) == idSelector(item));
-    if (index >= 0) {
-      list[index] = item;
-    } else {
-      list.add(item);
-    }
-    final sorted = list.toList()..sort(compare);
-    list
-      ..clear()
-      ..addAll(sorted);
-  }
-
-  T? _findById<T>(
-    Iterable<T> items,
-    String? id,
-    String Function(T item) idSelector,
-  ) {
-    if (id == null || id.isEmpty) {
-      return null;
-    }
-    for (final item in items) {
-      if (idSelector(item) == id) {
-        return item;
-      }
-    }
-    return null;
-  }
-
-  @action
-  Future<void> _refreshAttributeOptionCount(String attributeId) async {
-    final counts =
-        await _repository.getAttributeOptionCounts(<String>[attributeId]);
-    attributeOptionCounts[attributeId] = counts[attributeId] ?? 0;
   }
 }

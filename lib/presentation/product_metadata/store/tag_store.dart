@@ -63,22 +63,6 @@ abstract class TagStoreBase with Store {
   @observable
   String? sortOrder;
 
-  int _loadingOperations = 0;
-
-  @action
-  void _beginLoadingOperation() {
-    _loadingOperations++;
-    isLoading = _loadingOperations > 0;
-  }
-
-  @action
-  void _endLoadingOperation() {
-    if (_loadingOperations > 0) {
-      _loadingOperations--;
-    }
-    isLoading = _loadingOperations > 0;
-  }
-
   @action
   Future<void> loadTags({
     int page = 1,
@@ -125,7 +109,6 @@ abstract class TagStoreBase with Store {
       } catch (e) {
         error = e.toString();
         errorStore.setErrorMessage(e.toString());
-        await _reloadCurrentQuery();
         rethrow;
       }
     });
@@ -142,7 +125,6 @@ abstract class TagStoreBase with Store {
       } catch (e) {
         error = e.toString();
         errorStore.setErrorMessage(e.toString());
-        await _reloadCurrentQuery();
         rethrow;
       }
     });
@@ -158,10 +140,25 @@ abstract class TagStoreBase with Store {
       } catch (e) {
         error = e.toString();
         errorStore.setErrorMessage(e.toString());
-        await _reloadCurrentQuery();
         rethrow;
       }
     });
+  }
+
+  int _loadingOperations = 0;
+
+  @action
+  void _beginLoadingOperation() {
+    _loadingOperations++;
+    isLoading = _loadingOperations > 0;
+  }
+
+  @action
+  void _endLoadingOperation() {
+    if (_loadingOperations > 0) {
+      _loadingOperations--;
+    }
+    isLoading = _loadingOperations > 0;
   }
 
   Future<T> _runWithLoading<T>(Future<T> Function() fn) async {
