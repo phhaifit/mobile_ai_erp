@@ -27,7 +27,7 @@ class RoleDataSource {
     if (index != -1) _roles[index] = updated;
   }
 
-  Future<void> deleteRole(int id) async {
+  Future<void> deleteRole(String id) async {
     await Future.delayed(const Duration(milliseconds: 200));
     _roles.removeWhere((r) => r.id == id);
   }
