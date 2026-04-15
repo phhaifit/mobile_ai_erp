@@ -22,6 +22,36 @@ enum SortOption {
 class ListingFilters = _ListingFiltersStore with _$ListingFilters;
 
 abstract class _ListingFiltersStore with Store {
+  static final DateTime _mockTimestamp = DateTime(2026, 4, 10);
+
+  static Brand _brand(String id, String name) {
+    return Brand(
+      id: id,
+      tenantId: 'tenant_demo',
+      name: name,
+      isActive: true,
+      createdAt: _mockTimestamp,
+      updatedAt: _mockTimestamp,
+    );
+  }
+
+  static Category _category({
+    required String id,
+    required String name,
+    required String slug,
+    String? parentId,
+  }) {
+    return Category(
+      id: id,
+      tenantId: 'tenant_demo',
+      name: name,
+      slug: slug,
+      parentId: parentId,
+      createdAt: _mockTimestamp,
+      updatedAt: _mockTimestamp,
+    );
+  }
+
   // test data
   final List<Product> testProducts = [
           Product(
@@ -37,8 +67,8 @@ abstract class _ListingFiltersStore with Store {
         brandId: 1,
         tagIds: [1],
         imageUrls: ['https://picsum.photos/id/17/250/250'],
-        category: Category(id: 'CAT1', name: 'Happy', code: 'CAT1', slug: 'happy'),
-        brand: Brand(id: 'BRAND1', name: 'CLX', code: 'BRAND1'),
+        category: _category(id: 'CAT1', name: 'Happy', slug: 'happy'),
+        brand: _brand('BRAND1', 'CLX'),
       ),
       Product(
         id: 2,
@@ -53,8 +83,8 @@ abstract class _ListingFiltersStore with Store {
         brandId: 2,
         tagIds: [1, 2],
         imageUrls: [],
-        category: Category(id: 'CAT1', name: 'Happy', code: 'CAT1', slug: 'happy'),
-        brand: Brand(id: 'BRAND2', name: 'MGMG', code: 'BRAND2'),
+        category: _category(id: 'CAT1', name: 'Happy', slug: 'happy'),
+        brand: _brand('BRAND2', 'MGMG'),
       ),
       Product(
         id: 3,
@@ -69,8 +99,8 @@ abstract class _ListingFiltersStore with Store {
         brandId: 2,
         tagIds: [2, 3],
         imageUrls: ['https://picsum.photos/id/19/250/250'],
-        category: Category(id: 'CAT2', name: 'General', code: 'CAT2', slug: 'general'),
-        brand: Brand(id: 'BRAND2', name: 'MGMG', code: 'BRAND2'),
+        category: _category(id: 'CAT2', name: 'General', slug: 'general'),
+        brand: _brand('BRAND2', 'MGMG'),
       ),
       Product(
         id: 4,
@@ -85,49 +115,22 @@ abstract class _ListingFiltersStore with Store {
         brandId: 3,
         tagIds: [3],
         imageUrls: ['https://picsum.photos/id/20/250/250'],
-        category: Category(id: 'CAT2', name: 'General', code: 'CAT2', slug: 'general'),
-        brand: Brand(id: 'BRAND3', name: 'SOUPS', code: 'BRAND3'),
+        category: _category(id: 'CAT2', name: 'General', slug: 'general'),
+        brand: _brand('BRAND3', 'SOUPS'),
       ),
   ].toList();
 
 
   final List<Brand> testBrands = [
-    const Brand(
-        id: 'BRAND1',
-        name: 'TechCorp',
-        code: 'BRAND1',
-      ),
-      const Brand(
-        id: 'BRAND2',
-        name: 'CompuTech',
-        code: 'BRAND2',
-      ),
-      const Brand(
-        id: 'BRAND3',
-        name: 'FashionBrand',
-        code: 'BRAND3',
-      ),
+    _brand('BRAND1', 'TechCorp'),
+    _brand('BRAND2', 'CompuTech'),
+    _brand('BRAND3', 'FashionBrand'),
   ];
 
   final List<Category> testCategories = [
-    Category(
-        id: 'CAT1',
-        name: 'Electronics',
-        code: 'ELEC',
-        slug: 'electronics',
-      ),
-      Category(
-        id: 'CAT2',
-        name: 'Clothing',
-        code: 'CLOTH',
-        slug: 'clothing',
-      ),
-      Category(
-        id: 'CAT3',
-        name: 'Home & Garden',
-        code: 'HOME',
-        slug: 'home-garden',
-      ),
+    _category(id: 'CAT1', name: 'Electronics', slug: 'electronics'),
+    _category(id: 'CAT2', name: 'Clothing', slug: 'clothing'),
+    _category(id: 'CAT3', name: 'Home & Garden', slug: 'home-garden'),
   ];
 
   // store variables

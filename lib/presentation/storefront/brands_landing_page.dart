@@ -16,8 +16,42 @@ class BrandsLandingPage extends StatefulWidget {
 }
 
 class _BrandsLandingPageState extends State<BrandsLandingPage> {
+  static final DateTime _mockTimestamp = DateTime(2026, 4, 10);
   late List<Brand> brands;
   late Map<String, List<Product>> productsByBrand;
+
+  Brand _brand({
+    required String id,
+    required String name,
+    String? description,
+    String? logoUrl,
+  }) {
+    return Brand(
+      id: id,
+      tenantId: 'tenant_demo',
+      name: name,
+      description: description,
+      logoUrl: logoUrl,
+      isActive: true,
+      createdAt: _mockTimestamp,
+      updatedAt: _mockTimestamp,
+    );
+  }
+
+  Category _category({
+    required String id,
+    required String name,
+    required String slug,
+  }) {
+    return Category(
+      id: id,
+      tenantId: 'tenant_demo',
+      name: name,
+      slug: slug,
+      createdAt: _mockTimestamp,
+      updatedAt: _mockTimestamp,
+    );
+  }
 
   @override
   void initState() {
@@ -28,37 +62,25 @@ class _BrandsLandingPageState extends State<BrandsLandingPage> {
 
   List<Brand> fetchBrands() {
     return [
-      const Brand(
+      _brand(
         id: 'BRAND1',
         name: 'TechCorp',
-        code: 'BRAND1',
         description: 'Leading technology innovator',
-        countryCode: 'US',
-        city: 'San Francisco',
       ),
-      const Brand(
+      _brand(
         id: 'BRAND2',
         name: 'CompuTech',
-        code: 'BRAND2',
         description: 'Quality computing solutions',
-        countryCode: 'JP',
-        city: 'Tokyo',
       ),
-      const Brand(
+      _brand(
         id: 'BRAND3',
         name: 'FashionBrand',
-        code: 'BRAND3',
         description: 'Trendy fashion for everyone',
-        countryCode: 'IT',
-        city: 'Milan',
       ),
-      const Brand(
+      _brand(
         id: 'BRAND4',
         name: 'HomeGoods',
-        code: 'BRAND4',
         description: 'Quality home and garden products',
-        countryCode: 'DE',
-        city: 'Berlin',
       ),
     ];
   }
@@ -78,13 +100,8 @@ class _BrandsLandingPageState extends State<BrandsLandingPage> {
         brandId: 1,
         tagIds: [1, 2],
         imageUrls: ['https://picsum.photos/id/17/250/250'],
-        category: Category(
-          id: 'CAT1',
-          name: 'Electronics',
-          code: 'ELEC',
-          slug: 'electronics',
-        ),
-        brand: const Brand(id: 'BRAND1', name: 'TechCorp', code: 'BRAND1'),
+        category: _category(id: 'CAT1', name: 'Electronics', slug: 'electronics'),
+        brand: _brand(id: 'BRAND1', name: 'TechCorp'),
       ),
       Product(
         id: 2,
@@ -99,13 +116,8 @@ class _BrandsLandingPageState extends State<BrandsLandingPage> {
         brandId: 1,
         tagIds: [1, 3],
         imageUrls: ['https://picsum.photos/id/18/250/250'],
-        category: Category(
-          id: 'CAT1',
-          name: 'Electronics',
-          code: 'ELEC',
-          slug: 'electronics',
-        ),
-        brand: const Brand(id: 'BRAND1', name: 'TechCorp', code: 'BRAND1'),
+        category: _category(id: 'CAT1', name: 'Electronics', slug: 'electronics'),
+        brand: _brand(id: 'BRAND1', name: 'TechCorp'),
       ),
       Product(
         id: 3,
@@ -120,13 +132,8 @@ class _BrandsLandingPageState extends State<BrandsLandingPage> {
         brandId: 2,
         tagIds: [1, 2, 3],
         imageUrls: ['https://picsum.photos/id/19/250/250'],
-        category: Category(
-          id: 'CAT1',
-          name: 'Electronics',
-          code: 'ELEC',
-          slug: 'electronics',
-        ),
-        brand: const Brand(id: 'BRAND2', name: 'CompuTech', code: 'BRAND2'),
+        category: _category(id: 'CAT1', name: 'Electronics', slug: 'electronics'),
+        brand: _brand(id: 'BRAND2', name: 'CompuTech'),
       ),
       Product(
         id: 4,
@@ -141,13 +148,8 @@ class _BrandsLandingPageState extends State<BrandsLandingPage> {
         brandId: 2,
         tagIds: [1, 4],
         imageUrls: [],
-        category: Category(
-          id: 'CAT1',
-          name: 'Electronics',
-          code: 'ELEC',
-          slug: 'electronics',
-        ),
-        brand: const Brand(id: 'BRAND2', name: 'CompuTech', code: 'BRAND2'),
+        category: _category(id: 'CAT1', name: 'Electronics', slug: 'electronics'),
+        brand: _brand(id: 'BRAND2', name: 'CompuTech'),
       ),
       Product(
         id: 5,
@@ -162,13 +164,8 @@ class _BrandsLandingPageState extends State<BrandsLandingPage> {
         brandId: 3,
         tagIds: [5, 6],
         imageUrls: ['https://picsum.photos/id/20/250/250'],
-        category: Category(
-          id: 'CAT2',
-          name: 'Clothing',
-          code: 'CLOTH',
-          slug: 'clothing',
-        ),
-        brand: const Brand(id: 'BRAND3', name: 'FashionBrand', code: 'BRAND3'),
+        category: _category(id: 'CAT2', name: 'Clothing', slug: 'clothing'),
+        brand: _brand(id: 'BRAND3', name: 'FashionBrand'),
       ),
       Product(
         id: 6,
@@ -183,13 +180,8 @@ class _BrandsLandingPageState extends State<BrandsLandingPage> {
         brandId: 3,
         tagIds: [5, 6, 7],
         imageUrls: ['https://picsum.photos/id/21/250/250'],
-        category: Category(
-          id: 'CAT2',
-          name: 'Clothing',
-          code: 'CLOTH',
-          slug: 'clothing',
-        ),
-        brand: const Brand(id: 'BRAND3', name: 'FashionBrand', code: 'BRAND3'),
+        category: _category(id: 'CAT2', name: 'Clothing', slug: 'clothing'),
+        brand: _brand(id: 'BRAND3', name: 'FashionBrand'),
       ),
     ];
   }
@@ -248,20 +240,6 @@ class _BrandsLandingPageState extends State<BrandsLandingPage> {
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Colors.grey[600],
                   ),
-            ),
-          ),
-        if (brand.displayLocation != null)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
-            child: Row(
-              children: [
-                const Icon(Icons.location_on, size: 16),
-                const SizedBox(width: 5.0),
-                Text(
-                  brand.displayLocation!,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
             ),
           ),
         const SizedBox(height: 10.0),

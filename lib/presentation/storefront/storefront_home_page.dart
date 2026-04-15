@@ -20,6 +20,7 @@ class StorefrontHomePage extends StatefulWidget {
 }
 
 class _StorefrontHomePageState extends State<StorefrontHomePage> {
+  static final DateTime _mockTimestamp = DateTime(2026, 4, 10);
   String? imageSource;
   // bool isLoadingImageSource = true;
 
@@ -29,6 +30,34 @@ class _StorefrontHomePageState extends State<StorefrontHomePage> {
   List<Product> productsForYou = List.empty();
   List<Category> featuredCategories = List.empty();
   List<Brand> featuredBrands = List.empty();
+
+  Brand _brand(String id, String name) {
+    return Brand(
+      id: id,
+      tenantId: 'tenant_demo',
+      name: name,
+      isActive: true,
+      createdAt: _mockTimestamp,
+      updatedAt: _mockTimestamp,
+    );
+  }
+
+  Category _category({
+    required String id,
+    required String name,
+    required String slug,
+    String? parentId,
+  }) {
+    return Category(
+      id: id,
+      tenantId: 'tenant_demo',
+      name: name,
+      slug: slug,
+      parentId: parentId,
+      createdAt: _mockTimestamp,
+      updatedAt: _mockTimestamp,
+    );
+  }
 
   String fetchBannerImageSource() {
     //// call repository here
@@ -57,21 +86,27 @@ class _StorefrontHomePageState extends State<StorefrontHomePage> {
     return [
       Category(
         id: 'CAT1',
+        tenantId: 'tenant_demo',
         name: 'Electronics',
-        code: 'ELEC',
         slug: 'electronics',
+        createdAt: _mockTimestamp,
+        updatedAt: _mockTimestamp,
       ),
       Category(
         id: 'CAT2',
+        tenantId: 'tenant_demo',
         name: 'Clothing',
-        code: 'CLOTH',
         slug: 'clothing',
+        createdAt: _mockTimestamp,
+        updatedAt: _mockTimestamp,
       ),
       Category(
         id: 'CAT3',
+        tenantId: 'tenant_demo',
         name: 'Home & Garden',
-        code: 'HOME',
         slug: 'home-garden',
+        createdAt: _mockTimestamp,
+        updatedAt: _mockTimestamp,
       ),
     ];
   }
@@ -79,21 +114,9 @@ class _StorefrontHomePageState extends State<StorefrontHomePage> {
   List<Brand> fetchFeaturedBrands() {
     //// call repository here
     return [
-      const Brand(
-        id: 'BRAND1',
-        name: 'TechCorp',
-        code: 'BRAND1',
-      ),
-      const Brand(
-        id: 'BRAND2',
-        name: 'CompuTech',
-        code: 'BRAND2',
-      ),
-      const Brand(
-        id: 'BRAND3',
-        name: 'FashionBrand',
-        code: 'BRAND3',
-      ),
+      _brand('BRAND1', 'TechCorp'),
+      _brand('BRAND2', 'CompuTech'),
+      _brand('BRAND3', 'FashionBrand'),
     ];
   }
 
@@ -112,8 +135,8 @@ class _StorefrontHomePageState extends State<StorefrontHomePage> {
         brandId: 1,
         tagIds: [1],
         imageUrls: ['https://picsum.photos/id/17/250/250'],
-        category: Category(id: 'CAT1', name: 'Happy', code: 'CAT1', slug: 'happy'),
-        brand: Brand(id: 'BRAND1', name: 'CLX', code: 'BRAND1'),
+        category: _category(id: 'CAT1', name: 'Happy', slug: 'happy'),
+        brand: _brand('BRAND1', 'CLX'),
       ),
       Product(
         id: 2,
@@ -128,8 +151,8 @@ class _StorefrontHomePageState extends State<StorefrontHomePage> {
         brandId: 2,
         tagIds: [1, 2],
         imageUrls: [],
-        category: Category(id: 'CAT1', name: 'Happy', code: 'CAT1', slug: 'happy'),
-        brand: Brand(id: 'BRAND2', name: 'MGMG', code: 'BRAND2'),
+        category: _category(id: 'CAT1', name: 'Happy', slug: 'happy'),
+        brand: _brand('BRAND2', 'MGMG'),
       ),
       Product(
         id: 3,
@@ -144,8 +167,8 @@ class _StorefrontHomePageState extends State<StorefrontHomePage> {
         brandId: 2,
         tagIds: [2, 3],
         imageUrls: ['https://picsum.photos/id/19/250/250'],
-        category: Category(id: 'CAT2', name: 'General', code: 'CAT2', slug: 'general'),
-        brand: Brand(id: 'BRAND2', name: 'MGMG', code: 'BRAND2'),
+        category: _category(id: 'CAT2', name: 'General', slug: 'general'),
+        brand: _brand('BRAND2', 'MGMG'),
       ),
       Product(
         id: 4,
@@ -160,8 +183,8 @@ class _StorefrontHomePageState extends State<StorefrontHomePage> {
         brandId: 3,
         tagIds: [3],
         imageUrls: ['https://picsum.photos/id/20/250/250'],
-        category: Category(id: 'CAT2', name: 'General', code: 'CAT2', slug: 'general'),
-        brand: Brand(id: 'BRAND3', name: 'SOUPS', code: 'BRAND3'),
+        category: _category(id: 'CAT2', name: 'General', slug: 'general'),
+        brand: _brand('BRAND3', 'SOUPS'),
       ),
     ].toList();
   }

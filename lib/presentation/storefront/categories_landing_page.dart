@@ -16,10 +16,39 @@ class CategoriesLandingPage extends StatefulWidget {
 }
 
 class _CategoriesLandingPageState extends State<CategoriesLandingPage> {
+  static final DateTime _mockTimestamp = DateTime(2026, 4, 10);
   late List<Category> majorCategories;
   late Map<String, List<Product>> productsByCategory;
   late Map<String, List<Category>> subcategoriesByCategory;
   late Map<String, bool> expandedCategoriesState;
+
+  Brand _brand(String id, String name) {
+    return Brand(
+      id: id,
+      tenantId: 'tenant_demo',
+      name: name,
+      isActive: true,
+      createdAt: _mockTimestamp,
+      updatedAt: _mockTimestamp,
+    );
+  }
+
+  Category _category({
+    required String id,
+    required String name,
+    required String slug,
+    String? parentId,
+  }) {
+    return Category(
+      id: id,
+      tenantId: 'tenant_demo',
+      name: name,
+      slug: slug,
+      parentId: parentId,
+      createdAt: _mockTimestamp,
+      updatedAt: _mockTimestamp,
+    );
+  }
 
   @override
   void initState() {
@@ -32,24 +61,9 @@ class _CategoriesLandingPageState extends State<CategoriesLandingPage> {
 
   List<Category> fetchMajorCategories() {
     return [
-      Category(
-        id: 'CAT1',
-        name: 'Electronics',
-        code: 'ELEC',
-        slug: 'electronics',
-      ),
-      Category(
-        id: 'CAT2',
-        name: 'Clothing',
-        code: 'CLOTH',
-        slug: 'clothing',
-      ),
-      Category(
-        id: 'CAT3',
-        name: 'Home & Garden',
-        code: 'HOME',
-        slug: 'home-garden',
-      ),
+      _category(id: 'CAT1', name: 'Electronics', slug: 'electronics'),
+      _category(id: 'CAT2', name: 'Clothing', slug: 'clothing'),
+      _category(id: 'CAT3', name: 'Home & Garden', slug: 'home-garden'),
     ];
   }
 
@@ -68,8 +82,8 @@ class _CategoriesLandingPageState extends State<CategoriesLandingPage> {
         brandId: 1,
         tagIds: [1],
         imageUrls: ['https://picsum.photos/id/17/250/250'],
-        category: Category(id: 'CAT1', name: 'Happy', code: 'CAT1', slug: 'happy'),
-        brand: Brand(id: 'BRAND1', name: 'CLX', code: 'BRAND1'),
+        category: _category(id: 'CAT1', name: 'Happy', slug: 'happy'),
+        brand: _brand('BRAND1', 'CLX'),
       ),
       Product(
         id: 2,
@@ -84,8 +98,8 @@ class _CategoriesLandingPageState extends State<CategoriesLandingPage> {
         brandId: 2,
         tagIds: [1, 2],
         imageUrls: [],
-        category: Category(id: 'CAT1', name: 'Happy', code: 'CAT1', slug: 'happy'),
-        brand: Brand(id: 'BRAND2', name: 'MGMG', code: 'BRAND2'),
+        category: _category(id: 'CAT1', name: 'Happy', slug: 'happy'),
+        brand: _brand('BRAND2', 'MGMG'),
       ),
       Product(
         id: 3,
@@ -100,8 +114,8 @@ class _CategoriesLandingPageState extends State<CategoriesLandingPage> {
         brandId: 2,
         tagIds: [2, 3],
         imageUrls: ['https://picsum.photos/id/19/250/250'],
-        category: Category(id: 'CAT2', name: 'General', code: 'CAT2', slug: 'general'),
-        brand: Brand(id: 'BRAND2', name: 'MGMG', code: 'BRAND2'),
+        category: _category(id: 'CAT2', name: 'General', slug: 'general'),
+        brand: _brand('BRAND2', 'MGMG'),
       ),
       Product(
         id: 4,
@@ -116,8 +130,8 @@ class _CategoriesLandingPageState extends State<CategoriesLandingPage> {
         brandId: 3,
         tagIds: [3],
         imageUrls: ['https://picsum.photos/id/20/250/250'],
-        category: Category(id: 'CAT2', name: 'General', code: 'CAT2', slug: 'general'),
-        brand: Brand(id: 'BRAND3', name: 'SOUPS', code: 'BRAND3'),
+        category: _category(id: 'CAT2', name: 'General', slug: 'general'),
+        brand: _brand('BRAND3', 'SOUPS'),
       ),
     ].toList();
   }
@@ -136,56 +150,34 @@ class _CategoriesLandingPageState extends State<CategoriesLandingPage> {
   Map<String, List<Category>> fetchSubcategoriesByCategory() {
     return {
       'CAT1': [
-        Category(
-          id: 'CAT1_1',
-          name: 'Phones',
-          code: 'PHONES',
-          slug: 'phones',
-          parentId: 'CAT1',
-        ),
-        Category(
+        _category(id: 'CAT1_1', name: 'Phones', slug: 'phones', parentId: 'CAT1'),
+        _category(
           id: 'CAT1_2',
           name: 'Computers',
-          code: 'COMPUTERS',
           slug: 'computers',
           parentId: 'CAT1',
         ),
-        Category(
+        _category(
           id: 'CAT1_3',
           name: 'Accessories',
-          code: 'ACCESSORIES',
           slug: 'accessories',
           parentId: 'CAT1',
         ),
       ],
       'CAT2': [
-        Category(
-          id: 'CAT2_1',
-          name: 'Men',
-          code: 'MEN',
-          slug: 'men',
-          parentId: 'CAT2',
-        ),
-        Category(
-          id: 'CAT2_2',
-          name: 'Women',
-          code: 'WOMEN',
-          slug: 'women',
-          parentId: 'CAT2',
-        ),
+        _category(id: 'CAT2_1', name: 'Men', slug: 'men', parentId: 'CAT2'),
+        _category(id: 'CAT2_2', name: 'Women', slug: 'women', parentId: 'CAT2'),
       ],
       'CAT3': [
-        Category(
+        _category(
           id: 'CAT3_1',
           name: 'Furniture',
-          code: 'FURNITURE',
           slug: 'furniture',
           parentId: 'CAT3',
         ),
-        Category(
+        _category(
           id: 'CAT3_2',
           name: 'Garden Tools',
-          code: 'GARDEN_TOOLS',
           slug: 'garden-tools',
           parentId: 'CAT3',
         ),
