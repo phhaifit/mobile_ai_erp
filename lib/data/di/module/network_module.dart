@@ -6,6 +6,8 @@ import 'package:mobile_ai_erp/core/data/network/dio/interceptors/tenant_intercep
 import 'package:mobile_ai_erp/core/services/tenant_service.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
+import 'package:mobile_ai_erp/data/network/datasources/role/role_remote_datasource.dart';
+import 'package:mobile_ai_erp/data/network/datasources/user/user_remote_datasource.dart';
 import 'package:mobile_ai_erp/data/network/interceptors/error_interceptor.dart';
 import 'package:mobile_ai_erp/data/network/rest_client.dart';
 import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
@@ -60,5 +62,13 @@ class NetworkModule {
 
     // api's:-------------------------------------------------------------------
     getIt.registerSingleton(PostApi(getIt<DioClient>(), getIt<RestClient>()));
+
+    // datasources:-----------------------------------------------------------
+    getIt.registerSingleton<RoleRemoteDataSource>(
+      RoleRemoteDataSourceImpl(dio: getIt<DioClient>().dio),
+    );
+    getIt.registerSingleton<UserRemoteDataSource>(
+      UserRemoteDataSourceImpl(getIt<DioClient>().dio),
+    );
   }
 }

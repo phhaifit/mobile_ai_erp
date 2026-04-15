@@ -90,7 +90,7 @@ class _UsersTabState extends State<UsersTab> {
               child: Align(
                 alignment: Alignment.centerRight,
                 child: ElevatedButton.icon(
-                  onPressed: () => _showCreateRoleDialog(context),
+                  onPressed: () => _showCreateUserDialog(context),
                   icon: const Icon(Icons.add),
                   label: const Text('Create User'),
                 ),
@@ -156,88 +156,149 @@ class _UsersTabState extends State<UsersTab> {
     );
   }
 
-  void _showCreateRoleDialog(BuildContext context) {
+  void _showCreateUserDialog(BuildContext context) {
     final nameController = TextEditingController();
-    final descController = TextEditingController();
+    final emailController = TextEditingController();
+    final passwordController = TextEditingController();
+    String? selectedRoleId;
+
+    // Load roles when dialog opens
+    widget.roleStore.loadRoles();
 
     showDialog(
       context: context,
       builder: (_) {
         return AlertDialog(
-          title: const Text('Create Role'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: 'Role name'),
-              ),
-              TextField(
-                controller: descController,
-                decoration: const InputDecoration(labelText: 'Description'),
-              ),
-            ],
+          title: const Text('Create User'),
+          content: StatefulBuilder(
+            builder: (context, setState) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    decoration: const InputDecoration(labelText: 'Name'),
+                  ),
+                  TextField(
+                    controller: emailController,
+                    decoration: const InputDecoration(labelText: 'Email'),
+                  ),
+                  TextField(
+                    controller: passwordController,
+                    decoration: const InputDecoration(labelText: 'Password'),
+                    obscureText: true,
+                  ),
+                  const SizedBox(height: 16),
+                  Observer(
+                    builder: (_) {
+                      if (widget.roleStore.loading) {
+                        return const CircularProgressIndicator();
+                      }
+                      
+                      return DropdownButtonFormField<String>(
+                        value: selectedRoleId,
+                        decoration: const InputDecoration(
+                          labelText: 'Role',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: widget.roleStore.roleList.map((role) {
+                          return DropdownMenuItem<String>(
+                            value: role.id,
+                            child: Text(role.name),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            selectedRoleId = value;
+                          });
+                        },
+                      );
+                    },
+                  ),
+                ],
+              );
+            },
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text('Cancel'),
             ),
-            StatefulBuilder(
-              builder: (context, setState) {
-                return Observer(
-                  builder: (_) {
-                    return ElevatedButton(
-                      onPressed: widget.roleStore.loading ? null : () async {
-                        final tenantService = TenantService();
-                        final tenantId = await tenantService.getCurrentTenantId();
-                        
-                        if (tenantId == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Unable to get tenant ID')),
-                          );
-                          return;
-                        }
+            Observer(
+              builder: (_) {
+                return ElevatedButton(
+                  onPressed: widget.userStore.loading ? null : () async {
+                    final tenantService = TenantService();
+                    final tenantId = await tenantService.getCurrentTenantId();
+                    
+                    if (tenantId == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Unable to get tenant ID')),
+                      );
+                      return;
+                    }
 
-                        if (nameController.text.trim().isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please enter a role name')),
-                          );
-                          return;
-                        }
+                    if (nameController.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Please enter a name')),
+                      );
+                      return;
+                    }
 
-                        final newRole = Role(
-                          id: DateTime.now().millisecondsSinceEpoch.toString(),
-                          tenantId: tenantId,
-                          name: nameController.text.trim(),
-                          description: descController.text.trim(),
-                        );
+                    if (emailController.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Please enter an email')),
+                      );
+                      return;
+                    }
 
-                        await widget.roleStore.createRole(newRole);
-                        
-                        if (widget.roleStore.error == null) {
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Role created successfully')),
-                          );
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(widget.roleStore.error!),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        }
-                      },
-                      child: widget.roleStore.loading 
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text('Create'),
+                    if (passwordController.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Please enter a password')),
+                      );
+                      return;
+                    }
+
+                    if (selectedRoleId == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Please select a role')),
+                      );
+                      return;
+                    }
+
+                    final newUser = User(
+                      id: DateTime.now().millisecondsSinceEpoch.toString(),
+                      tenantId: tenantId,
+                      name: nameController.text.trim(),
+                      email: emailController.text.trim(),
+                      password: passwordController.text.trim(),
+                      roleId: selectedRoleId!,
+                      isActive: true,
                     );
+
+                    await widget.userStore.createUser(newUser);
+                    
+                    if (widget.userStore.error == null) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('User created successfully')),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(widget.userStore.error!),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
                   },
+                  child: widget.userStore.loading 
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Create'),
                 );
               },
             ),
