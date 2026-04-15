@@ -96,7 +96,7 @@ class RoleRemoteDataSourceImpl implements RoleRemoteDataSource {
   @override
   Future<void> deleteRole(String id) async {
     try {
-      final response = await _dio.patch('/roles/$id');
+      final response = await _dio.delete('/roles/$id');
       
       if (response.statusCode != 200) {
         throw _handleApiError(response);

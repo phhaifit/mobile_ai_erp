@@ -85,7 +85,10 @@ class _RolesTabState extends State<RolesTab> {
                         if (widget.roleStore.error == null) {
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Role created successfully')),
+                            const SnackBar(
+                              content: Text('Role created successfully'),
+                              backgroundColor: Colors.green,
+                            ),
                           );
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -203,7 +206,12 @@ class _RolesTabState extends State<RolesTab> {
                           Row(
                             children: [
                               IconButton(
-                                onPressed: () => widget.roleStore.deleteRole(role.id),
+                                onPressed: () => _showUpdateRoleDialog(context, role),
+                                icon: const Icon(Icons.edit),
+                              ),
+                              const SizedBox(width: 8),
+                              IconButton(
+                                onPressed: () => _showDeleteRoleDialog(context, role),
                                 icon: const Icon(Icons.delete),
                               ),
                             ],
@@ -214,6 +222,139 @@ class _RolesTabState extends State<RolesTab> {
                   );
                 },
               ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showUpdateRoleDialog(BuildContext context, Role role) {
+    final nameController = TextEditingController(text: role.name);
+    final descController = TextEditingController(text: role.description);
+
+    showDialog(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          title: const Text('Update Role'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: 'Role name'),
+              ),
+              TextField(
+                controller: descController,
+                decoration: const InputDecoration(labelText: 'Description'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            StatefulBuilder(
+              builder: (context, setState) {
+                return Observer(
+                  builder: (_) {
+                    return ElevatedButton(
+                      onPressed: widget.roleStore.loading ? null : () async {
+                        if (nameController.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please enter a role name')),
+                          );
+                          return;
+                        }
+
+                        final updatedRole = role.copyWith(
+                          name: nameController.text.trim(),
+                          description: descController.text.trim(),
+                        );
+
+                        await widget.roleStore.updateRole(role.id, updatedRole);
+                        
+                        if (widget.roleStore.error == null) {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Role updated successfully'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(widget.roleStore.error!),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      },
+                      child: widget.roleStore.loading 
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('Update'),
+                    );
+                  },
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showDeleteRoleDialog(BuildContext context, Role role) {
+    showDialog(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          title: const Text('Delete Role'),
+          content: Text('Are you sure you want to delete the role "${role.name}"?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            Observer(
+              builder: (_) {
+                return ElevatedButton(
+                  onPressed: widget.roleStore.loading ? null : () async {
+                    await widget.roleStore.deleteRole(role.id);
+                    
+                    if (widget.roleStore.error == null) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Role deleted successfully'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(widget.roleStore.error!),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  },
+                  child: widget.roleStore.loading 
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Delete'),
+                );
+              },
             ),
           ],
         );
