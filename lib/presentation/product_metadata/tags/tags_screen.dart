@@ -332,7 +332,7 @@ class _ProductMetadataTagsScreenState extends State<ProductMetadataTagsScreen> {
 
   List<String> _tagSummary(Tag tag) {
     return <String>[
-      if (tag.descriptionOrNull != null) tag.descriptionOrNull!,
+      if (tag.descriptionOrNull != null) tag.description!.replaceAll(RegExp(r'\s+'), ' ').trim(),
     ];
   }
 

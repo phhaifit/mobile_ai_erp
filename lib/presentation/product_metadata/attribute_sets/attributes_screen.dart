@@ -159,7 +159,7 @@ class _ProductMetadataAttributesScreenState
                         leading: const Icon(Icons.label_outline),
                         detailLines: <String>[
                           if (item.description?.trim().isNotEmpty == true)
-                            item.description!,
+                            item.description!.replaceAll(RegExp(r'\s+'), ' ').trim(),
                           '${item.values.length} values',
                         ],
                         trailing: PopupMenuButton<String>(

@@ -331,7 +331,7 @@ class _ProductMetadataBrandsScreenState
 
   List<String> _brandSummary(Brand brand) {
     return <String>[
-      if (brand.descriptionOrNull != null) brand.descriptionOrNull!,
+      if (brand.descriptionOrNull != null) brand.description!.replaceAll(RegExp(r'\s+'), ' ').trim(),
     ];
   }
 

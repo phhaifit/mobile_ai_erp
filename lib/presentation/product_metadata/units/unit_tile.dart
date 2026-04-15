@@ -28,7 +28,7 @@ class UnitTile extends StatelessWidget {
       leading: const Icon(Icons.straighten_outlined),
       detailLines: <String>[
         if (unit.symbol?.trim().isNotEmpty == true) 'Symbol: ${unit.symbol}',
-        if (unit.description?.trim().isNotEmpty == true) unit.description!,
+        if (unit.description?.trim().isNotEmpty == true) unit.description!.replaceAll(RegExp(r'\s+'), ' ').trim(),
       ],
       chips: <Widget>[
         MetadataStatusChip(label: unit.isActive ? 'Active' : 'Inactive'),
