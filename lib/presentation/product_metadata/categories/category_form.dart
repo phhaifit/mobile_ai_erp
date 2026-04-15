@@ -250,7 +250,7 @@ class _ProductMetadataCategoryFormScreenState
     try {
       final category = Category(
         id: _editingCategory?.id ?? '',
-        tenantId: _editingCategory?.tenantId ?? '',  // TODO: Use actual tenant ID from auth context/current user's session
+        tenantId: _editingCategory?.tenantId ?? '',
         name: _nameController.text.trim(),
         slug: _slugController.text.trim(),
         parentId: _selectedParentId,

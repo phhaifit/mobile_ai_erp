@@ -285,7 +285,7 @@ class _ProductMetadataAttributeFormScreenState
 
     final item = AttributeSet(
       id: _editingItem?.id ?? '',
-      tenantId: _editingItem?.tenantId ?? '', // TODO: Use actual tenant ID from auth context/current user's session
+      tenantId: _editingItem?.tenantId ?? '',
       name: _nameController.text.trim(),
       description: _descriptionController.text.trim().isEmpty
           ? null

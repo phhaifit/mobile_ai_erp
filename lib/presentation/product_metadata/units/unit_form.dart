@@ -111,7 +111,7 @@ class _ProductMetadataUnitFormScreenState
     try {
       final unit = Unit(
         id: _editingUnit?.id ?? '',
-        tenantId: _editingUnit?.tenantId ?? '', // TODO: Use actual tenant ID from auth context/current user's session
+        tenantId: _editingUnit?.tenantId ?? '',
         name: _nameController.text.trim(),
         symbol: _trimOrNull(_symbolController.text),
         description: _trimOrNull(_descriptionController.text),

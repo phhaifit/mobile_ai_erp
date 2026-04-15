@@ -274,7 +274,7 @@ class _ProductMetadataBrandFormScreenState
     try {
       final input = Brand(
         id: _editingBrand?.id ?? '',
-        tenantId: _editingBrand?.tenantId ?? '', // TODO: Use actual tenant ID from auth context/current user's session
+        tenantId: _editingBrand?.tenantId ?? '',
         name: _nameController.text.trim(),
         description: _trimOrNull(_descriptionController.text),
         logoUrl: resolveBrandLogoUrlForSave(

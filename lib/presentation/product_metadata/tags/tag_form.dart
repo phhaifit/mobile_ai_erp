@@ -159,7 +159,7 @@ class _ProductMetadataTagFormScreenState
     try {
       final input = Tag(
         id: _editingTag?.id ?? '',
-        tenantId: _editingTag?.tenantId ?? '', // TODO: Use actual tenant ID from auth context/current user's session
+        tenantId: _editingTag?.tenantId ?? '',
         name: _nameController.text.trim(),
         description: _trimOrNull(_descriptionController.text),
         isActive: _isActive,
