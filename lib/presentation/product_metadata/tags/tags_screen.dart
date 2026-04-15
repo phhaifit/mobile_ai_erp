@@ -364,42 +364,26 @@ class _ProductMetadataTagsScreenState extends State<ProductMetadataTagsScreen> {
       return;
     }
 
-    try {
-      final previousTotalItems = _store.tagTotalItems;
-      await _store.deleteTag(tag.id);
-      final effectiveTotalItems = _queryState.includeInactive
-          ? previousTotalItems
-          : (previousTotalItems > 0 ? previousTotalItems - 1 : 0);
-      _queryState = _queryState.copyWith(
-        page: resolveMetadataPageAfterDelete(
-          currentPage: _queryState.page,
-          pageSize: _queryState.pageSize,
-          totalItems: effectiveTotalItems,
-          includeInactive: _queryState.includeInactive,
-        ),
-      );
-      await _loadTags();
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Deactivated "${tag.name}".')),
-      );
-    } catch (error) {
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            MetadataErrorFormatter.formatActionError(
-              error: error,
-              actionLabel: 'deactivate tag',
-            ),
-          ),
-        ),
-      );
+    final previousTotalItems = _store.tagTotalItems;
+    await _store.deleteTag(tag.id);
+    final effectiveTotalItems = _queryState.includeInactive
+        ? previousTotalItems
+        : (previousTotalItems > 0 ? previousTotalItems - 1 : 0);
+    _queryState = _queryState.copyWith(
+      page: resolveMetadataPageAfterDelete(
+        currentPage: _queryState.page,
+        pageSize: _queryState.pageSize,
+        totalItems: effectiveTotalItems,
+        includeInactive: _queryState.includeInactive,
+      ),
+    );
+    await _loadTags();
+    if (!mounted) {
+      return;
     }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Deactivated "${tag.name}".')),
+    );
   }
 
   Future<void> _loadTags() {

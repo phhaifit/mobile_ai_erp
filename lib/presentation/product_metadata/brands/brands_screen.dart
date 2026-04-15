@@ -364,42 +364,26 @@ class _ProductMetadataBrandsScreenState
       return;
     }
 
-    try {
-      final previousTotalItems = _store.brandTotalItems;
-      await _store.deleteBrand(brand.id);
-      final effectiveTotalItems = _queryState.includeInactive
-          ? previousTotalItems
-          : (previousTotalItems > 0 ? previousTotalItems - 1 : 0);
-      _queryState = _queryState.copyWith(
-        page: resolveMetadataPageAfterDelete(
-          currentPage: _queryState.page,
-          pageSize: _queryState.pageSize,
-          totalItems: effectiveTotalItems,
-          includeInactive: _queryState.includeInactive,
-        ),
-      );
-      await _loadBrands();
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Deactivated "${brand.name}".')));
-    } catch (error) {
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            MetadataErrorFormatter.formatActionError(
-              error: error,
-              actionLabel: 'deactivate brand',
-            ),
-          ),
-        ),
-      );
+    final previousTotalItems = _store.brandTotalItems;
+    await _store.deleteBrand(brand.id);
+    final effectiveTotalItems = _queryState.includeInactive
+        ? previousTotalItems
+        : (previousTotalItems > 0 ? previousTotalItems - 1 : 0);
+    _queryState = _queryState.copyWith(
+      page: resolveMetadataPageAfterDelete(
+        currentPage: _queryState.page,
+        pageSize: _queryState.pageSize,
+        totalItems: effectiveTotalItems,
+        includeInactive: _queryState.includeInactive,
+      ),
+    );
+    await _loadBrands();
+    if (!mounted) {
+      return;
     }
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Deactivated "${brand.name}".')));
   }
 
   void _setQueryState(MetadataListQuery nextQuery) {

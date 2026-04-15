@@ -290,38 +290,24 @@ class _ProductMetadataAttributesScreenState
       return;
     }
 
-    try {
-      final previousTotalItems = _store.attributeSetTotalItems;
-      await _store.deleteAttributeSet(item.id);
-      
-      _queryState = _queryState.copyWith(
-        page: resolveMetadataPageAfterDelete(
-          currentPage: _queryState.page,
-          pageSize: _queryState.pageSize,
-          totalItems: previousTotalItems,
-        ),
-      );
-      
-      await _loadAttributeSets();
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Deleted attribute set "${item.name}".'),
-        ),
-      );
-    } catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            MetadataErrorFormatter.formatActionError(
-              error: error,
-              actionLabel: 'delete attribute set',
-            ),
-          ),
-        ),
-      );
-    }
+    final previousTotalItems = _store.attributeSetTotalItems;
+    await _store.deleteAttributeSet(item.id);
+    
+    _queryState = _queryState.copyWith(
+      page: resolveMetadataPageAfterDelete(
+        currentPage: _queryState.page,
+        pageSize: _queryState.pageSize,
+        totalItems: previousTotalItems,
+      ),
+    );
+    
+    await _loadAttributeSets();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Deleted attribute set "${item.name}".'),
+      ),
+    );
   }
 
   Future<void> _loadAttributeSets() {

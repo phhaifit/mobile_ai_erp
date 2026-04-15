@@ -194,45 +194,29 @@ class _ProductMetadataUnitsScreenState
       return;
     }
 
-    try {
-      final previousTotalItems = _store.unitTotalItems;
-      await _store.deleteUnit(unit.id);
-      final effectiveTotalItems =
-          _queryState.includeInactive
-              ? previousTotalItems
-              : (previousTotalItems > 0 ? previousTotalItems - 1 : 0);
-      _queryState = _queryState.copyWith(
-        page: resolveMetadataPageAfterDelete(
-          currentPage: _queryState.page,
-          pageSize: _queryState.pageSize,
-          totalItems: effectiveTotalItems,
-          includeInactive: _queryState.includeInactive,
-        ),
-      );
-      await _loadUnits();
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Deactivated "${unit.name}".'),
-        ),
-      );
-    } catch (error) {
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            MetadataErrorFormatter.formatActionError(
-              error: error,
-              actionLabel: 'deactivate unit',
-            ),
-          ),
-        ),
-      );
+    final previousTotalItems = _store.unitTotalItems;
+    await _store.deleteUnit(unit.id);
+    final effectiveTotalItems =
+        _queryState.includeInactive
+            ? previousTotalItems
+            : (previousTotalItems > 0 ? previousTotalItems - 1 : 0);
+    _queryState = _queryState.copyWith(
+      page: resolveMetadataPageAfterDelete(
+        currentPage: _queryState.page,
+        pageSize: _queryState.pageSize,
+        totalItems: effectiveTotalItems,
+        includeInactive: _queryState.includeInactive,
+      ),
+    );
+    await _loadUnits();
+    if (!mounted) {
+      return;
     }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Deactivated "${unit.name}".'),
+      ),
+    );
   }
 
 }

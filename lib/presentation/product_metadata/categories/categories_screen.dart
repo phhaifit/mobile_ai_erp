@@ -397,44 +397,28 @@ class _ProductMetadataCategoriesScreenState
       return;
     }
 
-    try {
-      final previousTotalItems = _store.categoryTotalItems;
-      await _store.deleteCategory(category.id);
-      
-      _queryState = _queryState.copyWith(
-        page: resolveMetadataPageAfterDelete(
-          currentPage: _queryState.page,
-          pageSize: _queryState.pageSize,
-          totalItems: previousTotalItems,
-        ),
-      );
-      
-      await Future.wait([
-        _loadCategories(),
-        _store.loadCategoryTree(),
-      ]);
-      
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Deleted "${category.name}".')));
-    } catch (error) {
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            MetadataErrorFormatter.formatActionError(
-              error: error,
-              actionLabel: 'delete category',
-            ),
-          ),
-        ),
-      );
+    final previousTotalItems = _store.categoryTotalItems;
+    await _store.deleteCategory(category.id);
+    
+    _queryState = _queryState.copyWith(
+      page: resolveMetadataPageAfterDelete(
+        currentPage: _queryState.page,
+        pageSize: _queryState.pageSize,
+        totalItems: previousTotalItems,
+      ),
+    );
+    
+    await Future.wait([
+      _loadCategories(),
+      _store.loadCategoryTree(),
+    ]);
+    
+    if (!mounted) {
+      return;
     }
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Deleted "${category.name}".')));
   }
 
   Future<void> _openSortSheet() async {
