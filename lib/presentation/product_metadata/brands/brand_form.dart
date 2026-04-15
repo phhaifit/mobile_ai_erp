@@ -47,6 +47,7 @@ class _ProductMetadataBrandFormScreenState
   bool _isInitializing = true;
   bool _isSaving = false;
   bool _isUploadingLogo = false;
+  bool _removeImageOnSave = false;
   String? _nameErrorText;
 
   @override
@@ -100,10 +101,12 @@ class _ProductMetadataBrandFormScreenState
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _logoUrlController,
+                      enabled: _pendingLogoFile == null,
                       decoration: metadataFormDecoration(
                         labelText: 'Logo URL',
-                        helperText:
-                            'Use an absolute http/https URL or a local /uploads/... path.',
+                        helperText: _pendingLogoFile == null
+                            ? 'Use an absolute http/https URL or a local /uploads/... path.'
+                            : 'Remove the selected image before editing Logo URL.',
                       ),
                       validator: _validateLogoUrl,
                     ),
@@ -182,8 +185,12 @@ class _ProductMetadataBrandFormScreenState
     );
   }
 
-  bool get _canRemoveCurrentImage =>
-      _currentBrandImage != null || _logoUrlController.text.trim().isNotEmpty;
+  bool get _canRemoveCurrentImage => canRemoveCurrentBrandImage(
+    currentBrandImage: _currentBrandImage,
+    logoUrl: _logoUrlController.text,
+    hasPendingLogoFile: _pendingLogoFile != null,
+    removeImageOnSave: _removeImageOnSave,
+  );
 
   Future<void> _initialize() async {
     if (widget.args?.brandId != null) {
@@ -226,6 +233,7 @@ class _ProductMetadataBrandFormScreenState
       }
       setState(() {
         _pendingLogoFile = selectedFile;
+        _removeImageOnSave = false;
       });
     } catch (error) {
       if (!mounted) {
@@ -249,6 +257,7 @@ class _ProductMetadataBrandFormScreenState
       _pendingLogoFile = null;
       _currentBrandImage = null;
       _logoUrlController.clear();
+      _removeImageOnSave = true;
     });
   }
 
@@ -268,7 +277,13 @@ class _ProductMetadataBrandFormScreenState
         tenantId: _editingBrand?.tenantId ?? '', // TODO: Use actual tenant ID from auth context/current user's session
         name: _nameController.text.trim(),
         description: _trimOrNull(_descriptionController.text),
-        logoUrl: _trimOrNull(_logoUrlController.text),
+        logoUrl: resolveBrandLogoUrlForSave(
+          editingBrand: _editingBrand,
+          currentBrandImage: _currentBrandImage,
+          logoUrl: _logoUrlController.text,
+          removeImageOnSave: _removeImageOnSave,
+          hasPendingLogoFile: _pendingLogoFile != null,
+        ),
         isActive: _isActive,
         createdAt: _editingBrand?.createdAt ?? DateTime.now(),
         updatedAt: _editingBrand?.updatedAt ?? DateTime.now(),
@@ -360,8 +375,7 @@ class _ProductMetadataBrandFormScreenState
 
   bool get _shouldDeleteBrandImageOnSave => shouldDeleteBrandImageOnSave(
     editingBrand: _editingBrand,
-    currentBrandImage: _currentBrandImage,
-    logoUrl: _logoUrlController.text,
+    removeImageOnSave: _removeImageOnSave,
     hasPendingLogoFile: _pendingLogoFile != null,
   );
 
