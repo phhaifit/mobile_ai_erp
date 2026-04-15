@@ -9,6 +9,7 @@ import 'package:mobile_ai_erp/presentation/product_metadata/models/metadata_list
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_navigator.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_route_args.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/widgets/brand_logo_avatar.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_empty_state.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_list_card.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_list_controls.dart';
@@ -150,9 +151,9 @@ class _ProductMetadataBrandsScreenState
                       final brand = brands[index];
                       return MetadataListCard(
                         title: brand.name,
-                        leading: Icon(
-                          Icons.workspace_premium_outlined,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        leading: BrandLogoAvatar(
+                          name: brand.name,
+                          logoUrl: brand.logoUrl,
                         ),
                         detailLines: _brandSummary(brand),
                         chips: <Widget>[

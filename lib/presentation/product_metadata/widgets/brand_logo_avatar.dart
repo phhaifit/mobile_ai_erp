@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:mobile_ai_erp/core/data/network/dio/configs/dio_configs.dart';
+import 'package:mobile_ai_erp/di/service_locator.dart';
 
 class BrandLogoAvatar extends StatelessWidget {
   const BrandLogoAvatar({
@@ -17,7 +18,7 @@ class BrandLogoAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final normalizedUrl = resolveBrandLogoUrl(
       logoUrl,
-      apiBaseUrl: dotenv.env['ERP_API_BASE_URL'],
+      apiBaseUrl: _configuredApiBaseUrl(),
     );
     if (normalizedUrl == null || !_isAbsoluteUrl(normalizedUrl)) {
       return _IconAvatar(radius: radius);
@@ -45,6 +46,13 @@ class BrandLogoAvatar extends StatelessWidget {
     return uri != null &&
         uri.hasScheme &&
         (uri.scheme == 'http' || uri.scheme == 'https');
+  }
+
+  String? _configuredApiBaseUrl() {
+    if (!getIt.isRegistered<DioConfigs>()) {
+      return null;
+    }
+    return getIt<DioConfigs>().baseUrl;
   }
 }
 
