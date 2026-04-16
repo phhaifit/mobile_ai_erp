@@ -100,7 +100,7 @@ class DamagedExpiredPanel extends StatelessWidget {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text(
-                                    'Damaged/expired record saved locally.',
+                                    'Damaged/expired record saved.',
                                   ),
                                 ),
                               );

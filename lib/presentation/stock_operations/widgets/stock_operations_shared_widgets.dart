@@ -248,3 +248,10 @@ String formatDateTime(DateTime dateTime) {
   final minute = dateTime.minute.toString().padLeft(2, '0');
   return '${dateTime.year}-$month-$day $hour:$minute';
 }
+
+String formatNullableDateTime(DateTime? dateTime) {
+  if (dateTime == null) {
+    return '-';
+  }
+  return formatDateTime(dateTime);
+}

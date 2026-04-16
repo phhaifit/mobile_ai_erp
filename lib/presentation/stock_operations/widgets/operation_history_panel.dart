@@ -168,8 +168,15 @@ class DesktopHistoryTable extends StatelessWidget {
                       Expanded(flex: 2, child: Text('${operation.quantity}')),
                       Expanded(
                         flex: 4,
-                        child: Text(
-                          '${operation.sourceWarehouseName ?? '-'} -> ${operation.destinationWarehouseName ?? '-'}',
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${operation.sourceWarehouseName ?? '-'} -> ${operation.destinationWarehouseName ?? '-'}',
+                            ),
+                            const SizedBox(height: 4),
+                            _AuditTrailSummary(operation: operation),
+                          ],
                         ),
                       ),
                       Expanded(
@@ -245,6 +252,8 @@ class MobileHistoryList extends StatelessWidget {
                 Text('Qty: ${operation.quantity}'),
                 Text('From: ${operation.sourceWarehouseName ?? '-'}'),
                 Text('To: ${operation.destinationWarehouseName ?? '-'}'),
+                const SizedBox(height: 6),
+                _AuditTrailSummary(operation: operation),
                 if ((operation.note ?? '').isNotEmpty)
                   Text('Note: ${operation.note}'),
                 const SizedBox(height: 8),
@@ -283,7 +292,7 @@ class _TransferActionButton extends StatelessWidget {
                   return;
                 }
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Transfer approved locally.')),
+                  const SnackBar(content: Text('Transfer approved.')),
                 );
               },
         child: const Text('Approve'),
@@ -303,7 +312,7 @@ class _TransferActionButton extends StatelessWidget {
                   return;
                 }
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Transfer completed locally.')),
+                  const SnackBar(content: Text('Transfer completed.')),
                 );
               },
         child: const Text('Complete'),
@@ -311,5 +320,67 @@ class _TransferActionButton extends StatelessWidget {
     }
 
     return const SizedBox.shrink();
+  }
+}
+
+class _AuditTrailSummary extends StatelessWidget {
+  const _AuditTrailSummary({required this.operation});
+
+  final StockOperation operation;
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = <Widget>[
+      _AuditTrailLine(label: 'Created by', value: operation.createdBy ?? '-'),
+      _AuditTrailLine(
+        label: 'Created at',
+        value: formatNullableDateTime(operation.createdAt),
+      ),
+    ];
+
+    if (operation.status == StockOperationStatus.approved ||
+        operation.status == StockOperationStatus.completed) {
+      rows.add(
+        _AuditTrailLine(
+          label: 'Approved by',
+          value: operation.approvedBy ?? '-',
+        ),
+      );
+      rows.add(
+        _AuditTrailLine(
+          label: 'Approved at',
+          value: formatNullableDateTime(operation.approvedAt),
+        ),
+      );
+    }
+
+    if (operation.status == StockOperationStatus.completed) {
+      rows.add(
+        _AuditTrailLine(
+          label: 'Completed by',
+          value: operation.completedBy ?? '-',
+        ),
+      );
+      rows.add(
+        _AuditTrailLine(
+          label: 'Completed at',
+          value: formatNullableDateTime(operation.completedAt),
+        ),
+      );
+    }
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: rows);
+  }
+}
+
+class _AuditTrailLine extends StatelessWidget {
+  const _AuditTrailLine({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text('$label: $value', style: Theme.of(context).textTheme.bodySmall);
   }
 }
