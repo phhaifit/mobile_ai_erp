@@ -128,23 +128,25 @@ class TransferForm extends StatelessWidget {
                   ),
                 const SizedBox(height: 12),
                 FilledButton.icon(
-                  onPressed: store.isSubmitting || !store.canSubmitTransfer
+                  onPressed: store.isSubmitting || !store.canCreateTransferDraft
                       ? null
                       : () async {
-                          final success = await store.submitTransfer();
+                          final success = await store.createTransferDraft();
                           if (!context.mounted) {
                             return;
                           }
                           if (success) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Transfer submitted locally.'),
+                                content: Text(
+                                  'Transfer draft created locally.',
+                                ),
                               ),
                             );
                           }
                         },
-                  icon: const Icon(Icons.check_circle_outline),
-                  label: const Text('Submit Transfer'),
+                  icon: const Icon(Icons.playlist_add_check_circle_outlined),
+                  label: const Text('Create Transfer'),
                 ),
               ],
             ),
