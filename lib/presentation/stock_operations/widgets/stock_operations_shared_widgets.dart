@@ -198,6 +198,49 @@ class OperationTypeBadge extends StatelessWidget {
   }
 }
 
+class OperationStatusBadge extends StatelessWidget {
+  const OperationStatusBadge({super.key, required this.status});
+
+  final StockOperationStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color color;
+    final String text;
+
+    switch (status) {
+      case StockOperationStatus.draft:
+        color = Colors.grey.shade300;
+        text = 'DRAFT';
+        break;
+      case StockOperationStatus.approved:
+        color = Colors.amber.shade200;
+        text = 'APPROVED';
+        break;
+      case StockOperationStatus.completed:
+        color = Colors.green.shade200;
+        text = 'COMPLETED';
+        break;
+      case StockOperationStatus.cancelled:
+        color = Colors.red.shade100;
+        text = 'CANCELLED';
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+      ),
+    );
+  }
+}
+
 String formatDateTime(DateTime dateTime) {
   final month = dateTime.month.toString().padLeft(2, '0');
   final day = dateTime.day.toString().padLeft(2, '0');

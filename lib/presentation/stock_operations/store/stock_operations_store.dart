@@ -136,7 +136,7 @@ abstract class _StockOperationsStore with Store {
   }
 
   @computed
-  bool get canSubmitTransfer {
+  bool get canCreateTransferDraft {
     final source = transferSourceWarehouseId;
     final destination = transferDestinationWarehouseId;
     final productId = transferProductId;
@@ -303,8 +303,8 @@ abstract class _StockOperationsStore with Store {
   }
 
   @action
-  Future<bool> submitTransfer() async {
-    if (!canSubmitTransfer) {
+  Future<bool> createTransferDraft() async {
+    if (!canCreateTransferDraft) {
       errorMessage = 'Please complete transfer fields with valid values.';
       return false;
     }
@@ -313,7 +313,7 @@ abstract class _StockOperationsStore with Store {
     clearError();
 
     try {
-      await _repository.submitTransfer(
+      await _repository.createTransfer(
         sourceWarehouseId: transferSourceWarehouseId!,
         destinationWarehouseId: transferDestinationWarehouseId!,
         productId: transferProductId!,
@@ -321,6 +321,38 @@ abstract class _StockOperationsStore with Store {
       );
       await _reloadOperationalData();
       _resetTransferForm();
+      return true;
+    } catch (error) {
+      errorMessage = error.toString();
+      return false;
+    } finally {
+      isSubmitting = false;
+    }
+  }
+
+  @action
+  Future<bool> approveSelectedTransfer(String transferId) async {
+    isSubmitting = true;
+    clearError();
+    try {
+      await _repository.approveTransfer(transferId: transferId);
+      await _reloadOperationalData();
+      return true;
+    } catch (error) {
+      errorMessage = error.toString();
+      return false;
+    } finally {
+      isSubmitting = false;
+    }
+  }
+
+  @action
+  Future<bool> completeSelectedTransfer(String transferId) async {
+    isSubmitting = true;
+    clearError();
+    try {
+      await _repository.completeTransfer(transferId: transferId);
+      await _reloadOperationalData();
       return true;
     } catch (error) {
       errorMessage = error.toString();

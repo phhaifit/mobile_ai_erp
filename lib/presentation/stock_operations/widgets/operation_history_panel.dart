@@ -41,9 +41,11 @@ class OperationHistoryPanel extends StatelessWidget {
                   ? const Center(child: Text('No operations yet.'))
                   : (isDesktop
                         ? DesktopHistoryTable(
+                            store: store,
                             operations: store.filteredOperations,
                           )
                         : MobileHistoryList(
+                            store: store,
                             operations: store.filteredOperations,
                           )),
             ),
@@ -68,8 +70,13 @@ class OperationHistoryPanel extends StatelessWidget {
 }
 
 class DesktopHistoryTable extends StatelessWidget {
-  const DesktopHistoryTable({super.key, required this.operations});
+  const DesktopHistoryTable({
+    super.key,
+    required this.store,
+    required this.operations,
+  });
 
+  final StockOperationsStore store;
   final List<StockOperation> operations;
 
   @override
@@ -119,6 +126,20 @@ class DesktopHistoryTable extends StatelessWidget {
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Status',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Action',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
               ],
             ),
           ),
@@ -151,6 +172,17 @@ class DesktopHistoryTable extends StatelessWidget {
                           '${operation.sourceWarehouseName ?? '-'} -> ${operation.destinationWarehouseName ?? '-'}',
                         ),
                       ),
+                      Expanded(
+                        flex: 2,
+                        child: OperationStatusBadge(status: operation.status),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: _TransferActionButton(
+                          store: store,
+                          operation: operation,
+                        ),
+                      ),
                     ],
                   ),
                 );
@@ -164,8 +196,13 @@ class DesktopHistoryTable extends StatelessWidget {
 }
 
 class MobileHistoryList extends StatelessWidget {
-  const MobileHistoryList({super.key, required this.operations});
+  const MobileHistoryList({
+    super.key,
+    required this.store,
+    required this.operations,
+  });
 
+  final StockOperationsStore store;
   final List<StockOperation> operations;
 
   @override
@@ -191,6 +228,16 @@ class MobileHistoryList extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Text(
+                      'Status: ',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    OperationStatusBadge(status: operation.status),
+                  ],
+                ),
+                const SizedBox(height: 8),
                 Text(
                   operation.productName,
                   style: const TextStyle(fontWeight: FontWeight.w600),
@@ -200,11 +247,69 @@ class MobileHistoryList extends StatelessWidget {
                 Text('To: ${operation.destinationWarehouseName ?? '-'}'),
                 if ((operation.note ?? '').isNotEmpty)
                   Text('Note: ${operation.note}'),
+                const SizedBox(height: 8),
+                _TransferActionButton(store: store, operation: operation),
               ],
             ),
           ),
         );
       },
     );
+  }
+}
+
+class _TransferActionButton extends StatelessWidget {
+  const _TransferActionButton({required this.store, required this.operation});
+
+  final StockOperationsStore store;
+  final StockOperation operation;
+
+  @override
+  Widget build(BuildContext context) {
+    if (operation.type != StockOperationType.transfer) {
+      return const SizedBox.shrink();
+    }
+
+    if (operation.status == StockOperationStatus.draft) {
+      return TextButton(
+        key: Key('approve_transfer_${operation.id}'),
+        onPressed: store.isSubmitting
+            ? null
+            : () async {
+                final success = await store.approveSelectedTransfer(
+                  operation.id,
+                );
+                if (!context.mounted || !success) {
+                  return;
+                }
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Transfer approved locally.')),
+                );
+              },
+        child: const Text('Approve'),
+      );
+    }
+
+    if (operation.status == StockOperationStatus.approved) {
+      return TextButton(
+        key: Key('complete_transfer_${operation.id}'),
+        onPressed: store.isSubmitting
+            ? null
+            : () async {
+                final success = await store.completeSelectedTransfer(
+                  operation.id,
+                );
+                if (!context.mounted || !success) {
+                  return;
+                }
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Transfer completed locally.')),
+                );
+              },
+        child: const Text('Complete'),
+      );
+    }
+
+    return const SizedBox.shrink();
   }
 }

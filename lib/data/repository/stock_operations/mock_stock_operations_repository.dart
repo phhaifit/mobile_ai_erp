@@ -63,6 +63,11 @@ class MockStockOperationsRepository extends StockOperationsRepository {
       destinationWarehouseId: 'wh-02',
       destinationWarehouseName: 'North Warehouse',
       createdAt: DateTime.now().subtract(const Duration(hours: 9)),
+      createdBy: 'system',
+      approvedBy: 'manager-a',
+      approvedAt: DateTime.now().subtract(const Duration(hours: 8)),
+      completedBy: 'staff-a',
+      completedAt: DateTime.now().subtract(const Duration(hours: 8)),
       note: 'Routine balancing',
     ),
     StockOperation(
@@ -75,6 +80,9 @@ class MockStockOperationsRepository extends StockOperationsRepository {
       sourceWarehouseId: 'wh-03',
       sourceWarehouseName: 'Outlet Warehouse',
       createdAt: DateTime.now().subtract(const Duration(hours: 4)),
+      createdBy: 'staff-b',
+      completedBy: 'staff-b',
+      completedAt: DateTime.now().subtract(const Duration(hours: 4)),
       note: 'Damaged package',
     ),
   ];
@@ -99,7 +107,7 @@ class MockStockOperationsRepository extends StockOperationsRepository {
   }
 
   @override
-  Future<StockOperation> submitTransfer({
+  Future<StockOperation> createTransfer({
     required String sourceWarehouseId,
     required String destinationWarehouseId,
     required String productId,
@@ -113,40 +121,89 @@ class MockStockOperationsRepository extends StockOperationsRepository {
       throw Exception('Insufficient stock for transfer.');
     }
 
-    final destinationStock = _findStock(destinationWarehouseId, productId);
-
-    _updateStock(
-      warehouseId: sourceWarehouseId,
-      productId: productId,
-      quantityDelta: -quantity,
-      fallbackName: sourceStock.productName,
-    );
-
-    _updateStock(
-      warehouseId: destinationWarehouseId,
-      productId: productId,
-      quantityDelta: quantity,
-      fallbackName: sourceStock.productName,
-    );
-
     final operation = StockOperation(
       id: 'op-${_idCounter.toString().padLeft(3, '0')}',
       type: StockOperationType.transfer,
-      status: StockOperationStatus.completed,
+      status: StockOperationStatus.draft,
       productId: productId,
-      productName: destinationStock?.productName ?? sourceStock.productName,
+      productName: sourceStock.productName,
       quantity: quantity,
       sourceWarehouseId: sourceWarehouseId,
       sourceWarehouseName: sourceWarehouse.name,
       destinationWarehouseId: destinationWarehouseId,
       destinationWarehouseName: destinationWarehouse.name,
       createdAt: DateTime.now(),
-      note: 'Internal transfer',
+      createdBy: 'staff-draft',
+      note: 'Pending approval',
     );
 
     _idCounter++;
     _operations.add(operation);
     return operation;
+  }
+
+  @override
+  Future<StockOperation> approveTransfer({required String transferId}) async {
+    final operation = _findOperation(transferId);
+    if (operation.type != StockOperationType.transfer) {
+      throw Exception('Only transfer operations can be approved.');
+    }
+    if (operation.status != StockOperationStatus.draft) {
+      throw Exception('Only draft transfers can be approved.');
+    }
+
+    final approved = operation.copyWith(
+      status: StockOperationStatus.approved,
+      approvedBy: 'manager-approval',
+      approvedAt: DateTime.now(),
+    );
+    _replaceOperation(approved);
+    return approved;
+  }
+
+  @override
+  Future<StockOperation> completeTransfer({required String transferId}) async {
+    final operation = _findOperation(transferId);
+    if (operation.type != StockOperationType.transfer) {
+      throw Exception('Only transfer operations can be completed.');
+    }
+    if (operation.status != StockOperationStatus.approved) {
+      throw Exception('Only approved transfers can be completed.');
+    }
+
+    final sourceWarehouseId = operation.sourceWarehouseId;
+    final destinationWarehouseId = operation.destinationWarehouseId;
+    if (sourceWarehouseId == null || destinationWarehouseId == null) {
+      throw Exception('Transfer warehouses are invalid.');
+    }
+
+    final sourceStock = _findStock(sourceWarehouseId, operation.productId);
+    if (sourceStock == null ||
+        sourceStock.availableQuantity < operation.quantity) {
+      throw Exception('Insufficient stock for transfer completion.');
+    }
+
+    _updateStock(
+      warehouseId: sourceWarehouseId,
+      productId: operation.productId,
+      quantityDelta: -operation.quantity,
+      fallbackName: operation.productName,
+    );
+    _updateStock(
+      warehouseId: destinationWarehouseId,
+      productId: operation.productId,
+      quantityDelta: operation.quantity,
+      fallbackName: operation.productName,
+    );
+
+    final completed = operation.copyWith(
+      status: StockOperationStatus.completed,
+      completedBy: 'staff-complete',
+      completedAt: DateTime.now(),
+      note: 'Transfer completed locally.',
+    );
+    _replaceOperation(completed);
+    return completed;
   }
 
   @override
@@ -186,6 +243,9 @@ class MockStockOperationsRepository extends StockOperationsRepository {
       sourceWarehouseId: warehouseId,
       sourceWarehouseName: warehouse.name,
       createdAt: DateTime.now(),
+      createdBy: 'staff-damage',
+      completedBy: 'staff-damage',
+      completedAt: DateTime.now(),
       note: note,
     );
 
@@ -210,6 +270,23 @@ class MockStockOperationsRepository extends StockOperationsRepository {
     } catch (_) {
       return null;
     }
+  }
+
+  StockOperation _findOperation(String operationId) {
+    return _operations.firstWhere(
+      (operation) => operation.id == operationId,
+      orElse: () => throw Exception('Operation not found.'),
+    );
+  }
+
+  void _replaceOperation(StockOperation updatedOperation) {
+    final index = _operations.indexWhere(
+      (operation) => operation.id == updatedOperation.id,
+    );
+    if (index < 0) {
+      throw Exception('Operation not found.');
+    }
+    _operations[index] = updatedOperation;
   }
 
   void _updateStock({
