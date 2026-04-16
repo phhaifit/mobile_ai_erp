@@ -7,6 +7,12 @@ class AuditRecord {
   final DateTime createdAt;
   final List<AuditLine> lines;
   final int totalMismatchCount;
+  final String status;
+  final String? sessionCode;
+  final DateTime? closedAt;
+  final DateTime? reconciledAt;
+  final DateTime? approvedAt;
+  final String? approverName;
 
   const AuditRecord({
     required this.id,
@@ -15,5 +21,11 @@ class AuditRecord {
     required this.createdAt,
     required this.lines,
     required this.totalMismatchCount,
+    this.status = 'reconciled',
+    this.sessionCode,
+    this.closedAt,
+    this.reconciledAt,
+    this.approvedAt,
+    this.approverName,
   });
 }

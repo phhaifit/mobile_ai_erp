@@ -7,6 +7,9 @@ class OutboundRecord {
   final int quantity;
   final String? note;
   final DateTime createdAt;
+  final String status;
+  final String? code;
+  final DateTime? updatedAt;
 
   const OutboundRecord({
     required this.id,
@@ -17,5 +20,8 @@ class OutboundRecord {
     required this.quantity,
     required this.createdAt,
     this.note,
+    this.status = 'confirmed',
+    this.code,
+    this.updatedAt,
   });
 }

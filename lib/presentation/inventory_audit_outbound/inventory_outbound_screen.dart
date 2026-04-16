@@ -25,6 +25,18 @@ class _InventoryOutboundScreenState extends State<InventoryOutboundScreen> {
     _store.loadInitialData();
   }
 
+  Future<void> _createOutboundIssue() async {
+    final success = await _store.createOutboundIssue();
+    if (!mounted) {
+      return;
+    }
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Outbound issue created.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -39,13 +51,35 @@ class _InventoryOutboundScreenState extends State<InventoryOutboundScreen> {
                 return const Center(child: CircularProgressIndicator());
               }
 
+              if (_store.warehouses.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('No warehouse found.'),
+                      const SizedBox(height: 8),
+                      OutlinedButton(
+                        onPressed: _store.loadInitialData,
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
               if (isDesktop) {
                 return Padding(
                   key: const Key('outbound_desktop_layout'),
                   padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
-                      Expanded(flex: 2, child: _OutboundForm(store: _store)),
+                      Expanded(
+                        flex: 2,
+                        child: _OutboundForm(
+                          store: _store,
+                          onCreateOutboundIssue: _createOutboundIssue,
+                        ),
+                      ),
                       const SizedBox(width: 12),
                       Expanded(flex: 1, child: _OutboundPreview(store: _store)),
                     ],
@@ -57,7 +91,10 @@ class _InventoryOutboundScreenState extends State<InventoryOutboundScreen> {
                 key: const Key('outbound_mobile_layout'),
                 padding: const EdgeInsets.all(16),
                 children: [
-                  _OutboundForm(store: _store),
+                  _OutboundForm(
+                    store: _store,
+                    onCreateOutboundIssue: _createOutboundIssue,
+                  ),
                   const SizedBox(height: 12),
                   _OutboundPreview(store: _store),
                 ],
@@ -71,9 +108,10 @@ class _InventoryOutboundScreenState extends State<InventoryOutboundScreen> {
 }
 
 class _OutboundForm extends StatelessWidget {
-  const _OutboundForm({required this.store});
+  const _OutboundForm({required this.store, required this.onCreateOutboundIssue});
 
   final InventoryAuditOutboundStore store;
+  final VoidCallback onCreateOutboundIssue;
 
   @override
   Widget build(BuildContext context) {
@@ -146,23 +184,18 @@ class _OutboundForm extends StatelessWidget {
                 Text(store.errorMessage, style: const TextStyle(color: Colors.red)),
               ],
               const SizedBox(height: 12),
-              FilledButton.icon(
-                key: const Key('outbound_submit_button'),
-                onPressed: store.isSubmittingOutbound || !store.canSubmitOutbound
-                    ? null
-                    : () async {
-                        final success = await store.submitOutbound();
-                        if (!context.mounted) {
-                          return;
-                        }
-                        if (success) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Outbound issue saved locally.')),
-                          );
-                        }
-                      },
-                icon: const Icon(Icons.check_circle_outline),
-                label: const Text('Submit Outbound'),
+              Tooltip(
+                message: store.canCreateOutboundIssue
+                    ? 'Create outbound issue'
+                    : store.createOutboundDisabledReason,
+                child: FilledButton.icon(
+                  key: const Key('outbound_submit_button'),
+                  onPressed: store.isSubmittingOutbound || !store.canCreateOutboundIssue
+                      ? null
+                      : onCreateOutboundIssue,
+                  icon: const Icon(Icons.check_circle_outline),
+                  label: const Text('Create Outbound'),
+                ),
               ),
             ],
           ),
@@ -218,14 +251,21 @@ class _OutboundPreview extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 8),
-              if (store.outboundRecords.isEmpty)
+              if (store.outboundIssues.isEmpty)
                 const Text('No outbound records yet.')
               else
-                ...store.outboundRecords.take(5).map(
+                ...store.outboundIssues.take(5).map(
                   (record) => Padding(
                     padding: const EdgeInsets.only(bottom: 8),
-                    child: Text(
-                      '${formatDateTime(record.createdAt)} - ${record.productName} x${record.quantity}',
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '${formatDateTime(record.createdAt)} - ${record.productName} x${record.quantity}',
+                          ),
+                        ),
+                        WorkflowStatusBadge.outbound(status: record.status),
+                      ],
                     ),
                   ),
                 ),
@@ -236,4 +276,3 @@ class _OutboundPreview extends StatelessWidget {
     );
   }
 }
-

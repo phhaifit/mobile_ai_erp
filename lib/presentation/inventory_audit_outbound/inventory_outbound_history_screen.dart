@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
-import 'package:mobile_ai_erp/domain/entity/inventory_audit_outbound/outbound_record.dart';
 import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/inventory_shared_widgets.dart';
+import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/models/inventory_workflow_view_models.dart';
 import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/store/inventory_audit_outbound_store.dart';
 
 class InventoryOutboundHistoryScreen extends StatefulWidget {
@@ -37,16 +37,16 @@ class _InventoryOutboundHistoryScreenState extends State<InventoryOutboundHistor
                 return const Center(child: CircularProgressIndicator());
               }
 
-              if (_store.outboundRecords.isEmpty) {
+              if (_store.outboundIssues.isEmpty) {
                 return const Center(child: Text('No outbound records yet.'));
               }
 
               final isDesktop = constraints.maxWidth >= 600;
-              final records = _store.outboundRecords.toList(growable: false);
+              final records = _store.outboundIssues.toList(growable: false);
               if (isDesktop) {
-                return _OutboundHistoryDesktop(records: records);
+                return _OutboundHistoryDesktop(records: records, store: _store);
               }
-              return _OutboundHistoryMobile(records: records);
+              return _OutboundHistoryMobile(records: records, store: _store);
             },
           );
         },
@@ -56,9 +56,10 @@ class _InventoryOutboundHistoryScreenState extends State<InventoryOutboundHistor
 }
 
 class _OutboundHistoryDesktop extends StatelessWidget {
-  const _OutboundHistoryDesktop({required this.records});
+  const _OutboundHistoryDesktop({required this.records, required this.store});
 
-  final List<OutboundRecord> records;
+  final List<OutboundIssueViewModel> records;
+  final InventoryAuditOutboundStore store;
 
   @override
   Widget build(BuildContext context) {
@@ -72,14 +73,50 @@ class _OutboundHistoryDesktop extends StatelessWidget {
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                color: Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.3),
+                color:
+                    Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.3),
                 child: const Row(
                   children: [
-                    Expanded(flex: 3, child: Text('Date/Time', style: TextStyle(fontWeight: FontWeight.bold))),
-                    Expanded(flex: 2, child: Text('Warehouse', style: TextStyle(fontWeight: FontWeight.bold))),
-                    Expanded(flex: 2, child: Text('Product', style: TextStyle(fontWeight: FontWeight.bold))),
-                    Expanded(flex: 1, child: Text('Qty', style: TextStyle(fontWeight: FontWeight.bold))),
-                    Expanded(flex: 3, child: Text('Note', style: TextStyle(fontWeight: FontWeight.bold))),
+                    Expanded(
+                      flex: 3,
+                      child: Text(
+                        'Date/Time',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        'Warehouse',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        'Product',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 1,
+                      child:
+                          Text('Qty', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        'Status',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        'Action',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -92,7 +129,20 @@ class _OutboundHistoryDesktop extends StatelessWidget {
                       Expanded(flex: 2, child: Text(record.warehouseName)),
                       Expanded(flex: 2, child: Text(record.productName)),
                       Expanded(flex: 1, child: Text('${record.quantity}')),
-                      Expanded(flex: 3, child: Text(record.note?.trim().isNotEmpty == true ? record.note! : '-')),
+                      Expanded(
+                        flex: 2,
+                        child: WorkflowStatusBadge.outbound(status: record.status),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: record.status == OutboundIssueStatus.confirmed
+                            ? TextButton(
+                                key: Key('cancel_outbound_${record.id}'),
+                                onPressed: () => store.cancelOutboundIssue(record.id),
+                                child: const Text('Cancel'),
+                              )
+                            : const Text('-'),
+                      ),
                     ],
                   ),
                 ),
@@ -106,9 +156,10 @@ class _OutboundHistoryDesktop extends StatelessWidget {
 }
 
 class _OutboundHistoryMobile extends StatelessWidget {
-  const _OutboundHistoryMobile({required this.records});
+  const _OutboundHistoryMobile({required this.records, required this.store});
 
-  final List<OutboundRecord> records;
+  final List<OutboundIssueViewModel> records;
+  final InventoryAuditOutboundStore store;
 
   @override
   Widget build(BuildContext context) {
@@ -121,13 +172,23 @@ class _OutboundHistoryMobile extends StatelessWidget {
         final record = records[index];
         return InventorySectionCard(
           title: record.productName,
-          trailing: Text(formatDateTime(record.createdAt)),
+          trailing: WorkflowStatusBadge.outbound(status: record.status),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Warehouse: ${record.warehouseName}'),
               Text('Quantity: ${record.quantity}'),
+              Text('Date: ${formatDateTime(record.createdAt)}'),
               Text('Note: ${record.note?.trim().isNotEmpty == true ? record.note! : '-'}'),
+              if (record.status == OutboundIssueStatus.confirmed)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    key: Key('cancel_outbound_mobile_${record.id}'),
+                    onPressed: () => store.cancelOutboundIssue(record.id),
+                    child: const Text('Cancel Issue'),
+                  ),
+                ),
             ],
           ),
         );
