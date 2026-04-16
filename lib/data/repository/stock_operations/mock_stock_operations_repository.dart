@@ -200,7 +200,7 @@ class MockStockOperationsRepository extends StockOperationsRepository {
       status: StockOperationStatus.completed,
       completedBy: 'staff-complete',
       completedAt: DateTime.now(),
-      note: 'Transfer completed locally.',
+      note: 'Transfer completed.',
     );
     _replaceOperation(completed);
     return completed;

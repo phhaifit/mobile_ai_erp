@@ -94,6 +94,7 @@ void main() {
     await tester.tap(find.text('Operation History'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Qty:'), findsWidgets);
+    expect(find.textContaining('Created by:'), findsWidgets);
 
     await tester.pageBack();
     await tester.pumpAndSettle();
@@ -107,6 +108,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Warehouses'), findsOneWidget);
     expect(find.text('Time'), findsOneWidget);
+    expect(find.textContaining('Created by:'), findsWidgets);
 
     addTearDown(() {
       tester.view.resetPhysicalSize();
@@ -227,9 +229,12 @@ void main() {
     store.setCurrentView(StockOperationsView.history);
     await tester.pumpAndSettle();
     expect(find.text('Approve'), findsOneWidget);
+    expect(find.textContaining('Created by:'), findsWidgets);
 
     await tester.tap(find.text('Approve'));
     await tester.pumpAndSettle();
     expect(find.text('Complete'), findsOneWidget);
+    expect(find.textContaining('Approved by:'), findsWidgets);
+    expect(find.textContaining('Approved at:'), findsWidgets);
   });
 }

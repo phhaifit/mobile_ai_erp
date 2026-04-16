@@ -138,9 +138,7 @@ class TransferForm extends StatelessWidget {
                           if (success) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text(
-                                  'Transfer draft created locally.',
-                                ),
+                                content: Text('Transfer draft created.'),
                               ),
                             );
                           }

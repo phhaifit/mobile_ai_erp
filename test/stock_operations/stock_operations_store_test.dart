@@ -93,6 +93,8 @@ void main() {
       final approved = await store.approveSelectedTransfer(transferId);
       expect(approved, isTrue);
       expect(store.operations.first.status, StockOperationStatus.approved);
+      expect(store.operations.first.approvedBy, isNotNull);
+      expect(store.operations.first.approvedAt, isNotNull);
 
       final afterApproveSource = store.productStocks
           .firstWhere(
@@ -110,6 +112,8 @@ void main() {
       final completed = await store.completeSelectedTransfer(transferId);
       expect(completed, isTrue);
       expect(store.operations.first.status, StockOperationStatus.completed);
+      expect(store.operations.first.completedBy, isNotNull);
+      expect(store.operations.first.completedAt, isNotNull);
 
       final afterCompleteSource = store.productStocks
           .firstWhere(
