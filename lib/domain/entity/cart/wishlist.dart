@@ -1,41 +1,37 @@
-import 'package:mobile_ai_erp/domain/entity/cart/cart_item.dart';
+import 'package:mobile_ai_erp/domain/entity/cart/wishlist_item.dart';
 
-class Cart {
+class Wishlist {
   final String id;
   final String tenantId;
   final String customerId;
-  final String subtotal;
   final int totalItems;
-  final List<CartItem> items;
+  final List<WishlistItem> items;
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  const Cart({
+  const Wishlist({
     required this.id,
     required this.tenantId,
     required this.customerId,
-    required this.subtotal,
     required this.totalItems,
     required this.items,
     required this.createdAt,
     required this.updatedAt,
   });
 
-  Cart copyWith({
+  Wishlist copyWith({
     String? id,
     String? tenantId,
     String? customerId,
-    String? subtotal,
     int? totalItems,
-    List<CartItem>? items,
+    List<WishlistItem>? items,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
-    return Cart(
+    return Wishlist(
       id: id ?? this.id,
       tenantId: tenantId ?? this.tenantId,
       customerId: customerId ?? this.customerId,
-      subtotal: subtotal ?? this.subtotal,
       totalItems: totalItems ?? this.totalItems,
       items: items ?? this.items,
       createdAt: createdAt ?? this.createdAt,
@@ -45,6 +41,6 @@ class Cart {
 
   @override
   String toString() {
-    return 'Cart(id: $id, totalItems: $totalItems, subtotal: $subtotal)';
+    return 'Wishlist(id: $id, totalItems: $totalItems)';
   }
 }
