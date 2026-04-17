@@ -3,6 +3,7 @@ import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/auth_interceptor.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/logging_interceptor.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/suppliers/supplier_api.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
 import 'package:mobile_ai_erp/data/network/interceptors/error_interceptor.dart';
 import 'package:mobile_ai_erp/data/network/rest_client.dart';
@@ -49,5 +50,6 @@ class NetworkModule {
 
     // api's:-------------------------------------------------------------------
     getIt.registerSingleton(PostApi(getIt<DioClient>(), getIt<RestClient>()));
+    getIt.registerSingleton(SupplierApi(getIt<DioClient>()));
   }
 }
