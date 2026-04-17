@@ -1,412 +1,627 @@
-import 'package:mobile_ai_erp/domain/entity/cart/cart.dart';
-import 'package:mobile_ai_erp/domain/entity/cart/cart_item.dart';
-import 'package:mobile_ai_erp/domain/entity/cart/coupon.dart';
-import 'package:mobile_ai_erp/domain/entity/cart/wishlist_item.dart';
 import 'package:mobile_ai_erp/data/local/datasources/cart/cart_datasource.dart';
+import 'package:mobile_ai_erp/domain/entity/cart/cart.dart';
+import 'package:mobile_ai_erp/domain/entity/cart/cart_calculation.dart';
+import 'package:mobile_ai_erp/domain/entity/cart/cart_item.dart';
+import 'package:mobile_ai_erp/domain/entity/cart/wishlist.dart';
+import 'package:mobile_ai_erp/domain/entity/cart/wishlist_item.dart';
 
-/// Mock implementation of CartDataSource
 class CartLocalDataSourceImpl implements CartDataSource {
-  // In-memory storage for carts (userId -> Cart)
   static final Map<String, Cart> _carts = {};
+  static final Map<String, Wishlist> _wishlists = {};
 
-  // In-memory storage for wishlists (userId -> List<WishlistItem>)
-  static final Map<String, List<WishlistItem>> _wishlists = {};
-
-  // Mock available coupons
-  List<Coupon> _mockCoupons = [
-    Coupon(
-      code: 'SUMMER20',
-      discountValue: 20,
-      isPercentage: true,
-      expiryDate: DateTime.now().add(Duration(days: 30)),
-      minCartValue: 50,
-      description: '20% off summer collection',
-      isActive: true,
-    ),
-    Coupon(
-      code: 'SAVE50',
-      discountValue: 50,
-      isPercentage: false,
-      expiryDate: DateTime.now().add(Duration(days: 15)),
-      minCartValue: 200,
-      maxDiscount: 100,
-      description: 'Save \$50 on orders over \$200',
-      isActive: true,
-    ),
-    Coupon(
-      code: 'WELCOME10',
-      discountValue: 10,
-      isPercentage: true,
-      minCartValue: 0,
-      description: '10% off for new users',
-      isActive: true,
-    ),
-    Coupon(
-      code: 'EXPIRED',
-      discountValue: 30,
-      isPercentage: true,
-      expiryDate: DateTime.now().subtract(Duration(days: 5)),
-      description: 'This coupon has expired',
-      isActive: true,
-    ),
-  ];
-
-  // Mock products for adding to cart
-  final Map<String, dynamic> _mockProducts = {
-    'prod_001': {
-      'name': 'Wireless Headphones',
-      'price': 79.99,
-      'image': 'https://via.placeholder.com/150?text=Headphones',
-      'stock': 15,
-      'category': 'Electronics',
-      'sku': 'WH-001',
-    },
-    'prod_002': {
-      'name': 'USB-C Cable',
-      'price': 12.99,
-      'image': 'https://via.placeholder.com/150?text=Cable',
-      'stock': 50,
-      'category': 'Accessories',
-      'sku': 'UC-002',
-    },
-    'prod_003': {
-      'name': 'Phone Case',
-      'price': 24.99,
-      'image': 'https://via.placeholder.com/150?text=Case',
-      'stock': 3,
-      'category': 'Accessories',
-      'sku': 'PC-003',
-    },
-    'prod_004': {
-      'name': 'Screen Protector',
-      'price': 9.99,
-      'image': 'https://via.placeholder.com/150?text=Protector',
-      'stock': 0,
-      'category': 'Accessories',
-      'sku': 'SP-004',
-    },
-    'prod_005': {
-      'name': 'Portable Charger',
-      'price': 49.99,
-      'image': 'https://via.placeholder.com/150?text=Charger',
-      'stock': 25,
-      'category': 'Electronics',
-      'sku': 'PC-005',
-    },
-  };
-
-  /// Simulate network delay
-  Future<void> _simulateDelay({int milliseconds = 500}) async {
+  Future<void> _simulateDelay({int milliseconds = 250}) async {
     await Future.delayed(Duration(milliseconds: milliseconds));
   }
 
-  @override
-  Future<Cart> getCart(String userId) async {
-    final cart =
-        _carts[userId] ??
-        Cart(
-          id: 'cart_$userId',
-          userId: userId,
-          items: [],
-          dateCreated: DateTime.now(),
-          dateModified: DateTime.now(),
-        );
+  String _key({required String customerId, required String tenantId}) {
+    return '$tenantId::$customerId';
+  }
 
-    return cart;
+  List<CartItemAttribute> _attrs(List<Map<String, String>> values) {
+    return values
+        .map(
+          (e) => CartItemAttribute(
+            label: e['label'] ?? '',
+            value: e['value'] ?? '',
+          ),
+        )
+        .toList();
+  }
+
+  List<WishlistItemAttribute> _wishlistAttrs(List<Map<String, String>> values) {
+    return values
+        .map(
+          (e) => WishlistItemAttribute(
+            label: e['label'] ?? '',
+            value: e['value'] ?? '',
+          ),
+        )
+        .toList();
+  }
+
+  Cart _buildDefaultCart({
+    required String customerId,
+    required String tenantId,
+  }) {
+    final now = DateTime.now();
+
+    final items = <CartItem>[
+      CartItem(
+        id: '8f1b0a7d-5f0e-4f7d-9f11-7ecf4f17a001',
+        cartId: 'cart_$customerId',
+        productId: 'd1a6e0d7-6e7a-4c41-93a2-2c8f9b101111',
+        variantId: 'variant-sneaker-42-white',
+        quantity: 1,
+        unitPrice: '1590000',
+        originalPrice: '1890000',
+        lineTotal: '1590000',
+        addedAt: now.subtract(const Duration(minutes: 10)),
+        productName: 'Sneaker Cart Test - 42 / White',
+        sku: 'CART-SNEAKER-42',
+        productType: 'variant',
+        productStatus: 'selling',
+        thumbnailUrl:
+            'https://cdn.example.com/products/sneaker-42-white-main.jpg',
+        variantSummary: '42, White',
+        attributes: _attrs([
+          {'label': 'Size', 'value': '42'},
+          {'label': 'Color', 'value': 'White'},
+        ]),
+        availableStock: 8,
+        isPriceChanged: false,
+        isAvailable: true,
+        stockWarning: false,
+      ),
+      CartItem(
+        id: '8f1b0a7d-5f0e-4f7d-9f11-7ecf4f17a002',
+        cartId: 'cart_$customerId',
+        productId: '4f4d74e8-9a9a-4d65-8bd1-13d91a772222',
+        variantId: 'variant-tshirt-m-black',
+        quantity: 2,
+        unitPrice: '249000',
+        originalPrice: '299000',
+        lineTotal: '498000',
+        addedAt: now.subtract(const Duration(minutes: 8)),
+        productName: 'Áo thun Oversize Cart Test - M / Black',
+        sku: 'CART-TSHIRT-M-BLACK',
+        productType: 'variant',
+        productStatus: 'selling',
+        thumbnailUrl:
+            'https://cdn.example.com/products/tshirt-m-black-main.jpg',
+        variantSummary: 'M, Black',
+        attributes: _attrs([
+          {'label': 'Size', 'value': 'M'},
+          {'label': 'Color', 'value': 'Black'},
+        ]),
+        availableStock: 2,
+        isPriceChanged: true,
+        isAvailable: true,
+        stockWarning: true,
+      ),
+      CartItem(
+        id: '8f1b0a7d-5f0e-4f7d-9f11-7ecf4f17a003',
+        cartId: 'cart_$customerId',
+        productId: '7c8a9d70-cb71-4d67-a57f-6e2a3f113333',
+        variantId: null,
+        quantity: 1,
+        unitPrice: '2391000',
+        originalPrice: '2490000',
+        lineTotal: '2391000',
+        addedAt: now.subtract(const Duration(minutes: 5)),
+        productName: 'Logitech MX Master 3S',
+        sku: 'CART-MOUSE-MX3S',
+        productType: 'standalone',
+        productStatus: 'selling',
+        thumbnailUrl: 'https://cdn.example.com/products/mx-master-3s-main.jpg',
+        variantSummary: null,
+        attributes: const [],
+        availableStock: 0,
+        isPriceChanged: true,
+        isAvailable: false,
+        stockWarning: true,
+      ),
+    ];
+
+    return Cart(
+      id: '4e6d8a84-8e1f-4f7d-b2e8-6f2d53b2a101',
+      tenantId: tenantId,
+      customerId: customerId,
+      subtotal: '4479000',
+      totalItems: 3,
+      items: items,
+      createdAt: now.subtract(const Duration(minutes: 15)),
+      updatedAt: now.subtract(const Duration(minutes: 5)),
+    );
+  }
+
+  Wishlist _buildDefaultWishlist({
+    required String customerId,
+    required String tenantId,
+  }) {
+    final now = DateTime.now();
+
+    final items = <WishlistItem>[
+      WishlistItem(
+        id: 'c1f8b96a-6f0a-4d9f-9c8c-0d8b7d110001',
+        wishlistId: 'wishlist_$customerId',
+        productId: 'd1a6e0d7-6e7a-4c41-93a2-2c8f9b101111',
+        variantId: 'variant-sneaker-42-white',
+        addedAt: now.subtract(const Duration(minutes: 20)),
+        productName: 'Sneaker Cart Test - 42 / White',
+        sku: 'CART-SNEAKER-42',
+        productType: 'variant',
+        productStatus: 'selling',
+        sellingPrice: '1590000',
+        originalPrice: '1890000',
+        thumbnailUrl:
+            'https://cdn.example.com/products/sneaker-42-white-main.jpg',
+        variantSummary: '42, White',
+        attributes: _wishlistAttrs([
+          {'label': 'Size', 'value': '42'},
+          {'label': 'Color', 'value': 'White'},
+        ]),
+        isAvailable: true,
+      ),
+      WishlistItem(
+        id: 'c1f8b96a-6f0a-4d9f-9c8c-0d8b7d110002',
+        wishlistId: 'wishlist_$customerId',
+        productId: '4f4d74e8-9a9a-4d65-8bd1-13d91a772222',
+        variantId: 'variant-tshirt-m-black',
+        addedAt: now.subtract(const Duration(minutes: 18)),
+        productName: 'Áo thun Oversize Cart Test - M / Black',
+        sku: 'CART-TSHIRT-M-BLACK',
+        productType: 'variant',
+        productStatus: 'selling',
+        sellingPrice: '249000',
+        originalPrice: '299000',
+        thumbnailUrl:
+            'https://cdn.example.com/products/tshirt-m-black-main.jpg',
+        variantSummary: 'M, Black',
+        attributes: _wishlistAttrs([
+          {'label': 'Size', 'value': 'M'},
+          {'label': 'Color', 'value': 'Black'},
+        ]),
+        isAvailable: true,
+      ),
+      WishlistItem(
+        id: 'c1f8b96a-6f0a-4d9f-9c8c-0d8b7d110003',
+        wishlistId: 'wishlist_$customerId',
+        productId: '7c8a9d70-cb71-4d67-a57f-6e2a3f113333',
+        variantId: null,
+        addedAt: now.subtract(const Duration(minutes: 15)),
+        productName: 'Logitech MX Master 3S',
+        sku: 'CART-MOUSE-MX3S',
+        productType: 'standalone',
+        productStatus: 'out_of_stock',
+        sellingPrice: '2290000',
+        originalPrice: '2490000',
+        thumbnailUrl: 'https://cdn.example.com/products/mx-master-3s-main.jpg',
+        variantSummary: null,
+        attributes: const [],
+        isAvailable: false,
+      ),
+    ];
+
+    return Wishlist(
+      id: '8e6d4f11-2ad8-4d5e-b0e5-2d77d1a8f001',
+      tenantId: tenantId,
+      customerId: customerId,
+      totalItems: 3,
+      items: items,
+      createdAt: now.subtract(const Duration(minutes: 30)),
+      updatedAt: now.subtract(const Duration(minutes: 15)),
+    );
+  }
+
+  int _sumQuantity(List<CartItem> items) {
+    return items.fold(0, (sum, item) => sum + item.quantity);
+  }
+
+  String _sumLineTotals(List<CartItem> items) {
+    final total = items.fold<int>(
+      0,
+      (sum, item) => sum + int.parse(item.lineTotal),
+    );
+    return total.toString();
   }
 
   @override
-  Future<void> saveCart(Cart cart) async {
-    await _simulateDelay(milliseconds: 300);
-    _carts[cart.userId] = cart;
+  Future<Cart> getCart({
+    required String customerId,
+    required String tenantId,
+  }) async {
+    await _simulateDelay();
+    final key = _key(customerId: customerId, tenantId: tenantId);
+    return _carts.putIfAbsent(
+      key,
+      () => _buildDefaultCart(customerId: customerId, tenantId: tenantId),
+    );
   }
 
   @override
-  Future<void> addItemToCart(String userId, CartItem item) async {
-    final cart = await getCart(userId);
-
-    final updatedCart = cart.addItem(item);
-
-    await saveCart(updatedCart);
-  }
-
-  @override
-  Future<void> removeItemFromCart(String userId, String itemId) async {
+  Future<Cart> addCartItem({
+    required String customerId,
+    required String tenantId,
+    required String productId,
+    String? variantId,
+    required int quantity,
+  }) async {
     await _simulateDelay();
 
-    final cart = await getCart(userId);
-    final updatedCart = cart.removeItem(itemId);
-    await saveCart(updatedCart);
-  }
+    final currentCart = await getCart(
+      customerId: customerId,
+      tenantId: tenantId,
+    );
+    final now = DateTime.now();
 
-  @override
-  Future<void> updateItemQuantity(
-    String userId,
-    String itemId,
-    int newQuantity,
-  ) async {
-    await _simulateDelay();
-
-    final cart = await getCart(userId);
-    final updatedCart = cart.updateItemQuantity(itemId, newQuantity);
-    await saveCart(updatedCart);
-  }
-
-  @override
-  Future<void> clearCart(String userId) async {
-    await _simulateDelay();
-
-    final cart = await getCart(userId);
-    final clearedCart = cart.clear();
-    await saveCart(clearedCart);
-  }
-
-  @override
-  Future<void> applyCoupon(String userId, String couponCode) async {
-    await _simulateDelay();
-
-    final coupon = await getCouponByCode(couponCode);
-    if (coupon == null) {
-      throw Exception('Coupon not found: $couponCode');
-    }
-
-    final cart = await getCart(userId);
-    final updatedCart = cart.applyCoupon(coupon);
-    await saveCart(updatedCart);
-  }
-
-  @override
-  Future<void> removeCoupon(String userId) async {
-    await _simulateDelay();
-
-    final cart = await getCart(userId);
-    final updatedCart = cart.removeCoupon();
-    await saveCart(updatedCart);
-  }
-
-  @override
-  Future<List<Coupon>> getAvailableCoupons({String? userId}) async {
-    await _simulateDelay(milliseconds: 300);
-
-    // Filter only active and non-expired coupons
-    return _mockCoupons.where((coupon) => coupon.isValid).toList();
-  }
-
-  @override
-  Future<bool> validateCoupon(String couponCode) async {
-    await _simulateDelay(milliseconds: 200);
-
-    final coupon = _mockCoupons.firstWhere(
-      (c) => c.code == couponCode,
-      orElse: () => throw Exception('Coupon not found'),
+    final existingIndex = currentCart.items.indexWhere(
+      (item) => item.productId == productId && item.variantId == variantId,
     );
 
-    return coupon.isValid;
-  }
-
-  @override
-  Future<Coupon?> getCouponByCode(String couponCode) async {
-    await _simulateDelay(milliseconds: 150);
-
-    try {
-      return _mockCoupons.firstWhere((c) => c.code == couponCode);
-    } catch (e) {
-      return null;
-    }
-  }
-
-  @override
-  Future<void> saveWishlist(String userId, List<WishlistItem> items) async {
-    await _simulateDelay();
-
-    _wishlists[userId] = items;
-  }
-
-  @override
-  Future<List<WishlistItem>> getWishlist(String userId) async {
-    await _simulateDelay();
-
-    return _wishlists[userId] ?? [];
-  }
-
-  @override
-  Future<void> addToWishlist(String userId, WishlistItem item) async {
-    await _simulateDelay();
-
-    final wishlist = await getWishlist(userId);
-
-    // Check if item already exists
-    final existingIndex = wishlist.indexWhere(
-      (w) => w.variantId == item.variantId,
-    );
+    final updatedItems = [...currentCart.items];
 
     if (existingIndex != -1) {
-      // Update existing
-      wishlist[existingIndex] = item.copyWith(lastViewed: DateTime.now());
-    } else {
-      // Add new
-      wishlist.add(item);
-    }
+      final existing = updatedItems[existingIndex];
+      final newQuantity = existing.quantity + quantity;
+      final newLineTotal = (int.parse(existing.unitPrice) * newQuantity)
+          .toString();
 
-    await saveWishlist(userId, wishlist);
-  }
-
-  @override
-  Future<void> removeFromWishlist(String userId, String variantId) async {
-    await _simulateDelay();
-
-    final wishlist = await getWishlist(userId);
-    wishlist.removeWhere((item) => item.variantId == variantId);
-    await saveWishlist(userId, wishlist);
-  }
-
-  @override
-  Future<void> clearWishlist(String userId) async {
-    await _simulateDelay();
-
-    _wishlists[userId] = [];
-  }
-
-  @override
-  Future<bool> isInWishlist(String userId, String variantId) async {
-    await _simulateDelay(milliseconds: 100);
-
-    final wishlist = await getWishlist(userId);
-    return wishlist.any((item) => item.variantId == variantId);
-  }
-
-  @override
-  Future<List<Cart>> getCartHistory(String userId, {int limit = 10}) async {
-    await _simulateDelay();
-
-    // For mock, return only current cart if exists
-    if (_carts.containsKey(userId)) {
-      return [_carts[userId]!];
-    }
-    return [];
-  }
-
-  @override
-  Future<void> markCartAsAbandoned(String userId) async {
-    await _simulateDelay();
-
-    final cart = await getCart(userId);
-    if (cart.items.isNotEmpty) {
-      final abandonedCart = cart.copyWith(
-        isAbandoned: true,
-        abandonedDate: DateTime.now(),
-        status: 'abandoned',
+      updatedItems[existingIndex] = existing.copyWith(
+        quantity: newQuantity,
+        lineTotal: newLineTotal,
       );
-      await saveCart(abandonedCart);
-    }
-  }
+    } else {
+      CartItem newItem;
 
-  @override
-  Future<List<Cart>> getAbandonedCarts({int hoursThreshold = 24}) async {
-    await _simulateDelay();
-
-    final now = DateTime.now();
-    final threshold = Duration(hours: hoursThreshold);
-
-    final abandonedCarts = _carts.values.where((cart) {
-      if (cart.isAbandoned) {
-        return true;
+      if (productId == 'd1a6e0d7-6e7a-4c41-93a2-2c8f9b101111') {
+        newItem = CartItem(
+          id: 'new_${now.microsecondsSinceEpoch}',
+          cartId: currentCart.id,
+          productId: productId,
+          variantId: variantId,
+          quantity: quantity,
+          unitPrice: '1590000',
+          originalPrice: '1890000',
+          lineTotal: (1590000 * quantity).toString(),
+          addedAt: now,
+          productName: 'Sneaker Cart Test - 42 / White',
+          sku: 'CART-SNEAKER-42',
+          productType: 'variant',
+          productStatus: 'selling',
+          thumbnailUrl:
+              'https://cdn.example.com/products/sneaker-42-white-main.jpg',
+          variantSummary: '42, White',
+          attributes: _attrs([
+            {'label': 'Size', 'value': '42'},
+            {'label': 'Color', 'value': 'White'},
+          ]),
+          availableStock: 8,
+          isPriceChanged: false,
+          isAvailable: true,
+          stockWarning: false,
+        );
+      } else {
+        newItem = CartItem(
+          id: 'new_${now.microsecondsSinceEpoch}',
+          cartId: currentCart.id,
+          productId: productId,
+          variantId: variantId,
+          quantity: quantity,
+          unitPrice: '249000',
+          originalPrice: '299000',
+          lineTotal: (249000 * quantity).toString(),
+          addedAt: now,
+          productName: 'Áo thun Oversize Cart Test - M / Black',
+          sku: 'CART-TSHIRT-M-BLACK',
+          productType: variantId != null ? 'variant' : 'standalone',
+          productStatus: 'selling',
+          thumbnailUrl:
+              'https://cdn.example.com/products/tshirt-m-black-main.jpg',
+          variantSummary: variantId != null ? 'M, Black' : null,
+          attributes: variantId != null
+              ? _attrs([
+                  {'label': 'Size', 'value': 'M'},
+                  {'label': 'Color', 'value': 'Black'},
+                ])
+              : const [],
+          availableStock: 2,
+          isPriceChanged: false,
+          isAvailable: true,
+          stockWarning: quantity >= 2,
+        );
       }
 
-      // Check if cart hasn't been modified for threshold
-      final timeSinceModified = now.difference(cart.dateModified);
-      return timeSinceModified.compareTo(threshold) >= 0;
-    }).toList();
-
-    return abandonedCarts;
-  }
-
-  @override
-  Future<void> syncCartWithServer(String userId) async {
-    // Simulate sync delay
-    await _simulateDelay(milliseconds: 800);
-
-    // In mock implementation, just update sync timestamp
-    final cart = await getCart(userId);
-    final syncedCart = cart.copyWith(dateSynced: DateTime.now());
-    await saveCart(syncedCart);
-  }
-
-  @override
-  Future<void> migrateGuestCartToUser(String guestCartId, String userId) async {
-    await _simulateDelay();
-
-    // Get guest cart
-    final guestCart = _carts[guestCartId];
-    if (guestCart == null) return;
-
-    // Get user cart
-    final userCart = await getCart(userId);
-
-    // Merge items (guest items + user items)
-    final mergedItems = [...userCart.items, ...guestCart.items];
-
-    // Create merged cart
-    final mergedCart = userCart.copyWith(
-      items: mergedItems,
-      appliedCoupon: userCart.appliedCoupon ?? guestCart.appliedCoupon,
-    );
-
-    // Save to user
-    await saveCart(mergedCart);
-
-    // Clean up guest cart
-    _carts.remove(guestCartId);
-  }
-
-  /// Helper: Create mock cart item from product data
-  CartItem _createMockCartItem(String productId) {
-    final product = _mockProducts[productId];
-    if (product == null) {
-      throw Exception('Product not found: $productId');
+      updatedItems.add(newItem);
     }
 
-    return CartItem(
-      id: 'item_${productId}_${DateTime.now().millisecondsSinceEpoch}',
+    final updatedCart = currentCart.copyWith(
+      items: updatedItems,
+      totalItems: _sumQuantity(updatedItems),
+      subtotal: _sumLineTotals(updatedItems),
+      updatedAt: now,
+    );
+
+    final key = _key(customerId: customerId, tenantId: tenantId);
+    _carts[key] = updatedCart;
+    return updatedCart;
+  }
+
+  @override
+  Future<Cart> updateCartItemQuantity({
+    required String customerId,
+    required String tenantId,
+    required String itemId,
+    required int quantity,
+  }) async {
+    await _simulateDelay();
+
+    final currentCart = await getCart(
+      customerId: customerId,
+      tenantId: tenantId,
+    );
+    final updatedItems = currentCart.items.map((item) {
+      if (item.id != itemId) return item;
+      return item.copyWith(
+        quantity: quantity,
+        lineTotal: (int.parse(item.unitPrice) * quantity).toString(),
+      );
+    }).toList();
+
+    final updatedCart = currentCart.copyWith(
+      items: updatedItems,
+      totalItems: _sumQuantity(updatedItems),
+      subtotal: _sumLineTotals(updatedItems),
+      updatedAt: DateTime.now(),
+    );
+
+    final key = _key(customerId: customerId, tenantId: tenantId);
+    _carts[key] = updatedCart;
+    return updatedCart;
+  }
+
+  @override
+  Future<Cart> removeCartItem({
+    required String customerId,
+    required String tenantId,
+    required String itemId,
+  }) async {
+    await _simulateDelay();
+
+    final currentCart = await getCart(
+      customerId: customerId,
+      tenantId: tenantId,
+    );
+    final updatedItems = currentCart.items
+        .where((item) => item.id != itemId)
+        .toList();
+
+    final updatedCart = currentCart.copyWith(
+      items: updatedItems,
+      totalItems: _sumQuantity(updatedItems),
+      subtotal: _sumLineTotals(updatedItems),
+      updatedAt: DateTime.now(),
+    );
+
+    final key = _key(customerId: customerId, tenantId: tenantId);
+    _carts[key] = updatedCart;
+    return updatedCart;
+  }
+
+  @override
+  Future<CartCalculation> calculateCart({
+    required String customerId,
+    required String tenantId,
+    required List<String> selectedItemIds,
+    String? couponCode,
+  }) async {
+    await _simulateDelay();
+
+    final cart = await getCart(customerId: customerId, tenantId: tenantId);
+    final selectedItems = cart.items
+        .where((item) => selectedItemIds.contains(item.id))
+        .toList();
+
+    final subtotal = selectedItems.fold<int>(
+      0,
+      (sum, item) => sum + int.parse(item.lineTotal),
+    );
+
+    int discount = 0;
+    AppliedCoupon? coupon;
+
+    if (couponCode != null && couponCode.trim().isNotEmpty) {
+      if (couponCode == 'CART10') {
+        discount = (subtotal * 0.1).round();
+        coupon = AppliedCoupon(
+          code: 'CART10',
+          name: 'Giảm 10%',
+          isApplied: true,
+          isValid: true,
+          discountAmount: discount.toString(),
+          reason: null,
+        );
+      } else {
+        coupon = AppliedCoupon(
+          code: couponCode,
+          name: null,
+          isApplied: false,
+          isValid: false,
+          discountAmount: '0',
+          reason: 'Coupon không hợp lệ',
+        );
+      }
+    }
+
+    final total = subtotal - discount;
+    final selectedQuantity = selectedItems.fold<int>(
+      0,
+      (sum, item) => sum + item.quantity,
+    );
+
+    return CartCalculation(
+      items: selectedItems,
+      summary: CartCalculationSummary(
+        subtotal: subtotal.toString(),
+        discount: discount.toString(),
+        total: total.toString(),
+        selectedItemsCount: selectedItems.length,
+        selectedQuantity: selectedQuantity,
+      ),
+      coupon: coupon,
+    );
+  }
+
+  @override
+  Future<Wishlist> getWishlist({
+    required String customerId,
+    required String tenantId,
+  }) async {
+    await _simulateDelay();
+    final key = _key(customerId: customerId, tenantId: tenantId);
+    return _wishlists.putIfAbsent(
+      key,
+      () => _buildDefaultWishlist(customerId: customerId, tenantId: tenantId),
+    );
+  }
+
+  @override
+  Future<Wishlist> addToWishlist({
+    required String customerId,
+    required String tenantId,
+    required String productId,
+    String? variantId,
+  }) async {
+    await _simulateDelay();
+
+    final currentWishlist = await getWishlist(
+      customerId: customerId,
+      tenantId: tenantId,
+    );
+
+    final exists = currentWishlist.items.any(
+      (item) => item.productId == productId && item.variantId == variantId,
+    );
+    if (exists) {
+      return currentWishlist;
+    }
+
+    final now = DateTime.now();
+
+    final newItem = WishlistItem(
+      id: 'wish_${now.microsecondsSinceEpoch}',
+      wishlistId: currentWishlist.id,
       productId: productId,
-      productName: product['name'],
-      imageUrl: product['image'],
-      variantId: product['variantId'] ?? 'variant_$productId',
-      sku: product['sku'] ?? '',
-      selectedSize: product['size'],
-      selectedColorName: product['colorName'],
-      selectedColorValue: product['colorValue'],
-      price: (product['price'] as num).toDouble(),
-      salePrice: product['salePrice'] != null
-          ? (product['salePrice'] as num).toDouble()
+      variantId: variantId,
+      addedAt: now,
+      productName: productId == 'd1a6e0d7-6e7a-4c41-93a2-2c8f9b101111'
+          ? 'Sneaker Cart Test - 42 / White'
+          : 'Áo thun Oversize Cart Test - M / Black',
+      sku: productId == 'd1a6e0d7-6e7a-4c41-93a2-2c8f9b101111'
+          ? 'CART-SNEAKER-42'
+          : 'CART-TSHIRT-M-BLACK',
+      productType: variantId != null ? 'variant' : 'standalone',
+      productStatus: 'selling',
+      sellingPrice: productId == 'd1a6e0d7-6e7a-4c41-93a2-2c8f9b101111'
+          ? '1590000'
+          : '249000',
+      originalPrice: productId == 'd1a6e0d7-6e7a-4c41-93a2-2c8f9b101111'
+          ? '1890000'
+          : '299000',
+      thumbnailUrl: productId == 'd1a6e0d7-6e7a-4c41-93a2-2c8f9b101111'
+          ? 'https://cdn.example.com/products/sneaker-42-white-main.jpg'
+          : 'https://cdn.example.com/products/tshirt-m-black-main.jpg',
+      variantSummary: variantId != null
+          ? (productId == 'd1a6e0d7-6e7a-4c41-93a2-2c8f9b101111'
+                ? '42, White'
+                : 'M, Black')
           : null,
-      stockAvailable: product['stock'],
-      quantity: 1,
-      dateAdded: DateTime.now(),
-    );
-  }
-
-  /// Helper: Get mock available products
-  List<dynamic> getMockProducts() {
-    return _mockProducts.values.toList();
-  }
-
-  /// Helper: Create sample filled cart for demo/testing
-  Future<Cart> createSampleCart(String userId) async {
-    // Create cart with sample items
-    var cart = Cart(
-      id: 'cart_$userId',
-      userId: userId,
-      dateCreated: DateTime.now(),
-      dateModified: DateTime.now(),
+      attributes: variantId != null
+          ? _wishlistAttrs(
+              productId == 'd1a6e0d7-6e7a-4c41-93a2-2c8f9b101111'
+                  ? [
+                      {'label': 'Size', 'value': '42'},
+                      {'label': 'Color', 'value': 'White'},
+                    ]
+                  : [
+                      {'label': 'Size', 'value': 'M'},
+                      {'label': 'Color', 'value': 'Black'},
+                    ],
+            )
+          : const [],
+      isAvailable: true,
     );
 
-    // Add sample items
-    cart = cart.addItem(_createMockCartItem('prod_001'));
-    cart = cart.addItem(_createMockCartItem('prod_002'));
-    cart = cart.addItem(_createMockCartItem('prod_005'));
+    final updatedItems = [...currentWishlist.items, newItem];
+    final updatedWishlist = currentWishlist.copyWith(
+      items: updatedItems,
+      totalItems: updatedItems.length,
+      updatedAt: now,
+    );
 
-    await saveCart(cart);
+    final key = _key(customerId: customerId, tenantId: tenantId);
+    _wishlists[key] = updatedWishlist;
+    return updatedWishlist;
+  }
+
+  @override
+  Future<Wishlist> removeFromWishlist({
+    required String customerId,
+    required String tenantId,
+    required String itemId,
+  }) async {
+    await _simulateDelay();
+
+    final currentWishlist = await getWishlist(
+      customerId: customerId,
+      tenantId: tenantId,
+    );
+
+    final updatedItems = currentWishlist.items
+        .where((item) => item.id != itemId)
+        .toList();
+
+    final updatedWishlist = currentWishlist.copyWith(
+      items: updatedItems,
+      totalItems: updatedItems.length,
+      updatedAt: DateTime.now(),
+    );
+
+    final key = _key(customerId: customerId, tenantId: tenantId);
+    _wishlists[key] = updatedWishlist;
+    return updatedWishlist;
+  }
+
+  @override
+  Future<Cart> moveWishlistItemToCart({
+    required String customerId,
+    required String tenantId,
+    required String wishlistItemId,
+    int quantity = 1,
+  }) async {
+    await _simulateDelay();
+
+    final wishlist = await getWishlist(
+      customerId: customerId,
+      tenantId: tenantId,
+    );
+    final wishItem = wishlist.items.firstWhere(
+      (item) => item.id == wishlistItemId,
+    );
+
+    final cart = await addCartItem(
+      customerId: customerId,
+      tenantId: tenantId,
+      productId: wishItem.productId,
+      variantId: wishItem.variantId,
+      quantity: quantity,
+    );
+
+    await removeFromWishlist(
+      customerId: customerId,
+      tenantId: tenantId,
+      itemId: wishlistItemId,
+    );
+
     return cart;
   }
 }
