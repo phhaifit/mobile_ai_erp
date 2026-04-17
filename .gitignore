@@ -138,3 +138,4 @@ app.*.symbols
 !.idea/runConfigurations
 
 CLAUDE.md
+.env

@@ -1,4 +1,6 @@
 import 'package:mobile_ai_erp/data/local/datasources/product_metadata/product_metadata_datasource.dart';
+import 'package:mobile_ai_erp/data/network/apis/brands/brand_api.dart';
+import 'package:mobile_ai_erp/data/network/rest_client.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/attribute.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/attribute_option.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/brand.dart';
@@ -11,6 +13,7 @@ class ProductMetadataRepositoryImpl extends ProductMetadataRepository {
   ProductMetadataRepositoryImpl(this._dataSource);
 
   final ProductMetadataDataSource _dataSource;
+  final BrandApi _brandApi = BrandApi(RestClient());
 
   @override
   Future<List<Category>> getCategories() => _dataSource.getCategories();
@@ -65,7 +68,15 @@ class ProductMetadataRepositoryImpl extends ProductMetadataRepository {
       _dataSource.deleteCategoryAttribute(categoryAttributeId);
 
   @override
-  Future<List<Brand>> getBrands() => _dataSource.getBrands();
+  Future<List<Brand>> getBrands() {
+    return _brandApi.getBrands().then((response) {
+      if (response is List) {
+        return response.map((item) => Brand.fromJson(item)).toList();
+      } else {
+        throw Exception('Unexpected response format');
+      }
+    });
+  }
 
   @override
   Future<Brand> saveBrand(Brand brand) => _dataSource.saveBrand(brand);

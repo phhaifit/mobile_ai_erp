@@ -26,11 +26,11 @@ class Brand {
   final String code;
   final String? description;
   final String? logoUrl;
-  final String? countryCode;
-  final String? regionOrState;
-  final String? city;
-  final int sortOrder;
-  final BrandStatus status;
+  final String? countryCode; // not in db design, remove from model when refactoring
+  final String? regionOrState; // not in db design, remove from model when refactoring
+  final String? city; // not in db design, remove from model when refactoring
+  final int sortOrder; //// what is sort order
+  final BrandStatus status; // can be changed to bool, db/API field is named is_active/isActive
 
   bool get isActive => status == BrandStatus.active;
 
@@ -78,6 +78,23 @@ class Brand {
       city: identical(city, _sentinel) ? this.city : city as String?,
       sortOrder: sortOrder ?? this.sortOrder,
       status: status ?? this.status,
+    );
+  }
+
+  factory Brand.fromJson(Map<String, dynamic> json) {
+    return Brand(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      code: "", // not in db design, remove from model when refactoring
+      description: json['description'] as String?,
+      logoUrl: json['logoUrl'] as String?,
+      countryCode: null, // not in db design, remove from model when refactoring
+      regionOrState: null, // not in db design, remove from model when refactoring
+      city: null, // not in db design, remove from model when refactoring
+      sortOrder: 0, // default value, remove if unused
+      status: (json['isActive'] as bool)
+          ? BrandStatus.active
+          : BrandStatus.archived,
     );
   }
 }

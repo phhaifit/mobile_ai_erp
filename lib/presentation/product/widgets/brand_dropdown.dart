@@ -7,10 +7,10 @@ class BrandDropdown extends StatefulWidget {
   final Function(int) onBrandChanged;
 
   const BrandDropdown({
-    Key? key,
+    super.key,
     required this.selectedBrandId,
     required this.onBrandChanged,
-  }) : super(key: key);
+  });
 
   @override
   State<BrandDropdown> createState() => _BrandDropdownState();
@@ -31,7 +31,7 @@ class _BrandDropdownState extends State<BrandDropdown> {
         final brands = snapshot.data ?? [];
 
         return DropdownButtonFormField<int>(
-          value: widget.selectedBrandId,
+          initialValue: widget.selectedBrandId,
           decoration: InputDecoration(
             labelText: ProductStrings.brandRequired,
             border: OutlineInputBorder(),
