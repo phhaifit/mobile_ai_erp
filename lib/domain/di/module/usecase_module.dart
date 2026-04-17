@@ -11,6 +11,8 @@ import 'package:mobile_ai_erp/domain/repository/inventory_audit_outbound/invento
 import 'package:mobile_ai_erp/domain/repository/web_builder/cms_page_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/web_builder/store_settings_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/web_builder/web_theme_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/supplier/supplier_repository.dart';
+import 'package:mobile_ai_erp/domain/usecase/supplier/supplier_usecases.dart';
 import 'package:mobile_ai_erp/domain/usecase/checkout/checkout_usecases.dart';
 import 'package:mobile_ai_erp/domain/usecase/checkout/get_payment_methods_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/checkout/get_shipping_methods_usecase.dart';
@@ -272,6 +274,38 @@ class UseCaseModule {
     );
     getIt.registerSingleton<GetInventoryOutboundRecordsUseCase>(
       GetInventoryOutboundRecordsUseCase(getIt<InventoryAuditOutboundRepository>()),
+    );
+
+    // supplier:-------------------------------------------------------------
+    getIt.registerSingleton<GetSuppliersUseCase>(
+      GetSuppliersUseCase(getIt<SupplierRepository>()),
+    );
+    getIt.registerSingleton<GetSupplierByIdUseCase>(
+      GetSupplierByIdUseCase(getIt<SupplierRepository>()),
+    );
+    getIt.registerSingleton<CreateSupplierUseCase>(
+      CreateSupplierUseCase(getIt<SupplierRepository>()),
+    );
+    getIt.registerSingleton<UpdateSupplierUseCase>(
+      UpdateSupplierUseCase(getIt<SupplierRepository>()),
+    );
+    getIt.registerSingleton<DeleteSupplierUseCase>(
+      DeleteSupplierUseCase(getIt<SupplierRepository>()),
+    );
+    getIt.registerSingleton<GetSupplierProductsUseCase>(
+      GetSupplierProductsUseCase(getIt<SupplierRepository>()),
+    );
+    getIt.registerSingleton<AddProductToSupplierUseCase>(
+      AddProductToSupplierUseCase(getIt<SupplierRepository>()),
+    );
+    getIt.registerSingleton<UpdateProductSupplierLinkUseCase>(
+      UpdateProductSupplierLinkUseCase(getIt<SupplierRepository>()),
+    );
+    getIt.registerSingleton<RemoveProductFromSupplierUseCase>(
+      RemoveProductFromSupplierUseCase(getIt<SupplierRepository>()),
+    );
+    getIt.registerSingleton<SearchProductsUseCase>(
+      SearchProductsUseCase(getIt<SupplierRepository>()),
     );
   }
 }

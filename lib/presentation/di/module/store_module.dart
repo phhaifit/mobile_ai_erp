@@ -8,7 +8,7 @@ import 'package:mobile_ai_erp/domain/repository/dashboard/dashboard_repository.d
 import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadata_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/setting/setting_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/stock_operations/stock_operations_repository.dart';
-import 'package:mobile_ai_erp/domain/repository/supplier/supplier_repository.dart';
+import 'package:mobile_ai_erp/domain/usecase/supplier/supplier_usecases.dart';
 import 'package:mobile_ai_erp/domain/repository/user/role_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/user_repository.dart';
 import 'package:mobile_ai_erp/domain/usecase/checkout/checkout_usecases.dart';
@@ -212,7 +212,18 @@ class StoreModule {
     );
 
     getIt.registerLazySingleton<SupplierStore>(
-      () => SupplierStore(getIt<SupplierRepository>()),
+      () => SupplierStore(
+        getIt<GetSuppliersUseCase>(),
+        getIt<GetSupplierByIdUseCase>(),
+        getIt<CreateSupplierUseCase>(),
+        getIt<UpdateSupplierUseCase>(),
+        getIt<DeleteSupplierUseCase>(),
+        getIt<GetSupplierProductsUseCase>(),
+        getIt<AddProductToSupplierUseCase>(),
+        getIt<UpdateProductSupplierLinkUseCase>(),
+        getIt<RemoveProductFromSupplierUseCase>(),
+        getIt<SearchProductsUseCase>(),
+      ),
     );
 
     getIt.registerSingleton<CmsPageStore>(
