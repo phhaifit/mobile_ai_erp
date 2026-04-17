@@ -9,20 +9,47 @@ abstract class SupplierRepository {
     String search = '',
     int page = 1,
     int pageSize = 10,
+    bool? includeInactive,
+    bool? hasProducts,
+    String? sortBy,
+    String? sortOrder,
   });
 
   Future<Supplier?> getById(String id);
+
   Future<Supplier> add(SupplierUpsertPayload payload);
+
   Future<Supplier> update(String id, SupplierUpsertPayload payload);
+
   Future<void> delete(String id);
-  Future<List<SupplierProductLink>> getSupplierProducts(String supplierId);
-  Future<void> saveSupplierProducts(
-    String supplierId,
-    List<SupplierProductLink> items,
-  );
+
+  Future<List<SupplierProductLink>> getSupplierProducts(
+    String supplierId, {
+    int page = 1,
+    int pageSize = 50,
+  });
+
+  Future<void> addProductToSupplier(
+    String productId,
+    String supplierId, {
+    String? supplierSku,
+    double? costPrice,
+    bool isPrimary = false,
+  });
+
+  Future<void> updateProductSupplierLink(
+    String productId,
+    String supplierId, {
+    String? supplierSku,
+    double? costPrice,
+    bool? isPrimary,
+  });
+
+  Future<void> removeProductFromSupplier(String productId, String supplierId);
+
   Future<PaginatedResult<ProductSummary>> searchProducts({
     String search = '',
     int page = 1,
-    int pageSize = 10,
+    int pageSize = 20,
   });
 }
