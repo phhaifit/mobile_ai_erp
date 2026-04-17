@@ -2,7 +2,7 @@ class SupplierProductLink {
   final String supplierId;
   final String productId;
   final String productName;
-  final String supplierSku;
+  final String? supplierSku;
   final double? costPrice;
   final bool isPrimary;
 
@@ -10,7 +10,7 @@ class SupplierProductLink {
     required this.supplierId,
     required this.productId,
     required this.productName,
-    this.supplierSku = '',
+    this.supplierSku,
     this.costPrice,
     this.isPrimary = false,
   });

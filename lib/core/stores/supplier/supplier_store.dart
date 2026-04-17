@@ -1,217 +1,453 @@
+import 'dart:async';
+import 'package:dio/dio.dart';
 import 'package:mobx/mobx.dart';
-import 'package:uuid/uuid.dart';
 import '../../../domain/entity/supplier/supplier.dart';
-import '../../../domain/repository/supplier/supplier_repository.dart';
+import '../../../domain/entity/supplier/supplier_product_link.dart';
+import '../../../domain/entity/supplier/supplier_upsert_payload.dart';
+import '../../../domain/entity/supplier/product_summary.dart';
+import '../../../domain/usecase/supplier/supplier_usecases.dart';
 
 part 'supplier_store.g.dart';
 
-class SupplierStore = _SupplierStore with _$SupplierStore;
+class SupplierStore = SupplierStoreBase with _$SupplierStore;
 
-abstract class _SupplierStore with Store {
-  final SupplierRepository _repository;
-  final _uuid = const Uuid();
+abstract class SupplierStoreBase with Store {
+  final GetSuppliersUseCase _getSuppliers;
+  final GetSupplierByIdUseCase _getSupplierById;
+  final CreateSupplierUseCase _createSupplier;
+  final UpdateSupplierUseCase _updateSupplier;
+  final DeleteSupplierUseCase _deleteSupplier;
+  final GetSupplierProductsUseCase _getSupplierProducts;
+  final AddProductToSupplierUseCase _addProductToSupplier;
+  final UpdateProductSupplierLinkUseCase _updateProductSupplierLink;
+  final RemoveProductFromSupplierUseCase _removeProductFromSupplier;
+  final SearchProductsUseCase _searchProducts;
 
-  _SupplierStore(this._repository);
+  SupplierStoreBase(
+    this._getSuppliers,
+    this._getSupplierById,
+    this._createSupplier,
+    this._updateSupplier,
+    this._deleteSupplier,
+    this._getSupplierProducts,
+    this._addProductToSupplier,
+    this._updateProductSupplierLink,
+    this._removeProductFromSupplier,
+    this._searchProducts,
+  );
+
+  // ── Supplier list ──────────────────────────────────────────────────────────
 
   @observable
   ObservableList<Supplier> suppliers = ObservableList();
 
   @observable
-  bool isLoading = false;
+  int currentPage = 1;
 
   @observable
-  String? errorMessage;
+  int pageSize = 10;
+
+  @observable
+  int totalItems = 0;
+
+  @observable
+  int totalPages = 0;
+
+  // ── Filters ────────────────────────────────────────────────────────────────
 
   @observable
   String searchQuery = '';
 
-  // productId -> list of supplierIds
   @observable
-  ObservableMap<String, ObservableList<String>> productSupplierMap =
-      ObservableMap();
+  bool? includeInactive;
 
-  // supplierId -> list of productIds
   @observable
-  ObservableMap<String, ObservableList<String>> supplierProductMap =
-      ObservableMap();
+  bool? hasProducts;
+
+  // ── Sort ───────────────────────────────────────────────────────────────────
+
+  @observable
+  String? sortBy;
+
+  @observable
+  String? sortOrder;
+
+  // ── Selected supplier detail ───────────────────────────────────────────────
+
+  @observable
+  Supplier? currentSupplier;
+
+  // ── Product-supplier links for current supplier ────────────────────────────
+
+  @observable
+  ObservableList<SupplierProductLink> supplierProducts = ObservableList();
+
+  // ── Product search (for picker) ────────────────────────────────────────────
+
+  @observable
+  ObservableList<ProductSummary> availableProducts = ObservableList();
+
+  @observable
+  int productSearchPage = 1;
+
+  @observable
+  bool hasMoreProducts = false;
+
+  // ── Private fields ─────────────────────────────────────────────────────────
+
+  Timer? _searchDebounce;
+
+  // ── Async state ────────────────────────────────────────────────────────────
+
+  @observable
+  bool isLoading = false;
+
+  @observable
+  bool isSubmitting = false;
+
+  @observable
+  String? errorMessage;
+
+  // ── Computed ───────────────────────────────────────────────────────────────
 
   @computed
-  List<Supplier> get filteredSuppliers {
-    if (searchQuery.isEmpty) return suppliers;
-    final q = searchQuery.toLowerCase();
-    return suppliers
-        .where((s) =>
-            s.name.toLowerCase().contains(q) ||
-            s.contactName.toLowerCase().contains(q) ||
-            s.phone.contains(q) ||
-            s.email.toLowerCase().contains(q))
-        .toList();
+  bool get hasNextPage => currentPage < totalPages;
+
+  @computed
+  bool get hasPreviousPage => currentPage > 1;
+
+  // ── Supplier list actions ──────────────────────────────────────────────────
+
+  @action
+  Future<void> fetchSuppliers({int page = 1}) async {
+    isLoading = true;
+    errorMessage = null;
+    try {
+      final result = await _getSuppliers(
+        search: searchQuery,
+        page: page,
+        pageSize: pageSize,
+        includeInactive: includeInactive,
+        hasProducts: hasProducts,
+        sortBy: sortBy,
+        sortOrder: sortOrder,
+      );
+      suppliers = ObservableList.of(result.data);
+      currentPage = result.page;
+      totalItems = result.totalItems;
+      totalPages = result.totalPages;
+    } catch (e) {
+      errorMessage = _parseError(e);
+    } finally {
+      isLoading = false;
+    }
   }
 
   @action
   void setSearchQuery(String query) {
     searchQuery = query;
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 500), () {
+      fetchSuppliers(page: 1);
+    });
   }
 
   @action
-  Future<void> fetchSuppliers() async {
-    isLoading = true;
-    errorMessage = null;
-    try {
-      final result = await _repository.getAll();
-      suppliers = ObservableList.of(result);
-    } catch (e) {
-      errorMessage = 'Failed to load suppliers.';
-    } finally {
-      isLoading = false;
-    }
-  }
-
-  @action
-  Future<bool> addSupplier({
-    required String name,
-    String contactName = '',
-    String phone = '',
-    String email = '',
-    String address = '',
-    String notes = '',
+  Future<void> setFilters({
+    bool? includeInactive,
+    bool? hasProducts,
   }) async {
+    this.includeInactive = includeInactive;
+    this.hasProducts = hasProducts;
+    await fetchSuppliers(page: 1);
+  }
+
+  @action
+  Future<void> nextPage() async {
+    if (hasNextPage) await fetchSuppliers(page: currentPage + 1);
+  }
+
+  @action
+  Future<void> previousPage() async {
+    if (hasPreviousPage) await fetchSuppliers(page: currentPage - 1);
+  }
+
+  @action
+  Future<void> setSort({String? sortBy, String? sortOrder}) async {
+    this.sortBy = sortBy;
+    this.sortOrder = sortOrder;
+    await fetchSuppliers(page: 1);
+  }
+
+  @action
+  void resetSort() {
+    sortBy = null;
+    sortOrder = null;
+  }
+
+  // ── Supplier detail ────────────────────────────────────────────────────────
+
+  @action
+  Future<void> loadSupplierById(String id) async {
     isLoading = true;
     errorMessage = null;
     try {
-      final now = DateTime.now();
-      final supplier = Supplier(
-        id: _uuid.v4(),
-        name: name,
-        contactName: contactName,
-        phone: phone,
-        email: email,
-        address: address,
-        notes: notes,
-        isActive: true,
-        createdAt: now,
-        updatedAt: now,
-      );
-      await _repository.add(supplier);
-      suppliers.add(supplier);
-      return true;
+      currentSupplier = await _getSupplierById(id);
     } catch (e) {
-      errorMessage = 'Failed to add supplier.';
-      return false;
+      errorMessage = _parseError(e);
     } finally {
       isLoading = false;
     }
   }
 
+  // ── Supplier CRUD ──────────────────────────────────────────────────────────
+
   @action
-  Future<bool> updateSupplier(Supplier supplier) async {
-    isLoading = true;
+  Future<bool> addSupplier(SupplierUpsertPayload payload) async {
+    isSubmitting = true;
     errorMessage = null;
     try {
-      final updated = supplier.copyWith(updatedAt: DateTime.now());
-      await _repository.update(updated);
-      final index = suppliers.indexWhere((s) => s.id == updated.id);
-      if (index != -1) suppliers[index] = updated;
+      final created = await _createSupplier(payload);
+      suppliers.insert(0, created);
+      totalItems += 1;
+      isSubmitting = false;
       return true;
     } catch (e) {
-      errorMessage = 'Failed to update supplier.';
+      errorMessage = _parseError(e);
+      isSubmitting = false;
       return false;
-    } finally {
-      isLoading = false;
+    }
+  }
+
+  @action
+  Future<bool> updateSupplier(
+    String id,
+    SupplierUpsertPayload payload,
+  ) async {
+    isSubmitting = true;
+    errorMessage = null;
+    try {
+      final updated = await _updateSupplier(id, payload);
+      final index = suppliers.indexWhere((s) => s.id == id);
+      if (index >= 0) suppliers[index] = updated;
+      if (currentSupplier?.id == id) currentSupplier = updated;
+      isSubmitting = false;
+      return true;
+    } catch (e) {
+      errorMessage = _parseError(e);
+      isSubmitting = false;
+      return false;
     }
   }
 
   @action
   Future<bool> deleteSupplier(String id) async {
+    isSubmitting = true;
+    errorMessage = null;
+    try {
+      await _deleteSupplier(id);
+      suppliers.removeWhere((s) => s.id == id);
+      totalItems -= 1;
+      if (currentSupplier?.id == id) currentSupplier = null;
+      isSubmitting = false;
+      return true;
+    } catch (e) {
+      errorMessage = _parseError(e);
+      isSubmitting = false;
+      return false;
+    }
+  }
+
+  // ── Supplier products ──────────────────────────────────────────────────────
+
+  @action
+  Future<void> loadSupplierProducts(String supplierId) async {
     isLoading = true;
     errorMessage = null;
     try {
-      await _repository.delete(id);
-      suppliers.removeWhere((s) => s.id == id);
-      return true;
+      final links = await _getSupplierProducts(supplierId);
+      supplierProducts = ObservableList.of(links);
     } catch (e) {
-      errorMessage = 'Failed to delete supplier.';
-      return false;
+      errorMessage = _parseError(e);
     } finally {
       isLoading = false;
     }
   }
 
   @action
-  Future<void> toggleActive(Supplier supplier) async {
-    await updateSupplier(supplier.copyWith(isActive: !supplier.isActive));
+  Future<bool> addProductToSupplier(
+    String productId,
+    String supplierId, {
+    String? supplierSku,
+    double? costPrice,
+    bool isPrimary = false,
+  }) async {
+    isSubmitting = true;
+    errorMessage = null;
+    try {
+      await _addProductToSupplier(
+        productId,
+        supplierId,
+        supplierSku: supplierSku,
+        costPrice: costPrice,
+        isPrimary: isPrimary,
+      );
+      // Reload to get server-confirmed state (e.g. isPrimary cascade)
+      await loadSupplierProducts(supplierId);
+      isSubmitting = false;
+      return true;
+    } catch (e) {
+      errorMessage = _parseError(e);
+      isSubmitting = false;
+      return false;
+    }
   }
 
-  // ---------- Product–Supplier Mapping ----------
+  @action
+  Future<bool> updateProductSupplierLink(
+    String productId,
+    String supplierId, {
+    String? supplierSku,
+    double? costPrice,
+    bool? isPrimary,
+  }) async {
+    isSubmitting = true;
+    errorMessage = null;
+    try {
+      await _updateProductSupplierLink(
+        productId,
+        supplierId,
+        supplierSku: supplierSku,
+        costPrice: costPrice,
+        isPrimary: isPrimary,
+      );
+      // Reload to reflect isPrimary cascade from server
+      await loadSupplierProducts(supplierId);
+      isSubmitting = false;
+      return true;
+    } catch (e) {
+      errorMessage = _parseError(e);
+      isSubmitting = false;
+      return false;
+    }
+  }
+
+  @action
+  Future<bool> removeProductFromSupplier(
+    String productId,
+    String supplierId,
+  ) async {
+    isSubmitting = true;
+    errorMessage = null;
+    try {
+      await _removeProductFromSupplier(productId, supplierId);
+      supplierProducts.removeWhere(
+        (p) => p.productId == productId && p.supplierId == supplierId,
+      );
+      isSubmitting = false;
+      return true;
+    } catch (e) {
+      errorMessage = _parseError(e);
+      isSubmitting = false;
+      return false;
+    }
+  }
+
+  // ── Product search (for picker dialog) ────────────────────────────────────
+
+  @action
+  Future<void> searchProducts(String query, {bool reset = true}) async {
+    if (reset) {
+      productSearchPage = 1;
+      availableProducts.clear();
+    }
+    try {
+      final result = await _searchProducts(
+        search: query,
+        page: productSearchPage,
+        pageSize: 20,
+      );
+      availableProducts.addAll(result.data);
+      hasMoreProducts = result.hasNextPage;
+      productSearchPage += 1;
+    } catch (e) {
+      errorMessage = _parseError(e);
+    }
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  void clearError() {
+    errorMessage = null;
+  }
+
+  void clearCurrentSupplier() {
+    currentSupplier = null;
+    supplierProducts.clear();
+  }
+
+  // ── Product Supplier Widget helpers (for ProductSupplierSection) ────────────
 
   @action
   Future<void> fetchSuppliersForProduct(String productId) async {
-    try {
-      final ids = await _repository.getSupplierIdsForProduct(productId);
-      productSupplierMap[productId] = ObservableList.of(ids);
-    } catch (_) {}
-  }
-
-  @action
-  Future<void> fetchProductsForSupplier(String supplierId) async {
-    try {
-      final ids = await _repository.getProductIdsForSupplier(supplierId);
-      supplierProductMap[supplierId] = ObservableList.of(ids);
-    } catch (_) {}
-  }
-
-  @action
-  Future<void> linkSupplierToProduct(
-      String productId, String supplierId) async {
-    await _repository.linkSupplierToProduct(productId, supplierId);
-    // Update productSupplierMap
-    productSupplierMap.putIfAbsent(productId, () => ObservableList());
-    if (!productSupplierMap[productId]!.contains(supplierId)) {
-      productSupplierMap[productId]!.add(supplierId);
-    }
-    // Update supplierProductMap (reverse)
-    supplierProductMap.putIfAbsent(supplierId, () => ObservableList());
-    if (!supplierProductMap[supplierId]!.contains(productId)) {
-      supplierProductMap[supplierId]!.add(productId);
-    }
-  }
-
-  @action
-  Future<void> unlinkSupplierFromProduct(
-      String productId, String supplierId) async {
-    await _repository.unlinkSupplierFromProduct(productId, supplierId);
-    productSupplierMap[productId]?.remove(supplierId);
-    supplierProductMap[supplierId]?.remove(productId);
-  }
-
-  List<Supplier> getSuppliersForProduct(String productId) {
-    final ids = productSupplierMap[productId] ?? [];
-    return suppliers.where((s) => ids.contains(s.id)).toList();
+    // No-op for now: product suppliers are managed from supplier detail
   }
 
   List<Supplier> getUnlinkedSuppliersForProduct(String productId) {
-    final ids = productSupplierMap[productId] ?? [];
-    return suppliers.where((s) => !ids.contains(s.id) && s.isActive).toList();
+    return []; // No-op for now
   }
 
-  List<String> getProductIdsForSupplier(String supplierId) {
-    return supplierProductMap[supplierId]?.toList() ?? [];
+  Future<void> linkSupplierToProduct(String productId, String supplierId) async {
+    // Call the add product to supplier use case instead
+    await _addProductToSupplier(productId, supplierId);
   }
 
-  // Mock product list — replace with ProductRepository in Phase 2
-  final Map<String, String> allMockProducts = {
-    'product_001': 'Laptop Dell XPS 15',
-    'product_002': 'Wireless Mouse',
-    'product_003': 'USB-C Hub',
-    'product_004': 'Mechanical Keyboard',
-    'product_005': 'Monitor LG 27"',
-  };
+  Future<void> unlinkSupplierFromProduct(String productId, String supplierId) async {
+    // Call the remove product from supplier use case instead
+    await _removeProductFromSupplier(productId, supplierId);
+  }
 
-  List<MapEntry<String, String>> getUnlinkedProductsForSupplier(
-      String supplierId) {
-    final linked = supplierProductMap[supplierId] ?? [];
-    return allMockProducts.entries
-        .where((e) => !linked.contains(e.key))
-        .toList();
+  List<Supplier> getSuppliersForProduct(String productId) {
+    return []; // No-op for now
+  }
+
+  String _parseError(dynamic error) {
+    if (error is DioException) {
+      final data = error.response?.data;
+
+      // Try to extract message from response (prefer backend message)
+      if (data is Map<String, dynamic>) {
+        // Check direct message field (root level)
+        final message = data['message'];
+        if (message is String) return message;
+        if (message is List) return message.join(', ');
+
+        // Check nested message in error object
+        final errorObj = data['error'];
+        if (errorObj is Map<String, dynamic>) {
+          final nestedMessage = errorObj['message'];
+          if (nestedMessage is String) return nestedMessage;
+          if (nestedMessage is List) return nestedMessage.join(', ');
+        }
+      }
+      if (data is String && data.isNotEmpty) return data;
+
+      // Fall back to status code generic messages
+      switch (error.response?.statusCode) {
+        case 400:
+          return 'Invalid request. Please check your input.';
+        case 401:
+          return 'Session expired. Please log in again.';
+        case 403:
+          return 'You do not have permission to perform this action.';
+        case 404:
+          return 'Supplier not found.';
+        case 409:
+          return 'Cannot complete this action due to a conflict.';
+        default:
+          return 'An unexpected error occurred. Please try again.';
+      }
+    }
+    return error.toString();
   }
 }
