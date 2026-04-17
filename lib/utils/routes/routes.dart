@@ -26,7 +26,6 @@ import 'package:mobile_ai_erp/presentation/order_fulfillment/print_label.dart';
 import 'package:mobile_ai_erp/presentation/product/screens/product_create_edit_screen.dart';
 import 'package:mobile_ai_erp/presentation/product/screens/product_filter_screen.dart';
 import 'package:mobile_ai_erp/presentation/product/screens/product_info_screen.dart';
-import 'package:mobile_ai_erp/presentation/product/screens/product_list_page.dart';
 import 'package:mobile_ai_erp/presentation/product/screens/product_list_screen.dart';
 import 'package:mobile_ai_erp/presentation/product_detail/product_detail_screen.dart';
 import 'package:mobile_ai_erp/presentation/post_purchase/exchange_detail_screen.dart';
@@ -126,7 +125,7 @@ class Routes {
     ...CartRoutes.getRoutes(),
     reports: (BuildContext context) => ReportsAnalyticsScreen(),
     suppliers: (BuildContext context) =>
-      SupplierListScreen(store: getIt<SupplierStore>()),
+        SupplierListScreen(store: getIt<SupplierStore>()),
     profileDashboard: (BuildContext context) => ProfileDashboardScreen(),
     addressBook: (BuildContext context) => const AddressBookScreen(),
     addressForm: (BuildContext context) => const AddressFormScreen(),
@@ -137,7 +136,6 @@ class Routes {
       userStore: getIt<UserStore>(),
       roleStore: getIt<RoleStore>(),
     ),
-    productList: (BuildContext context) => ProductListPage(),
     productDetail: (BuildContext context) => const ProductDetailScreen(),
     fulfillment: (BuildContext context) => FulfillmentListScreen(),
     fulfillmentDetail: (BuildContext context) => FulfillmentDetailScreen(),

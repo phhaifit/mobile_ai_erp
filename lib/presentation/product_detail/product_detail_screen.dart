@@ -46,6 +46,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Future<void> _onAddToCart() async {
+    final product = _store.product;
+    if (product == null) return;
     final variant = _store.selectedVariant;
     if (variant == null || !variant.inStock) return;
 
@@ -61,7 +63,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       return;
     }
 
-    await _cartStore.addToCart(variant.id, _quantity);
+    await _cartStore.addToCart(
+      productId: product.id,
+      variantId: variant.id,
+      qty: _quantity,
+    );
 
     if (!mounted) return;
 
@@ -144,10 +150,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ),
       ),
       actions: [
-        IconButton(
-          icon: const Icon(Icons.share_outlined),
-          onPressed: _onShare,
-        ),
+        IconButton(icon: const Icon(Icons.share_outlined), onPressed: _onShare),
       ],
     );
   }
@@ -236,8 +239,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         // Vertical divider
         Container(
           width: 1,
-          color:
-              Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08),
+          color: Theme.of(
+            context,
+          ).colorScheme.onSurface.withValues(alpha: 0.08),
         ),
 
         // RIGHT — product info + variant selector + add to cart (scrollable)
@@ -422,7 +426,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Observer(
       builder: (_) {
         final variant = _store.selectedVariant;
-        final canAdd = variant != null &&
+        final canAdd =
+            variant != null &&
             variant.inStock &&
             _quantity > 0 &&
             _quantity <= variant.stockQuantity &&
@@ -449,8 +454,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     _cartStore.isLoading
                         ? 'Adding...'
                         : canAdd
-                            ? 'Add to Cart'
-                            : 'Select Options',
+                        ? 'Add to Cart'
+                        : 'Select Options',
                     style: const TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 16,
@@ -459,10 +464,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colorScheme.primary,
                     foregroundColor: Colors.white,
-                    disabledBackgroundColor:
-                        colorScheme.onSurface.withValues(alpha: 0.12),
-                    disabledForegroundColor:
-                        colorScheme.onSurface.withValues(alpha: 0.38),
+                    disabledBackgroundColor: colorScheme.onSurface.withValues(
+                      alpha: 0.12,
+                    ),
+                    disabledForegroundColor: colorScheme.onSurface.withValues(
+                      alpha: 0.38,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -522,10 +529,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           children: [
             const Text(
               'Quantity',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 10),
             Row(

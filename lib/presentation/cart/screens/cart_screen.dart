@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
+import 'package:mobile_ai_erp/domain/entity/cart/cart_calculation.dart';
 import 'package:mobile_ai_erp/presentation/cart/models/cart_ui_model.dart';
 import 'package:mobile_ai_erp/presentation/cart/store/cart_store.dart';
 import 'package:mobile_ai_erp/presentation/cart/widgets/cart_item_card.dart';
+import 'package:mobile_ai_erp/presentation/cart/widgets/coupon_form_widget.dart';
 import 'package:mobile_ai_erp/presentation/cart/widgets/empty_cart_state.dart';
 import 'package:mobile_ai_erp/presentation/cart/widgets/mini_cart_drawer.dart';
 import 'package:mobile_ai_erp/presentation/cart/widgets/price_summary_card.dart';
@@ -17,6 +19,7 @@ class CartScreen extends StatefulWidget {
 
 class _CartScreenState extends State<CartScreen> {
   late final CartStore _cartStore;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   bool _isInitialLoading = true;
   bool _isSubmittingCheckout = false;
@@ -47,7 +50,6 @@ class _CartScreenState extends State<CartScreen> {
   Future<void> _handleRemoveItem(String itemId) async {
     final messenger = ScaffoldMessenger.of(context);
     messenger.clearSnackBars();
-    messenger.hideCurrentSnackBar();
 
     await _cartStore.removeItemFromCart(itemId);
 
@@ -89,8 +91,45 @@ class _CartScreenState extends State<CartScreen> {
           duration: const Duration(seconds: 2),
         ),
       );
+    }
+  }
+
+  Future<void> _handleApplyCoupon(String code) async {
+    if (_cartStore.checkoutItems.isEmpty) {
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Please select at least one item before applying a coupon',
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
       return;
     }
+
+    await _cartStore.calculateSelectedCart(couponCode: code);
+
+    if (!mounted) return;
+
+    if (_cartStore.errorMessage != null) {
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_cartStore.errorMessage!),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleRemoveCoupon() async {
+    if (_cartStore.checkoutItems.isEmpty) {
+      _cartStore.clearSelection();
+      return;
+    }
+
+    await _cartStore.calculateSelectedCart();
   }
 
   void _handleContinueShopping() {
@@ -115,7 +154,7 @@ class _CartScreenState extends State<CartScreen> {
       ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Some selected items exceed available stock'),
+          content: Text('Selected items are invalid'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -127,11 +166,20 @@ class _CartScreenState extends State<CartScreen> {
     });
 
     try {
+      if (_cartStore.calculation == null) {
+        await _cartStore.calculateSelectedCart();
+      }
+
+      if (!mounted) return;
+
       Navigator.of(context).pushNamed(
         '/checkout',
         arguments: {
-          'cartData': _cartStore.checkoutData,
-          'appliedCoupon': _cartStore.appliedCouponCode,
+          'cartId': _cartStore.cart.id,
+          'customerId': _cartStore.cart.customerId,
+          'tenantId': _cartStore.cart.tenantId,
+          'selectedItemIds': _cartStore.selectedItemIds.toList(),
+          'calculation': _cartStore.calculation,
         },
       );
     } finally {
@@ -160,33 +208,107 @@ class _CartScreenState extends State<CartScreen> {
       _cartStore.isCartValid &&
       !_isSubmittingCheckout;
 
-  @override
-  Widget build(BuildContext context) {
-    return Observer(
-      builder: (context) => Scaffold(
-        appBar: AppBar(
-          title: const Text('Shopping Cart'),
-          elevation: 0,
-          centerTitle: true,
-          actions: [
-            if (_cartStore.itemCount > 0)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Center(
-                  child: Text(
-                    '${_cartStore.itemCount} item${_cartStore.itemCount != 1 ? 's' : ''}',
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                ),
-              ),
-          ],
-        ),
-        body: _buildBody(),
-      ),
+  CartCalculationSummary _fallbackSummary() {
+    final selectedQuantity = _cartStore.checkoutItems.fold<int>(
+      0,
+      (sum, item) => sum + item.quantity,
+    );
+
+    final selectedSubtotal = _cartStore.checkoutItems.fold<int>(
+      0,
+      (sum, item) => sum + int.parse(item.lineTotal),
+    );
+
+    return CartCalculationSummary(
+      subtotal: selectedSubtotal.toString(),
+      discount: '0',
+      total: selectedSubtotal.toString(),
+      selectedItemsCount: _cartStore.checkoutItems.length,
+      selectedQuantity: selectedQuantity,
     );
   }
 
-  Widget _buildBody() {
+  String? get _couponError {
+    final coupon = _cartStore.calculation?.coupon;
+    if (coupon == null) return null;
+    if (coupon.isValid) return null;
+    return coupon.reason ?? 'Coupon is invalid';
+  }
+
+  String? get _couponSuccess {
+    final coupon = _cartStore.calculation?.coupon;
+    if (coupon == null) return null;
+    if (!coupon.isApplied || !coupon.isValid) return null;
+    return coupon.name != null
+        ? '${coupon.name} applied successfully'
+        : 'Coupon applied successfully';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Observer(
+      builder: (context) {
+        final cartUIModel = CartUIModel(
+          cart: _cartStore.cart,
+          calculation: _cartStore.calculation,
+        );
+
+        return Scaffold(
+          key: _scaffoldKey,
+          appBar: AppBar(
+            title: const Text('Shopping Cart'),
+            elevation: 0,
+            centerTitle: true,
+            actions: [
+              if (_cartStore.itemCount > 0)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Center(
+                    child: Text(
+                      '${_cartStore.itemCount} item${_cartStore.itemCount != 1 ? 's' : ''}',
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                  ),
+                ),
+              MiniCartBadge(
+                itemCount: _cartStore.itemCount,
+                hasDiscount: _cartStore.calculation?.coupon?.isApplied ?? false,
+                onTap: () {
+                  if (_cartStore.isEmpty) return;
+                  _scaffoldKey.currentState?.openEndDrawer();
+                },
+              ),
+              const SizedBox(width: 8),
+            ],
+          ),
+          endDrawer: cartUIModel.isEmpty
+              ? null
+              : MiniCartDrawer(
+                  cartData: cartUIModel,
+                  onViewFullCart: () => Navigator.pop(context),
+                  onCheckout: _handleApproveCheckout,
+                  onRemoveItem: (itemId) async {
+                    await _handleRemoveItem(itemId);
+                  },
+                  onQuantityChanged: (itemId, quantity) async {
+                    await _handleQuantityChange(itemId, quantity);
+                  },
+                  isLoading: _cartStore.isLoading,
+                  onDrawerToggle: () {
+                    if (_scaffoldKey.currentState?.isEndDrawerOpen ?? false) {
+                      Navigator.pop(context);
+                    } else {
+                      _scaffoldKey.currentState?.openEndDrawer();
+                    }
+                  },
+                ),
+          body: _buildBody(cartUIModel),
+        );
+      },
+    );
+  }
+
+  Widget _buildBody(CartUIModel cartUIModel) {
     if (_isInitialLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -204,8 +326,6 @@ class _CartScreenState extends State<CartScreen> {
         icon: Icons.shopping_cart_outlined,
       );
     }
-
-    final cartUIModel = CartUIModel.fromEntity(_cartStore.cart);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -269,20 +389,27 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Widget _buildRightContent(CartUIModel cartUIModel) {
+    final summary = _cartStore.calculation?.summary ?? _fallbackSummary();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Observer(
-          builder: (_) => PriceSummaryCard(
-            subtotal: _cartStore.selectedSubtotal,
-            discountAmount: _cartStore.selectedDiscountAmount,
-            taxAmount: _cartStore.selectedTaxAmount,
-            shippingAmount: _cartStore.selectedShippingAmount,
-            total: _cartStore.selectedTotal,
-            discountLabel: 'Subtotal',
-            showDividers: true,
-            isShippingDetermined: false,
-          ),
+        CouponFormWidget(
+          onApplyCoupon: _handleApplyCoupon,
+          onRemoveCoupon: _handleRemoveCoupon,
+          appliedCouponCode: _cartStore.calculation?.coupon?.isApplied == true
+              ? _cartStore.calculation?.coupon?.code
+              : null,
+          isLoading: _cartStore.isLoading,
+          error: _couponError,
+          success: _couponSuccess,
+        ),
+        const SizedBox(height: 16),
+        PriceSummaryCard(
+          summary: summary,
+          coupon: _cartStore.calculation?.coupon,
+          discountLabel: 'Discount',
+          showDividers: true,
         ),
         const SizedBox(height: 24),
         SizedBox(
@@ -371,7 +498,7 @@ class _CartScreenState extends State<CartScreen> {
                 context,
               ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
-            if (cartUIModel.itemCount > 0)
+            if (cartUIModel.cart.totalItems > 0)
               InkWell(
                 borderRadius: BorderRadius.circular(8),
                 onTap: _selectAllItems,
@@ -396,10 +523,10 @@ class _CartScreenState extends State<CartScreen> {
         ListView.separated(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: cartUIModel.items.length,
+          itemCount: cartUIModel.cart.items.length,
           separatorBuilder: (_, __) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
-            final item = cartUIModel.items[index];
+            final item = cartUIModel.cart.items[index];
             return Observer(
               builder: (_) => CartItemCard(
                 key: ValueKey('cart_item_${item.id}'),
@@ -410,15 +537,18 @@ class _CartScreenState extends State<CartScreen> {
                 },
                 onRemove: () => _handleRemoveItem(item.id),
                 onMoveToWishlist: () async {
-                  final cartItem = _cartStore.cart.items.firstWhere(
-                    (cartItem) => cartItem.id == item.id,
-                  );
-
                   final messenger = ScaffoldMessenger.of(context);
 
-                  await _cartStore.moveCartItemToWishlist(cartItem);
+                  await _cartStore.moveCartItemToWishlist(item);
 
                   if (!mounted) return;
+
+                  if (_cartStore.errorMessage != null) {
+                    messenger.showSnackBar(
+                      SnackBar(content: Text(_cartStore.errorMessage!)),
+                    );
+                    return;
+                  }
 
                   messenger.showSnackBar(
                     const SnackBar(content: Text('Moved to wishlist')),
@@ -469,66 +599,11 @@ class _CartScreenState extends State<CartScreen> {
   }
 }
 
-class CartScreenWithDrawer extends StatefulWidget {
+class CartScreenWithDrawer extends StatelessWidget {
   const CartScreenWithDrawer({Key? key}) : super(key: key);
 
   @override
-  State<CartScreenWithDrawer> createState() => _CartScreenWithDrawerState();
-}
-
-class _CartScreenWithDrawerState extends State<CartScreenWithDrawer> {
-  late final CartStore _cartStore;
-
-  @override
-  void initState() {
-    super.initState();
-    _cartStore = GetIt.instance<CartStore>();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Observer(
-      builder: (context) {
-        final cartUIModel = CartUIModel.fromEntity(_cartStore.cart);
-        return Builder(
-          builder: (innerContext) => Scaffold(
-            body: const CartScreen(),
-            endDrawer: cartUIModel.isEmpty
-                ? null
-                : MiniCartDrawer(
-                    cartData: cartUIModel,
-                    onViewFullCart: () => Navigator.pop(innerContext),
-                    onCheckout: _handleCheckout,
-                    onRemoveItem: (itemId) async {
-                      await _cartStore.removeItemFromCart(itemId);
-                      if (mounted) setState(() {});
-                    },
-                    onQuantityChanged: (itemId, quantity) async {
-                      await _cartStore.updateItemQuantity(itemId, quantity);
-                      if (mounted) setState(() {});
-                    },
-                    isLoading: false,
-                    onDrawerToggle: () {
-                      final scaffoldState = Scaffold.maybeOf(innerContext);
-                      if (scaffoldState == null) return;
-
-                      if (scaffoldState.isEndDrawerOpen) {
-                        Navigator.pop(innerContext);
-                      } else {
-                        scaffoldState.openEndDrawer();
-                      }
-                    },
-                  ),
-          ),
-        );
-      },
-    );
-  }
-
-  void _handleCheckout() {
-    Navigator.pop(context);
-    Navigator.of(
-      context,
-    ).pushNamed('/checkout', arguments: {'cartData': _cartStore.checkoutData});
+    return const CartScreen();
   }
 }

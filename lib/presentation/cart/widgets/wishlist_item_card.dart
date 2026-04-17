@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_ai_erp/core/utils/price_formatter.dart';
 import 'package:mobile_ai_erp/domain/entity/cart/wishlist_item.dart';
 
 class WishlistItemCard extends StatelessWidget {
@@ -15,7 +16,12 @@ class WishlistItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final inStock = (item.stockAvailable ?? 0) > 0;
+    final imageUrl = item.thumbnailUrl ?? '';
+    final inStock = item.isAvailable;
+    final hasOriginalPrice =
+        item.originalPrice != null &&
+        item.originalPrice!.isNotEmpty &&
+        item.originalPrice != item.sellingPrice;
 
     return Card(
       child: Padding(
@@ -28,8 +34,15 @@ class WishlistItemCard extends StatelessWidget {
               child: SizedBox(
                 width: 84,
                 height: 84,
-                child: item.imageUrl != null
-                    ? Image.network(item.imageUrl!, fit: BoxFit.cover)
+                child: imageUrl.isNotEmpty
+                    ? Image.network(
+                        imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          color: Colors.grey[200],
+                          child: const Icon(Icons.image_not_supported_outlined),
+                        ),
+                      )
                     : Container(
                         color: Colors.grey[200],
                         child: const Icon(Icons.image),
@@ -51,21 +64,50 @@ class WishlistItemCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  if (item.selectedSize != null ||
-                      item.selectedColorName != null)
+                  if ((item.variantSummary ?? '').isNotEmpty)
                     Text(
-                      '${item.selectedColorName ?? ''} ${item.selectedSize ?? ''}'
-                          .trim(),
+                      item.variantSummary!,
                       style: TextStyle(color: Colors.grey[600], fontSize: 12),
                     ),
+                  if (item.attributes.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: item.attributes.map((attr) {
+                        return Text(
+                          '${attr.label}: ${attr.value}',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
                   const SizedBox(height: 6),
                   Text(
-                    '\$${item.effectivePrice.toStringAsFixed(2)}',
+                    PriceFormatter.formatPrice(
+                      double.tryParse(item.sellingPrice) ?? 0,
+                    ),
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
                     ),
                   ),
+                  if (hasOriginalPrice) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      PriceFormatter.formatPrice(
+                        double.tryParse(item.originalPrice!) ?? 0,
+                      ),
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 12,
+                        decoration: TextDecoration.lineThrough,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 6),
                   Text(
                     inStock ? 'In stock' : 'Out of stock',

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_ai_erp/core/utils/price_formatter.dart';
+import 'package:mobile_ai_erp/domain/entity/cart/cart_calculation.dart';
+import 'package:mobile_ai_erp/domain/entity/cart/cart_item.dart';
 import 'package:mobile_ai_erp/presentation/cart/models/cart_ui_model.dart';
 import 'price_summary_card.dart';
 
-/// Mini cart drawer widget for quick cart preview
 class MiniCartDrawer extends StatelessWidget {
   final CartUIModel cartData;
   final VoidCallback onViewFullCart;
@@ -36,9 +38,7 @@ class MiniCartDrawer extends StatelessWidget {
           children: [
             _buildDrawerHeader(context),
             Divider(color: Colors.grey[200]),
-            Expanded(
-              child: _buildCartItemsList(context),
-            ),
+            Expanded(child: _buildCartItemsList(context)),
             Divider(color: Colors.grey[200]),
             _buildPriceSummary(context),
             _buildCheckoutSection(context),
@@ -49,6 +49,8 @@ class MiniCartDrawer extends StatelessWidget {
   }
 
   Widget _buildDrawerHeader(BuildContext context) {
+    final itemCount = cartData.cart.totalItems;
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -59,12 +61,12 @@ class MiniCartDrawer extends StatelessWidget {
             children: [
               Text(
                 'Your Cart',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               Text(
-                '${cartData.itemCount} item${cartData.itemCount != 1 ? 's' : ''}',
+                '$itemCount item${itemCount != 1 ? 's' : ''}',
                 style: TextStyle(color: Colors.grey[600], fontSize: 12),
               ),
             ],
@@ -83,13 +85,16 @@ class MiniCartDrawer extends StatelessWidget {
   }
 
   Widget _buildCartItemsList(BuildContext context) {
-    if (cartData.isEmpty) {
+    if (cartData.cart.items.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.shopping_cart_outlined,
-                size: 48, color: Colors.grey[300]),
+            Icon(
+              Icons.shopping_cart_outlined,
+              size: 48,
+              color: Colors.grey[300],
+            ),
             const SizedBox(height: 16),
             Text(
               'Your cart is empty',
@@ -110,21 +115,32 @@ class MiniCartDrawer extends StatelessWidget {
 
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      itemCount: cartData.items.length,
+      itemCount: cartData.cart.items.length,
       itemBuilder: (context, index) {
-        final item = cartData.items[index];
+        final item = cartData.cart.items[index];
         return _buildMiniCartItem(context, item);
       },
     );
   }
 
-  Widget _buildMiniCartItem(BuildContext context, CartItemUIModel item) {
+  Widget _buildMiniCartItem(BuildContext context, CartItem item) {
+    final imageUrl = item.thumbnailUrl ?? '';
+    final canIncreaseQuantity =
+        item.isAvailable && item.quantity < item.availableStock;
+    final subtitleParts = <String>['Qty: ${item.quantity}'];
+
+    if ((item.variantSummary ?? '').isNotEmpty) {
+      subtitleParts.add(item.variantSummary!);
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: Card(
         child: ListTile(
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 4,
+          ),
           leading: Container(
             width: 50,
             height: 50,
@@ -132,11 +148,11 @@ class MiniCartDrawer extends StatelessWidget {
               borderRadius: BorderRadius.circular(4),
               color: Colors.grey[100],
             ),
-            child: item.imageUrl.isNotEmpty
+            child: imageUrl.isNotEmpty
                 ? ClipRRect(
                     borderRadius: BorderRadius.circular(4),
                     child: Image.network(
-                      item.imageUrl,
+                      imageUrl,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) =>
                           Icon(Icons.image, color: Colors.grey[400]),
@@ -145,17 +161,20 @@ class MiniCartDrawer extends StatelessWidget {
                 : Icon(Icons.image, color: Colors.grey[400]),
           ),
           title: Text(
-            item.displayName,
+            item.productName,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
           ),
-          subtitle: Row(
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Qty: ${item.quantity}'),
-              const SizedBox(width: 8),
+              Text(subtitleParts.join(' • ')),
+              const SizedBox(height: 2),
               Text(
-                item.formattedTotalPrice,
+                PriceFormatter.formatPrice(
+                  double.tryParse(item.lineTotal) ?? 0,
+                ),
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
             ],
@@ -182,14 +201,13 @@ class MiniCartDrawer extends StatelessWidget {
                 Tooltip(
                   message: 'Increase quantity',
                   child: GestureDetector(
-                    onTap: item.canIncreaseQuantity
+                    onTap: canIncreaseQuantity
                         ? () => onQuantityChanged(item.id, item.quantity + 1)
                         : null,
                     child: Icon(
                       Icons.add_circle_outline,
                       size: 18,
-                      color:
-                          item.canIncreaseQuantity ? _accentRed : Colors.grey,
+                      color: canIncreaseQuantity ? _accentRed : Colors.grey,
                     ),
                   ),
                 ),
@@ -198,11 +216,7 @@ class MiniCartDrawer extends StatelessWidget {
                   message: 'Remove from cart',
                   child: GestureDetector(
                     onTap: () => onRemoveItem(item.id),
-                    child: const Icon(
-                      Icons.close,
-                      size: 18,
-                      color: _accentRed,
-                    ),
+                    child: const Icon(Icons.close, size: 18, color: _accentRed),
                   ),
                 ),
               ],
@@ -214,13 +228,19 @@ class MiniCartDrawer extends StatelessWidget {
   }
 
   Widget _buildPriceSummary(BuildContext context) {
+    final CartCalculationSummary summary =
+        cartData.calculation?.summary ??
+        CartCalculationSummary(
+          subtotal: cartData.cart.subtotal,
+          discount: '0',
+          total: cartData.cart.subtotal,
+          selectedItemsCount: cartData.cart.items.length,
+          selectedQuantity: cartData.cart.totalItems,
+        );
+
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: CompactPriceSummary(
-        subtotal: cartData.subtotal,
-        total: cartData.total,
-        itemCount: cartData.itemCount,
-      ),
+      child: CompactPriceSummary(summary: summary),
     );
   }
 
@@ -272,7 +292,6 @@ class MiniCartDrawer extends StatelessWidget {
   }
 }
 
-/// Mini cart badge (cart icon with item count)
 class MiniCartBadge extends StatelessWidget {
   final int itemCount;
   final VoidCallback onTap;
@@ -295,17 +314,11 @@ class MiniCartBadge extends StatelessWidget {
         clipBehavior: Clip.none,
         children: [
           IconButton(
-            icon: const Icon(
-              Icons.shopping_cart_outlined,
-              color: _accentRed,
-            ),
+            icon: const Icon(Icons.shopping_cart_outlined, color: _accentRed),
             iconSize: 24,
             hoverColor: _accentRed.withValues(alpha: 0.1),
             highlightColor: _accentRed.withValues(alpha: 0.1),
-            constraints: const BoxConstraints(
-              minWidth: 48,
-              minHeight: 48,
-            ),
+            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
             onPressed: onTap,
           ),
           if (itemCount > 0)
@@ -318,10 +331,7 @@ class MiniCartBadge extends StatelessWidget {
                   color: _accentRed,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                constraints: const BoxConstraints(
-                  minWidth: 20,
-                  minHeight: 20,
-                ),
+                constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
                 child: Center(
                   child: Text(
                     itemCount > 99 ? '99+' : itemCount.toString(),
