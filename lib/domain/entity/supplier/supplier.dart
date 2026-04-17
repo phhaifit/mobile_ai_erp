@@ -2,31 +2,31 @@ class Supplier {
   final String id;
   final String code;
   final String name;
-  final String phone;
-  final String email;
-  final String address;
-  final String taxCode;
-  final String idCard;
-  final String bankName;
-  final String bankAccount;
-  final String bankNote;
+  final String? phone;
+  final String? email;
+  final String? address;
+  final String? taxCode;
+  final String? idCard;
+  final String? bankName;
+  final String? bankAccount;
+  final String? bankNote;
+  final bool isActive;
   final DateTime createdAt;
-  final DateTime updatedAt;
 
   Supplier({
     required this.id,
     required this.code,
     required this.name,
-    this.phone = '',
-    this.email = '',
-    this.address = '',
-    this.taxCode = '',
-    this.idCard = '',
-    this.bankName = '',
-    this.bankAccount = '',
-    this.bankNote = '',
+    this.phone,
+    this.email,
+    this.address,
+    this.taxCode,
+    this.idCard,
+    this.bankName,
+    this.bankAccount,
+    this.bankNote,
+    required this.isActive,
     required this.createdAt,
-    required this.updatedAt,
   });
 
   Supplier copyWith({
@@ -41,8 +41,8 @@ class Supplier {
     String? bankName,
     String? bankAccount,
     String? bankNote,
+    bool? isActive,
     DateTime? createdAt,
-    DateTime? updatedAt,
   }) {
     return Supplier(
       id: id ?? this.id,
@@ -56,8 +56,8 @@ class Supplier {
       bankName: bankName ?? this.bankName,
       bankAccount: bankAccount ?? this.bankAccount,
       bankNote: bankNote ?? this.bankNote,
+      isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }
