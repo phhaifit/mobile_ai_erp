@@ -16,12 +16,14 @@ class PrintLabelScreen extends StatefulWidget {
 
 class _PrintLabelScreenState extends State<PrintLabelScreen> {
   final FulfillmentStore _store = getIt<FulfillmentStore>();
+  List<ShipmentTrackingInfo> _shipments = const [];
   ShipmentTrackingInfo? _shipment;
   bool _loadingShipment = false;
   bool _submittingShipment = false;
 
   bool _canManageShipment(FulfillmentOrder order) {
-    return order.status == FulfillmentStatus.shipped ||
+    return order.status == FulfillmentStatus.partiallyShipped ||
+        order.status == FulfillmentStatus.shipped ||
         order.status == FulfillmentStatus.delivered;
   }
 
@@ -66,7 +68,7 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
       _loadingShipment = true;
     });
 
-    final shipment = await _store.getShipmentTracking(
+    final shipments = await _store.getOrderShipmentBatches(
       orderId,
       refresh: refresh,
     );
@@ -76,7 +78,8 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
     }
 
     setState(() {
-      _shipment = shipment;
+      _shipments = shipments;
+      _shipment = shipments.isEmpty ? null : shipments.last;
       _loadingShipment = false;
     });
   }
@@ -157,7 +160,8 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
     final shipment = _shipment;
     final canManageShipment = _canManageShipment(order);
     final canCreateShipment =
-        order.status == FulfillmentStatus.shipped && shipment == null;
+        order.status == FulfillmentStatus.shipped ||
+        order.status == FulfillmentStatus.partiallyShipped;
 
     return Container(
       width: double.infinity,
@@ -209,7 +213,12 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
             ),
           if (shipment != null) ...[
             Text(
-              '${shipment.provider.toUpperCase()} • ${shipment.trackingCode}',
+              'Shipment batches: ${_shipments.length}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Latest: ${shipment.provider.toUpperCase()} • #${shipment.shipmentNumber} • ${shipment.trackingCode}',
               style: Theme.of(
                 context,
               ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
@@ -252,11 +261,15 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
               ),
             ),
           ],
-          if (order.status == FulfillmentStatus.shipped && shipment != null)
+          if (
+            (order.status == FulfillmentStatus.shipped ||
+                order.status == FulfillmentStatus.partiallyShipped) &&
+            shipment != null
+          )
             Padding(
               padding: const EdgeInsets.only(top: 10),
               child: Text(
-                'Shipment already created. Carrier status will be synchronized via refresh/webhook.',
+                'You can create next shipment batch for remaining items. Carrier status will be synchronized via refresh/webhook.',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),

@@ -209,6 +209,8 @@ class _FulfillmentListScreenState extends State<FulfillmentListScreen> {
         return Colors.orange;
       case FulfillmentStatus.processing:
         return Colors.blue;
+      case FulfillmentStatus.partiallyShipped:
+        return Colors.cyan;
       case FulfillmentStatus.shipped:
         return Colors.teal;
       case FulfillmentStatus.delivered:

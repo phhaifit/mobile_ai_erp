@@ -51,4 +51,6 @@ class Endpoints {
   static String orderShipment(String id) => "/orders/$id/shipment";
   static String orderShipmentTracking(String id) =>
       "/orders/$id/shipment/tracking";
+    static String orderShipmentsTracking(String id) =>
+      "/orders/$id/shipments/tracking";
 }
