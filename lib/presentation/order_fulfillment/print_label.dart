@@ -20,6 +20,8 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
   ShipmentTrackingInfo? _shipment;
   bool _loadingShipment = false;
   bool _submittingShipment = false;
+  bool _shipFullRemaining = true;
+  final Map<String, int> _manualAllocations = <String, int>{};
 
   bool _canManageShipment(FulfillmentOrder order) {
     return order.status == FulfillmentStatus.partiallyShipped ||
@@ -84,7 +86,10 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
     });
   }
 
-  Future<void> _createShipment(FulfillmentOrder order) async {
+  Future<void> _createShipment(
+    FulfillmentOrder order, {
+    List<CreateShipmentItemAllocation> items = const [],
+  }) async {
     if (_submittingShipment) {
       return;
     }
@@ -93,22 +98,32 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
       _submittingShipment = true;
     });
 
-    final result = await _store.createOrLinkShipment(order.id);
+    final result = await _store.createOrLinkShipment(order.id, items: items);
 
     if (!mounted) {
       return;
+    }
+
+    if (result != null) {
+      await _loadShipment(order.id, refresh: true);
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Shipment batch #${result.shipmentNumber} ready: ${result.trackingCode}',
+          ),
+        ),
+      );
     }
 
     setState(() {
       _shipment = result;
       _submittingShipment = false;
     });
-
-    if (result != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Shipment ready: ${result.trackingCode}')),
-      );
-    }
   }
 
   @override
@@ -159,9 +174,14 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
   Widget _buildShipmentSection(FulfillmentOrder order) {
     final shipment = _shipment;
     final canManageShipment = _canManageShipment(order);
+    final shippedByItem = _buildShippedByItemMap(_shipments);
+    final remainingByItem = _buildRemainingByItemMap(order, shippedByItem);
+    final hasRemainingItems =
+      remainingByItem.values.any((remaining) => remaining > 0);
     final canCreateShipment =
-        order.status == FulfillmentStatus.shipped ||
-        order.status == FulfillmentStatus.partiallyShipped;
+      (order.status == FulfillmentStatus.shipped ||
+        order.status == FulfillmentStatus.partiallyShipped) &&
+      hasRemainingItems;
 
     return Container(
       width: double.infinity,
@@ -203,7 +223,7 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
           ),
           if (!canManageShipment)
             Text(
-              'Shipment actions are available when order status is Shipped or Delivered.',
+              'Shipment actions are available when order status is Shipped, Partially Shipped, or Delivered.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
           if (shipment == null)
@@ -250,17 +270,42 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
           ],
           if (canCreateShipment) ...[
             const SizedBox(height: 12),
+            _buildPartialAllocationSection(order, remainingByItem),
+            const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: _submittingShipment
                     ? null
-                    : () => _createShipment(order),
+                    : () {
+                        final allocations = _buildAllocationsForCreate(order, remainingByItem);
+                        if (allocations == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Please pick at least one item quantity for partial shipment.'),
+                            ),
+                          );
+                          return;
+                        }
+                        _createShipment(order, items: allocations);
+                      },
                 icon: const Icon(Icons.local_shipping_outlined),
-                label: const Text('Create GHN Shipment'),
+                label: Text(
+                  _shipFullRemaining
+                      ? 'Create GHN Shipment (Full Remaining)'
+                      : 'Create GHN Shipment (Partial)',
+                ),
               ),
             ),
           ],
+          if (!hasRemainingItems)
+            Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: Text(
+                'All order items are already allocated to shipment batches.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
           if (
             (order.status == FulfillmentStatus.shipped ||
                 order.status == FulfillmentStatus.partiallyShipped) &&
@@ -276,6 +321,158 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildPartialAllocationSection(
+    FulfillmentOrder order,
+    Map<String, int> remainingByItem,
+  ) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.tune, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                'Shipment Allocation',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleSmall
+                    ?.copyWith(fontWeight: FontWeight.w700),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SwitchListTile.adaptive(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Ship full remaining items'),
+            value: _shipFullRemaining,
+            onChanged: (value) {
+              setState(() {
+                _shipFullRemaining = value;
+              });
+            },
+          ),
+          if (!_shipFullRemaining) ...[
+            const SizedBox(height: 4),
+            ...order.items.map((item) {
+              final remaining = remainingByItem[item.id] ?? 0;
+              final selected = (_manualAllocations[item.id] ?? 0).clamp(0, remaining);
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.productName,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            'Remaining: $remaining',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: remaining == 0
+                          ? null
+                          : () {
+                              final next = selected > 0 ? selected - 1 : 0;
+                              setState(() {
+                                _manualAllocations[item.id] = next;
+                              });
+                            },
+                      icon: const Icon(Icons.remove_circle_outline),
+                    ),
+                    SizedBox(
+                      width: 28,
+                      child: Text(
+                        '$selected',
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: remaining == 0 || selected >= remaining
+                          ? null
+                          : () {
+                              final next = selected + 1;
+                              setState(() {
+                                _manualAllocations[item.id] = next;
+                              });
+                            },
+                      icon: const Icon(Icons.add_circle_outline),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Map<String, int> _buildShippedByItemMap(List<ShipmentTrackingInfo> shipments) {
+    final shipped = <String, int>{};
+    for (final shipment in shipments) {
+      for (final item in shipment.items) {
+        shipped[item.orderItemId] = (shipped[item.orderItemId] ?? 0) + item.quantity;
+      }
+    }
+    return shipped;
+  }
+
+  Map<String, int> _buildRemainingByItemMap(
+    FulfillmentOrder order,
+    Map<String, int> shippedByItem,
+  ) {
+    final remaining = <String, int>{};
+    for (final item in order.items) {
+      final shippedQty = shippedByItem[item.id] ?? 0;
+      final value = item.quantity - shippedQty;
+      remaining[item.id] = value > 0 ? value : 0;
+    }
+    return remaining;
+  }
+
+  List<CreateShipmentItemAllocation>? _buildAllocationsForCreate(
+    FulfillmentOrder order,
+    Map<String, int> remainingByItem,
+  ) {
+    if (_shipFullRemaining) {
+      return const <CreateShipmentItemAllocation>[];
+    }
+
+    final allocations = <CreateShipmentItemAllocation>[];
+    for (final item in order.items) {
+      final remaining = remainingByItem[item.id] ?? 0;
+      final picked = (_manualAllocations[item.id] ?? 0).clamp(0, remaining);
+      if (picked > 0) {
+        allocations.add(
+          CreateShipmentItemAllocation(orderItemId: item.id, quantity: picked),
+        );
+      }
+    }
+
+    if (allocations.isEmpty) {
+      return null;
+    }
+
+    return allocations;
   }
 
   Widget _buildComingSoonBanner() {
