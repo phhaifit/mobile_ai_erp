@@ -305,6 +305,21 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),
+          if (order.status == FulfillmentStatus.shipped && !isCarrierManaged)
+            Container(
+              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.only(bottom: 8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.secondary.withValues(
+                  alpha: 0.08,
+                ),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                'Create or link carrier shipment from Print Label. Delivered status is synchronized from carrier tracking.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
           if (isCarrierManaged)
             Container(
               padding: const EdgeInsets.all(12),
@@ -403,7 +418,7 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
       case FulfillmentStatus.processing:
         return FulfillmentStatus.shipped;
       case FulfillmentStatus.shipped:
-        return FulfillmentStatus.delivered;
+        return null;
       case FulfillmentStatus.delivered:
       case FulfillmentStatus.cancelled:
       case FulfillmentStatus.returned:
