@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/entity/fulfillment/fulfillment_order.dart';
+import 'package:mobile_ai_erp/domain/entity/fulfillment/fulfillment_status.dart';
 import 'package:mobile_ai_erp/domain/entity/fulfillment/shipment_tracking.dart';
 import 'package:mobile_ai_erp/presentation/order_fulfillment/store/fulfillment_store.dart';
 import 'package:intl/intl.dart';
@@ -17,6 +18,11 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
   bool _loadingShipment = false;
   bool _submittingShipment = false;
 
+  bool _canManageShipment(FulfillmentOrder order) {
+    return order.status == FulfillmentStatus.shipped ||
+        order.status == FulfillmentStatus.delivered;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -29,6 +35,11 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
   }
 
   Future<void> _loadShipment(String orderId, {bool refresh = false}) async {
+    final order = _store.selectedOrder;
+    if (order == null || !_canManageShipment(order)) {
+      return;
+    }
+
     if (_loadingShipment) {
       return;
     }
@@ -184,6 +195,7 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
 
   Widget _buildShipmentSection(FulfillmentOrder order) {
     final shipment = _shipment;
+    final canManageShipment = _canManageShipment(order);
 
     return Container(
       width: double.infinity,
@@ -207,21 +219,27 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
                 ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
               ),
               const Spacer(),
-              IconButton(
-                tooltip: 'Refresh shipment',
-                onPressed: _loadingShipment
-                    ? null
-                    : () => _loadShipment(order.id, refresh: true),
-                icon: _loadingShipment
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.refresh),
-              ),
+              if (canManageShipment)
+                IconButton(
+                  tooltip: 'Refresh shipment',
+                  onPressed: _loadingShipment
+                      ? null
+                      : () => _loadShipment(order.id, refresh: true),
+                  icon: _loadingShipment
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.refresh),
+                ),
             ],
           ),
+          if (!canManageShipment)
+            Text(
+              'Shipment actions are available when order status is Shipped or Delivered.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
           if (shipment == null)
             Text(
               'No shipment linked yet. Create a GHN shipment or link an existing tracking code.',
@@ -249,32 +267,34 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
                 ),
               ),
           ],
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: _submittingShipment
-                      ? null
-                      : () => _createShipment(order),
-                  icon: const Icon(Icons.local_shipping_outlined),
-                  label: Text(
-                    shipment == null ? 'Create GHN Shipment' : 'Re-create',
+          if (canManageShipment) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _submittingShipment
+                        ? null
+                        : () => _createShipment(order),
+                    icon: const Icon(Icons.local_shipping_outlined),
+                    label: Text(
+                      shipment == null ? 'Create GHN Shipment' : 'Re-create',
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: _submittingShipment
-                      ? null
-                      : () => _showLinkTrackingDialog(order),
-                  icon: const Icon(Icons.link),
-                  label: const Text('Link Tracking'),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _submittingShipment
+                        ? null
+                        : () => _showLinkTrackingDialog(order),
+                    icon: const Icon(Icons.link),
+                    label: const Text('Link Tracking'),
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
+          ],
         ],
       ),
     );
