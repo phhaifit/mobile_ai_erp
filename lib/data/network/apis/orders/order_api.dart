@@ -66,12 +66,19 @@ class OrderApi {
   }
 
   Future<ShipmentTrackingResponseDto> createOrLinkOrderShipment(
-    String orderId,
+    String orderId, {
+    List<Map<String, dynamic>>? items,
+  }
   ) async {
     try {
+      final payload = <String, dynamic>{};
+      if (items != null && items.isNotEmpty) {
+        payload['items'] = items;
+      }
+
       final res = await _dioClient.dio.post(
         Endpoints.orderShipment(orderId),
-        data: const <String, dynamic>{},
+        data: payload,
       );
 
       return ShipmentTrackingResponseDto.fromJson(
@@ -98,6 +105,25 @@ class OrderApi {
       );
     } catch (e) {
       print('OrderApi.getOrderShipmentTracking error: $e');
+      rethrow;
+    }
+  }
+
+  Future<OrderShipmentsTrackingResponseDto> getOrderShipmentsTracking(
+    String orderId, {
+    bool refresh = false,
+  }) async {
+    try {
+      final res = await _dioClient.dio.get(
+        Endpoints.orderShipmentsTracking(orderId),
+        queryParameters: refresh ? {'refresh': 'true'} : null,
+      );
+
+      return OrderShipmentsTrackingResponseDto.fromJson(
+        res.data as Map<String, dynamic>,
+      );
+    } catch (e) {
+      print('OrderApi.getOrderShipmentsTracking error: $e');
       rethrow;
     }
   }

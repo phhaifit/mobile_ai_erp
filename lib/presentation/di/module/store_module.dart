@@ -22,6 +22,7 @@ import 'package:mobile_ai_erp/domain/usecase/checkout/validate_coupon_usecase.da
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/create_or_link_shipment_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_fulfillment_order_detail_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_fulfillment_orders_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_order_shipments_tracking_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_shipment_tracking_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/update_fulfillment_status_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/post_purchase/get_issue_detail_usecase.dart';
@@ -294,6 +295,7 @@ class StoreModule {
         getIt<UpdateFulfillmentStatusUseCase>(),
         getIt<CreateOrLinkShipmentUseCase>(),
         getIt<GetShipmentTrackingUseCase>(),
+        getIt<GetOrderShipmentsTrackingUseCase>(),
         getIt<ErrorStore>(),
       ),
     );

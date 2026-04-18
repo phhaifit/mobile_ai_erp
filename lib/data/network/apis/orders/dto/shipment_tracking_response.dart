@@ -24,9 +24,30 @@ class ShipmentTrackingEventDto {
   }
 }
 
+class ShipmentItemDto {
+  final String id;
+  final String orderItemId;
+  final int quantity;
+
+  ShipmentItemDto({
+    required this.id,
+    required this.orderItemId,
+    required this.quantity,
+  });
+
+  factory ShipmentItemDto.fromJson(Map<String, dynamic> json) {
+    return ShipmentItemDto(
+      id: json['id'] as String,
+      orderItemId: json['orderItemId'] as String,
+      quantity: json['quantity'] as int,
+    );
+  }
+}
+
 class ShipmentTrackingResponseDto {
   final String id;
   final String orderId;
+  final int shipmentNumber;
   final String provider;
   final String trackingCode;
   final String status;
@@ -36,11 +57,13 @@ class ShipmentTrackingResponseDto {
   final String? syncedAt;
   final String createdAt;
   final String updatedAt;
+  final List<ShipmentItemDto> items;
   final List<ShipmentTrackingEventDto> events;
 
   ShipmentTrackingResponseDto({
     required this.id,
     required this.orderId,
+    required this.shipmentNumber,
     required this.provider,
     required this.trackingCode,
     required this.status,
@@ -50,6 +73,7 @@ class ShipmentTrackingResponseDto {
     this.syncedAt,
     required this.createdAt,
     required this.updatedAt,
+    required this.items,
     required this.events,
   });
 
@@ -62,9 +86,18 @@ class ShipmentTrackingResponseDto {
               .toList()
         : <ShipmentTrackingEventDto>[];
 
+    final itemsJson = json['items'];
+    final itemList = itemsJson is List<dynamic>
+        ? itemsJson
+              .whereType<Map<String, dynamic>>()
+              .map(ShipmentItemDto.fromJson)
+              .toList()
+        : <ShipmentItemDto>[];
+
     return ShipmentTrackingResponseDto(
       id: json['id'] as String,
       orderId: json['orderId'] as String,
+      shipmentNumber: json['shipmentNumber'] as int? ?? 1,
       provider: json['provider'] as String,
       trackingCode: json['trackingCode'] as String,
       status: json['status'] as String,
@@ -74,7 +107,33 @@ class ShipmentTrackingResponseDto {
       syncedAt: json['syncedAt'] as String?,
       createdAt: json['createdAt'] as String,
       updatedAt: json['updatedAt'] as String,
+      items: itemList,
       events: eventList,
+    );
+  }
+}
+
+class OrderShipmentsTrackingResponseDto {
+  final String orderId;
+  final List<ShipmentTrackingResponseDto> shipments;
+
+  OrderShipmentsTrackingResponseDto({
+    required this.orderId,
+    required this.shipments,
+  });
+
+  factory OrderShipmentsTrackingResponseDto.fromJson(Map<String, dynamic> json) {
+    final shipmentsJson = json['shipments'];
+    final shipments = shipmentsJson is List<dynamic>
+        ? shipmentsJson
+              .whereType<Map<String, dynamic>>()
+              .map(ShipmentTrackingResponseDto.fromJson)
+              .toList()
+        : <ShipmentTrackingResponseDto>[];
+
+    return OrderShipmentsTrackingResponseDto(
+      orderId: json['orderId'] as String,
+      shipments: shipments,
     );
   }
 }

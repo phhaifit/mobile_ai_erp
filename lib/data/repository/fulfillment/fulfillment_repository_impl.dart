@@ -48,9 +48,20 @@ class FulfillmentRepositoryImpl extends FulfillmentRepository {
   }
 
   @override
-  Future<ShipmentTrackingInfo> createOrLinkShipment(String orderId) async {
+  Future<ShipmentTrackingInfo> createOrLinkShipment(
+    String orderId, {
+    List<CreateShipmentItemAllocation> items = const [],
+  }) async {
     final response = await _orderApi.createOrLinkOrderShipment(
       orderId,
+      items: items
+          .map(
+            (item) => {
+              'orderItemId': item.orderItemId,
+              'quantity': item.quantity,
+            },
+          )
+          .toList(),
     );
 
     return _mapShipmentToEntity(response);
@@ -68,6 +79,29 @@ class FulfillmentRepositoryImpl extends FulfillmentRepository {
       );
 
       return _mapShipmentToEntity(response);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        return null;
+      }
+      rethrow;
+    }
+  }
+
+  @override
+  Future<OrderShipmentsTrackingInfo?> getOrderShipmentsTracking(
+    String orderId, {
+    bool refresh = false,
+  }) async {
+    try {
+      final response = await _orderApi.getOrderShipmentsTracking(
+        orderId,
+        refresh: refresh,
+      );
+
+      return OrderShipmentsTrackingInfo(
+        orderId: response.orderId,
+        shipments: response.shipments.map(_mapShipmentToEntity).toList(),
+      );
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) {
         return null;
@@ -154,6 +188,7 @@ class FulfillmentRepositoryImpl extends FulfillmentRepository {
     return ShipmentTrackingInfo(
       id: dto.id,
       orderId: dto.orderId,
+      shipmentNumber: dto.shipmentNumber,
       provider: dto.provider,
       trackingCode: dto.trackingCode,
       status: dto.status,
@@ -163,6 +198,15 @@ class FulfillmentRepositoryImpl extends FulfillmentRepository {
       syncedAt: _tryParseDate(dto.syncedAt),
       createdAt: DateTime.parse(dto.createdAt),
       updatedAt: DateTime.parse(dto.updatedAt),
+      items: dto.items
+          .map(
+            (item) => ShipmentItemAllocation(
+              id: item.id,
+              orderItemId: item.orderItemId,
+              quantity: item.quantity,
+            ),
+          )
+          .toList(),
       events: dto.events.map(_mapShipmentEventToEntity).toList(),
     );
   }

@@ -17,11 +17,13 @@ class FulfillmentTrackingScreen extends StatefulWidget {
 
 class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
   final FulfillmentStore _store = getIt<FulfillmentStore>();
+  List<ShipmentTrackingInfo> _shipments = const [];
   ShipmentTrackingInfo? _shipment;
   bool _isRefreshingCarrier = false;
 
   bool _canUseCarrierTracking(FulfillmentStatus status) {
-    return status == FulfillmentStatus.shipped ||
+    return status == FulfillmentStatus.partiallyShipped ||
+        status == FulfillmentStatus.shipped ||
         status == FulfillmentStatus.delivered;
   }
 
@@ -49,7 +51,7 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
       _isRefreshingCarrier = true;
     });
 
-    final shipment = await _store.getShipmentTracking(
+    final shipments = await _store.getOrderShipmentBatches(
       orderId,
       refresh: refresh,
     );
@@ -59,7 +61,8 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
     }
 
     setState(() {
-      _shipment = shipment;
+      _shipments = shipments;
+      _shipment = shipments.isEmpty ? null : shipments.last;
       _isRefreshingCarrier = false;
     });
   }
@@ -98,6 +101,7 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
                   order.trackingEvents,
                   order.status,
                   _shipment,
+                  _shipments,
                 ),
         );
       },
@@ -108,6 +112,7 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
     List<TrackingEvent> events,
     FulfillmentStatus currentStatus,
     ShipmentTrackingInfo? shipment,
+    List<ShipmentTrackingInfo> shipments,
   ) {
     if (events.isEmpty) {
       return Center(
@@ -134,6 +139,11 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
           _buildCurrentStatusBanner(currentStatus),
           if (shipment != null) ...[
             const SizedBox(height: 12),
+            Text(
+              'Shipment batches: ${shipments.length}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 8),
             _buildCarrierCard(shipment, currentStatus),
           ],
           const SizedBox(height: 24),
@@ -383,6 +393,8 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
         return Colors.orange;
       case FulfillmentStatus.processing:
         return Colors.blue;
+      case FulfillmentStatus.partiallyShipped:
+        return Colors.cyan;
       case FulfillmentStatus.shipped:
         return Colors.teal;
       case FulfillmentStatus.delivered:
@@ -400,6 +412,8 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
         return Icons.hourglass_empty;
       case FulfillmentStatus.processing:
         return Icons.sync;
+      case FulfillmentStatus.partiallyShipped:
+        return Icons.local_shipping_outlined;
       case FulfillmentStatus.shipped:
         return Icons.local_shipping;
       case FulfillmentStatus.delivered:
