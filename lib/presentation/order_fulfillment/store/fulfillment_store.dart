@@ -110,6 +110,12 @@ abstract class _FulfillmentStore with Store {
         params: GetShipmentTrackingParams(orderId: orderId, refresh: refresh),
       );
 
+      if (refresh) {
+        // Keep detail and list in sync after carrier refresh/webhook reconciliation.
+        await getOrderDetail(orderId);
+        await getOrders();
+      }
+
       if (shipment != null) {
         _mergeCarrierTrackingEvents(shipment);
       }
@@ -122,16 +128,12 @@ abstract class _FulfillmentStore with Store {
   }
 
   Future<ShipmentTrackingInfo?> createOrLinkShipment(
-    String orderId, {
-    String? trackingCode,
-    String? note,
-  }) async {
+    String orderId,
+  ) async {
     try {
       final shipment = await _createOrLinkShipmentUseCase.call(
         params: CreateOrLinkShipmentParams(
           orderId: orderId,
-          trackingCode: trackingCode,
-          note: note,
         ),
       );
 

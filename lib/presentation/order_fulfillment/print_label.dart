@@ -8,6 +8,8 @@ import 'package:mobile_ai_erp/presentation/order_fulfillment/store/fulfillment_s
 import 'package:intl/intl.dart';
 
 class PrintLabelScreen extends StatefulWidget {
+  const PrintLabelScreen({super.key});
+
   @override
   State<PrintLabelScreen> createState() => _PrintLabelScreenState();
 }
@@ -23,13 +25,29 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
         order.status == FulfillmentStatus.delivered;
   }
 
+  String _displayShipmentStatus(
+    FulfillmentOrder order,
+    ShipmentTrackingInfo shipment,
+  ) {
+    final isTerminalOrder =
+        order.status == FulfillmentStatus.delivered ||
+        order.status == FulfillmentStatus.returned ||
+        order.status == FulfillmentStatus.cancelled;
+
+    if (isTerminalOrder) {
+      return order.status.apiValue;
+    }
+
+    return shipment.status;
+  }
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final orderId = _store.selectedOrder?.id;
       if (orderId != null) {
-        _loadShipment(orderId);
+        _loadShipment(orderId, refresh: true);
       }
     });
   }
@@ -90,64 +108,6 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
     }
   }
 
-  Future<void> _showLinkTrackingDialog(FulfillmentOrder order) async {
-    final controller = TextEditingController();
-
-    final trackingCode = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Link Existing Tracking Code'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'Tracking code',
-            hintText: 'e.g. 5ENLKKHD',
-          ),
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
-            child: const Text('Link'),
-          ),
-        ],
-      ),
-    );
-
-    if (trackingCode == null || trackingCode.isEmpty || !mounted) {
-      return;
-    }
-
-    setState(() {
-      _submittingShipment = true;
-    });
-
-    final result = await _store.createOrLinkShipment(
-      order.id,
-      trackingCode: trackingCode,
-      note: 'Linked from mobile app',
-    );
-
-    if (!mounted) {
-      return;
-    }
-
-    setState(() {
-      _shipment = result;
-      _submittingShipment = false;
-    });
-
-    if (result != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Linked tracking: ${result.trackingCode}')),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Observer(
@@ -196,15 +156,17 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
   Widget _buildShipmentSection(FulfillmentOrder order) {
     final shipment = _shipment;
     final canManageShipment = _canManageShipment(order);
+    final canCreateShipment =
+        order.status == FulfillmentStatus.shipped && shipment == null;
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary.withOpacity(0.06),
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
         ),
       ),
       child: Column(
@@ -242,7 +204,7 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
             ),
           if (shipment == null)
             Text(
-              'No shipment linked yet. Create a GHN shipment or link an existing tracking code.',
+              'No shipment linked yet. Create a GHN shipment.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
           if (shipment != null) ...[
@@ -253,13 +215,23 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
               ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 4),
-            Text('Status: ${shipment.status}'),
+            Text('Status: ${_displayShipmentStatus(order, shipment)}'),
+            if (order.status == FulfillmentStatus.delivered &&
+                shipment.status.toLowerCase() != 'delivered')
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  'Order status has been synchronized via webhook. Provider detail may take time to converge.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
             if (shipment.latestNote != null && shipment.latestNote!.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(shipment.latestNote!),
               ),
-            if (shipment.estimatedDelivery != null)
+            if (shipment.estimatedDelivery != null &&
+                order.status != FulfillmentStatus.delivered)
               Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
@@ -267,34 +239,27 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
                 ),
               ),
           ],
-          if (canManageShipment) ...[
+          if (canCreateShipment) ...[
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: _submittingShipment
-                        ? null
-                        : () => _createShipment(order),
-                    icon: const Icon(Icons.local_shipping_outlined),
-                    label: Text(
-                      shipment == null ? 'Create GHN Shipment' : 'Re-create',
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: _submittingShipment
-                        ? null
-                        : () => _showLinkTrackingDialog(order),
-                    icon: const Icon(Icons.link),
-                    label: const Text('Link Tracking'),
-                  ),
-                ),
-              ],
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _submittingShipment
+                    ? null
+                    : () => _createShipment(order),
+                icon: const Icon(Icons.local_shipping_outlined),
+                label: const Text('Create GHN Shipment'),
+              ),
             ),
           ],
+          if (order.status == FulfillmentStatus.shipped && shipment != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: Text(
+                'Shipment already created. Carrier status will be synchronized via refresh/webhook.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
         ],
       ),
     );
@@ -305,9 +270,9 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.amber.withOpacity(0.1),
+        color: Colors.amber.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.amber.withOpacity(0.4)),
+        border: Border.all(color: Colors.amber.withValues(alpha: 0.4)),
       ),
       child: Row(
         children: [

@@ -4,13 +4,9 @@ import 'package:mobile_ai_erp/domain/repository/fulfillment/fulfillment_reposito
 
 class CreateOrLinkShipmentParams {
   final String orderId;
-  final String? trackingCode;
-  final String? note;
 
   CreateOrLinkShipmentParams({
     required this.orderId,
-    this.trackingCode,
-    this.note,
   });
 }
 
@@ -24,10 +20,6 @@ class CreateOrLinkShipmentUseCase
   Future<ShipmentTrackingInfo> call({
     required CreateOrLinkShipmentParams params,
   }) {
-    return _repository.createOrLinkShipment(
-      params.orderId,
-      trackingCode: params.trackingCode,
-      note: params.note,
-    );
+    return _repository.createOrLinkShipment(params.orderId);
   }
 }
