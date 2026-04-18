@@ -19,8 +19,10 @@ import 'package:mobile_ai_erp/domain/usecase/checkout/checkout_usecases.dart';
 import 'package:mobile_ai_erp/domain/usecase/checkout/get_payment_methods_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/checkout/get_shipping_methods_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/checkout/validate_coupon_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/create_or_link_shipment_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_fulfillment_order_detail_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_fulfillment_orders_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_shipment_tracking_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/update_fulfillment_status_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/post_purchase/get_issue_detail_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/post_purchase/get_issue_list_usecase.dart';
@@ -75,7 +77,8 @@ import 'package:mobile_ai_erp/presentation/dashboard/store/dashboard_store.dart'
 import 'package:mobile_ai_erp/presentation/home/store/language/language_store.dart';
 import 'package:mobile_ai_erp/presentation/home/store/theme/theme_store.dart';
 import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/store/inventory_audit_outbound_store.dart';
-import 'package:mobile_ai_erp/presentation/login/store/login_store.dart' as auth;
+import 'package:mobile_ai_erp/presentation/login/store/login_store.dart'
+    as auth;
 import 'package:mobile_ai_erp/presentation/order_fulfillment/store/fulfillment_store.dart';
 import 'package:mobile_ai_erp/presentation/order_tracking/store/order_tracking_store.dart';
 import 'package:mobile_ai_erp/presentation/post/store/post_store.dart';
@@ -90,7 +93,8 @@ import 'package:mobile_ai_erp/domain/repository/account/address_repository.dart'
 import 'package:mobile_ai_erp/domain/repository/account/order_repository.dart';
 import 'package:mobile_ai_erp/presentation/stock_operations/store/stock_operations_store.dart';
 import 'package:mobile_ai_erp/presentation/user/store/role_store.dart';
-import 'package:mobile_ai_erp/presentation/user/store/user_store.dart' as user_mgmt;
+import 'package:mobile_ai_erp/presentation/user/store/user_store.dart'
+    as user_mgmt;
 import 'package:mobile_ai_erp/presentation/web_builder/store/cms_page_store.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/store/store_settings_store.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/store/web_theme_store.dart';
@@ -111,10 +115,14 @@ class StoreModule {
     getIt.registerFactory(
       () => FormStore(getIt<FormErrorStore>(), getIt<ErrorStore>()),
     );
-    
+
     getIt.registerLazySingleton<ProfileStore>(() => ProfileStore());
-    getIt.registerLazySingleton<AddressStore>(() => AddressStore(getIt<AddressRepository>()));
-    getIt.registerLazySingleton<OrderStore>(() => OrderStore(getIt<OrderRepository>()));
+    getIt.registerLazySingleton<AddressStore>(
+      () => AddressStore(getIt<AddressRepository>()),
+    );
+    getIt.registerLazySingleton<OrderStore>(
+      () => OrderStore(getIt<OrderRepository>()),
+    );
     getIt.registerLazySingleton(() => ReportsMockRepository());
 
     getIt.registerSingleton<auth.LoginStore>(
@@ -284,6 +292,8 @@ class StoreModule {
         getIt<GetFulfillmentOrdersUseCase>(),
         getIt<GetFulfillmentOrderDetailUseCase>(),
         getIt<UpdateFulfillmentStatusUseCase>(),
+        getIt<CreateOrLinkShipmentUseCase>(),
+        getIt<GetShipmentTrackingUseCase>(),
         getIt<ErrorStore>(),
       ),
     );
@@ -314,7 +324,10 @@ class StoreModule {
     );
 
     getIt.registerSingleton<ProductFormStore>(
-      ProductFormStore(getIt<ProductManagementRepository>(), getIt<ErrorStore>()),
+      ProductFormStore(
+        getIt<ProductManagementRepository>(),
+        getIt<ErrorStore>(),
+      ),
     );
   }
 }

@@ -1,8 +1,12 @@
 import 'package:mobile_ai_erp/core/stores/error/error_store.dart';
 import 'package:mobile_ai_erp/domain/entity/fulfillment/fulfillment_order.dart';
 import 'package:mobile_ai_erp/domain/entity/fulfillment/fulfillment_status.dart';
+import 'package:mobile_ai_erp/domain/entity/fulfillment/shipment_tracking.dart';
+import 'package:mobile_ai_erp/domain/entity/fulfillment/tracking_event.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/create_or_link_shipment_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_fulfillment_order_detail_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_fulfillment_orders_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_shipment_tracking_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/update_fulfillment_status_usecase.dart';
 import 'package:mobx/mobx.dart';
 
@@ -14,17 +18,22 @@ abstract class _FulfillmentStore with Store {
   final GetFulfillmentOrdersUseCase _getOrdersUseCase;
   final GetFulfillmentOrderDetailUseCase _getOrderDetailUseCase;
   final UpdateFulfillmentStatusUseCase _updateStatusUseCase;
+  final CreateOrLinkShipmentUseCase _createOrLinkShipmentUseCase;
+  final GetShipmentTrackingUseCase _getShipmentTrackingUseCase;
   final ErrorStore errorStore;
 
   _FulfillmentStore(
     this._getOrdersUseCase,
     this._getOrderDetailUseCase,
     this._updateStatusUseCase,
+    this._createOrLinkShipmentUseCase,
+    this._getShipmentTrackingUseCase,
     this.errorStore,
   );
 
   @observable
-  ObservableList<FulfillmentOrder> orderList = ObservableList<FulfillmentOrder>();
+  ObservableList<FulfillmentOrder> orderList =
+      ObservableList<FulfillmentOrder>();
 
   @observable
   FulfillmentOrder? selectedOrder;
@@ -78,10 +87,7 @@ abstract class _FulfillmentStore with Store {
   Future<void> updateStatus(String orderId, FulfillmentStatus status) async {
     try {
       await _updateStatusUseCase.call(
-        params: UpdateFulfillmentStatusParams(
-          orderId: orderId,
-          status: status,
-        ),
+        params: UpdateFulfillmentStatusParams(orderId: orderId, status: status),
       );
       await getOrderDetail(orderId);
       await getOrders();
@@ -93,5 +99,101 @@ abstract class _FulfillmentStore with Store {
   @action
   void setStatusFilter(FulfillmentStatus? status) {
     statusFilter = status;
+  }
+
+  Future<ShipmentTrackingInfo?> getShipmentTracking(
+    String orderId, {
+    bool refresh = false,
+  }) async {
+    try {
+      final shipment = await _getShipmentTrackingUseCase.call(
+        params: GetShipmentTrackingParams(orderId: orderId, refresh: refresh),
+      );
+
+      if (shipment != null) {
+        _mergeCarrierTrackingEvents(shipment);
+      }
+
+      return shipment;
+    } catch (e) {
+      errorStore.errorMessage = e.toString();
+      return null;
+    }
+  }
+
+  Future<ShipmentTrackingInfo?> createOrLinkShipment(
+    String orderId, {
+    String? trackingCode,
+    String? note,
+  }) async {
+    try {
+      final shipment = await _createOrLinkShipmentUseCase.call(
+        params: CreateOrLinkShipmentParams(
+          orderId: orderId,
+          trackingCode: trackingCode,
+          note: note,
+        ),
+      );
+
+      final refreshed = await getShipmentTracking(orderId, refresh: true);
+      return refreshed ?? shipment;
+    } catch (e) {
+      errorStore.errorMessage = e.toString();
+      return null;
+    }
+  }
+
+  void _mergeCarrierTrackingEvents(ShipmentTrackingInfo shipment) {
+    final current = selectedOrder;
+    if (current == null || current.id != shipment.orderId) {
+      return;
+    }
+
+    final mergedEvents = <String, TrackingEvent>{
+      for (final event in current.trackingEvents) event.id: event,
+    };
+
+    for (final event in shipment.events) {
+      final status = _mapShipmentStatusToFulfillment(event.status);
+      final notes = <String>[
+        '[${shipment.provider.toUpperCase()}] ${event.status}',
+        if (event.description != null && event.description!.isNotEmpty)
+          event.description!,
+        if (event.location != null && event.location!.isNotEmpty)
+          event.location!,
+      ];
+
+      mergedEvents['carrier:${event.id}'] = TrackingEvent(
+        id: 'carrier:${event.id}',
+        newStatus: status,
+        note: notes.join(' • '),
+        changedAt: event.eventTime,
+        changedByName: '${shipment.provider.toUpperCase()} Carrier',
+      );
+    }
+
+    final sortedEvents = mergedEvents.values.toList()
+      ..sort((a, b) => b.changedAt.compareTo(a.changedAt));
+
+    selectedOrder = current.copyWith(trackingEvents: sortedEvents);
+  }
+
+  FulfillmentStatus _mapShipmentStatusToFulfillment(String status) {
+    switch (status.toLowerCase()) {
+      case 'delivered':
+        return FulfillmentStatus.delivered;
+      case 'returned':
+        return FulfillmentStatus.returned;
+      case 'failed':
+        return FulfillmentStatus.cancelled;
+      case 'processing':
+      case 'pending':
+        return FulfillmentStatus.processing;
+      case 'created':
+      case 'linked':
+      case 'in_transit':
+      default:
+        return FulfillmentStatus.shipped;
+    }
   }
 }
