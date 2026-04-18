@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
 import 'package:mobile_ai_erp/data/network/apis/orders/dto/order_detail_response.dart';
 import 'package:mobile_ai_erp/data/network/apis/orders/dto/order_list_response.dart';
+import 'package:mobile_ai_erp/data/network/apis/orders/dto/shipment_tracking_response.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
 
 /// API client for the ERP Orders endpoints.
@@ -18,10 +19,7 @@ class OrderApi {
     int pageSize = 20,
   }) async {
     try {
-      final queryParams = <String, dynamic>{
-        'page': page,
-        'pageSize': pageSize,
-      };
+      final queryParams = <String, dynamic>{'page': page, 'pageSize': pageSize};
       if (status != null) {
         queryParams['status'] = status;
       }
@@ -63,6 +61,51 @@ class OrderApi {
       return OrderDetailResponse.fromJson(res.data as Map<String, dynamic>);
     } catch (e) {
       print('OrderApi.updateOrderStatus error: $e');
+      rethrow;
+    }
+  }
+
+  Future<ShipmentTrackingResponseDto> createOrLinkOrderShipment(
+    String orderId, {
+    String? trackingCode,
+    String? note,
+  }) async {
+    try {
+      final data = <String, dynamic>{
+        if (trackingCode != null && trackingCode.isNotEmpty)
+          'trackingCode': trackingCode,
+        if (note != null && note.isNotEmpty) 'note': note,
+      };
+
+      final res = await _dioClient.dio.post(
+        Endpoints.orderShipment(orderId),
+        data: data,
+      );
+
+      return ShipmentTrackingResponseDto.fromJson(
+        res.data as Map<String, dynamic>,
+      );
+    } catch (e) {
+      print('OrderApi.createOrLinkOrderShipment error: $e');
+      rethrow;
+    }
+  }
+
+  Future<ShipmentTrackingResponseDto> getOrderShipmentTracking(
+    String orderId, {
+    bool refresh = false,
+  }) async {
+    try {
+      final res = await _dioClient.dio.get(
+        Endpoints.orderShipmentTracking(orderId),
+        queryParameters: refresh ? {'refresh': 'true'} : null,
+      );
+
+      return ShipmentTrackingResponseDto.fromJson(
+        res.data as Map<String, dynamic>,
+      );
+    } catch (e) {
+      print('OrderApi.getOrderShipmentTracking error: $e');
       rethrow;
     }
   }

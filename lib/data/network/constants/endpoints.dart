@@ -42,4 +42,7 @@ class Endpoints {
   static const String orders = "/orders";
   static String orderDetail(String id) => "/orders/$id";
   static String orderStatus(String id) => "/orders/$id/status";
+  static String orderShipment(String id) => "/orders/$id/shipment";
+  static String orderShipmentTracking(String id) =>
+      "/orders/$id/shipment/tracking";
 }
