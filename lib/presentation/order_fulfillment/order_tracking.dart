@@ -233,6 +233,7 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
     required bool isFirst,
     required bool isLast,
   }) {
+    final displayNote = _normalizedEventNote(event.note);
     final color = isFirst
         ? _getStatusColor(event.newStatus)
         : _getStatusColor(event.newStatus).withOpacity(0.5);
@@ -304,10 +305,10 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
                           ),
                         ],
                       ),
-                      if (event.note != null && event.note!.isNotEmpty) ...[
+                      if (displayNote != null) ...[
                         const SizedBox(height: 8),
                         Text(
-                          event.note!,
+                          displayNote,
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ],
@@ -374,5 +375,40 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
       case FulfillmentStatus.returned:
         return Icons.assignment_return;
     }
+  }
+
+  String? _normalizedEventNote(String? rawNote) {
+    if (rawNote == null) {
+      return null;
+    }
+
+    final note = rawNote.trim();
+    if (note.isEmpty) {
+      return null;
+    }
+
+    final lower = note.toLowerCase();
+    final hasNonAscii = note.runes.any((codePoint) => codePoint > 127);
+    final hasSystemStatusToken =
+      lower.contains('pending') ||
+      lower.contains('confirmed') ||
+      lower.contains('packing') ||
+      lower.contains('processing') ||
+      lower.contains('shipping') ||
+      lower.contains('shipped') ||
+      lower.contains('delivered') ||
+      lower.contains('cancelled') ||
+      lower.contains('returned');
+
+    final isLegacyAutoMessage =
+      hasNonAscii ||
+      (lower.startsWith('status:') &&
+        (lower.contains('system') || lower.contains('auto')));
+
+    if (isLegacyAutoMessage && hasSystemStatusToken) {
+      return 'Status updated automatically by system';
+    }
+
+    return note;
   }
 }
