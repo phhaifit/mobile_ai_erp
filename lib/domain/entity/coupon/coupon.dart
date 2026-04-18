@@ -1,31 +1,39 @@
 class Coupon {
+  final String id;
+  final String tenantId;
   final String code;
-  final String? name;
+  final String name;
   final String? description;
   final String discountType;
   final String discountValue;
-  final String? minOrderAmount;
+  final String minOrderAmount;
   final int? maxUses;
   final int usedCount;
-  final DateTime? validFrom;
-  final DateTime? validTo;
+  final DateTime validFrom;
+  final DateTime validTo;
   final bool isActive;
+  final DateTime? createdAt;
 
   const Coupon({
+    required this.id,
+    required this.tenantId,
     required this.code,
-    this.name,
+    required this.name,
     this.description,
     required this.discountType,
     required this.discountValue,
-    this.minOrderAmount,
+    required this.minOrderAmount,
     this.maxUses,
     required this.usedCount,
-    this.validFrom,
-    this.validTo,
+    required this.validFrom,
+    required this.validTo,
     required this.isActive,
+    this.createdAt,
   });
 
   Coupon copyWith({
+    String? id,
+    String? tenantId,
     String? code,
     String? name,
     String? description,
@@ -37,8 +45,11 @@ class Coupon {
     DateTime? validFrom,
     DateTime? validTo,
     bool? isActive,
+    DateTime? createdAt,
   }) {
     return Coupon(
+      id: id ?? this.id,
+      tenantId: tenantId ?? this.tenantId,
       code: code ?? this.code,
       name: name ?? this.name,
       description: description ?? this.description,
@@ -50,19 +61,7 @@ class Coupon {
       validFrom: validFrom ?? this.validFrom,
       validTo: validTo ?? this.validTo,
       isActive: isActive ?? this.isActive,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
-
-  @override
-  String toString() {
-    return 'Coupon(code: $code, discountType: $discountType, discountValue: $discountValue, isActive: $isActive)';
-  }
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Coupon && runtimeType == other.runtimeType && code == other.code;
-
-  @override
-  int get hashCode => code.hashCode;
 }

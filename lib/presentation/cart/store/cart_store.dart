@@ -1,9 +1,11 @@
 import 'package:mobx/mobx.dart';
 import 'package:mobile_ai_erp/data/repository/cart/cart_repository.dart';
+import 'package:mobile_ai_erp/data/repository/coupon/coupon_repository.dart';
 import 'package:mobile_ai_erp/domain/entity/cart/cart.dart';
 import 'package:mobile_ai_erp/domain/entity/cart/cart_calculation.dart';
 import 'package:mobile_ai_erp/domain/entity/cart/cart_item.dart';
-import 'package:mobile_ai_erp/domain/entity/cart/wishlist_item.dart';
+import 'package:mobile_ai_erp/domain/entity/coupon/coupon.dart';
+import 'package:mobile_ai_erp/domain/entity/coupon/validated_coupon.dart';
 import 'package:mobile_ai_erp/presentation/cart/store/wishlist_store.dart';
 
 part 'cart_store.g.dart';
@@ -12,16 +14,19 @@ class CartStore = CartStoreBase with _$CartStore;
 
 abstract class CartStoreBase with Store {
   final CartRepository _cartRepository;
+  final CouponRepository _couponRepository;
   final WishlistStore _wishlistStore;
   final String customerId;
   final String tenantId;
 
   CartStoreBase({
     required CartRepository cartRepository,
+    required CouponRepository couponRepository,
     required WishlistStore wishlistStore,
     required this.customerId,
     required this.tenantId,
   }) : _cartRepository = cartRepository,
+       _couponRepository = couponRepository,
        _wishlistStore = wishlistStore {
     cart = Cart(
       id: 'cart_$customerId',
@@ -33,7 +38,6 @@ abstract class CartStoreBase with Store {
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );
-    loadCart();
   }
 
   @observable
@@ -60,6 +64,24 @@ abstract class CartStoreBase with Store {
   @observable
   ObservableList<String> selectedItemIds = ObservableList<String>();
 
+  @observable
+  ObservableList<Coupon> availableCoupons = ObservableList<Coupon>();
+
+  @observable
+  bool isLoadingCoupons = false;
+
+  @observable
+  String? selectedCouponCode;
+
+  @observable
+  String? couponValidationError;
+
+  @observable
+  ValidatedCoupon? validatedCoupon;
+
+  @observable
+  Map<String, dynamic>? cartSummary;
+
   @computed
   int get itemCount => cart.totalItems;
 
@@ -84,10 +106,23 @@ abstract class CartStoreBase with Store {
   bool get hasCoupon => calculation?.coupon != null;
 
   @computed
-  String? get appliedCouponCode => calculation?.coupon?.code;
+  String? get appliedCouponCode =>
+      calculation?.coupon?.code ?? selectedCouponCode;
 
   @computed
   int get selectedItemsCount => selectedItemIds.length;
+
+  @computed
+  int get cartBadgeCount =>
+      (cartSummary?['totalItems'] as num?)?.toInt() ?? cart.totalItems;
+
+  @computed
+  int get distinctItemsCount =>
+      (cartSummary?['distinctItems'] as num?)?.toInt() ?? cart.items.length;
+
+  @computed
+  bool get hasSelectedCoupon =>
+      selectedCouponCode != null && selectedCouponCode!.isNotEmpty;
 
   @computed
   List<CartItem> get checkoutItems {
@@ -97,7 +132,9 @@ abstract class CartStoreBase with Store {
   }
 
   @computed
-  bool get isCartValid => checkoutItems.isNotEmpty;
+  bool get isCartValid =>
+      checkoutItems.isNotEmpty &&
+      checkoutItems.every((item) => item.isAvailable);
 
   @computed
   String get selectedSubtotal =>
@@ -152,10 +189,36 @@ abstract class CartStoreBase with Store {
         tenantId: tenantId,
       );
       cart = result;
+      await loadCartSummary();
     } catch (e) {
       errorMessage = e.toString();
     } finally {
       isLoading = false;
+    }
+  }
+
+  @action
+  Future<void> loadCartSummary() async {
+    try {
+      cartSummary = await _cartRepository.getCartSummary(
+        customerId: customerId,
+        tenantId: tenantId,
+      );
+    } catch (_) {}
+  }
+
+  @action
+  Future<void> loadCoupons() async {
+    isLoadingCoupons = true;
+    couponValidationError = null;
+
+    try {
+      final result = await _couponRepository.getCoupons(tenantId: tenantId);
+      availableCoupons = ObservableList<Coupon>.of(result);
+    } catch (e) {
+      couponValidationError = e.toString();
+    } finally {
+      isLoadingCoupons = false;
     }
   }
 
@@ -181,6 +244,8 @@ abstract class CartStoreBase with Store {
         variantId: variantId,
         quantity: qty,
       );
+      await loadCartSummary();
+      await _wishlistStore.loadWishlist();
     } catch (e) {
       errorMessage = e.toString();
     } finally {
@@ -201,6 +266,7 @@ abstract class CartStoreBase with Store {
       );
       selectedItemIds.remove(itemId);
       calculation = null;
+      await loadCartSummary();
     } catch (e) {
       errorMessage = e.toString();
     } finally {
@@ -226,6 +292,32 @@ abstract class CartStoreBase with Store {
         quantity: newQuantity,
       );
       calculation = null;
+      await loadCartSummary();
+    } catch (e) {
+      errorMessage = e.toString();
+    } finally {
+      isLoading = false;
+    }
+  }
+
+  @action
+  Future<void> removeMultipleItemsFromCart(List<String> itemIds) async {
+    if (itemIds.isEmpty) return;
+
+    isLoading = true;
+    errorMessage = null;
+
+    try {
+      for (final itemId in itemIds) {
+        cart = await _cartRepository.removeCartItem(
+          customerId: customerId,
+          tenantId: tenantId,
+          itemId: itemId,
+        );
+        selectedItemIds.remove(itemId);
+      }
+      calculation = null;
+      await loadCartSummary();
     } catch (e) {
       errorMessage = e.toString();
     } finally {
@@ -271,13 +363,65 @@ abstract class CartStoreBase with Store {
         customerId: customerId,
         tenantId: tenantId,
         selectedItemIds: selectedItemIds.toList(),
-        couponCode: couponCode,
+        couponCode: couponCode ?? selectedCouponCode,
       );
     } catch (e) {
       errorMessage = e.toString();
     } finally {
       isLoading = false;
     }
+  }
+
+  @action
+  Future<void> validateAndApplyCoupon(String code) async {
+    couponValidationError = null;
+    validatedCoupon = null;
+
+    if (checkoutItems.isEmpty) {
+      couponValidationError = 'Please select at least one item first';
+      return;
+    }
+
+    final subtotal = checkoutItems.fold<double>(
+      0,
+      (sum, item) => sum + (double.tryParse(item.lineTotal) ?? 0),
+    );
+
+    try {
+      final result = await _couponRepository.validateCoupon(
+        tenantId: tenantId,
+        couponCode: code,
+        subtotal: subtotal,
+      );
+
+      validatedCoupon = result;
+
+      if (!result.isValid) {
+        selectedCouponCode = null;
+        couponValidationError = result.reason ?? 'Coupon is invalid';
+        await calculateSelectedCart();
+        return;
+      }
+
+      selectedCouponCode = code;
+      await calculateSelectedCart(couponCode: code);
+    } catch (e) {
+      couponValidationError = e.toString();
+    }
+  }
+
+  @action
+  Future<void> clearSelectedCoupon() async {
+    selectedCouponCode = null;
+    couponValidationError = null;
+    validatedCoupon = null;
+
+    if (selectedItemIds.isEmpty) {
+      calculation = null;
+      return;
+    }
+
+    await calculateSelectedCart();
   }
 
   @action
@@ -303,6 +447,8 @@ abstract class CartStoreBase with Store {
       selectedItemIds.add(itemId);
     }
     calculation = null;
+    couponValidationError = null;
+    validatedCoupon = null;
   }
 
   @action
@@ -311,12 +457,17 @@ abstract class CartStoreBase with Store {
       ..clear()
       ..addAll(cart.items.map((item) => item.id));
     calculation = null;
+    couponValidationError = null;
+    validatedCoupon = null;
   }
 
   @action
   void clearSelection() {
     selectedItemIds.clear();
     calculation = null;
+    selectedCouponCode = null;
+    couponValidationError = null;
+    validatedCoupon = null;
   }
 
   @action
@@ -329,95 +480,21 @@ abstract class CartStoreBase with Store {
     cartFilterBy = filter;
   }
 
-  WishlistItem _mapCartItemToWishlistItem(CartItem item) {
-    return WishlistItem(
-      id: 'wishlist_${item.id}',
-      wishlistId: 'wishlist_$customerId',
-      productId: item.productId,
-      variantId: item.variantId,
-      addedAt: DateTime.now(),
-      productName: item.productName,
-      sku: item.sku,
-      productType: item.productType,
-      productStatus: item.productStatus,
-      sellingPrice: item.unitPrice,
-      originalPrice: item.originalPrice,
-      thumbnailUrl: item.thumbnailUrl,
-      variantSummary: item.variantSummary,
-      attributes: item.attributes
-          .map(
-            (attr) =>
-                WishlistItemAttribute(label: attr.label, value: attr.value),
-          )
-          .toList(),
-      isAvailable: item.isAvailable,
-    );
-  }
-
   @action
   Future<void> moveCartItemToWishlist(CartItem item) async {
     isLoading = true;
     errorMessage = null;
 
     try {
-      final wishlistItem = _mapCartItemToWishlistItem(item);
-
       if (!_wishlistStore.containsItem(item.productId, item.variantId)) {
         await _wishlistStore.addToWishlist(
-          productId: wishlistItem.productId,
-          variantId: wishlistItem.variantId,
+          productId: item.productId,
+          variantId: item.variantId,
         );
       }
 
-      await removeItemFromCart(item.id);
+      await loadCart();
       selectedItemIds.remove(item.id);
-    } catch (e) {
-      errorMessage = e.toString();
-    } finally {
-      isLoading = false;
-    }
-  }
-
-  @action
-  Future<void> moveWishlistItemToCart(WishlistItem item) async {
-    isLoading = true;
-    errorMessage = null;
-
-    try {
-      if (!item.isAvailable) {
-        throw Exception('Item is out of stock');
-      }
-
-      cart = await _cartRepository.moveWishlistItemToCart(
-        customerId: customerId,
-        tenantId: tenantId,
-        wishlistItemId: item.id,
-        quantity: 1,
-      );
-
-      await _wishlistStore.loadWishlist();
-    } catch (e) {
-      errorMessage = e.toString();
-    } finally {
-      isLoading = false;
-    }
-  }
-
-  @action
-  Future<void> removeMultipleItemsFromCart(List<String> itemIds) async {
-    isLoading = true;
-    errorMessage = null;
-
-    try {
-      for (final itemId in itemIds) {
-        cart = await _cartRepository.removeCartItem(
-          customerId: customerId,
-          tenantId: tenantId,
-          itemId: itemId,
-        );
-        selectedItemIds.remove(itemId);
-      }
-      calculation = null;
     } catch (e) {
       errorMessage = e.toString();
     } finally {

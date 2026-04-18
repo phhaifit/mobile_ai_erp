@@ -38,6 +38,7 @@ class _CartScreenState extends State<CartScreen> {
 
     try {
       await _cartStore.loadCart();
+      await _cartStore.loadCoupons();
     } finally {
       if (mounted) {
         setState(() {
@@ -108,7 +109,7 @@ class _CartScreenState extends State<CartScreen> {
       return;
     }
 
-    await _cartStore.calculateSelectedCart(couponCode: code);
+    await _cartStore.validateAndApplyCoupon(code);
 
     if (!mounted) return;
 
@@ -124,12 +125,7 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Future<void> _handleRemoveCoupon() async {
-    if (_cartStore.checkoutItems.isEmpty) {
-      _cartStore.clearSelection();
-      return;
-    }
-
-    await _cartStore.calculateSelectedCart();
+    await _cartStore.clearSelectedCoupon();
   }
 
   void _handleContinueShopping() {
@@ -229,6 +225,11 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   String? get _couponError {
+    if (_cartStore.couponValidationError != null &&
+        _cartStore.couponValidationError!.isNotEmpty) {
+      return _cartStore.couponValidationError;
+    }
+
     final coupon = _cartStore.calculation?.coupon;
     if (coupon == null) return null;
     if (coupon.isValid) return null;
@@ -236,9 +237,18 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   String? get _couponSuccess {
+    final validated = _cartStore.validatedCoupon;
+    if (validated != null && validated.isValid) {
+      final promotionName = validated.promotion?.name;
+      return (promotionName != null && promotionName.isNotEmpty)
+          ? '$promotionName applied successfully'
+          : 'Coupon applied successfully';
+    }
+
     final coupon = _cartStore.calculation?.coupon;
     if (coupon == null) return null;
     if (!coupon.isApplied || !coupon.isValid) return null;
+
     return coupon.name != null
         ? '${coupon.name} applied successfully'
         : 'Coupon applied successfully';
@@ -260,18 +270,18 @@ class _CartScreenState extends State<CartScreen> {
             elevation: 0,
             centerTitle: true,
             actions: [
-              if (_cartStore.itemCount > 0)
+              if (_cartStore.cartBadgeCount > 0)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: Center(
                     child: Text(
-                      '${_cartStore.itemCount} item${_cartStore.itemCount != 1 ? 's' : ''}',
+                      '${_cartStore.cartBadgeCount} item${_cartStore.cartBadgeCount != 1 ? 's' : ''}',
                       style: const TextStyle(fontSize: 14),
                     ),
                   ),
                 ),
               MiniCartBadge(
-                itemCount: _cartStore.itemCount,
+                itemCount: _cartStore.cartBadgeCount,
                 hasDiscount: _cartStore.calculation?.coupon?.isApplied ?? false,
                 onTap: () {
                   if (_cartStore.isEmpty) return;
@@ -395,12 +405,13 @@ class _CartScreenState extends State<CartScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         CouponFormWidget(
+          coupons: _cartStore.availableCoupons.toList(),
           onApplyCoupon: _handleApplyCoupon,
           onRemoveCoupon: _handleRemoveCoupon,
           appliedCouponCode: _cartStore.calculation?.coupon?.isApplied == true
               ? _cartStore.calculation?.coupon?.code
-              : null,
-          isLoading: _cartStore.isLoading,
+              : _cartStore.selectedCouponCode,
+          isLoading: _cartStore.isLoading || _cartStore.isLoadingCoupons,
           error: _couponError,
           success: _couponSuccess,
         ),
@@ -524,7 +535,7 @@ class _CartScreenState extends State<CartScreen> {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: cartUIModel.cart.items.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          separatorBuilder: (_, _) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
             final item = cartUIModel.cart.items[index];
             return Observer(

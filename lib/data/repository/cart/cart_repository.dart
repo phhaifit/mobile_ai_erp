@@ -5,6 +5,11 @@ import 'package:mobile_ai_erp/domain/entity/cart/wishlist.dart';
 abstract class CartRepository {
   Future<Cart> getCart({required String customerId, required String tenantId});
 
+  Future<Map<String, dynamic>> getCartSummary({
+    required String customerId,
+    required String tenantId,
+  });
+
   Future<Cart> addCartItem({
     required String customerId,
     required String tenantId,
@@ -33,7 +38,18 @@ abstract class CartRepository {
     String? couponCode,
   });
 
+  Future<Cart> mergeCart({
+    required String customerId,
+    required String tenantId,
+    required List<Map<String, dynamic>> items,
+  });
+
   Future<Wishlist> getWishlist({
+    required String customerId,
+    required String tenantId,
+  });
+
+  Future<Map<String, dynamic>> getWishlistSummary({
     required String customerId,
     required String tenantId,
   });
@@ -51,10 +67,9 @@ abstract class CartRepository {
     required String itemId,
   });
 
-  Future<Cart> moveWishlistItemToCart({
+  Future<Wishlist> mergeWishlist({
     required String customerId,
     required String tenantId,
-    required String wishlistItemId,
-    int quantity = 1,
+    required List<Map<String, dynamic>> items,
   });
 }

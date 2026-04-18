@@ -47,7 +47,7 @@ class _WishlistPageState extends State<WishlistPage> {
           return ListView.separated(
             padding: const EdgeInsets.all(16),
             itemCount: wishlistStore.items.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            separatorBuilder: (_, _) => const SizedBox(height: 12),
             itemBuilder: (_, index) {
               final item = wishlistStore.items[index];
 
@@ -56,7 +56,11 @@ class _WishlistPageState extends State<WishlistPage> {
                 onMoveToCart: () async {
                   final messenger = ScaffoldMessenger.of(context);
 
-                  await cartStore.moveWishlistItemToCart(item);
+                  await cartStore.addToCart(
+                    productId: item.productId,
+                    variantId: item.variantId,
+                    qty: 1,
+                  );
 
                   if (!context.mounted) return;
 
@@ -66,11 +70,16 @@ class _WishlistPageState extends State<WishlistPage> {
                     messenger.showSnackBar(
                       SnackBar(content: Text(cartStore.errorMessage!)),
                     );
-                  } else {
-                    messenger.showSnackBar(
-                      const SnackBar(content: Text('Moved to cart')),
-                    );
+                    return;
                   }
+
+                  await wishlistStore.loadWishlist();
+
+                  if (!context.mounted) return;
+
+                  messenger.showSnackBar(
+                    const SnackBar(content: Text('Moved to cart')),
+                  );
                 },
                 onRemove: () async {
                   final messenger = ScaffoldMessenger.of(context);
