@@ -104,18 +104,25 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
       return;
     }
 
-    if (result != null) {
-      await _loadShipment(order.id, refresh: true);
+    await _loadShipment(order.id, refresh: true);
 
-      if (!mounted) {
-        return;
-      }
+    if (!mounted) {
+      return;
+    }
+
+    if (result != null) {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             'Shipment batch #${result.shipmentNumber} ready: ${result.trackingCode}',
           ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Create shipment failed. Please review remaining allocation and retry.'),
         ),
       );
     }
@@ -327,6 +334,10 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
     FulfillmentOrder order,
     Map<String, int> remainingByItem,
   ) {
+    final remainingItems = order.items
+        .where((item) => (remainingByItem[item.id] ?? 0) > 0)
+        .toList();
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
@@ -364,7 +375,12 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
           ),
           if (!_shipFullRemaining) ...[
             const SizedBox(height: 4),
-            ...order.items.map((item) {
+            if (remainingItems.isEmpty)
+              Text(
+                'No remaining items for manual allocation.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ...remainingItems.map((item) {
               final remaining = remainingByItem[item.id] ?? 0;
               final selected = (_manualAllocations[item.id] ?? 0).clamp(0, remaining);
               return Padding(
