@@ -48,15 +48,9 @@ class FulfillmentRepositoryImpl extends FulfillmentRepository {
   }
 
   @override
-  Future<ShipmentTrackingInfo> createOrLinkShipment(
-    String orderId, {
-    String? trackingCode,
-    String? note,
-  }) async {
+  Future<ShipmentTrackingInfo> createOrLinkShipment(String orderId) async {
     final response = await _orderApi.createOrLinkOrderShipment(
       orderId,
-      trackingCode: trackingCode,
-      note: note,
     );
 
     return _mapShipmentToEntity(response);

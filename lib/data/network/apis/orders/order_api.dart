@@ -66,20 +66,12 @@ class OrderApi {
   }
 
   Future<ShipmentTrackingResponseDto> createOrLinkOrderShipment(
-    String orderId, {
-    String? trackingCode,
-    String? note,
-  }) async {
+    String orderId,
+  ) async {
     try {
-      final data = <String, dynamic>{
-        if (trackingCode != null && trackingCode.isNotEmpty)
-          'trackingCode': trackingCode,
-        if (note != null && note.isNotEmpty) 'note': note,
-      };
-
       final res = await _dioClient.dio.post(
         Endpoints.orderShipment(orderId),
-        data: data,
+        data: const <String, dynamic>{},
       );
 
       return ShipmentTrackingResponseDto.fromJson(
