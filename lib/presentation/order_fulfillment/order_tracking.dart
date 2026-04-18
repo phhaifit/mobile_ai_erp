@@ -8,6 +8,8 @@ import 'package:mobile_ai_erp/presentation/order_fulfillment/store/fulfillment_s
 import 'package:intl/intl.dart';
 
 class FulfillmentTrackingScreen extends StatefulWidget {
+  const FulfillmentTrackingScreen({super.key});
+
   @override
   State<FulfillmentTrackingScreen> createState() =>
       _FulfillmentTrackingScreenState();
@@ -132,7 +134,7 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
           _buildCurrentStatusBanner(currentStatus),
           if (shipment != null) ...[
             const SizedBox(height: 12),
-            _buildCarrierCard(shipment),
+            _buildCarrierCard(shipment, currentStatus),
           ],
           const SizedBox(height: 24),
           Text(
@@ -155,13 +157,32 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
     );
   }
 
-  Widget _buildCarrierCard(ShipmentTrackingInfo shipment) {
+  Widget _buildCarrierCard(
+    ShipmentTrackingInfo shipment,
+    FulfillmentStatus currentStatus,
+  ) {
     final eta = shipment.estimatedDelivery;
+    final isTerminalOrder =
+        currentStatus == FulfillmentStatus.delivered ||
+        currentStatus == FulfillmentStatus.returned ||
+        currentStatus == FulfillmentStatus.cancelled;
+
+    final isCarrierOutOfSync =
+        isTerminalOrder &&
+        ((currentStatus == FulfillmentStatus.delivered &&
+                shipment.status.toLowerCase() != 'delivered') ||
+            (currentStatus == FulfillmentStatus.returned &&
+                shipment.status.toLowerCase() != 'returned'));
+
+    final displayCarrierStatus = isCarrierOutOfSync
+        ? currentStatus.apiValue
+        : shipment.status;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary.withOpacity(0.08),
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
@@ -174,13 +195,21 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
             ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 6),
-          Text('Carrier status: ${shipment.status}'),
+          Text('Carrier status: $displayCarrierStatus'),
+          if (isCarrierOutOfSync)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                'Order status has been synchronized via webhook. Provider detail may take time to converge.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
           if (shipment.latestNote != null && shipment.latestNote!.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text(shipment.latestNote!),
             ),
-          if (eta != null)
+          if (eta != null && !isCarrierOutOfSync)
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text(
@@ -197,9 +226,11 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: _getStatusColor(status).withOpacity(0.1),
+        color: _getStatusColor(status).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _getStatusColor(status).withOpacity(0.3)),
+        border: Border.all(
+          color: _getStatusColor(status).withValues(alpha: 0.3),
+        ),
       ),
       child: Column(
         children: [
@@ -236,7 +267,7 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
     final displayNote = _normalizedEventNote(event.note);
     final color = isFirst
         ? _getStatusColor(event.newStatus)
-        : _getStatusColor(event.newStatus).withOpacity(0.5);
+      : _getStatusColor(event.newStatus).withValues(alpha: 0.5);
 
     return IntrinsicHeight(
       child: Row(
@@ -260,7 +291,10 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
                 ),
                 if (!isLast)
                   Expanded(
-                    child: Container(width: 2, color: color.withOpacity(0.3)),
+                    child: Container(
+                      width: 2,
+                      color: color.withValues(alpha: 0.3),
+                    ),
                   ),
               ],
             ),
@@ -284,7 +318,7 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: color.withOpacity(0.15),
+                              color: color.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
