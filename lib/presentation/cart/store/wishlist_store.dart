@@ -46,11 +46,18 @@ abstract class WishlistStoreBase with Store {
   @observable
   ObservableList<String> selectedItemIds = ObservableList<String>();
 
+  @observable
+  Map<String, dynamic>? wishlistSummary;
+
   @computed
   List<WishlistItem> get items => wishlist.items;
 
   @computed
   int get itemCount => wishlist.totalItems;
+
+  @computed
+  int get wishlistBadgeCount =>
+      (wishlistSummary?['totalItems'] as num?)?.toInt() ?? wishlist.totalItems;
 
   @computed
   bool get isEmpty => wishlist.items.isEmpty;
@@ -150,11 +157,22 @@ abstract class WishlistStoreBase with Store {
       );
       wishlist = result;
       _pruneInvalidSelections();
+      await loadWishlistSummary();
     } catch (e) {
       errorMessage = e.toString();
     } finally {
       isLoading = false;
     }
+  }
+
+  @action
+  Future<void> loadWishlistSummary() async {
+    try {
+      wishlistSummary = await _cartRepository.getWishlistSummary(
+        customerId: customerId,
+        tenantId: tenantId,
+      );
+    } catch (_) {}
   }
 
   @action
@@ -177,6 +195,7 @@ abstract class WishlistStoreBase with Store {
         variantId: variantId,
       );
       _pruneInvalidSelections();
+      await loadWishlistSummary();
     } catch (e) {
       errorMessage = e.toString();
     } finally {
@@ -197,6 +216,7 @@ abstract class WishlistStoreBase with Store {
       );
       selectedItemIds.remove(item.id);
       _pruneInvalidSelections();
+      await loadWishlistSummary();
     } catch (e) {
       errorMessage = e.toString();
     } finally {
@@ -227,6 +247,7 @@ abstract class WishlistStoreBase with Store {
       wishlist = currentWishlist;
       selectedItemIds.clear();
       _pruneInvalidSelections();
+      await loadWishlistSummary();
     } catch (e) {
       errorMessage = e.toString();
     } finally {

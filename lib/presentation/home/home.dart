@@ -12,6 +12,7 @@ import 'package:mobile_ai_erp/presentation/cart/store/cart_store.dart';
 import 'package:mobile_ai_erp/presentation/cart/widgets/mini_cart_drawer.dart';
 import 'package:mobile_ai_erp/presentation/cart/store/wishlist_store.dart';
 import 'package:mobile_ai_erp/presentation/cart/screens/wishlist_page.dart';
+import 'package:mobile_ai_erp/presentation/cart/models/cart_ui_model.dart';
 import 'package:mobile_ai_erp/utils/routes/cart_routes.dart';
 import 'package:mobile_ai_erp/utils/locale/app_localization.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
@@ -37,6 +38,48 @@ class _HomeScreenState extends State<HomeScreen> {
 
     _cartStore.loadCart();
     _wishlistStore.loadWishlist();
+  }
+
+  Future<void> _openMiniCart() async {
+    await _cartStore.loadCartSummary();
+    await _cartStore.loadCart();
+
+    if (!mounted) return;
+
+    final cartUIModel = CartUIModel(
+      cart: _cartStore.cart,
+      calculation: _cartStore.calculation,
+    );
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (_) {
+        return SizedBox(
+          height: MediaQuery.of(context).size.height * 0.85,
+          child: MiniCartDrawer(
+            cartData: cartUIModel,
+            onViewFullCart: () {
+              Navigator.pop(context);
+              CartRoutes.navigateToCart(context);
+            },
+            onCheckout: () {
+              Navigator.pop(context);
+              CartRoutes.navigateToCart(context);
+            },
+            onRemoveItem: (itemId) async {
+              await _cartStore.removeItemFromCart(itemId);
+            },
+            onQuantityChanged: (itemId, quantity) async {
+              await _cartStore.updateItemQuantity(itemId, quantity);
+            },
+            isLoading: _cartStore.isLoading,
+            onDrawerToggle: () {},
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -71,9 +114,9 @@ class _HomeScreenState extends State<HomeScreen> {
     return Observer(
       builder: (context) {
         return MiniCartBadge(
-          itemCount: _cartStore.itemCount,
-          onTap: () {
-            CartRoutes.navigateToCart(context);
+          itemCount: _cartStore.cartBadgeCount,
+          onTap: () async {
+            await _openMiniCart();
           },
           hasDiscount: _cartStore.hasCoupon,
         );
@@ -84,7 +127,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildWishlistButton() {
     return Observer(
       builder: (context) {
-        final count = _wishlistStore.itemCount;
+        final count = _wishlistStore.wishlistBadgeCount;
 
         return Stack(
           clipBehavior: Clip.none,
@@ -353,8 +396,7 @@ class _HomeScreenState extends State<HomeScreen> {
               contentPadding: EdgeInsets.zero,
             ),
           ),
-        if (compact)
-          const PopupMenuDivider(),
+        if (compact) const PopupMenuDivider(),
         const PopupMenuItem(
           value: 'dashboard',
           child: ListTile(
