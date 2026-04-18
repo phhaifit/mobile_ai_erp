@@ -274,6 +274,8 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
                   'ETA: ${DateFormat('dd/MM/yyyy HH:mm').format(shipment.estimatedDelivery!)}',
                 ),
               ),
+            const SizedBox(height: 12),
+            _buildShipmentBatchesList(order, _shipments),
           ],
           if (canCreateShipment) ...[
             const SizedBox(height: 12),
@@ -440,6 +442,78 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildShipmentBatchesList(
+    FulfillmentOrder order,
+    List<ShipmentTrackingInfo> shipments,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'All Shipment Batches',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+        const SizedBox(height: 8),
+        ...shipments.map((batch) {
+          return Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Theme.of(context)
+                  .colorScheme
+                  .surfaceContainerHighest
+                  .withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Batch #${batch.shipmentNumber} • ${batch.provider.toUpperCase()} • ${batch.trackingCode}',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+                const SizedBox(height: 4),
+                Text('Status: ${batch.status}'),
+                if (batch.items.isNotEmpty)
+                  Text(
+                    _buildBatchItemsText(order, batch),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                if (batch.latestNote != null && batch.latestNote!.isNotEmpty)
+                  Text(
+                    batch.latestNote!,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+              ],
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  String _buildBatchItemsText(
+    FulfillmentOrder order,
+    ShipmentTrackingInfo batch,
+  ) {
+    final orderItemsById = {
+      for (final item in order.items) item.id: item,
+    };
+
+    final chunks = batch.items.map((shipmentItem) {
+      final orderItem = orderItemsById[shipmentItem.orderItemId];
+      final productName = orderItem?.productName ?? shipmentItem.orderItemId;
+      return '$productName x${shipmentItem.quantity}';
+    }).toList();
+
+    return 'Items: ${chunks.join(', ')}';
   }
 
   Map<String, int> _buildShippedByItemMap(List<ShipmentTrackingInfo> shipments) {

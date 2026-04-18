@@ -145,6 +145,8 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
             ),
             const SizedBox(height: 8),
             _buildCarrierCard(shipment, currentStatus),
+            const SizedBox(height: 12),
+            _buildAllBatchesCardList(shipments),
           ],
           const SizedBox(height: 24),
           Text(
@@ -266,6 +268,59 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildAllBatchesCardList(List<ShipmentTrackingInfo> shipments) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'All Shipment Batches',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+        const SizedBox(height: 8),
+        ...shipments.map((shipment) {
+          return Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Theme.of(context)
+                  .colorScheme
+                  .surfaceContainerHighest
+                  .withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Batch #${shipment.shipmentNumber} • ${shipment.provider.toUpperCase()} • ${shipment.trackingCode}',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+                const SizedBox(height: 4),
+                Text('Status: ${shipment.status}'),
+                if (shipment.latestNote != null &&
+                    shipment.latestNote!.isNotEmpty)
+                  Text(
+                    shipment.latestNote!,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                if (shipment.estimatedDelivery != null)
+                  Text(
+                    'ETA: ${DateFormat('dd/MM/yyyy HH:mm').format(shipment.estimatedDelivery!)}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+              ],
+            ),
+          );
+        }),
+      ],
     );
   }
 
