@@ -18,6 +18,11 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
   ShipmentTrackingInfo? _shipment;
   bool _isRefreshingCarrier = false;
 
+  bool _canUseCarrierTracking(FulfillmentStatus status) {
+    return status == FulfillmentStatus.shipped ||
+        status == FulfillmentStatus.delivered;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -27,8 +32,14 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
   }
 
   Future<void> _loadCarrierTracking({required bool refresh}) async {
-    final orderId = _store.selectedOrder?.id;
-    if (orderId == null || _isRefreshingCarrier) {
+    final order = _store.selectedOrder;
+    final orderId = order?.id;
+    if (
+      orderId == null ||
+      order == null ||
+      !_canUseCarrierTracking(order.status) ||
+      _isRefreshingCarrier
+    ) {
       return;
     }
 
@@ -56,24 +67,28 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
     return Observer(
       builder: (_) {
         final order = _store.selectedOrder;
+        final canUseCarrierTracking =
+            order != null && _canUseCarrierTracking(order.status);
         return Scaffold(
           appBar: AppBar(
             title: Text(order != null ? 'Tracking ${order.code}' : 'Tracking'),
-            actions: [
-              IconButton(
-                tooltip: 'Refresh carrier tracking',
-                onPressed: _isRefreshingCarrier
-                    ? null
-                    : () => _loadCarrierTracking(refresh: true),
-                icon: _isRefreshingCarrier
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.refresh),
-              ),
-            ],
+            actions: canUseCarrierTracking
+                ? [
+                    IconButton(
+                      tooltip: 'Refresh carrier tracking',
+                      onPressed: _isRefreshingCarrier
+                          ? null
+                          : () => _loadCarrierTracking(refresh: true),
+                      icon: _isRefreshingCarrier
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.refresh),
+                    ),
+                  ]
+                : null,
           ),
           body: order == null
               ? const Center(child: Text('No order selected'))
