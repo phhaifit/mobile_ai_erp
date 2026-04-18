@@ -26,6 +26,7 @@ import 'package:mobile_ai_erp/domain/usecase/order_tracking/get_order_tracking_s
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/create_or_link_shipment_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_fulfillment_order_detail_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_fulfillment_orders_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_order_shipments_tracking_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_shipment_tracking_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/update_fulfillment_status_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/post/delete_post_usecase.dart';
@@ -206,6 +207,9 @@ class UseCaseModule {
     );
     getIt.registerSingleton<GetShipmentTrackingUseCase>(
       GetShipmentTrackingUseCase(getIt<FulfillmentRepository>()),
+    );
+    getIt.registerSingleton<GetOrderShipmentsTrackingUseCase>(
+      GetOrderShipmentsTrackingUseCase(getIt<FulfillmentRepository>()),
     );
 
     // order tracking:----------------------------------------------------------

@@ -262,6 +262,7 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
   Widget _buildActionButtons(FulfillmentOrder order) {
     final nextStatus = _getNextStatus(order.status);
     final isShipmentState =
+      order.status == FulfillmentStatus.partiallyShipped ||
       order.status == FulfillmentStatus.shipped ||
       order.status == FulfillmentStatus.delivered ||
       order.status == FulfillmentStatus.returned;
@@ -280,6 +281,7 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
     if (nextStatus == null &&
         order.status != FulfillmentStatus.pending &&
         order.status != FulfillmentStatus.processing &&
+        order.status != FulfillmentStatus.partiallyShipped &&
         order.status != FulfillmentStatus.shipped &&
         !isCarrierManaged) {
       return const SizedBox.shrink();
@@ -305,7 +307,11 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),
-          if (order.status == FulfillmentStatus.shipped && !isCarrierManaged)
+          if (
+            (order.status == FulfillmentStatus.shipped ||
+                order.status == FulfillmentStatus.partiallyShipped) &&
+            !isCarrierManaged
+          )
             Container(
               padding: const EdgeInsets.all(12),
               margin: const EdgeInsets.only(bottom: 8),
@@ -316,7 +322,7 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
-                'Create or link carrier shipment from Print Label. Delivered status is synchronized from carrier tracking.',
+                'Create shipment batches from Print Label. Delivered status is synchronized from carrier tracking.',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),
@@ -374,14 +380,17 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
       _shipmentCheckedOrderId = orderId;
     });
 
-    final shipment = await _store.getShipmentTracking(orderId, refresh: false);
+    final shipments = await _store.getOrderShipmentBatches(
+      orderId,
+      refresh: false,
+    );
 
     if (!mounted) {
       return;
     }
 
     setState(() {
-      _hasCarrierShipment = shipment != null;
+      _hasCarrierShipment = shipments.isNotEmpty;
       _isCheckingCarrierShipment = false;
     });
   }
@@ -416,6 +425,7 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
       case FulfillmentStatus.pending:
         return FulfillmentStatus.processing;
       case FulfillmentStatus.processing:
+      case FulfillmentStatus.partiallyShipped:
         return FulfillmentStatus.shipped;
       case FulfillmentStatus.shipped:
         return null;
@@ -432,6 +442,8 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
         return Icons.hourglass_empty;
       case FulfillmentStatus.processing:
         return Icons.sync;
+      case FulfillmentStatus.partiallyShipped:
+        return Icons.local_shipping_outlined;
       case FulfillmentStatus.shipped:
         return Icons.local_shipping;
       case FulfillmentStatus.delivered:
@@ -467,6 +479,8 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
         return Colors.orange;
       case FulfillmentStatus.processing:
         return Colors.blue;
+      case FulfillmentStatus.partiallyShipped:
+        return Colors.cyan;
       case FulfillmentStatus.shipped:
         return Colors.teal;
       case FulfillmentStatus.delivered:

@@ -11,8 +11,15 @@ abstract class FulfillmentRepository {
   });
   Future<FulfillmentOrder?> getOrderById(String id);
   Future<void> updateOrderStatus(String id, FulfillmentStatus status);
-  Future<ShipmentTrackingInfo> createOrLinkShipment(String orderId);
+  Future<ShipmentTrackingInfo> createOrLinkShipment(
+    String orderId, {
+    List<CreateShipmentItemAllocation> items,
+  });
   Future<ShipmentTrackingInfo?> getShipmentTracking(
+    String orderId, {
+    bool refresh = false,
+  });
+  Future<OrderShipmentsTrackingInfo?> getOrderShipmentsTracking(
     String orderId, {
     bool refresh = false,
   });

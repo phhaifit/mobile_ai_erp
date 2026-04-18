@@ -6,6 +6,7 @@ import 'package:mobile_ai_erp/domain/entity/fulfillment/tracking_event.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/create_or_link_shipment_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_fulfillment_order_detail_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_fulfillment_orders_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_order_shipments_tracking_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_shipment_tracking_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/update_fulfillment_status_usecase.dart';
 import 'package:mobx/mobx.dart';
@@ -20,6 +21,7 @@ abstract class _FulfillmentStore with Store {
   final UpdateFulfillmentStatusUseCase _updateStatusUseCase;
   final CreateOrLinkShipmentUseCase _createOrLinkShipmentUseCase;
   final GetShipmentTrackingUseCase _getShipmentTrackingUseCase;
+  final GetOrderShipmentsTrackingUseCase _getOrderShipmentsTrackingUseCase;
   final ErrorStore errorStore;
 
   _FulfillmentStore(
@@ -28,6 +30,7 @@ abstract class _FulfillmentStore with Store {
     this._updateStatusUseCase,
     this._createOrLinkShipmentUseCase,
     this._getShipmentTrackingUseCase,
+    this._getOrderShipmentsTrackingUseCase,
     this.errorStore,
   );
 
@@ -128,12 +131,15 @@ abstract class _FulfillmentStore with Store {
   }
 
   Future<ShipmentTrackingInfo?> createOrLinkShipment(
-    String orderId,
+    String orderId, {
+    List<CreateShipmentItemAllocation> items = const [],
+  }
   ) async {
     try {
       final shipment = await _createOrLinkShipmentUseCase.call(
         params: CreateOrLinkShipmentParams(
           orderId: orderId,
+          items: items,
         ),
       );
 
@@ -142,6 +148,32 @@ abstract class _FulfillmentStore with Store {
     } catch (e) {
       errorStore.errorMessage = e.toString();
       return null;
+    }
+  }
+
+  Future<List<ShipmentTrackingInfo>> getOrderShipmentBatches(
+    String orderId, {
+    bool refresh = false,
+  }) async {
+    try {
+      final response = await _getOrderShipmentsTrackingUseCase.call(
+        params: GetOrderShipmentsTrackingParams(
+          orderId: orderId,
+          refresh: refresh,
+        ),
+      );
+
+      final shipments = response?.shipments ?? const <ShipmentTrackingInfo>[];
+
+      if (refresh) {
+        await getOrderDetail(orderId);
+        await getOrders();
+      }
+
+      return shipments;
+    } catch (e) {
+      errorStore.errorMessage = e.toString();
+      return const <ShipmentTrackingInfo>[];
     }
   }
 

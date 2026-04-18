@@ -1,6 +1,7 @@
 enum FulfillmentStatus {
   pending,
   processing,
+  partiallyShipped,
   shipped,
   delivered,
   cancelled,
@@ -12,6 +13,8 @@ enum FulfillmentStatus {
         return 'Pending';
       case FulfillmentStatus.processing:
         return 'Processing';
+      case FulfillmentStatus.partiallyShipped:
+        return 'Partially Shipped';
       case FulfillmentStatus.shipped:
         return 'Shipped';
       case FulfillmentStatus.delivered:
@@ -31,6 +34,8 @@ enum FulfillmentStatus {
         return FulfillmentStatus.pending;
       case 'processing':
         return FulfillmentStatus.processing;
+      case 'partially_shipped':
+        return FulfillmentStatus.partiallyShipped;
       case 'shipped':
         return FulfillmentStatus.shipped;
       case 'delivered':
@@ -45,5 +50,12 @@ enum FulfillmentStatus {
   }
 
   /// Converts the enum value to a BE API status string.
-  String get apiValue => name;
+  String get apiValue {
+    switch (this) {
+      case FulfillmentStatus.partiallyShipped:
+        return 'partially_shipped';
+      default:
+        return name;
+    }
+  }
 }
