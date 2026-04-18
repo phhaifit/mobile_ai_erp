@@ -8,6 +8,8 @@ import 'package:mobile_ai_erp/utils/routes/routes.dart';
 import 'package:intl/intl.dart';
 
 class FulfillmentListScreen extends StatefulWidget {
+  const FulfillmentListScreen({super.key});
+
   @override
   State<FulfillmentListScreen> createState() => _FulfillmentListScreenState();
 }
@@ -64,7 +66,9 @@ class _FulfillmentListScreenState extends State<FulfillmentListScreen> {
         label: Text(label),
         selected: isSelected,
         onSelected: (_) => _store.setStatusFilter(status),
-        selectedColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+        selectedColor: Theme.of(context).colorScheme.primary.withValues(
+          alpha: 0.2,
+        ),
         checkmarkColor: Theme.of(context).colorScheme.primary,
       ),
     );
@@ -97,12 +101,20 @@ class _FulfillmentListScreenState extends State<FulfillmentListScreen> {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
-        onTap: () {
-          _store.getOrderDetail(order.id);
-          Navigator.of(context).pushNamed(
+        onTap: () async {
+          final navigator = Navigator.of(context);
+
+          await _store.getOrderDetail(order.id);
+          await navigator.pushNamed(
             Routes.fulfillmentDetail,
             arguments: order.id,
           );
+
+          if (!mounted) {
+            return;
+          }
+
+          await _store.getOrders();
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
@@ -177,7 +189,7 @@ class _FulfillmentListScreenState extends State<FulfillmentListScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: _getStatusColor(status).withOpacity(0.15),
+        color: _getStatusColor(status).withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
