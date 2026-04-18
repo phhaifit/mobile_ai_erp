@@ -10,6 +10,8 @@ import 'package:intl/intl.dart';
 import 'package:mobx/mobx.dart';
 
 class FulfillmentDetailScreen extends StatefulWidget {
+  const FulfillmentDetailScreen({super.key});
+
   @override
   State<FulfillmentDetailScreen> createState() =>
       _FulfillmentDetailScreenState();
@@ -19,6 +21,9 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
   final FulfillmentStore _store = getIt<FulfillmentStore>();
   final _currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: 'VND');
   late ReactionDisposer _errorDisposer;
+  bool _hasCarrierShipment = false;
+  bool _isCheckingCarrierShipment = false;
+  String? _shipmentCheckedOrderId;
 
   @override
   void initState() {
@@ -62,6 +67,13 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
             body: const Center(child: Text('Order not found')),
           );
         }
+
+        if (_shipmentCheckedOrderId != order.id && !_isCheckingCarrierShipment) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _loadCarrierShipmentState(order.id);
+          });
+        }
+
         return Scaffold(
           appBar: AppBar(
             title: Text(order.code),
@@ -249,10 +261,27 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
 
   Widget _buildActionButtons(FulfillmentOrder order) {
     final nextStatus = _getNextStatus(order.status);
+    final isShipmentState =
+      order.status == FulfillmentStatus.shipped ||
+      order.status == FulfillmentStatus.delivered ||
+      order.status == FulfillmentStatus.returned;
+    final hasResolvedCarrierState =
+      _shipmentCheckedOrderId == order.id && !_isCheckingCarrierShipment;
+
+    final isAwaitingCarrierCheck =
+      isShipmentState && !hasResolvedCarrierState;
+
+    final isCarrierManaged = _hasCarrierShipment &&
+      isShipmentState;
+
+    final canUseManualStatusActions =
+      !isAwaitingCarrierCheck && !isCarrierManaged;
+
     if (nextStatus == null &&
         order.status != FulfillmentStatus.pending &&
         order.status != FulfillmentStatus.processing &&
-        order.status != FulfillmentStatus.shipped) {
+        order.status != FulfillmentStatus.shipped &&
+        !isCarrierManaged) {
       return const SizedBox.shrink();
     }
 
@@ -261,7 +290,37 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (nextStatus != null)
+          if (isAwaitingCarrierCheck)
+            Container(
+              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.only(bottom: 8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.secondary.withValues(
+                  alpha: 0.08,
+                ),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                'Checking carrier shipment status... please wait.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+          if (isCarrierManaged)
+            Container(
+              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.only(bottom: 8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withValues(
+                  alpha: 0.08,
+                ),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                'Carrier shipment is linked. Delivery status is synchronized from GHN tracking/webhook.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+          if (nextStatus != null && canUseManualStatusActions)
             ElevatedButton.icon(
               onPressed: () => _store.updateStatus(order.id, nextStatus),
               icon: Icon(_getStatusIcon(nextStatus)),
@@ -272,7 +331,8 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
             ),
           if (order.status != FulfillmentStatus.cancelled &&
               order.status != FulfillmentStatus.delivered &&
-              order.status != FulfillmentStatus.returned) ...[
+              order.status != FulfillmentStatus.returned &&
+              canUseManualStatusActions) ...[
             const SizedBox(height: 8),
             OutlinedButton.icon(
               onPressed: () => _confirmCancelOrder(order.id),
@@ -287,6 +347,28 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _loadCarrierShipmentState(String orderId) async {
+    if (_isCheckingCarrierShipment) {
+      return;
+    }
+
+    setState(() {
+      _isCheckingCarrierShipment = true;
+      _shipmentCheckedOrderId = orderId;
+    });
+
+    final shipment = await _store.getShipmentTracking(orderId, refresh: false);
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _hasCarrierShipment = shipment != null;
+      _isCheckingCarrierShipment = false;
+    });
   }
 
   void _confirmCancelOrder(String orderId) {
@@ -350,7 +432,7 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: _getStatusColor(status).withOpacity(0.15),
+        color: _getStatusColor(status).withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
