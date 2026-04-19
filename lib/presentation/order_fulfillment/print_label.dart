@@ -18,8 +18,12 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
   final FulfillmentStore _store = getIt<FulfillmentStore>();
   List<ShipmentTrackingInfo> _shipments = const [];
   ShipmentTrackingInfo? _shipment;
+  List<ShipmentLabelArtifact> _labelArtifacts = const [];
+  List<ShipmentPrintJob> _printJobs = const [];
   bool _loadingShipment = false;
+  bool _loadingPrintData = false;
   bool _submittingShipment = false;
+  bool _submittingPrint = false;
   bool _shipFullRemaining = true;
   final Map<String, int> _manualAllocations = <String, int>{};
 
@@ -84,6 +88,39 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
       _shipment = shipments.isEmpty ? null : shipments.last;
       _loadingShipment = false;
     });
+
+    if (shipments.isEmpty) {
+      setState(() {
+        _labelArtifacts = const [];
+        _printJobs = const [];
+      });
+      return;
+    }
+
+    await _loadPrintData(orderId, _shipment!.id);
+  }
+
+  Future<void> _loadPrintData(String orderId, String shipmentId) async {
+    if (_loadingPrintData) {
+      return;
+    }
+
+    setState(() {
+      _loadingPrintData = true;
+    });
+
+    final labels = await _store.getShipmentLabelArtifacts(orderId, shipmentId);
+    final jobs = await _store.getShipmentPrintJobs(orderId, shipmentId);
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _labelArtifacts = labels;
+      _printJobs = jobs;
+      _loadingPrintData = false;
+    });
   }
 
   Future<void> _createShipment(
@@ -133,6 +170,84 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
     });
   }
 
+  Future<void> _printLatestShipmentLabel(FulfillmentOrder order) async {
+    final shipment = _shipment;
+    if (shipment == null || _submittingPrint) {
+      return;
+    }
+
+    setState(() {
+      _submittingPrint = true;
+    });
+
+    final startedAt = DateTime.now();
+
+    final createdJob = await _store.createShipmentPrintJob(
+      order.id,
+      shipment.id,
+      artifactType: 'shipping_label',
+      format: 'pdf',
+      printerName: 'Mobile Preview Printer',
+      printerCode: 'MOBILE-PREVIEW',
+      copies: 1,
+      metadata: {
+        'source': 'mobile_ai_erp',
+        'screen': 'print_label',
+      },
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    if (createdJob == null) {
+      setState(() {
+        _submittingPrint = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cannot queue print job. Please retry.'),
+        ),
+      );
+      return;
+    }
+
+    final completedJob = await _store.createShipmentPrintAttempt(
+      order.id,
+      shipment.id,
+      createdJob.id,
+      status: 'succeeded',
+      spoolJobId: 'mobile-${DateTime.now().millisecondsSinceEpoch}',
+      durationMs: DateTime.now().difference(startedAt).inMilliseconds,
+      printerResponse: {
+        'channel': 'mobile-preview',
+        'message': 'Preview print acknowledged by mobile client',
+      },
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    await _loadPrintData(order.id, shipment.id);
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _submittingPrint = false;
+    });
+
+    final finalStatus = completedJob?.status ?? createdJob.status;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Print job queued with status: $finalStatus'),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Observer(
@@ -151,23 +266,29 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
   }
 
   Widget _buildBody(FulfillmentOrder order) {
+    final canPrint = _shipment != null && !_submittingPrint;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildComingSoonBanner(),
+          _buildPrintIntegrationBanner(),
           const SizedBox(height: 16),
           _buildShipmentSection(order),
           const SizedBox(height: 16),
           _buildLabelPreview(order),
+          const SizedBox(height: 16),
+          _buildPrintQueueSection(order),
           const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: null, // Disabled until backend API supports labels
+              onPressed: canPrint ? () => _printLatestShipmentLabel(order) : null,
               icon: const Icon(Icons.print),
-              label: const Text('Print Label'),
+              label: Text(
+                _submittingPrint ? 'Printing...' : 'Print Label',
+              ),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
@@ -565,33 +686,33 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
     return allocations;
   }
 
-  Widget _buildComingSoonBanner() {
+  Widget _buildPrintIntegrationBanner() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.amber.withValues(alpha: 0.1),
+        color: Colors.teal.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.amber.withValues(alpha: 0.4)),
+        border: Border.all(color: Colors.teal.withValues(alpha: 0.35)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.info_outline, color: Colors.amber, size: 24),
+          const Icon(Icons.print_outlined, color: Colors.teal, size: 24),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Coming Soon',
+                  'Printing Queue Connected',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: Colors.amber.shade800,
+                    color: Colors.teal.shade800,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Label printing will be available with backend API integration.',
+                  'This screen now queues shipment print jobs and tracks print attempts from backend API.',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).hintColor,
                   ),
@@ -599,6 +720,107 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPrintQueueSection(FulfillmentOrder order) {
+    final shipment = _shipment;
+    if (shipment == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                'Print Queue',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleSmall
+                    ?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const Spacer(),
+              IconButton(
+                onPressed: _loadingPrintData
+                    ? null
+                    : () => _loadPrintData(order.id, shipment.id),
+                icon: _loadingPrintData
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.refresh),
+              ),
+            ],
+          ),
+          Text(
+            'Artifacts: ${_labelArtifacts.length} • Jobs: ${_printJobs.length}',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 8),
+          if (_printJobs.isEmpty)
+            Text(
+              'No print jobs yet. Tap Print Label to queue a job.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ..._printJobs.take(5).map((job) {
+            final latestAttempt =
+                job.attempts.isNotEmpty ? job.attempts.last : null;
+            return Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Job ${job.id.substring(0, 8)} • ${job.status.toUpperCase()}',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Queued: ${DateFormat('dd/MM HH:mm:ss').format(job.queuedAt)} • Copies: ${job.copies}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  if (latestAttempt != null)
+                    Text(
+                      'Latest attempt #${latestAttempt.attemptNo}: ${latestAttempt.status}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  if (job.lastErrorMessage != null &&
+                      job.lastErrorMessage!.isNotEmpty)
+                    Text(
+                      job.lastErrorMessage!,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(color: Colors.red.shade700),
+                    ),
+                ],
+              ),
+            );
+          }),
         ],
       ),
     );

@@ -110,6 +110,84 @@ class FulfillmentRepositoryImpl extends FulfillmentRepository {
     }
   }
 
+  @override
+  Future<List<ShipmentLabelArtifact>> getShipmentLabelArtifacts(
+    String orderId,
+    String shipmentId,
+  ) async {
+    final response = await _orderApi.getShipmentLabelArtifacts(
+      orderId,
+      shipmentId,
+    );
+
+    return response.map(_mapLabelArtifactToEntity).toList();
+  }
+
+  @override
+  Future<List<ShipmentPrintJob>> getShipmentPrintJobs(
+    String orderId,
+    String shipmentId,
+  ) async {
+    final response = await _orderApi.getShipmentPrintJobs(orderId, shipmentId);
+    return response.map(_mapPrintJobToEntity).toList();
+  }
+
+  @override
+  Future<ShipmentPrintJob> createShipmentPrintJob(
+    String orderId,
+    String shipmentId, {
+    String? artifactId,
+    String artifactType = 'shipping_label',
+    String format = 'pdf',
+    String? printerName,
+    String? printerCode,
+    int copies = 1,
+    Map<String, dynamic>? payload,
+    Map<String, dynamic>? metadata,
+  }) async {
+    final response = await _orderApi.createShipmentPrintJob(
+      orderId,
+      shipmentId,
+      artifactId: artifactId,
+      artifactType: artifactType,
+      format: format,
+      printerName: printerName,
+      printerCode: printerCode,
+      copies: copies,
+      payload: payload,
+      metadata: metadata,
+    );
+
+    return _mapPrintJobToEntity(response);
+  }
+
+  @override
+  Future<ShipmentPrintJob> createShipmentPrintAttempt(
+    String orderId,
+    String shipmentId,
+    String printJobId, {
+    required String status,
+    String? spoolJobId,
+    String? errorCode,
+    String? errorMessage,
+    int? durationMs,
+    Map<String, dynamic>? printerResponse,
+  }) async {
+    final response = await _orderApi.createShipmentPrintAttempt(
+      orderId,
+      shipmentId,
+      printJobId,
+      status: status,
+      spoolJobId: spoolJobId,
+      errorCode: errorCode,
+      errorMessage: errorMessage,
+      durationMs: durationMs,
+      printerResponse: printerResponse,
+    );
+
+    return _mapPrintJobToEntity(response);
+  }
+
   // ─── Mappers ──────────────────────────────────────────────────────────
 
   FulfillmentOrder _mapSummaryToEntity(OrderSummaryDto dto) {
@@ -220,6 +298,55 @@ class FulfillmentRepositoryImpl extends FulfillmentRepository {
       description: dto.description,
       location: dto.location,
       eventTime: DateTime.parse(dto.eventTime),
+    );
+  }
+
+  ShipmentLabelArtifact _mapLabelArtifactToEntity(
+    ShipmentLabelArtifactResponseDto dto,
+  ) {
+    return ShipmentLabelArtifact(
+      id: dto.id,
+      shipmentId: dto.shipmentId,
+      artifactType: dto.artifactType,
+      format: dto.format,
+      publicUrl: dto.publicUrl,
+      generatedAt: DateTime.parse(dto.generatedAt),
+    );
+  }
+
+  ShipmentPrintAttempt _mapPrintAttemptToEntity(
+    ShipmentPrintAttemptResponseDto dto,
+  ) {
+    return ShipmentPrintAttempt(
+      id: dto.id,
+      printJobId: dto.printJobId,
+      attemptNo: dto.attemptNo,
+      status: dto.status,
+      startedAt: DateTime.parse(dto.startedAt),
+      finishedAt: _tryParseDate(dto.finishedAt),
+      durationMs: dto.durationMs,
+      errorCode: dto.errorCode,
+      errorMessage: dto.errorMessage,
+    );
+  }
+
+  ShipmentPrintJob _mapPrintJobToEntity(ShipmentPrintJobResponseDto dto) {
+    return ShipmentPrintJob(
+      id: dto.id,
+      shipmentId: dto.shipmentId,
+      artifactId: dto.artifactId,
+      status: dto.status,
+      printerName: dto.printerName,
+      printerCode: dto.printerCode,
+      copies: dto.copies,
+      queuedAt: DateTime.parse(dto.queuedAt),
+      completedAt: _tryParseDate(dto.completedAt),
+      lastErrorCode: dto.lastErrorCode,
+      lastErrorMessage: dto.lastErrorMessage,
+      artifact: dto.artifact != null
+          ? _mapLabelArtifactToEntity(dto.artifact!)
+          : null,
+      attempts: dto.attempts.map(_mapPrintAttemptToEntity).toList(),
     );
   }
 
