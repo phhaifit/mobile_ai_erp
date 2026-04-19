@@ -548,6 +548,7 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
     final canCreateShipment =
         order.status == FulfillmentStatus.shipped ||
         order.status == FulfillmentStatus.partiallyShipped;
+    final isApplied = recommendation?.selectedProvider != null;
 
     if (!canCreateShipment) {
       return const SizedBox.shrink();
@@ -640,11 +641,13 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
                       ),
                     )
                     .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedRoutingOptionId = value;
-                  });
-                },
+                onChanged: isApplied
+                    ? null
+                    : (value) {
+                        setState(() {
+                          _selectedRoutingOptionId = value;
+                        });
+                      },
                 decoration: const InputDecoration(
                   labelText: 'Recommendation Options',
                   isDense: true,
@@ -663,12 +666,16 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: _applyingRouting
+                    onPressed: (_applyingRouting || isApplied)
                         ? null
                         : () => _applyRoutingRecommendation(order),
                     icon: const Icon(Icons.check_circle_outline),
                     label: Text(
-                      _applyingRouting ? 'Applying...' : 'Apply Recommendation',
+                      _applyingRouting
+                          ? 'Applying...'
+                          : isApplied
+                              ? 'Applied'
+                              : 'Apply Recommendation',
                     ),
                   ),
                 ),
@@ -678,7 +685,7 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
-                  'Applied provider: ${recommendation.selectedProvider!.toUpperCase()}',
+                  'Applied provider: ${recommendation.selectedProvider!.toUpperCase()}. Refresh to generate and apply a new decision for next shipment batch.',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ),
