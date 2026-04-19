@@ -153,3 +153,65 @@ class ShipmentPrintJob {
     this.attempts = const [],
   });
 }
+
+class RoutingRecommendationOption {
+  final String optionId;
+  final String provider;
+  final String serviceLevel;
+  final double score;
+  final int estimatedDeliveryDays;
+  final double estimatedCost;
+  final String reason;
+
+  const RoutingRecommendationOption({
+    required this.optionId,
+    required this.provider,
+    required this.serviceLevel,
+    required this.score,
+    required this.estimatedDeliveryDays,
+    required this.estimatedCost,
+    required this.reason,
+  });
+}
+
+class OrderRoutingRecommendation {
+  final String decisionId;
+  final String orderId;
+  final String recommendedProvider;
+  final String? selectedProvider;
+  final double? confidence;
+  final String scoreStrategy;
+  final bool fallbackUsed;
+  final DateTime createdAt;
+  final DateTime? appliedAt;
+  final List<RoutingRecommendationOption> options;
+
+  const OrderRoutingRecommendation({
+    required this.decisionId,
+    required this.orderId,
+    required this.recommendedProvider,
+    required this.selectedProvider,
+    required this.confidence,
+    required this.scoreStrategy,
+    required this.fallbackUsed,
+    required this.createdAt,
+    required this.appliedAt,
+    required this.options,
+  });
+}
+
+class OrderRoutingApplyResult {
+  final String decisionId;
+  final String orderId;
+  final String selectedProvider;
+  final String? selectedOptionId;
+  final DateTime appliedAt;
+
+  const OrderRoutingApplyResult({
+    required this.decisionId,
+    required this.orderId,
+    required this.selectedProvider,
+    required this.selectedOptionId,
+    required this.appliedAt,
+  });
+}

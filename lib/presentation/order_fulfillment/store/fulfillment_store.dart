@@ -4,10 +4,12 @@ import 'package:mobile_ai_erp/domain/entity/fulfillment/fulfillment_status.dart'
 import 'package:mobile_ai_erp/domain/entity/fulfillment/shipment_tracking.dart';
 import 'package:mobile_ai_erp/domain/entity/fulfillment/tracking_event.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/create_or_link_shipment_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/apply_order_routing_recommendation_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/create_shipment_print_attempt_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/create_shipment_print_job_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_fulfillment_order_detail_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_fulfillment_orders_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_order_routing_recommendation_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_order_shipments_tracking_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_shipment_label_artifacts_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_shipment_print_jobs_usecase.dart';
@@ -24,6 +26,10 @@ abstract class _FulfillmentStore with Store {
   final GetFulfillmentOrderDetailUseCase _getOrderDetailUseCase;
   final UpdateFulfillmentStatusUseCase _updateStatusUseCase;
   final CreateOrLinkShipmentUseCase _createOrLinkShipmentUseCase;
+    final GetOrderRoutingRecommendationUseCase
+      _getOrderRoutingRecommendationUseCase;
+    final ApplyOrderRoutingRecommendationUseCase
+      _applyOrderRoutingRecommendationUseCase;
   final GetShipmentTrackingUseCase _getShipmentTrackingUseCase;
   final GetOrderShipmentsTrackingUseCase _getOrderShipmentsTrackingUseCase;
   final GetShipmentLabelArtifactsUseCase _getShipmentLabelArtifactsUseCase;
@@ -37,6 +43,8 @@ abstract class _FulfillmentStore with Store {
     this._getOrderDetailUseCase,
     this._updateStatusUseCase,
     this._createOrLinkShipmentUseCase,
+    this._getOrderRoutingRecommendationUseCase,
+    this._applyOrderRoutingRecommendationUseCase,
     this._getShipmentTrackingUseCase,
     this._getOrderShipmentsTrackingUseCase,
     this._getShipmentLabelArtifactsUseCase,
@@ -145,8 +153,7 @@ abstract class _FulfillmentStore with Store {
   Future<ShipmentTrackingInfo?> createOrLinkShipment(
     String orderId, {
     List<CreateShipmentItemAllocation> items = const [],
-  }
-  ) async {
+  }) async {
     try {
       final shipment = await _createOrLinkShipmentUseCase.call(
         params: CreateOrLinkShipmentParams(
@@ -157,6 +164,42 @@ abstract class _FulfillmentStore with Store {
 
       final refreshed = await getShipmentTracking(orderId, refresh: true);
       return refreshed ?? shipment;
+    } catch (e) {
+      errorStore.errorMessage = e.toString();
+      return null;
+    }
+  }
+
+  Future<OrderRoutingRecommendation?> getOrderRoutingRecommendation(
+    String orderId, {
+    bool forceNew = false,
+  }) async {
+    try {
+      return await _getOrderRoutingRecommendationUseCase.call(
+        params: GetOrderRoutingRecommendationParams(
+          orderId: orderId,
+          forceNew: forceNew,
+        ),
+      );
+    } catch (e) {
+      errorStore.errorMessage = e.toString();
+      return null;
+    }
+  }
+
+  Future<OrderRoutingApplyResult?> applyOrderRoutingRecommendation(
+    String orderId, {
+    required String decisionId,
+    String? selectedOptionId,
+  }) async {
+    try {
+      return await _applyOrderRoutingRecommendationUseCase.call(
+        params: ApplyOrderRoutingRecommendationParams(
+          orderId: orderId,
+          decisionId: decisionId,
+          selectedOptionId: selectedOptionId,
+        ),
+      );
     } catch (e) {
       errorStore.errorMessage = e.toString();
       return null;

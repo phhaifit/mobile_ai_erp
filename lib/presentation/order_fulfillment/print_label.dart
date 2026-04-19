@@ -24,7 +24,11 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
   bool _loadingPrintData = false;
   bool _submittingShipment = false;
   bool _submittingPrint = false;
+  bool _loadingRouting = false;
+  bool _applyingRouting = false;
   bool _shipFullRemaining = true;
+  OrderRoutingRecommendation? _routingRecommendation;
+  String? _selectedRoutingOptionId;
   final Map<String, int> _manualAllocations = <String, int>{};
 
   bool _canManageShipment(FulfillmentOrder order) {
@@ -56,6 +60,7 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
       final orderId = _store.selectedOrder?.id;
       if (orderId != null) {
         _loadShipment(orderId, refresh: true);
+        _loadRoutingRecommendation(orderId);
       }
     });
   }
@@ -94,10 +99,90 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
         _labelArtifacts = const [];
         _printJobs = const [];
       });
+      await _loadRoutingRecommendation(orderId);
       return;
     }
 
     await _loadPrintData(orderId, _shipment!.id);
+    await _loadRoutingRecommendation(orderId);
+  }
+
+  Future<void> _loadRoutingRecommendation(
+    String orderId, {
+    bool forceNew = false,
+  }) async {
+    if (_loadingRouting) {
+      return;
+    }
+
+    setState(() {
+      _loadingRouting = true;
+    });
+
+    final recommendation = await _store.getOrderRoutingRecommendation(
+      orderId,
+      forceNew: forceNew,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _routingRecommendation = recommendation;
+      _selectedRoutingOptionId = recommendation?.options.isNotEmpty == true
+          ? recommendation!.options.first.optionId
+          : null;
+      _loadingRouting = false;
+    });
+  }
+
+  Future<void> _applyRoutingRecommendation(FulfillmentOrder order) async {
+    final recommendation = _routingRecommendation;
+    if (recommendation == null || _applyingRouting) {
+      return;
+    }
+
+    setState(() {
+      _applyingRouting = true;
+    });
+
+    final result = await _store.applyOrderRoutingRecommendation(
+      order.id,
+      decisionId: recommendation.decisionId,
+      selectedOptionId: _selectedRoutingOptionId,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _applyingRouting = false;
+    });
+
+    if (result == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cannot apply routing recommendation. Please retry.'),
+        ),
+      );
+      return;
+    }
+
+    await _loadRoutingRecommendation(order.id);
+
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Routing applied: ${result.selectedProvider.toUpperCase()}. Next shipment will use this decision.',
+        ),
+      ),
+    );
   }
 
   Future<void> _loadPrintData(String orderId, String shipmentId) async {
@@ -276,6 +361,8 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
         children: [
           _buildPrintIntegrationBanner(order),
           const SizedBox(height: 16),
+          _buildRoutingRecommendationSection(order),
+          const SizedBox(height: 16),
           _buildShipmentSection(order),
           const SizedBox(height: 16),
           _buildLabelPreview(order),
@@ -451,6 +538,151 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRoutingRecommendationSection(FulfillmentOrder order) {
+    final recommendation = _routingRecommendation;
+    final canCreateShipment =
+        order.status == FulfillmentStatus.shipped ||
+        order.status == FulfillmentStatus.partiallyShipped;
+
+    if (!canCreateShipment) {
+      return const SizedBox.shrink();
+    }
+
+    final options = recommendation?.options ?? const <RoutingRecommendationOption>[];
+    final selectedOption = options.firstWhere(
+      (option) => option.optionId == _selectedRoutingOptionId,
+      orElse: () => options.isNotEmpty
+          ? options.first
+          : const RoutingRecommendationOption(
+              optionId: '',
+              provider: 'ghn',
+              serviceLevel: 'standard',
+              score: 0,
+              estimatedDeliveryDays: 0,
+              estimatedCost: 0,
+              reason: '',
+            ),
+    );
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                'AI Routing (MVP)',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleSmall
+                    ?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const Spacer(),
+              IconButton(
+                tooltip: 'Refresh recommendation',
+                onPressed: _loadingRouting
+                    ? null
+                    : () => _loadRoutingRecommendation(order.id, forceNew: true),
+                icon: _loadingRouting
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.refresh),
+              ),
+            ],
+          ),
+          if (recommendation == null)
+            Text(
+              'No routing recommendation loaded yet. Fetch a recommendation before creating shipment.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          if (recommendation != null) ...[
+            Text(
+              'Recommended provider: ${recommendation.recommendedProvider.toUpperCase()} • Strategy: ${recommendation.scoreStrategy}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            if (recommendation.confidence != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  'Confidence: ${(recommendation.confidence! * 100).toStringAsFixed(1)}%'
+                  '${recommendation.fallbackUsed ? ' • Fallback mode' : ''}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+            const SizedBox(height: 8),
+            if (options.isNotEmpty)
+              DropdownButtonFormField<String>(
+                initialValue: _selectedRoutingOptionId,
+                items: options
+                    .map(
+                      (option) => DropdownMenuItem<String>(
+                        value: option.optionId,
+                        child: Text(
+                          '${option.provider.toUpperCase()} ${option.serviceLevel} • ${option.estimatedDeliveryDays}d • ${option.estimatedCost.toStringAsFixed(0)}',
+                        ),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedRoutingOptionId = value;
+                  });
+                },
+                decoration: const InputDecoration(
+                  labelText: 'Recommendation Options',
+                  isDense: true,
+                ),
+              ),
+            if (options.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  selectedOption.reason,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _applyingRouting
+                        ? null
+                        : () => _applyRoutingRecommendation(order),
+                    icon: const Icon(Icons.check_circle_outline),
+                    label: Text(
+                      _applyingRouting ? 'Applying...' : 'Apply Recommendation',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (recommendation.selectedProvider != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  'Applied provider: ${recommendation.selectedProvider!.toUpperCase()}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+          ],
         ],
       ),
     );
