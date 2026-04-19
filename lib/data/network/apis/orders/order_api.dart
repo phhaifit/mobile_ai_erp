@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
 import 'package:mobile_ai_erp/data/network/apis/orders/dto/order_detail_response.dart';
 import 'package:mobile_ai_erp/data/network/apis/orders/dto/order_list_response.dart';
@@ -30,7 +31,7 @@ class OrderApi {
       );
       return OrderListResponse.fromJson(res.data as Map<String, dynamic>);
     } catch (e) {
-      print('OrderApi.getOrders error: $e');
+      debugPrint('OrderApi.getOrders error: $e');
       rethrow;
     }
   }
@@ -41,7 +42,7 @@ class OrderApi {
       final res = await _dioClient.dio.get(Endpoints.orderDetail(id));
       return OrderDetailResponse.fromJson(res.data as Map<String, dynamic>);
     } catch (e) {
-      print('OrderApi.getOrderDetail error: $e');
+      debugPrint('OrderApi.getOrderDetail error: $e');
       rethrow;
     }
   }
@@ -60,7 +61,7 @@ class OrderApi {
       );
       return OrderDetailResponse.fromJson(res.data as Map<String, dynamic>);
     } catch (e) {
-      print('OrderApi.updateOrderStatus error: $e');
+      debugPrint('OrderApi.updateOrderStatus error: $e');
       rethrow;
     }
   }
@@ -85,7 +86,7 @@ class OrderApi {
         res.data as Map<String, dynamic>,
       );
     } catch (e) {
-      print('OrderApi.createOrLinkOrderShipment error: $e');
+      debugPrint('OrderApi.createOrLinkOrderShipment error: $e');
       rethrow;
     }
   }
@@ -104,7 +105,7 @@ class OrderApi {
         res.data as Map<String, dynamic>,
       );
     } catch (e) {
-      print('OrderApi.getOrderShipmentTracking error: $e');
+      debugPrint('OrderApi.getOrderShipmentTracking error: $e');
       rethrow;
     }
   }
@@ -123,7 +124,150 @@ class OrderApi {
         res.data as Map<String, dynamic>,
       );
     } catch (e) {
-      print('OrderApi.getOrderShipmentsTracking error: $e');
+      debugPrint('OrderApi.getOrderShipmentsTracking error: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<ShipmentLabelArtifactResponseDto>> getShipmentLabelArtifacts(
+    String orderId,
+    String shipmentId,
+  ) async {
+    try {
+      final res = await _dioClient.dio.get(
+        Endpoints.orderShipmentLabels(orderId, shipmentId),
+      );
+
+      final data = res.data;
+      if (data is! List<dynamic>) {
+        return const <ShipmentLabelArtifactResponseDto>[];
+      }
+
+      return data
+          .whereType<Map<String, dynamic>>()
+          .map(ShipmentLabelArtifactResponseDto.fromJson)
+          .toList();
+    } catch (e) {
+      debugPrint('OrderApi.getShipmentLabelArtifacts error: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<ShipmentPrintJobResponseDto>> getShipmentPrintJobs(
+    String orderId,
+    String shipmentId,
+  ) async {
+    try {
+      final res = await _dioClient.dio.get(
+        Endpoints.orderShipmentPrintJobs(orderId, shipmentId),
+      );
+
+      final data = res.data;
+      if (data is! List<dynamic>) {
+        return const <ShipmentPrintJobResponseDto>[];
+      }
+
+      return data
+          .whereType<Map<String, dynamic>>()
+          .map(ShipmentPrintJobResponseDto.fromJson)
+          .toList();
+    } catch (e) {
+      debugPrint('OrderApi.getShipmentPrintJobs error: $e');
+      rethrow;
+    }
+  }
+
+  Future<ShipmentPrintJobResponseDto> createShipmentPrintJob(
+    String orderId,
+    String shipmentId, {
+    String? artifactId,
+    String artifactType = 'shipping_label',
+    String format = 'pdf',
+    String? printerName,
+    String? printerCode,
+    int copies = 1,
+    Map<String, dynamic>? payload,
+    Map<String, dynamic>? metadata,
+  }) async {
+    try {
+      final req = <String, dynamic>{
+        'artifactType': artifactType,
+        'format': format,
+        'copies': copies,
+      };
+
+      if (artifactId != null) {
+        req['artifactId'] = artifactId;
+      }
+      if (printerName != null && printerName.isNotEmpty) {
+        req['printerName'] = printerName;
+      }
+      if (printerCode != null && printerCode.isNotEmpty) {
+        req['printerCode'] = printerCode;
+      }
+      if (payload != null) {
+        req['payload'] = payload;
+      }
+      if (metadata != null) {
+        req['metadata'] = metadata;
+      }
+
+      final res = await _dioClient.dio.post(
+        Endpoints.orderShipmentPrintJobs(orderId, shipmentId),
+        data: req,
+      );
+
+      return ShipmentPrintJobResponseDto.fromJson(
+        res.data as Map<String, dynamic>,
+      );
+    } catch (e) {
+      debugPrint('OrderApi.createShipmentPrintJob error: $e');
+      rethrow;
+    }
+  }
+
+  Future<ShipmentPrintJobResponseDto> createShipmentPrintAttempt(
+    String orderId,
+    String shipmentId,
+    String printJobId, {
+    required String status,
+    String? spoolJobId,
+    String? errorCode,
+    String? errorMessage,
+    int? durationMs,
+    Map<String, dynamic>? printerResponse,
+  }) async {
+    try {
+      final req = <String, dynamic>{
+        'status': status,
+      };
+
+      if (spoolJobId != null && spoolJobId.isNotEmpty) {
+        req['spoolJobId'] = spoolJobId;
+      }
+      if (errorCode != null && errorCode.isNotEmpty) {
+        req['errorCode'] = errorCode;
+      }
+      if (errorMessage != null && errorMessage.isNotEmpty) {
+        req['errorMessage'] = errorMessage;
+      }
+      if (durationMs != null) {
+        req['durationMs'] = durationMs;
+      }
+      if (printerResponse != null) {
+        req['printerResponse'] = printerResponse;
+      }
+
+      final res = await _dioClient.dio.post(
+        Endpoints.orderShipmentPrintAttempts(orderId, shipmentId, printJobId),
+        data: req,
+      );
+
+      return ShipmentPrintJobResponseDto.fromJson(
+        res.data as Map<String, dynamic>,
+      );
+    } catch (e) {
+      debugPrint('OrderApi.createShipmentPrintAttempt error: $e');
       rethrow;
     }
   }

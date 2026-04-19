@@ -23,4 +23,35 @@ abstract class FulfillmentRepository {
     String orderId, {
     bool refresh = false,
   });
+  Future<List<ShipmentLabelArtifact>> getShipmentLabelArtifacts(
+    String orderId,
+    String shipmentId,
+  );
+  Future<List<ShipmentPrintJob>> getShipmentPrintJobs(
+    String orderId,
+    String shipmentId,
+  );
+  Future<ShipmentPrintJob> createShipmentPrintJob(
+    String orderId,
+    String shipmentId, {
+    String? artifactId,
+    String artifactType,
+    String format,
+    String? printerName,
+    String? printerCode,
+    int copies,
+    Map<String, dynamic>? payload,
+    Map<String, dynamic>? metadata,
+  });
+  Future<ShipmentPrintJob> createShipmentPrintAttempt(
+    String orderId,
+    String shipmentId,
+    String printJobId, {
+    required String status,
+    String? spoolJobId,
+    String? errorCode,
+    String? errorMessage,
+    int? durationMs,
+    Map<String, dynamic>? printerResponse,
+  });
 }
