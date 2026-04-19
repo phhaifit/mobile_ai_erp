@@ -266,14 +266,15 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
   }
 
   Widget _buildBody(FulfillmentOrder order) {
-    final canPrint = _shipment != null && !_submittingPrint;
+    final canPrint =
+        _canManageShipment(order) && _shipment != null && !_submittingPrint;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildPrintIntegrationBanner(),
+          _buildPrintIntegrationBanner(order),
           const SizedBox(height: 16),
           _buildShipmentSection(order),
           const SizedBox(height: 16),
@@ -294,6 +295,8 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
               ),
             ),
           ),
+          const SizedBox(height: 8),
+          _buildPrintButtonHint(order),
         ],
       ),
     );
@@ -686,7 +689,22 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
     return allocations;
   }
 
-  Widget _buildPrintIntegrationBanner() {
+  Widget _buildPrintIntegrationBanner(FulfillmentOrder order) {
+    final canManageShipment = _canManageShipment(order);
+    final hasShipment = _shipment != null;
+
+    final title = canManageShipment
+        ? hasShipment
+            ? 'Printing Queue Connected'
+            : 'Waiting For Shipment Batch'
+        : 'Printing Locked By Order Status';
+
+    final description = canManageShipment
+        ? hasShipment
+            ? 'This screen queues shipment print jobs and tracks print attempts from backend API.'
+            : 'Please create or link at least one shipment batch before printing labels.'
+        : 'Print label is available only when order status is Shipped, Partially Shipped, or Delivered.';
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -704,7 +722,7 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Printing Queue Connected',
+                  title,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: Colors.teal.shade800,
@@ -712,7 +730,7 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'This screen now queues shipment print jobs and tracks print attempts from backend API.',
+                  description,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).hintColor,
                   ),
@@ -722,6 +740,34 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPrintButtonHint(FulfillmentOrder order) {
+    if (_submittingPrint) {
+      return Text(
+        'Submitting print job and attempt to backend...',
+        style: Theme.of(context).textTheme.bodySmall,
+      );
+    }
+
+    if (!_canManageShipment(order)) {
+      return Text(
+        'Current status: ${order.status.displayName}. Print is enabled only for Shipped, Partially Shipped, or Delivered.',
+        style: Theme.of(context).textTheme.bodySmall,
+      );
+    }
+
+    if (_shipment == null) {
+      return Text(
+        'No shipment batch found yet. Create a shipment above, then Print Label will be enabled.',
+        style: Theme.of(context).textTheme.bodySmall,
+      );
+    }
+
+    return Text(
+      'Ready to print for shipment batch #${_shipment!.shipmentNumber}.',
+      style: Theme.of(context).textTheme.bodySmall,
     );
   }
 
