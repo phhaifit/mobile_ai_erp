@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:mobile_ai_erp/data/network/apis/orders/dto/order_detail_response.dart';
 import 'package:mobile_ai_erp/data/network/apis/orders/dto/shipment_tracking_response.dart';
 import 'package:mobile_ai_erp/data/network/apis/orders/dto/order_list_response.dart';
+import 'package:mobile_ai_erp/data/network/apis/orders/dto/routing_recommendation_response.dart';
 import 'package:mobile_ai_erp/data/network/apis/orders/order_api.dart';
 import 'package:mobile_ai_erp/domain/entity/fulfillment/fulfillment_item.dart';
 import 'package:mobile_ai_erp/domain/entity/fulfillment/fulfillment_order.dart';
@@ -51,6 +52,7 @@ class FulfillmentRepositoryImpl extends FulfillmentRepository {
   Future<ShipmentTrackingInfo> createOrLinkShipment(
     String orderId, {
     List<CreateShipmentItemAllocation> items = const [],
+    String? provider,
   }) async {
     final response = await _orderApi.createOrLinkOrderShipment(
       orderId,
@@ -62,9 +64,51 @@ class FulfillmentRepositoryImpl extends FulfillmentRepository {
             },
           )
           .toList(),
+      provider: provider,
     );
 
     return _mapShipmentToEntity(response);
+  }
+
+  @override
+  Future<OrderRoutingRecommendation?> getOrderRoutingRecommendation(
+    String orderId, {
+    bool forceNew = false,
+  }) async {
+    try {
+      final response = await _orderApi.getOrderRoutingRecommendation(
+        orderId,
+        forceNew: forceNew,
+      );
+
+      return _mapRoutingRecommendationToEntity(response);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        return null;
+      }
+      rethrow;
+    }
+  }
+
+  @override
+  Future<OrderRoutingApplyResult> applyOrderRoutingRecommendation(
+    String orderId, {
+    required String decisionId,
+    String? selectedOptionId,
+  }) async {
+    final response = await _orderApi.applyOrderRoutingRecommendation(
+      orderId,
+      decisionId: decisionId,
+      selectedOptionId: selectedOptionId,
+    );
+
+    return OrderRoutingApplyResult(
+      decisionId: response.decisionId,
+      orderId: response.orderId,
+      selectedProvider: response.selectedProvider,
+      selectedOptionId: response.selectedOptionId,
+      appliedAt: DateTime.parse(response.appliedAt),
+    );
   }
 
   @override
@@ -298,6 +342,35 @@ class FulfillmentRepositoryImpl extends FulfillmentRepository {
       description: dto.description,
       location: dto.location,
       eventTime: DateTime.parse(dto.eventTime),
+    );
+  }
+
+  OrderRoutingRecommendation _mapRoutingRecommendationToEntity(
+    OrderRoutingRecommendationResponseDto dto,
+  ) {
+    return OrderRoutingRecommendation(
+      decisionId: dto.decisionId,
+      orderId: dto.orderId,
+      recommendedProvider: dto.recommendedProvider,
+      selectedProvider: dto.selectedProvider,
+      confidence: dto.confidence,
+      scoreStrategy: dto.scoreStrategy,
+      fallbackUsed: dto.fallbackUsed,
+      createdAt: DateTime.parse(dto.createdAt),
+      appliedAt: _tryParseDate(dto.appliedAt),
+      options: dto.options
+          .map(
+            (option) => RoutingRecommendationOption(
+              optionId: option.optionId,
+              provider: option.provider,
+              serviceLevel: option.serviceLevel,
+              score: option.score,
+              estimatedDeliveryDays: option.estimatedDeliveryDays,
+              estimatedCost: option.estimatedCost,
+              reason: option.reason,
+            ),
+          )
+          .toList(),
     );
   }
 
