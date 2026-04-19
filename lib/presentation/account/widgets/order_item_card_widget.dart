@@ -34,7 +34,7 @@ class OrderItemCardWidget extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    order.id,
+                    'Order #${order.code}',
                     style: const TextStyle(
                         fontWeight: FontWeight.bold, fontSize: 16),
                   ),
@@ -43,7 +43,7 @@ class OrderItemCardWidget extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'Date: ${order.date.toString().substring(0, 10)}',
+                'Date: ${order.createdAt.toString().substring(0, 10)}',
                 style: TextStyle(color: Colors.grey.shade600),
               ),
               const SizedBox(height: 4),

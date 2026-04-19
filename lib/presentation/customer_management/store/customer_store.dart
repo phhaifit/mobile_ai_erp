@@ -1,5 +1,5 @@
 import 'package:mobile_ai_erp/core/stores/error/error_store.dart';
-import 'package:mobile_ai_erp/domain/entity/customer/address.dart';
+import 'package:mobile_ai_erp/domain/entity/address/address.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/customer.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/customer_group.dart';
 import 'package:mobile_ai_erp/domain/repository/customer/customer_repository.dart';
@@ -97,7 +97,7 @@ abstract class CustomerStoreBase with Store {
   Future<void> loadAddresses(String customerId) async {
     activeCustomerId = customerId;
     await _runWithLoading(() async {
-      final loaded = await _repository.getAddresses(customerId);
+      final loaded = await _repository.getAddresses();
       activeAddresses = ObservableList<Address>.of(loaded);
       errorStore.errorMessage = '';
     });
@@ -106,9 +106,7 @@ abstract class CustomerStoreBase with Store {
   @action
   Future<void> saveAddress(Address address) async {
     final saved = await _repository.saveAddress(address);
-    if (activeCustomerId == saved.customerId) {
-      _upsertAddress(saved);
-    }
+    _upsertAddress(saved);
   }
 
   @action
@@ -118,14 +116,11 @@ abstract class CustomerStoreBase with Store {
   }
 
   @action
-  Future<void> setDefaultAddress(
-      String customerId, String addressId) async {
-    await _repository.setDefaultAddress(customerId, addressId);
-    if (activeCustomerId == customerId) {
-      for (var i = 0; i < activeAddresses.length; i++) {
-        final addr = activeAddresses[i];
-        activeAddresses[i] = addr.copyWith(isDefault: addr.id == addressId);
-      }
+  Future<void> setDefaultAddress(String addressId) async {
+    await _repository.setDefaultAddress(addressId);
+    for (var i = 0; i < activeAddresses.length; i++) {
+      final addr = activeAddresses[i];
+      activeAddresses[i] = addr.copyWith(isDefault: addr.id == addressId);
     }
   }
 
@@ -156,8 +151,7 @@ abstract class CustomerStoreBase with Store {
   int customerCountForGroup(String groupId) =>
       customerCountsByGroup[groupId] ?? 0;
 
-  List<Customer> customersInGroup(String groupId) =>
-      customers.where((c) => c.groupId == groupId).toList();
+  List<Customer> customersInGroup(String groupId) => [];
 
   // ── Private helpers ───────────────────────────────────────────────────────
 
@@ -194,7 +188,7 @@ abstract class CustomerStoreBase with Store {
       compare: (a, b) {
         if (a.isDefault && !b.isDefault) return -1;
         if (!a.isDefault && b.isDefault) return 1;
-        return a.label.toLowerCase().compareTo(b.label.toLowerCase());
+        return a.type.toLowerCase().compareTo(b.type.toLowerCase());
       },
     );
   }

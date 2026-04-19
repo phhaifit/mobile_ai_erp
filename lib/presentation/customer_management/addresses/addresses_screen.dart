@@ -1,5 +1,5 @@
 import 'package:mobile_ai_erp/di/service_locator.dart';
-import 'package:mobile_ai_erp/domain/entity/customer/address.dart';
+import 'package:mobile_ai_erp/domain/entity/address/address.dart';
 import 'package:mobile_ai_erp/presentation/customer_management/navigation/customer_navigator.dart';
 import 'package:mobile_ai_erp/presentation/customer_management/navigation/customer_route_args.dart';
 import 'package:mobile_ai_erp/presentation/customer_management/store/customer_store.dart';
@@ -25,7 +25,7 @@ class _CustomerAddressesScreenState extends State<CustomerAddressesScreen> {
   void initState() {
     super.initState();
     Future<void>.microtask(
-        () => _store.loadAddresses(widget.args.customerId));
+        () => _store.loadDashboard());
   }
 
   @override
@@ -37,7 +37,7 @@ class _CustomerAddressesScreenState extends State<CustomerAddressesScreen> {
             final customer =
                 _store.findCustomerById(widget.args.customerId);
             return Text(customer != null
-                ? '${customer.firstName}\'s Addresses'
+                ? '${customer.name}\'s Addresses'
                 : 'Addresses');
           },
         ),
@@ -45,7 +45,7 @@ class _CustomerAddressesScreenState extends State<CustomerAddressesScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => CustomerNavigator.openAddressForm(
           context,
-          args: AddressFormArgs(customerId: widget.args.customerId),
+          args: AddressFormArgs(),
         ),
         icon: const Icon(Icons.add_location_outlined),
         label: const Text('Add address'),
@@ -56,9 +56,7 @@ class _CustomerAddressesScreenState extends State<CustomerAddressesScreen> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final addresses = _store.activeAddresses
-              .where((a) => a.customerId == widget.args.customerId)
-              .toList();
+          final addresses = _store.activeAddresses.toList();
 
           if (addresses.isEmpty) {
             return const CustomerEmptyState(
@@ -78,7 +76,6 @@ class _CustomerAddressesScreenState extends State<CustomerAddressesScreen> {
               onEdit: () => CustomerNavigator.openAddressForm(
                 context,
                 args: AddressFormArgs(
-                  customerId: widget.args.customerId,
                   addressId: addresses[index].id,
                 ),
               ),
@@ -95,12 +92,11 @@ class _CustomerAddressesScreenState extends State<CustomerAddressesScreen> {
 
   Future<void> _setDefault(Address address) async {
     try {
-      await _store.setDefaultAddress(
-          widget.args.customerId, address.id);
+      await _store.setDefaultAddress(address.id);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text('"${address.label}" set as default address.')),
+            content: Text('Address set as default.')),
       );
     } catch (_) {
       if (!mounted) return;
@@ -115,8 +111,7 @@ class _CustomerAddressesScreenState extends State<CustomerAddressesScreen> {
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('Delete address?'),
-            content:
-                Text('Delete "${address.label}"? This can\'t be undone.'),
+            content: Text('Delete this address? This can\'t be undone.'),
             actions: <Widget>[
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
@@ -137,7 +132,7 @@ class _CustomerAddressesScreenState extends State<CustomerAddressesScreen> {
       await _store.deleteAddress(address.id);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Deleted "${address.label}".')),
+        const SnackBar(content: Text('Address deleted.')),
       );
     } catch (_) {
       if (!mounted) return;
@@ -180,7 +175,7 @@ class _AddressCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    address.label,
+                    address.type,
                     style: Theme.of(context)
                         .textTheme
                         .titleMedium
@@ -238,7 +233,7 @@ class _AddressCard extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              address.displayAddress,
+              address.address,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -248,9 +243,8 @@ class _AddressCard extends StatelessWidget {
               spacing: 6,
               runSpacing: 6,
               children: <Widget>[
-                CustomerStatusChip(label: address.type.label),
                 if (address.isDefault)
-                  const CustomerStatusChip(label: 'Default'),
+                  const Chip(label: Text('Default')),
               ],
             ),
           ],

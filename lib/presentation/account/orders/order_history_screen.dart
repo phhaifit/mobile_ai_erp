@@ -40,10 +40,10 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
             tabs: [
               Tab(text: 'All'),
               Tab(text: 'Pending'),
-              Tab(text: 'Shipped'),
+              Tab(text: 'Confirmed'),
+              Tab(text: 'Shipping'),
               Tab(text: 'Delivered'),
-              Tab(text: 'Canceled'),
-              Tab(text: 'Returned'),
+              Tab(text: 'Cancelled'),
             ],
           ),
         ),
@@ -57,10 +57,10 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               children: [
                 _buildOrderList(null), // All
                 _buildOrderList(OrderStatus.pending),
-                _buildOrderList(OrderStatus.shipped),
+                _buildOrderList(OrderStatus.confirmed),
+                _buildOrderList(OrderStatus.shipping),
                 _buildOrderList(OrderStatus.delivered),
-                _buildOrderList(OrderStatus.canceled),
-                _buildOrderList(OrderStatus.returned),
+                _buildOrderList(OrderStatus.cancelled),
               ],
             );
           },

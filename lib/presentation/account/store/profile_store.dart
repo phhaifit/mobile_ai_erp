@@ -1,20 +1,45 @@
 import 'package:mobx/mobx.dart';
+import '../../../../domain/entity/customer/customer.dart';
+import '../../../../domain/repository/account/customer_repository.dart';
 
 part 'profile_store.g.dart';
 
 class ProfileStore = _ProfileStore with _$ProfileStore;
 
 abstract class _ProfileStore with Store {
-  // Assuming logged-in state per Feature 0 boundaries
-  @observable
-  String userName = "Khang";
+  final AccountCustomerRepository _repository;
+
+  _ProfileStore(this._repository);
 
   @observable
-  String userEmail = "khang@gmail.com";
+  Customer? customer;
 
   @observable
-  String userPhone = "0901234567";
+  bool isLoading = false;
 
-  @observable
-  int loyaltyPoints = 1250;
+  @computed
+  String get userName => customer?.fullName ?? '';
+
+  @computed
+  String get userEmail => customer?.email ?? '';
+
+  @computed
+  String get userPhone => customer?.phone ?? '';
+
+  @computed
+  int get loyaltyPoints => 1250; // TODO: Load from API
+
+  @action
+  Future<void> fetchProfile() async {
+    isLoading = true;
+    customer = await _repository.getProfile();
+    isLoading = false;
+  }
+
+  @action
+  Future<void> updateProfile(Map<String, dynamic> data) async {
+    isLoading = true;
+    customer = await _repository.updateProfile(data);
+    isLoading = false;
+  }
 }

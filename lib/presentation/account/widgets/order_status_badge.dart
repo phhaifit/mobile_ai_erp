@@ -23,13 +23,21 @@ class OrderStatusBadge extends StatelessWidget {
         bgColor = Colors.orange.shade100;
         text = 'Pending';
         break;
-      case OrderStatus.shipped:
+      case OrderStatus.confirmed:
         bgColor = Colors.blue.shade100;
-        text = 'Shipped';
+        text = 'Confirmed';
         break;
-      case OrderStatus.canceled:
+      case OrderStatus.packing:
+        bgColor = Colors.blue.shade100;
+        text = 'Packing';
+        break;
+      case OrderStatus.shipping:
+        bgColor = Colors.blue.shade100;
+        text = 'Shipping';
+        break;
+      case OrderStatus.cancelled:
         bgColor = Colors.red.shade100;
-        text = 'Canceled';
+        text = 'Cancelled';
         break;
       case OrderStatus.returned:
         bgColor = Colors.purple.shade100;

@@ -32,19 +32,18 @@ class AddressCardWidget extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              // 3. Added to keep the badge at the top if the name spans multiple lines
               crossAxisAlignment: CrossAxisAlignment.start, 
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
                   child: Text(
-                    address.fullName,
+                    address.type,
                     style: const TextStyle(
                         fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                 ),
                 if (address.isDefault) ...[
-                  const SizedBox(width: 8), // Added spacing between long text and badge
+                  const SizedBox(width: 8),
                   Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -62,16 +61,19 @@ class AddressCardWidget extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Text(address.phone, style: TextStyle(color: Colors.grey.shade700)),
+            Text(address.address, style: TextStyle(color: Colors.grey.shade700)),
             const SizedBox(height: 4),
-            Text('${address.street}, ${address.city}',
-                style: TextStyle(color: Colors.grey.shade700)),
+            if (address.province != null || address.district != null)
+              Text(
+                '${address.province ?? ''} ${address.district ?? ''}'.trim(),
+                style: TextStyle(color: Colors.grey.shade700),
+              ),
             const SizedBox(height: 12),
             const SizedBox(height: 12),
             SizedBox(
-              width: double.infinity, // <-- Add this to force full width
+              width: double.infinity,
               child: Wrap(
-                alignment: WrapAlignment.end, // <-- Now this will properly push to the right
+                alignment: WrapAlignment.end,
                 spacing: 8.0,
                 runSpacing: 8.0,
                 children: [
@@ -84,7 +86,6 @@ class AddressCardWidget extends StatelessWidget {
                     label: "Edit", 
                     onPressed: onEdit,
                   ),
-                  // We will leave the delete button here, but wire it up in the Address Book!
                   _AddressCardButton(
                     label: "Delete", 
                     onPressed: onDelete,

@@ -39,8 +39,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
           );
         }
 
-        final group = _store.findGroupById(customer.groupId);
-
         return Scaffold(
           appBar: AppBar(
             title: const Text('Customer detail'),
@@ -72,30 +70,11 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                     value: customer.phone ?? 'Not set',
                   ),
                   CustomerDetailRow(
-                    label: 'Type',
-                    value: customer.type.label,
-                  ),
-                  CustomerDetailRow(
-                    label: 'Group',
-                    value: group?.name ?? 'No group',
-                  ),
-                  CustomerDetailRow(
                     label: 'Member since',
                     value: DateFormat('MMM d, y').format(customer.createdAt),
                   ),
                 ],
               ),
-              if (customer.notes != null &&
-                  customer.notes!.trim().isNotEmpty)
-                CustomerDetailSectionCard(
-                  title: 'Notes',
-                  children: <Widget>[
-                    Text(
-                      customer.notes!,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ],
-                ),
               CustomerDetailSectionCard(
                 title: 'Addresses',
                 trailing: TextButton.icon(
@@ -165,7 +144,6 @@ class _CustomerHeaderCard extends StatelessWidget {
                     runSpacing: 6,
                     children: <Widget>[
                       CustomerStatusChip(label: customer.status.label),
-                      CustomerStatusChip(label: customer.type.label),
                     ],
                   ),
                 ],
@@ -198,7 +176,7 @@ class _AddressPreviewState extends State<_AddressPreview> {
   void initState() {
     super.initState();
     Future<void>.microtask(() async {
-      await widget.store.loadAddresses(widget.customerId);
+      await widget.store.loadDashboard();
       if (mounted) setState(() => _loaded = true);
     });
   }
@@ -213,9 +191,7 @@ class _AddressPreviewState extends State<_AddressPreview> {
     }
 
     return Observer(builder: (context) {
-      final addresses = widget.store.activeAddresses
-          .where((a) => a.customerId == widget.customerId)
-          .toList();
+      final addresses = widget.store.activeAddresses.toList();
 
       if (addresses.isEmpty) {
         return const Text('No addresses added yet.');
@@ -229,7 +205,7 @@ class _AddressPreviewState extends State<_AddressPreview> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            preview.label,
+            preview.type,
             style: Theme.of(context)
                 .textTheme
                 .bodyMedium
@@ -237,7 +213,7 @@ class _AddressPreviewState extends State<_AddressPreview> {
           ),
           const SizedBox(height: 2),
           Text(
-            preview.displayAddress,
+            preview.address,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color:
                       Theme.of(context).colorScheme.onSurfaceVariant,

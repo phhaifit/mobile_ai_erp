@@ -21,10 +21,12 @@ dependencies:
   # C
   cupertino_icons: ^1.0.5
   # D
+  decimal: ^2.1.0
   dio: ^5.1.1
   # E
   event_bus: ^2.0.0
   # F
+  flutter_dotenv: ^5.1.0
   flutter_mobx: ^2.0.6+5
   # G
   get_it: ^7.2.0
@@ -91,6 +93,7 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/lang/
+    - .env
 
   fonts:
     - family: ProductSans

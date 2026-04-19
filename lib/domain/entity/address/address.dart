@@ -1,35 +1,65 @@
 class Address {
   final String id;
-  final String fullName;
-  final String phone;
-  final String street;
-  final String city;
+  final String address;
+  final String type;
+  final String? province;
+  final String? district;
+  final String? ward;
   final bool isDefault;
 
   Address({
     required this.id,
-    required this.fullName,
-    required this.phone,
-    required this.street,
-    required this.city,
+    required this.address,
+    required this.type,
+    this.province,
+    this.district,
+    this.ward,
     this.isDefault = false,
   });
 
   Address copyWith({
     String? id,
-    String? fullName,
-    String? phone,
-    String? street,
-    String? city,
+    String? address,
+    String? type,
+    Object? province,
+    Object? district,
+    Object? ward,
     bool? isDefault,
   }) {
     return Address(
       id: id ?? this.id,
-      fullName: fullName ?? this.fullName,
-      phone: phone ?? this.phone,
-      street: street ?? this.street,
-      city: city ?? this.city,
+      address: address ?? this.address,
+      type: type ?? this.type,
+      province: identical(province, _sentinel) ? this.province : province as String?,
+      district: identical(district, _sentinel) ? this.district : district as String?,
+      ward: identical(ward, _sentinel) ? this.ward : ward as String?,
       isDefault: isDefault ?? this.isDefault,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'address': address,
+      'type': type,
+      'province': province,
+      'district': district,
+      'ward': ward,
+      'isDefault': isDefault,
+    };
+  }
+
+  factory Address.fromJson(Map<String, dynamic> json) {
+    return Address(
+      id: json['id']?.toString() ?? '',
+      address: json['address']?.toString() ?? '',
+      type: json['type']?.toString() ?? '',
+      province: json['province']?.toString(),
+      district: json['district']?.toString(),
+      ward: json['ward']?.toString(),
+      isDefault: json['isDefault'] ?? json['is_default'] ?? false,
+    );
+  }
 }
+
+const _sentinel = Object();

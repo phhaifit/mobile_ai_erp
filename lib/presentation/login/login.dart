@@ -23,23 +23,33 @@ class LoginScreen extends StatefulWidget {
   _LoginScreenState createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin {
   //text controllers:-----------------------------------------------------------
   TextEditingController _userEmailController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
+  TextEditingController _firstNameController = TextEditingController();
+  TextEditingController _lastNameController = TextEditingController();
+  TextEditingController _registerEmailController = TextEditingController();
+  TextEditingController _registerPasswordController = TextEditingController();
 
   //stores:---------------------------------------------------------------------
   final ThemeStore _themeStore = getIt<ThemeStore>();
   final FormStore _formStore = getIt<FormStore>();
-  final UserStore _userStore = getIt<UserStore>();
+  final LoginStore _loginStore = getIt<LoginStore>();
 
   //focus node:-----------------------------------------------------------------
   late FocusNode _passwordFocusNode;
+  late FocusNode _registerPasswordFocusNode;
+
+  //tab controller:-------------------------------------------------------------
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
     _passwordFocusNode = FocusNode();
+    _registerPasswordFocusNode = FocusNode();
+    _tabController = TabController(length: 2, vsync: this);
   }
 
   @override
@@ -71,15 +81,8 @@ class _LoginScreenState extends State<LoginScreen> {
             : Center(child: _buildRightSide()),
         Observer(
           builder: (context) {
-            return _userStore.success
-                ? navigate(context)
-                : _showErrorMessage(_formStore.errorStore.errorMessage);
-          },
-        ),
-        Observer(
-          builder: (context) {
             return Visibility(
-              visible: _userStore.isLoading,
+              visible: _loginStore.isLoading,
               child: CustomProgressIndicatorWidget(),
             );
           },
@@ -108,13 +111,61 @@ class _LoginScreenState extends State<LoginScreen> {
           children: <Widget>[
             AppIconWidget(image: 'assets/icons/ic_appicon.png'),
             SizedBox(height: 24.0),
-            _buildUserIdField(),
-            _buildPasswordField(),
-            _buildForgotPasswordButton(),
-            _buildSignInButton()
+            _buildTabBar(),
+            SizedBox(height: 16.0),
+            _buildTabBarView(),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildTabBar() {
+    return TabBar(
+      controller: _tabController,
+      tabs: [
+        Tab(text: AppLocalizations.of(context).translate('login_tab_login')),
+        Tab(text: AppLocalizations.of(context).translate('login_tab_register')),
+      ],
+      labelColor: Colors.orangeAccent,
+      unselectedLabelColor: _themeStore.darkMode ? Colors.white70 : Colors.black54,
+      indicatorColor: Colors.orangeAccent,
+    );
+  }
+
+  Widget _buildTabBarView() {
+    return SizedBox(
+      height: 400, // Adjust height as needed
+      child: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildLoginTab(),
+          _buildRegisterTab(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoginTab() {
+    return Column(
+      children: <Widget>[
+        _buildUserIdField(),
+        _buildPasswordField(),
+        _buildForgotPasswordButton(),
+        _buildSignInButton()
+      ],
+    );
+  }
+
+  Widget _buildRegisterTab() {
+    return Column(
+      children: <Widget>[
+        _buildFirstNameField(),
+        _buildLastNameField(),
+        _buildRegisterEmailField(),
+        _buildRegisterPasswordField(),
+        _buildRegisterButton()
+      ],
     );
   }
 
@@ -174,8 +225,122 @@ class _LoginScreenState extends State<LoginScreen> {
               .bodySmall
               ?.copyWith(color: Colors.orangeAccent),
         ),
-        onPressed: () {},
+        onPressed: () {
+          _showForgotPasswordDialog();
+        },
       ),
+    );
+  }
+
+  Widget _buildFirstNameField() {
+    return Observer(
+      builder: (context) {
+        return TextFieldWidget(
+          hint: AppLocalizations.of(context).translate('register_first_name'),
+          inputType: TextInputType.text,
+          icon: Icons.person,
+          iconColor: _themeStore.darkMode ? Colors.white70 : Colors.black54,
+          textController: _firstNameController,
+          inputAction: TextInputAction.next,
+          autoFocus: false,
+          errorText: null,
+          onChanged: (value) {
+            // Update form store if needed
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildLastNameField() {
+    return Observer(
+      builder: (context) {
+        return TextFieldWidget(
+          hint: AppLocalizations.of(context).translate('register_last_name'),
+          inputType: TextInputType.text,
+          icon: Icons.person,
+          iconColor: _themeStore.darkMode ? Colors.white70 : Colors.black54,
+          textController: _lastNameController,
+          inputAction: TextInputAction.next,
+          autoFocus: false,
+          errorText: null,
+          onChanged: (value) {
+            // Update form store if needed
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildRegisterEmailField() {
+    return Observer(
+      builder: (context) {
+        return TextFieldWidget(
+          hint: AppLocalizations.of(context).translate('register_email'),
+          inputType: TextInputType.emailAddress,
+          icon: Icons.email,
+          iconColor: _themeStore.darkMode ? Colors.white70 : Colors.black54,
+          textController: _registerEmailController,
+          inputAction: TextInputAction.next,
+          autoFocus: false,
+          errorText: null,
+          onChanged: (value) {
+            // Update form store if needed
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildRegisterPasswordField() {
+    return Observer(
+      builder: (context) {
+        return TextFieldWidget(
+          hint: AppLocalizations.of(context).translate('register_password'),
+          isObscure: true,
+          padding: EdgeInsets.only(top: 16.0),
+          icon: Icons.lock,
+          iconColor: _themeStore.darkMode ? Colors.white70 : Colors.black54,
+          textController: _registerPasswordController,
+          focusNode: _registerPasswordFocusNode,
+          errorText: null,
+          onChanged: (value) {
+            // Update form store if needed
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildRegisterButton() {
+    return RoundedButtonWidget(
+      buttonText: AppLocalizations.of(context).translate('register_btn_sign_up'),
+      buttonColor: Colors.orangeAccent,
+      textColor: Colors.white,
+      onPressed: () async {
+        if (_firstNameController.text.isNotEmpty &&
+            _lastNameController.text.isNotEmpty &&
+            _registerEmailController.text.isNotEmpty &&
+            _registerPasswordController.text.isNotEmpty) {
+          DeviceUtils.hideKeyboard(context);
+          try {
+            await _loginStore.register(
+              _firstNameController.text,
+              _lastNameController.text,
+              _registerEmailController.text,
+              _registerPasswordController.text,
+            );
+            if (_loginStore.success) {
+              _showSuccessMessage('Registration successful! Please login.');
+              _tabController.animateTo(0); // Switch to login tab
+            }
+          } catch (e) {
+            _showErrorMessage(_loginStore.errorStore.errorMessage);
+          }
+        } else {
+          _showErrorMessage('Please fill in all fields');
+        }
+      },
     );
   }
 
@@ -187,7 +352,15 @@ class _LoginScreenState extends State<LoginScreen> {
       onPressed: () async {
         if (_formStore.canLogin) {
           DeviceUtils.hideKeyboard(context);
-          _userStore.login(_userEmailController.text, _passwordController.text);
+          try {
+            await _loginStore.login(_userEmailController.text, _passwordController.text);
+            if (_loginStore.success) {
+              _showSuccessMessage('Login successful!');
+              navigate(context);
+            }
+          } catch (e) {
+            _showErrorMessage(_loginStore.errorStore.errorMessage);
+          }
         } else {
           _showErrorMessage('Please fill in all fields');
         }
@@ -202,7 +375,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     Future.delayed(Duration(milliseconds: 0), () {
       Navigator.of(context).pushNamedAndRemoveUntil(
-          Routes.home, (Route<dynamic> route) => false);
+          Routes.profileDashboard, (Route<dynamic> route) => false);
     });
 
     return Container();
@@ -225,13 +398,70 @@ class _LoginScreenState extends State<LoginScreen> {
     return SizedBox.shrink();
   }
 
+  _showSuccessMessage(String message) {
+    Future.delayed(Duration(milliseconds: 0), () {
+      FlushbarHelper.createSuccess(
+        message: message,
+        title: 'Success',
+        duration: Duration(seconds: 3),
+      )..show(context);
+    });
+  }
+
+  _showForgotPasswordDialog() {
+    TextEditingController emailController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Forgot Password'),
+          content: TextField(
+            controller: emailController,
+            decoration: InputDecoration(hintText: 'Enter your email'),
+            keyboardType: TextInputType.emailAddress,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                if (emailController.text.isNotEmpty) {
+                  try {
+                    await _loginStore.forgotPassword(emailController.text);
+                    Navigator.of(context).pop();
+                    if (_loginStore.success) {
+                      _showSuccessMessage('Password reset email sent!');
+                    }
+                  } catch (e) {
+                    _showErrorMessage(_loginStore.errorStore.errorMessage);
+                  }
+                } else {
+                  _showErrorMessage('Please enter your email');
+                }
+              },
+              child: Text('Submit'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   // dispose:-------------------------------------------------------------------
   @override
   void dispose() {
     // Clean up the controller when the Widget is removed from the Widget tree
     _userEmailController.dispose();
     _passwordController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _registerEmailController.dispose();
+    _registerPasswordController.dispose();
     _passwordFocusNode.dispose();
+    _registerPasswordFocusNode.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 }

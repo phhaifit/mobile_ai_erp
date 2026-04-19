@@ -48,7 +48,7 @@ class OrderDetailScreen extends StatelessWidget {
                   ),
                   title: Text(item.productName),
                   subtitle: Text('Qty: ${item.quantity}'),
-                  trailing: Text(CurrencyUtils.format(item.price)),
+                  trailing: Text(CurrencyUtils.format(item.unitPrice)),
                 )),
             const Divider(height: 32),
             const Text('Shipping Information',
@@ -56,7 +56,8 @@ class OrderDetailScreen extends StatelessWidget {
             const SizedBox(height: 8),
             Text(order.shippingAddress),
             const SizedBox(height: 8),
-            Text('Payment Method: ${order.paymentMethod}'),
+            if (order.shippingProvince != null)
+              Text('${order.shippingProvince}, ${order.shippingDistrict}, ${order.shippingWard}'),
             const Divider(height: 32),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

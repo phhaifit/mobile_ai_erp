@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:mobile_ai_erp/core/stores/error/error_store.dart';
 import 'package:mobile_ai_erp/core/stores/form/form_store.dart';
 import 'package:mobile_ai_erp/core/stores/supplier/supplier_store.dart';
+import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
 import 'package:mobile_ai_erp/domain/repository/customer/customer_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/account/customer_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadata_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/setting/setting_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/stock_operations/stock_operations_repository.dart';
@@ -25,7 +27,9 @@ import 'package:mobile_ai_erp/domain/usecase/inventory_audit_outbound/submit_inv
 import 'package:mobile_ai_erp/domain/usecase/order_tracking/find_order_tracking_scenario_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/order_tracking/get_order_tracking_scenarios_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/post/get_post_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/user/assign_role_to_user_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/customer_forgot_password_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/customer_login_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/customer_register_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/create_role_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/is_logged_in_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/login_usecase.dart';
@@ -75,16 +79,19 @@ class StoreModule {
       () => FormStore(getIt<FormErrorStore>(), getIt<ErrorStore>()),
     );
     
-    getIt.registerLazySingleton<ProfileStore>(() => ProfileStore());
+    getIt.registerLazySingleton<ProfileStore>(() => ProfileStore(getIt<AccountCustomerRepository>()));
     getIt.registerLazySingleton<AddressStore>(() => AddressStore(getIt<AddressRepository>()));
     getIt.registerLazySingleton<OrderStore>(() => OrderStore(getIt<OrderRepository>()));
     getIt.registerLazySingleton(() => ReportsMockRepository());
 
-    getIt.registerSingleton<auth.UserStore>(
-      auth.UserStore(
+    getIt.registerSingleton<auth.LoginStore>(
+      auth.LoginStore(
         getIt<IsLoggedInUseCase>(),
         getIt<SaveLoginStatusUseCase>(),
-        getIt<LoginUseCase>(),
+        getIt<CustomerLoginUseCase>(),
+        getIt<CustomerRegisterUseCase>(),
+        getIt<CustomerForgotPasswordUseCase>(),
+        getIt<SharedPreferenceHelper>(),
         getIt<FormErrorStore>(),
         getIt<ErrorStore>(),
       ),
@@ -140,13 +147,13 @@ class StoreModule {
       ),
     );
 
-    getIt.registerSingleton<user_mgmt.UserStore>(
-      user_mgmt.UserStore(
-        getIt<UserRepository>(),
-        getIt<RoleRepository>(),
-        getIt<AssignRoleToUserUseCase>(),
-      ),
-    );
+    // getIt.registerSingleton<user_mgmt.UserStore>(
+    //   user_mgmt.UserStore(
+    //     getIt<UserRepository>(),
+    //     getIt<RoleRepository>(),
+    //     getIt<AssignRoleToUserUseCase>(),
+    //   ),
+    // );
 
     getIt.registerSingleton<RoleStore>(
       RoleStore(

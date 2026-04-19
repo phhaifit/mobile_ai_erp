@@ -1,4 +1,4 @@
-import 'package:mobile_ai_erp/domain/entity/customer/address.dart';
+import 'package:mobile_ai_erp/domain/entity/address/address.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/customer.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/customer_group.dart';
 
@@ -9,10 +9,10 @@ abstract class CustomerRepository {
   Future<void> deleteCustomer(String customerId);
 
   // Addresses
-  Future<List<Address>> getAddresses(String customerId);
+  Future<List<Address>> getAddresses();
   Future<Address> saveAddress(Address address);
   Future<void> deleteAddress(String addressId);
-  Future<void> setDefaultAddress(String customerId, String addressId);
+  Future<void> setDefaultAddress(String addressId);
 
   // Customer Groups
   Future<List<CustomerGroup>> getCustomerGroups();

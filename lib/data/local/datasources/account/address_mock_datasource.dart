@@ -4,18 +4,20 @@ class AddressMockDataSource {
   final List<Address> _mockAddresses = [
     Address(
       id: 'addr_1',
-      fullName: 'Khang Huynh',
-      phone: '0901234567',
-      street: '227 Nguyen Van Cu',
-      city: 'Ho Chi Minh City',
+      address: '227 Nguyen Van Cu',
+      type: 'home',
+      province: 'Ho Chi Minh',
+      district: 'District 1',
+      ward: 'Ward 1',
       isDefault: true,
     ),
     Address(
       id: 'addr_2',
-      fullName: 'Khang Huynh 123',
-      phone: '0901234567',
-      street: '123 Le Loi, District 1',
-      city: 'Ho Chi Minh City',
+      address: '123 Le Loi, District 1',
+      type: 'work',
+      province: 'Ho Chi Minh',
+      district: 'District 1',
+      ward: 'Ward 2',
       isDefault: false,
     ),
   ];

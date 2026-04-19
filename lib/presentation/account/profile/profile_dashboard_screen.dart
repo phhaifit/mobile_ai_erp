@@ -19,6 +19,7 @@ class _ProfileDashboardScreenState extends State<ProfileDashboardScreen> {
   @override
   void initState() {
     super.initState();
+    _profileStore.fetchProfile();
   }
 
   @override
@@ -74,8 +75,11 @@ class _ProfileDashboardScreenState extends State<ProfileDashboardScreen> {
           CircleAvatar(
             radius: 40,
             backgroundColor: Colors.blue.shade100,
+            // FIX: Safely check if the name is loaded before cutting the string
             child: Text(
-              _profileStore.userName.substring(0, 1).toUpperCase(),
+              _profileStore.userName.isNotEmpty 
+                  ? _profileStore.userName.substring(0, 1).toUpperCase() 
+                  : '?', // Shows a question mark while loading
               style: const TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
@@ -87,8 +91,9 @@ class _ProfileDashboardScreenState extends State<ProfileDashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // FIX: Add a fallback for empty text
                 Text(
-                  _profileStore.userName,
+                  _profileStore.userName.isNotEmpty ? _profileStore.userName : 'Loading...',
                   style: const TextStyle(
                       fontSize: 22, fontWeight: FontWeight.bold),
                 ),

@@ -1,5 +1,5 @@
 import 'package:mobile_ai_erp/data/local/datasources/customer/customer_datasource.dart';
-import 'package:mobile_ai_erp/domain/entity/customer/address.dart';
+import 'package:mobile_ai_erp/domain/entity/address/address.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/customer.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/customer_group.dart';
 import 'package:mobile_ai_erp/domain/repository/customer/customer_repository.dart';
@@ -21,8 +21,8 @@ class CustomerRepositoryImpl extends CustomerRepository {
       _dataSource.deleteCustomer(customerId);
 
   @override
-  Future<List<Address>> getAddresses(String customerId) =>
-      _dataSource.getAddresses(customerId);
+  Future<List<Address>> getAddresses() =>
+      _dataSource.getAddresses();
 
   @override
   Future<Address> saveAddress(Address address) =>
@@ -33,8 +33,8 @@ class CustomerRepositoryImpl extends CustomerRepository {
       _dataSource.deleteAddress(addressId);
 
   @override
-  Future<void> setDefaultAddress(String customerId, String addressId) =>
-      _dataSource.setDefaultAddress(customerId, addressId);
+  Future<void> setDefaultAddress(String addressId) =>
+      _dataSource.setDefaultAddress(addressId);
 
   @override
   Future<List<CustomerGroup>> getCustomerGroups() =>
@@ -49,7 +49,6 @@ class CustomerRepositoryImpl extends CustomerRepository {
       _dataSource.deleteCustomerGroup(groupId);
 
   @override
-  Future<Map<String, int>> getCustomerCountsByGroup(
-          List<String> groupIds) =>
+  Future<Map<String, int>> getCustomerCountsByGroup(List<String> groupIds) =>
       _dataSource.getCustomerCountsByGroup(groupIds);
 }

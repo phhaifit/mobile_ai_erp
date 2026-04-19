@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import '../../../../domain/entity/order/order.dart';
 
 class OrderMockDataSource {
@@ -5,37 +6,45 @@ class OrderMockDataSource {
     Order(
       id: 'ORD-2026-001',
       status: OrderStatus.delivered,
-      date: DateTime.now().subtract(const Duration(days: 5)),
-      totalAmount: 1250000,
-      shippingFee: 30000,
-      shippingAddress: '227 Nguyen Van Cu, HCM',
-      paymentMethod: 'COD',
+      createdAt: DateTime.now().subtract(const Duration(days: 5)),
+      totalAmount: Decimal.parse('1250000'),
+      shippingFee: Decimal.parse('30000'),
+      shippingAddress: '227 Nguyen Van Cu',
+      code: 'ORD-2026-001',
+      shippingProvince: 'Ho Chi Minh',
+      shippingDistrict: 'District 1',
+      shippingWard: 'Ward 1',
       items: [
         OrderItem(
             id: 'item_1',
             productId: 'p_101',
             productName: 'Mechanical Keyboard',
+            sku: 'KB-001',
             quantity: 1,
-            price: 1250000,
-            imageUrl: 'mock_url_here'),
+            unitPrice: Decimal.parse('1250000'),
+            totalPrice: Decimal.parse('1250000')),
       ],
     ),
     Order(
       id: 'ORD-2026-002',
       status: OrderStatus.pending,
-      date: DateTime.now().subtract(const Duration(hours: 2)),
-      totalAmount: 450000,
-      shippingFee: 15000,
-      shippingAddress: '227 Nguyen Van Cu, HCM',
-      paymentMethod: 'Bank Transfer',
+      createdAt: DateTime.now().subtract(const Duration(hours: 2)),
+      totalAmount: Decimal.parse('450000'),
+      shippingFee: Decimal.parse('15000'),
+      shippingAddress: '227 Nguyen Van Cu',
+      code: 'ORD-2026-002',
+      shippingProvince: 'Ho Chi Minh',
+      shippingDistrict: 'District 1',
+      shippingWard: 'Ward 2',
       items: [
         OrderItem(
             id: 'item_2',
             productId: 'p_102',
             productName: 'Wireless Mouse',
+            sku: 'MS-001',
             quantity: 1,
-            price: 450000,
-            imageUrl: 'mock_url_here'),
+            unitPrice: Decimal.parse('450000'),
+            totalPrice: Decimal.parse('450000')),
       ],
     ),
   ];

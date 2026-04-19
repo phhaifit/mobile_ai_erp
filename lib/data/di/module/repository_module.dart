@@ -6,8 +6,17 @@ import 'package:mobile_ai_erp/data/local/datasources/post/post_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/product_metadata/product_metadata_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/user/role_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/user/user_datasource.dart';
+import 'package:mobile_ai_erp/data/local/datasources/address/address_api_datasource.dart';
+import 'package:mobile_ai_erp/data/local/datasources/order/order_api_datasource.dart';
+import 'package:mobile_ai_erp/data/local/datasources/customer/customer_api_datasource.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/customer/customer_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/address/address_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/order/order_api.dart';
 import 'package:mobile_ai_erp/data/repository/customer/customer_repository_impl.dart';
+import 'package:mobile_ai_erp/data/repository/account/customer_repository_impl.dart';
+import 'package:mobile_ai_erp/domain/repository/customer/customer_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/account/customer_repository.dart';
 import 'package:mobile_ai_erp/data/repository/fulfillment/fulfillment_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/inventory_audit_outbound/mock_inventory_audit_outbound_repository.dart';
 import 'package:mobile_ai_erp/data/repository/order_tracking/order_tracking_repository_impl.dart';
@@ -22,7 +31,10 @@ import 'package:mobile_ai_erp/data/repository/web_builder/cms_page_repository_im
 import 'package:mobile_ai_erp/data/repository/web_builder/store_settings_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/web_builder/web_theme_repository_impl.dart';
 import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
-import 'package:mobile_ai_erp/domain/repository/customer/customer_repository.dart';
+import 'package:mobile_ai_erp/data/repository/account/customer_repository_impl.dart';
+import 'package:mobile_ai_erp/domain/repository/account/customer_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/account/address_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/account/order_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/fulfillment/fulfillment_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/inventory_audit_outbound/inventory_audit_outbound_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/order_tracking/order_tracking_repository.dart';
@@ -81,12 +93,22 @@ class RepositoryModule {
       getIt<ProductMetadataDataSource>(),
     ));
     
+    getIt.registerLazySingleton<AccountCustomerApiDataSource>(
+        () => AccountCustomerApiDataSource(getIt<CustomerApi>()));
+
+    getIt.registerLazySingleton<AccountCustomerRepository>(
+        () => AccountCustomerRepositoryImpl(getIt<AccountCustomerApiDataSource>()));
+
+    getIt.registerLazySingleton<AddressApiDataSource>(
+        () => AddressApiDataSource(getIt<AddressApi>()));
+    getIt.registerLazySingleton<OrderApiDataSource>(
+        () => OrderApiDataSource(getIt<OrderApi>()));
+
     getIt.registerLazySingleton<AddressRepository>(
-        () => AddressRepositoryImpl(getIt<AddressMockDataSource>()));
+        () => AddressRepositoryImpl(getIt<AddressApiDataSource>()));
         
     getIt.registerLazySingleton<OrderRepository>(
-        () => OrderRepositoryImpl(getIt<OrderMockDataSource>()));
-      ProductMetadataRepositoryImpl(getIt<ProductMetadataDataSource>());
+        () => OrderRepositoryImpl(getIt<OrderApiDataSource>()));
 
     getIt.registerSingleton<UserDataSource>(UserDataSource());
     getIt.registerSingleton<RoleDataSource>(RoleDataSource());

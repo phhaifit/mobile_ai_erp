@@ -1,8 +1,10 @@
 import 'package:mobile_ai_erp/constants/app_theme.dart';
 import 'package:mobile_ai_erp/constants/strings.dart';
+import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
 import 'package:mobile_ai_erp/presentation/home/home.dart';
 import 'package:mobile_ai_erp/presentation/home/store/language/language_store.dart';
 import 'package:mobile_ai_erp/presentation/home/store/theme/theme_store.dart';
+import 'package:mobile_ai_erp/presentation/login/login.dart';
 import 'package:mobile_ai_erp/utils/locale/app_localization.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
 import 'package:flutter/material.dart';
@@ -17,6 +19,7 @@ class MyApp extends StatelessWidget {
   // with Hot Reload than creating it directly in the `build` function.
   final ThemeStore _themeStore = getIt<ThemeStore>();
   final LanguageStore _languageStore = getIt<LanguageStore>();
+  final SharedPreferenceHelper _sharedPreferenceHelper = getIt<SharedPreferenceHelper>();
 
   @override
   Widget build(BuildContext context) {
@@ -44,9 +47,27 @@ class MyApp extends StatelessWidget {
             // Built-in localization of basic text for Cupertino widgets
             GlobalCupertinoLocalizations.delegate,
           ],
-          home: HomeScreen(),
+          home: FutureBuilder<bool>(
+            future: _sharedPreferenceHelper.isLoggedIn,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return _buildLoadingScreen();
+              } else {
+                final isLoggedIn = snapshot.data ?? false;
+                return isLoggedIn ? HomeScreen() : LoginScreen();
+              }
+            },
+          ),
         );
       },
+    );
+  }
+
+  Widget _buildLoadingScreen() {
+    return Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(),
+      ),
     );
   }
 }

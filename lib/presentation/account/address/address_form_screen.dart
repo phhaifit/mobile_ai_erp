@@ -33,10 +33,10 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
         _existingAddress = args;
       }
 
-      _nameController = TextEditingController(text: _existingAddress?.fullName ?? '');
-      _phoneController = TextEditingController(text: _existingAddress?.phone ?? '');
-      _streetController = TextEditingController(text: _existingAddress?.street ?? '');
-      _cityController = TextEditingController(text: _existingAddress?.city ?? '');
+      _nameController = TextEditingController(text: _existingAddress?.address ?? '');
+      _phoneController = TextEditingController(text: _existingAddress?.type ?? '');
+      _streetController = TextEditingController(text: _existingAddress?.district ?? '');
+      _cityController = TextEditingController(text: _existingAddress?.province ?? '');
       // If editing, use the existing status. If creating new, check if the list is empty!
       _isDefault = _existingAddress?.isDefault ?? _addressStore.addresses.isEmpty;
       
@@ -65,11 +65,10 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
 
         // Duplicate Check: Prevent adding/updating to an address that already exists (except itself when editing)
         final isDuplicate = _addressStore.addresses.any((existing) => 
-            existing.fullName.toLowerCase() == newFullName.toLowerCase() &&
+            existing.address.toLowerCase() == newFullName.toLowerCase() &&
             existing.id != _existingAddress?.id && 
-            existing.street.toLowerCase() == newStreet.toLowerCase() &&
-            existing.city.toLowerCase() == newCity.toLowerCase() &&
-            existing.phone == newPhone
+            (existing.district?.toLowerCase() ?? '').startsWith(newStreet.toLowerCase()) &&
+            (existing.province?.toLowerCase() ?? '').startsWith(newCity.toLowerCase())
         );
 
         if (isDuplicate) {
@@ -84,10 +83,10 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
 
         final addressData = Address(
           id: _existingAddress?.id ?? 'addr_${DateTime.now().millisecondsSinceEpoch}',
-          fullName: _nameController.text.trim(),
-          phone: newPhone,
-          street: newStreet,
-          city: newCity,
+          address: _nameController.text.trim(),
+          type: newPhone,
+          province: newCity,
+          district: newStreet,
           isDefault: _isDefault,
         );
 

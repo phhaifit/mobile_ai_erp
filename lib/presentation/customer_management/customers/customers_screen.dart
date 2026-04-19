@@ -22,10 +22,9 @@ enum _CustomerSortOption {
 }
 
 class _CustomerFilterResult {
-  const _CustomerFilterResult({this.status, this.groupId});
+  const _CustomerFilterResult({this.status});
 
   final CustomerStatus? status;
-  final String? groupId;
 }
 
 class CustomersScreen extends StatefulWidget {
@@ -42,7 +41,6 @@ class _CustomersScreenState extends State<CustomersScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _query = '';
   CustomerStatus? _statusFilter;
-  String? _groupFilter;
   _CustomerSortOption _sortOption = _CustomerSortOption.nameAsc;
   int _currentPage = 1;
 
@@ -101,7 +99,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                 resultLabel:
                     'Showing ${visible.length} of ${filtered.length} customers',
                 hasActiveFilter:
-                    _statusFilter != null || _groupFilter != null,
+                    _statusFilter != null,
                 hasCustomSort: _sortOption != _CustomerSortOption.nameAsc,
                 onOpenFilter: _openFilterSheet,
                 onOpenSort: _openSortSheet,
@@ -111,13 +109,11 @@ class _CustomersScreenState extends State<CustomersScreen> {
                 CustomerEmptyState(
                   icon: Icons.people_outline,
                   title: _query.isNotEmpty ||
-                          _statusFilter != null ||
-                          _groupFilter != null
+                          _statusFilter != null
                       ? 'No matching customers'
                       : 'No customers yet',
                   message: _query.isNotEmpty ||
-                          _statusFilter != null ||
-                          _groupFilter != null
+                          _statusFilter != null
                       ? 'Try changing your search or filters.'
                       : 'Add the first customer to get started.',
                 )
@@ -148,7 +144,6 @@ class _CustomersScreenState extends State<CustomersScreen> {
     final query = _query.toLowerCase();
     final filtered = source.where((c) {
       if (_statusFilter != null && c.status != _statusFilter) return false;
-      if (_groupFilter != null && c.groupId != _groupFilter) return false;
       if (query.isEmpty) return true;
       return c.fullName.toLowerCase().contains(query) ||
           c.email.toLowerCase().contains(query) ||
@@ -172,8 +167,6 @@ class _CustomersScreenState extends State<CustomersScreen> {
   }
 
   Widget _buildCustomerCard(Customer customer) {
-    final group = _store.findGroupById(customer.groupId);
-
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Card(
@@ -220,9 +213,6 @@ class _CustomersScreenState extends State<CustomersScreen> {
                         runSpacing: 6,
                         children: <Widget>[
                           CustomerStatusChip(label: customer.status.label),
-                          CustomerStatusChip(label: customer.type.label),
-                          if (group != null)
-                            CustomerStatusChip(label: group.name),
                         ],
                       ),
                     ],
@@ -256,7 +246,6 @@ class _CustomersScreenState extends State<CustomersScreen> {
       context: context,
       builder: (context) {
         CustomerStatus? tempStatus = _statusFilter;
-        String? tempGroup = _groupFilter;
         return StatefulBuilder(
           builder: (context, setModalState) {
             return SafeArea(
@@ -288,31 +277,10 @@ class _CustomersScreenState extends State<CustomersScreen> {
                             tempStatus == s ? const Icon(Icons.check) : null,
                         onTap: () => setModalState(() => tempStatus = s),
                       ),
-                    const Divider(),
-                    Text('Group',
-                        style: Theme.of(context).textTheme.labelMedium),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('All groups'),
-                      trailing:
-                          tempGroup == null ? const Icon(Icons.check) : null,
-                      onTap: () =>
-                          setModalState(() => tempGroup = null),
-                    ),
-                    for (final g in _store.groups)
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(g.name),
-                        trailing: tempGroup == g.id
-                            ? const Icon(Icons.check)
-                            : null,
-                        onTap: () => setModalState(() => tempGroup = g.id),
-                      ),
                     const SizedBox(height: 8),
                     FilledButton(
                       onPressed: () => Navigator.of(context).pop(
-                        _CustomerFilterResult(
-                            status: tempStatus, groupId: tempGroup),
+                        _CustomerFilterResult(status: tempStatus),
                       ),
                       child: const Text('Apply'),
                     ),
@@ -328,7 +296,6 @@ class _CustomersScreenState extends State<CustomersScreen> {
     if (result == null || !mounted) return;
     setState(() {
       _statusFilter = result.status;
-      _groupFilter = result.groupId;
       _currentPage = 1;
     });
   }
