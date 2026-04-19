@@ -4,9 +4,13 @@ import 'package:mobile_ai_erp/domain/entity/fulfillment/fulfillment_status.dart'
 import 'package:mobile_ai_erp/domain/entity/fulfillment/shipment_tracking.dart';
 import 'package:mobile_ai_erp/domain/entity/fulfillment/tracking_event.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/create_or_link_shipment_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/create_shipment_print_attempt_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/create_shipment_print_job_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_fulfillment_order_detail_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_fulfillment_orders_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_order_shipments_tracking_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_shipment_label_artifacts_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_shipment_print_jobs_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_shipment_tracking_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/update_fulfillment_status_usecase.dart';
 import 'package:mobx/mobx.dart';
@@ -22,6 +26,10 @@ abstract class _FulfillmentStore with Store {
   final CreateOrLinkShipmentUseCase _createOrLinkShipmentUseCase;
   final GetShipmentTrackingUseCase _getShipmentTrackingUseCase;
   final GetOrderShipmentsTrackingUseCase _getOrderShipmentsTrackingUseCase;
+  final GetShipmentLabelArtifactsUseCase _getShipmentLabelArtifactsUseCase;
+  final GetShipmentPrintJobsUseCase _getShipmentPrintJobsUseCase;
+  final CreateShipmentPrintJobUseCase _createShipmentPrintJobUseCase;
+  final CreateShipmentPrintAttemptUseCase _createShipmentPrintAttemptUseCase;
   final ErrorStore errorStore;
 
   _FulfillmentStore(
@@ -31,6 +39,10 @@ abstract class _FulfillmentStore with Store {
     this._createOrLinkShipmentUseCase,
     this._getShipmentTrackingUseCase,
     this._getOrderShipmentsTrackingUseCase,
+    this._getShipmentLabelArtifactsUseCase,
+    this._getShipmentPrintJobsUseCase,
+    this._createShipmentPrintJobUseCase,
+    this._createShipmentPrintAttemptUseCase,
     this.errorStore,
   );
 
@@ -174,6 +186,104 @@ abstract class _FulfillmentStore with Store {
     } catch (e) {
       errorStore.errorMessage = e.toString();
       return const <ShipmentTrackingInfo>[];
+    }
+  }
+
+  Future<List<ShipmentLabelArtifact>> getShipmentLabelArtifacts(
+    String orderId,
+    String shipmentId,
+  ) async {
+    try {
+      return await _getShipmentLabelArtifactsUseCase.call(
+        params: GetShipmentLabelArtifactsParams(
+          orderId: orderId,
+          shipmentId: shipmentId,
+        ),
+      );
+    } catch (e) {
+      errorStore.errorMessage = e.toString();
+      return const <ShipmentLabelArtifact>[];
+    }
+  }
+
+  Future<List<ShipmentPrintJob>> getShipmentPrintJobs(
+    String orderId,
+    String shipmentId,
+  ) async {
+    try {
+      return await _getShipmentPrintJobsUseCase.call(
+        params: GetShipmentPrintJobsParams(
+          orderId: orderId,
+          shipmentId: shipmentId,
+        ),
+      );
+    } catch (e) {
+      errorStore.errorMessage = e.toString();
+      return const <ShipmentPrintJob>[];
+    }
+  }
+
+  Future<ShipmentPrintJob?> createShipmentPrintJob(
+    String orderId,
+    String shipmentId, {
+    String? artifactId,
+    String artifactType = 'shipping_label',
+    String format = 'pdf',
+    String? printerName,
+    String? printerCode,
+    int copies = 1,
+    Map<String, dynamic>? payload,
+    Map<String, dynamic>? metadata,
+  }) async {
+    try {
+      return await _createShipmentPrintJobUseCase.call(
+        params: CreateShipmentPrintJobParams(
+          orderId: orderId,
+          shipmentId: shipmentId,
+          artifactId: artifactId,
+          artifactType: artifactType,
+          format: format,
+          printerName: printerName,
+          printerCode: printerCode,
+          copies: copies,
+          payload: payload,
+          metadata: metadata,
+        ),
+      );
+    } catch (e) {
+      errorStore.errorMessage = e.toString();
+      return null;
+    }
+  }
+
+  Future<ShipmentPrintJob?> createShipmentPrintAttempt(
+    String orderId,
+    String shipmentId,
+    String printJobId, {
+    required String status,
+    String? spoolJobId,
+    String? errorCode,
+    String? errorMessage,
+    int? durationMs,
+    Map<String, dynamic>? printerResponse,
+  }) async {
+    try {
+      return await _createShipmentPrintAttemptUseCase.call(
+        params: CreateShipmentPrintAttemptParams(
+          orderId: orderId,
+          shipmentId: shipmentId,
+          printJobId: printJobId,
+          status: status,
+          spoolJobId: spoolJobId,
+          errorCode: errorCode,
+          errorMessage: errorMessage,
+          durationMs: durationMs,
+          printerResponse: printerResponse,
+        ),
+      );
+    } catch (e) {
+      errorStore.errorMessage = e.toString();
+      return null;
     }
   }
 

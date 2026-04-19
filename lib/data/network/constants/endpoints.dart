@@ -51,6 +51,16 @@ class Endpoints {
   static String orderShipment(String id) => "/orders/$id/shipment";
   static String orderShipmentTracking(String id) =>
       "/orders/$id/shipment/tracking";
-    static String orderShipmentsTracking(String id) =>
+  static String orderShipmentsTracking(String id) =>
       "/orders/$id/shipments/tracking";
+  static String orderShipmentLabels(String orderId, String shipmentId) =>
+      "/orders/$orderId/shipments/$shipmentId/labels";
+  static String orderShipmentPrintJobs(String orderId, String shipmentId) =>
+      "/orders/$orderId/shipments/$shipmentId/print-jobs";
+  static String orderShipmentPrintAttempts(
+    String orderId,
+    String shipmentId,
+    String printJobId,
+  ) =>
+      "/orders/$orderId/shipments/$shipmentId/print-jobs/$printJobId/attempts";
 }

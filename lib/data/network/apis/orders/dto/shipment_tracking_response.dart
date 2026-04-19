@@ -137,3 +137,134 @@ class OrderShipmentsTrackingResponseDto {
     );
   }
 }
+
+class ShipmentLabelArtifactResponseDto {
+  final String id;
+  final String shipmentId;
+  final String artifactType;
+  final String format;
+  final String? publicUrl;
+  final String generatedAt;
+
+  ShipmentLabelArtifactResponseDto({
+    required this.id,
+    required this.shipmentId,
+    required this.artifactType,
+    required this.format,
+    required this.publicUrl,
+    required this.generatedAt,
+  });
+
+  factory ShipmentLabelArtifactResponseDto.fromJson(Map<String, dynamic> json) {
+    return ShipmentLabelArtifactResponseDto(
+      id: json['id'] as String,
+      shipmentId: json['shipmentId'] as String,
+      artifactType: json['artifactType'] as String,
+      format: json['format'] as String,
+      publicUrl: json['publicUrl'] as String?,
+      generatedAt: json['generatedAt'] as String,
+    );
+  }
+}
+
+class ShipmentPrintAttemptResponseDto {
+  final String id;
+  final String printJobId;
+  final int attemptNo;
+  final String status;
+  final String startedAt;
+  final String? finishedAt;
+  final int? durationMs;
+  final String? errorCode;
+  final String? errorMessage;
+
+  ShipmentPrintAttemptResponseDto({
+    required this.id,
+    required this.printJobId,
+    required this.attemptNo,
+    required this.status,
+    required this.startedAt,
+    this.finishedAt,
+    this.durationMs,
+    this.errorCode,
+    this.errorMessage,
+  });
+
+  factory ShipmentPrintAttemptResponseDto.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    return ShipmentPrintAttemptResponseDto(
+      id: json['id'] as String,
+      printJobId: json['printJobId'] as String,
+      attemptNo: json['attemptNo'] as int,
+      status: json['status'] as String,
+      startedAt: json['startedAt'] as String,
+      finishedAt: json['finishedAt'] as String?,
+      durationMs: json['durationMs'] as int?,
+      errorCode: json['errorCode'] as String?,
+      errorMessage: json['errorMessage'] as String?,
+    );
+  }
+}
+
+class ShipmentPrintJobResponseDto {
+  final String id;
+  final String shipmentId;
+  final String? artifactId;
+  final String status;
+  final String? printerName;
+  final String? printerCode;
+  final int copies;
+  final String queuedAt;
+  final String? completedAt;
+  final String? lastErrorCode;
+  final String? lastErrorMessage;
+  final ShipmentLabelArtifactResponseDto? artifact;
+  final List<ShipmentPrintAttemptResponseDto> attempts;
+
+  ShipmentPrintJobResponseDto({
+    required this.id,
+    required this.shipmentId,
+    required this.artifactId,
+    required this.status,
+    required this.printerName,
+    required this.printerCode,
+    required this.copies,
+    required this.queuedAt,
+    required this.completedAt,
+    required this.lastErrorCode,
+    required this.lastErrorMessage,
+    required this.artifact,
+    required this.attempts,
+  });
+
+  factory ShipmentPrintJobResponseDto.fromJson(Map<String, dynamic> json) {
+    final attemptsJson = json['attempts'];
+    final attemptList = attemptsJson is List<dynamic>
+        ? attemptsJson
+              .whereType<Map<String, dynamic>>()
+              .map(ShipmentPrintAttemptResponseDto.fromJson)
+              .toList()
+        : <ShipmentPrintAttemptResponseDto>[];
+
+    final artifactJson = json['artifact'];
+
+    return ShipmentPrintJobResponseDto(
+      id: json['id'] as String,
+      shipmentId: json['shipmentId'] as String,
+      artifactId: json['artifactId'] as String?,
+      status: json['status'] as String,
+      printerName: json['printerName'] as String?,
+      printerCode: json['printerCode'] as String?,
+      copies: json['copies'] as int? ?? 1,
+      queuedAt: json['queuedAt'] as String,
+      completedAt: json['completedAt'] as String?,
+      lastErrorCode: json['lastErrorCode'] as String?,
+      lastErrorMessage: json['lastErrorMessage'] as String?,
+      artifact: artifactJson is Map<String, dynamic>
+          ? ShipmentLabelArtifactResponseDto.fromJson(artifactJson)
+          : null,
+      attempts: attemptList,
+    );
+  }
+}
