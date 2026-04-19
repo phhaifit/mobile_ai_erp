@@ -24,10 +24,12 @@ import 'package:mobile_ai_erp/domain/usecase/inventory_audit_outbound/submit_inv
 import 'package:mobile_ai_erp/domain/usecase/order_tracking/find_order_tracking_scenario_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/order_tracking/get_order_tracking_scenarios_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/create_or_link_shipment_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/apply_order_routing_recommendation_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/create_shipment_print_attempt_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/create_shipment_print_job_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_fulfillment_order_detail_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_fulfillment_orders_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_order_routing_recommendation_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_shipment_label_artifacts_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_order_shipments_tracking_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_shipment_print_jobs_usecase.dart';
@@ -208,6 +210,12 @@ class UseCaseModule {
     );
     getIt.registerSingleton<CreateOrLinkShipmentUseCase>(
       CreateOrLinkShipmentUseCase(getIt<FulfillmentRepository>()),
+    );
+    getIt.registerSingleton<GetOrderRoutingRecommendationUseCase>(
+      GetOrderRoutingRecommendationUseCase(getIt<FulfillmentRepository>()),
+    );
+    getIt.registerSingleton<ApplyOrderRoutingRecommendationUseCase>(
+      ApplyOrderRoutingRecommendationUseCase(getIt<FulfillmentRepository>()),
     );
     getIt.registerSingleton<GetShipmentTrackingUseCase>(
       GetShipmentTrackingUseCase(getIt<FulfillmentRepository>()),

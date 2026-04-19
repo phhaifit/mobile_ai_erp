@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
 import 'package:mobile_ai_erp/data/network/apis/orders/dto/order_detail_response.dart';
 import 'package:mobile_ai_erp/data/network/apis/orders/dto/order_list_response.dart';
+import 'package:mobile_ai_erp/data/network/apis/orders/dto/routing_recommendation_response.dart';
 import 'package:mobile_ai_erp/data/network/apis/orders/dto/shipment_tracking_response.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
 
@@ -69,12 +70,16 @@ class OrderApi {
   Future<ShipmentTrackingResponseDto> createOrLinkOrderShipment(
     String orderId, {
     List<Map<String, dynamic>>? items,
+    String? provider,
   }
   ) async {
     try {
       final payload = <String, dynamic>{};
       if (items != null && items.isNotEmpty) {
         payload['items'] = items;
+      }
+      if (provider != null && provider.isNotEmpty) {
+        payload['provider'] = provider;
       }
 
       final res = await _dioClient.dio.post(
@@ -268,6 +273,53 @@ class OrderApi {
       );
     } catch (e) {
       debugPrint('OrderApi.createShipmentPrintAttempt error: $e');
+      rethrow;
+    }
+  }
+
+  Future<OrderRoutingRecommendationResponseDto> getOrderRoutingRecommendation(
+    String orderId, {
+    bool forceNew = false,
+  }) async {
+    try {
+      final res = await _dioClient.dio.get(
+        '/orders/$orderId/routing/recommendation',
+        queryParameters: forceNew ? {'forceNew': 'true'} : null,
+      );
+
+      return OrderRoutingRecommendationResponseDto.fromJson(
+        res.data as Map<String, dynamic>,
+      );
+    } catch (e) {
+      debugPrint('OrderApi.getOrderRoutingRecommendation error: $e');
+      rethrow;
+    }
+  }
+
+  Future<OrderRoutingApplyResponseDto> applyOrderRoutingRecommendation(
+    String orderId, {
+    required String decisionId,
+    String? selectedOptionId,
+  }) async {
+    try {
+      final payload = <String, dynamic>{
+        'decisionId': decisionId,
+      };
+
+      if (selectedOptionId != null && selectedOptionId.isNotEmpty) {
+        payload['selectedOptionId'] = selectedOptionId;
+      }
+
+      final res = await _dioClient.dio.post(
+        '/orders/$orderId/routing/recommendation/apply',
+        data: payload,
+      );
+
+      return OrderRoutingApplyResponseDto.fromJson(
+        res.data as Map<String, dynamic>,
+      );
+    } catch (e) {
+      debugPrint('OrderApi.applyOrderRoutingRecommendation error: $e');
       rethrow;
     }
   }

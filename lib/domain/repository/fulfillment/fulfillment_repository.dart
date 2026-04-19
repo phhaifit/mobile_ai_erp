@@ -14,6 +14,16 @@ abstract class FulfillmentRepository {
   Future<ShipmentTrackingInfo> createOrLinkShipment(
     String orderId, {
     List<CreateShipmentItemAllocation> items,
+    String? provider,
+  });
+  Future<OrderRoutingRecommendation?> getOrderRoutingRecommendation(
+    String orderId, {
+    bool forceNew = false,
+  });
+  Future<OrderRoutingApplyResult> applyOrderRoutingRecommendation(
+    String orderId, {
+    required String decisionId,
+    String? selectedOptionId,
   });
   Future<ShipmentTrackingInfo?> getShipmentTracking(
     String orderId, {
