@@ -31,8 +31,12 @@ class MiniCartDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Drawer(
-      width: MediaQuery.of(context).size.width * 0.85,
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
+    return Material(
+      color: Theme.of(context).cardColor,
+      borderRadius: isMobile ? BorderRadius.zero : BorderRadius.circular(20),
+      clipBehavior: Clip.antiAlias,
       child: SafeArea(
         child: Column(
           children: [
@@ -314,32 +318,28 @@ class MiniCartBadge extends StatelessWidget {
         clipBehavior: Clip.none,
         children: [
           IconButton(
-            icon: const Icon(Icons.shopping_cart_outlined, color: _accentRed),
-            iconSize: 24,
-            hoverColor: _accentRed.withValues(alpha: 0.1),
-            highlightColor: _accentRed.withValues(alpha: 0.1),
-            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+            tooltip: 'Cart',
             onPressed: onTap,
+            icon: const Icon(Icons.shopping_cart_outlined),
           ),
           if (itemCount > 0)
             Positioned(
-              right: 2,
-              top: 2,
+              right: 6,
+              top: 6,
               child: Container(
-                padding: const EdgeInsets.all(2),
-                decoration: BoxDecoration(
+                padding: const EdgeInsets.all(4),
+                constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                decoration: const BoxDecoration(
                   color: _accentRed,
-                  borderRadius: BorderRadius.circular(10),
+                  shape: BoxShape.circle,
                 ),
-                constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
-                child: Center(
-                  child: Text(
-                    itemCount > 99 ? '99+' : itemCount.toString(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                    ),
+                child: Text(
+                  itemCount > 99 ? '99+' : '$itemCount',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
