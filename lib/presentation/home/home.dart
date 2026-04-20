@@ -51,31 +51,94 @@ class _HomeScreenState extends State<HomeScreen> {
       calculation: _cartStore.calculation,
     );
 
-    await showModalBottomSheet(
+    await showGeneralDialog(
       context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (_) {
-        return SizedBox(
-          height: MediaQuery.of(context).size.height * 0.85,
-          child: MiniCartDrawer(
-            cartData: cartUIModel,
-            onViewFullCart: () {
-              Navigator.pop(context);
-              CartRoutes.navigateToCart(context);
-            },
-            onCheckout: () {
-              Navigator.pop(context);
-              CartRoutes.navigateToCart(context);
-            },
-            onRemoveItem: (itemId) async {
-              await _cartStore.removeItemFromCart(itemId);
-            },
-            onQuantityChanged: (itemId, quantity) async {
-              await _cartStore.updateItemQuantity(itemId, quantity);
-            },
-            isLoading: _cartStore.isLoading,
-            onDrawerToggle: () {},
+      barrierLabel: 'Mini cart',
+      barrierDismissible: true,
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 250),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        final screenSize = MediaQuery.of(context).size;
+        final sheetHeight = screenSize.height * 0.85;
+        final isMobile = screenSize.width < 600;
+
+        if (isMobile) {
+          return SafeArea(
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: SizedBox(
+                height: sheetHeight,
+                width: double.infinity,
+                child: MiniCartDrawer(
+                  cartData: cartUIModel,
+                  onViewFullCart: () {
+                    Navigator.pop(context);
+                    CartRoutes.navigateToCart(context);
+                  },
+                  onCheckout: () {
+                    Navigator.pop(context);
+                    CartRoutes.navigateToCart(context);
+                  },
+                  onRemoveItem: (itemId) async {
+                    await _cartStore.removeItemFromCart(itemId);
+                  },
+                  onQuantityChanged: (itemId, quantity) async {
+                    await _cartStore.updateItemQuantity(itemId, quantity);
+                  },
+                  isLoading: _cartStore.isLoading,
+                  onDrawerToggle: () {},
+                ),
+              ),
+            ),
+          );
+        }
+
+        return SafeArea(
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 16, top: 16, bottom: 16),
+              child: SizedBox(
+                width: 420,
+                height: sheetHeight,
+                child: MiniCartDrawer(
+                  cartData: cartUIModel,
+                  onViewFullCart: () {
+                    Navigator.pop(context);
+                    CartRoutes.navigateToCart(context);
+                  },
+                  onCheckout: () {
+                    Navigator.pop(context);
+                    CartRoutes.navigateToCart(context);
+                  },
+                  onRemoveItem: (itemId) async {
+                    await _cartStore.removeItemFromCart(itemId);
+                  },
+                  onQuantityChanged: (itemId, quantity) async {
+                    await _cartStore.updateItemQuantity(itemId, quantity);
+                  },
+                  isLoading: _cartStore.isLoading,
+                  onDrawerToggle: () {},
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+        );
+
+        return FadeTransition(
+          opacity: curved,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0.15, 0),
+              end: Offset.zero,
+            ).animate(curved),
+            child: child,
           ),
         );
       },
