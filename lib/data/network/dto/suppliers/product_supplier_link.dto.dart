@@ -1,31 +1,34 @@
 class ProductSupplierLinkDto {
   final String productId;
   final String productName;
+  final String? productSku;
+  final String? productBarcode;
   final String supplierId;
   final String? supplierSku;
   final double? costPrice;
   final bool isPrimary;
-  final DateTime createdAt;
 
   ProductSupplierLinkDto({
     required this.productId,
     required this.productName,
+    this.productSku,
+    this.productBarcode,
     required this.supplierId,
     this.supplierSku,
     this.costPrice,
     required this.isPrimary,
-    required this.createdAt,
   });
 
   factory ProductSupplierLinkDto.fromJson(Map<String, dynamic> json) {
     return ProductSupplierLinkDto(
       productId: json['productId'] as String,
       productName: json['productName'] as String,
+      productSku: json['sku'] as String?,
+      productBarcode: json['barcode'] as String?,
       supplierId: json['supplierId'] as String,
       supplierSku: json['supplierSku'] as String?,
       costPrice: (json['costPrice'] as num?)?.toDouble(),
       isPrimary: json['isPrimary'] as bool? ?? false,
-      createdAt: DateTime.parse(json['createdAt'] as String),
     );
   }
 }

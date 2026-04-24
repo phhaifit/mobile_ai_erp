@@ -10,7 +10,6 @@ class Supplier {
   final String? bankName;
   final String? bankAccount;
   final String? bankNote;
-  final bool isActive;
   final DateTime createdAt;
 
   Supplier({
@@ -25,7 +24,6 @@ class Supplier {
     this.bankName,
     this.bankAccount,
     this.bankNote,
-    required this.isActive,
     required this.createdAt,
   });
 
@@ -41,7 +39,6 @@ class Supplier {
     String? bankName,
     String? bankAccount,
     String? bankNote,
-    bool? isActive,
     DateTime? createdAt,
   }) {
     return Supplier(
@@ -56,7 +53,6 @@ class Supplier {
       bankName: bankName ?? this.bankName,
       bankAccount: bankAccount ?? this.bankAccount,
       bankNote: bankNote ?? this.bankNote,
-      isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
     );
   }

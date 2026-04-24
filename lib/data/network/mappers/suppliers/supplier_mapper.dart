@@ -1,4 +1,4 @@
-import 'package:mobile_ai_erp/data/network/dto/supplier_response.dto.dart';
+import 'package:mobile_ai_erp/data/network/dto/suppliers/supplier_response.dto.dart';
 import 'package:mobile_ai_erp/domain/entity/supplier/supplier.dart';
 
 class SupplierMapper {
@@ -15,7 +15,6 @@ class SupplierMapper {
       bankName: dto.bankName,
       bankAccount: dto.bankAccount,
       bankNote: dto.bankNote,
-      isActive: dto.isActive,
       createdAt: dto.createdAt,
     );
   }

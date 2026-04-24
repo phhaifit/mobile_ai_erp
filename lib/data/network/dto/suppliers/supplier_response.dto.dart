@@ -10,7 +10,6 @@ class SupplierResponseDto {
   final String? bankName;
   final String? bankAccount;
   final String? bankNote;
-  final bool isActive;
   final DateTime createdAt;
 
   SupplierResponseDto({
@@ -25,7 +24,6 @@ class SupplierResponseDto {
     this.bankName,
     this.bankAccount,
     this.bankNote,
-    required this.isActive,
     required this.createdAt,
   });
 
@@ -42,7 +40,6 @@ class SupplierResponseDto {
       bankName: json['bankName'] as String?,
       bankAccount: json['bankAccount'] as String?,
       bankNote: json['bankNote'] as String?,
-      isActive: json['isActive'] as bool,
       createdAt: DateTime.parse(json['createdAt'] as String),
     );
   }
