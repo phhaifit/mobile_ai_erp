@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:mobile_ai_erp/data/network/apis/suppliers/supplier_api.dart';
-import 'package:mobile_ai_erp/data/network/dto/product_supplier_link.dto.dart';
-import 'package:mobile_ai_erp/data/network/mappers/product_supplier_mapper.dart';
-import 'package:mobile_ai_erp/data/network/mappers/supplier_mapper.dart';
+import 'package:mobile_ai_erp/data/network/dto/suppliers/product_supplier_link.dto.dart';
+import 'package:mobile_ai_erp/data/network/mappers/suppliers/product_supplier_mapper.dart';
+import 'package:mobile_ai_erp/data/network/mappers/suppliers/supplier_mapper.dart';
 import 'package:mobile_ai_erp/domain/entity/shared/paginated_result.dart';
 import 'package:mobile_ai_erp/domain/entity/supplier/product_summary.dart';
 import 'package:mobile_ai_erp/domain/entity/supplier/supplier.dart';
@@ -20,7 +20,6 @@ class SupplierRepositoryImpl implements SupplierRepository {
     String search = '',
     int page = 1,
     int pageSize = 10,
-    bool? includeInactive,
     bool? hasProducts,
     String? sortBy,
     String? sortOrder,
@@ -29,7 +28,6 @@ class SupplierRepositoryImpl implements SupplierRepository {
       search: search,
       page: page,
       pageSize: pageSize,
-      includeInactive: includeInactive,
       hasProducts: hasProducts,
       sortBy: sortBy,
       sortOrder: sortOrder,
@@ -74,18 +72,27 @@ class SupplierRepositoryImpl implements SupplierRepository {
   }
 
   @override
-  Future<List<SupplierProductLink>> getSupplierProducts(
+  Future<PaginatedResult<SupplierProductLink>> getSupplierProducts(
     String supplierId, {
     int page = 1,
-    int pageSize = 50,
+    int pageSize = 10,
+    String search = '',
   }) async {
     final response = await _api.getSupplierProducts(
       supplierId,
       page: page,
       pageSize: pageSize,
+      search: search,
     );
     final data = response['data'] as List<dynamic>;
-    return ProductSupplierMapper.fromProductList(data, supplierId);
+    final meta = response['meta'] as Map<String, dynamic>?;
+    return PaginatedResult(
+      data: ProductSupplierMapper.fromJsonList(data),
+      page: meta?['page'] as int? ?? page,
+      pageSize: meta?['pageSize'] as int? ?? pageSize,
+      totalItems: meta?['totalItems'] as int? ?? data.length,
+      totalPages: meta?['totalPages'] as int? ?? 1,
+    );
   }
 
   @override
@@ -133,31 +140,12 @@ class SupplierRepositoryImpl implements SupplierRepository {
   Future<PaginatedResult<ProductSummary>> searchProducts({
     String search = '',
     int page = 1,
-    int pageSize = 20,
+    int pageSize = 10,
   }) async {
-    final response = await _api.searchProducts(
+    return await _api.searchProducts(
       search: search,
       page: page,
       pageSize: pageSize,
-    );
-    final data = response['data'] as List<dynamic>;
-    final meta = response['meta'] as Map<String, dynamic>;
-    return PaginatedResult(
-      data: data
-          .map((e) => _productSummaryFromJson(e as Map<String, dynamic>))
-          .toList(),
-      page: meta['page'] as int,
-      pageSize: meta['pageSize'] as int,
-      totalItems: meta['totalItems'] as int,
-      totalPages: meta['totalPages'] as int,
-    );
-  }
-
-  ProductSummary _productSummaryFromJson(Map<String, dynamic> json) {
-    return ProductSummary(
-      id: json['id'] as String,
-      sku: json['sku'] as String? ?? '',
-      name: json['name'] as String,
     );
   }
 }

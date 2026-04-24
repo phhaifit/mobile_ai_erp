@@ -9,7 +9,6 @@ abstract class SupplierRepository {
     String search = '',
     int page = 1,
     int pageSize = 10,
-    bool? includeInactive,
     bool? hasProducts,
     String? sortBy,
     String? sortOrder,
@@ -23,10 +22,11 @@ abstract class SupplierRepository {
 
   Future<void> delete(String id);
 
-  Future<List<SupplierProductLink>> getSupplierProducts(
+  Future<PaginatedResult<SupplierProductLink>> getSupplierProducts(
     String supplierId, {
     int page = 1,
-    int pageSize = 50,
+    int pageSize = 10,
+    String search = '',
   });
 
   Future<void> addProductToSupplier(
@@ -50,6 +50,6 @@ abstract class SupplierRepository {
   Future<PaginatedResult<ProductSummary>> searchProducts({
     String search = '',
     int page = 1,
-    int pageSize = 20,
+    int pageSize = 10,
   });
 }

@@ -2,9 +2,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:mobx/mobx.dart';
 import '../../../domain/entity/supplier/supplier.dart';
-import '../../../domain/entity/supplier/supplier_product_link.dart';
 import '../../../domain/entity/supplier/supplier_upsert_payload.dart';
-import '../../../domain/entity/supplier/product_summary.dart';
 import '../../../domain/usecase/supplier/supplier_usecases.dart';
 
 part 'supplier_store.g.dart';
@@ -17,11 +15,6 @@ abstract class SupplierStoreBase with Store {
   final CreateSupplierUseCase _createSupplier;
   final UpdateSupplierUseCase _updateSupplier;
   final DeleteSupplierUseCase _deleteSupplier;
-  final GetSupplierProductsUseCase _getSupplierProducts;
-  final AddProductToSupplierUseCase _addProductToSupplier;
-  final UpdateProductSupplierLinkUseCase _updateProductSupplierLink;
-  final RemoveProductFromSupplierUseCase _removeProductFromSupplier;
-  final SearchProductsUseCase _searchProducts;
 
   SupplierStoreBase(
     this._getSuppliers,
@@ -29,11 +22,6 @@ abstract class SupplierStoreBase with Store {
     this._createSupplier,
     this._updateSupplier,
     this._deleteSupplier,
-    this._getSupplierProducts,
-    this._addProductToSupplier,
-    this._updateProductSupplierLink,
-    this._removeProductFromSupplier,
-    this._searchProducts,
   );
 
   // ── Supplier list ──────────────────────────────────────────────────────────
@@ -57,10 +45,7 @@ abstract class SupplierStoreBase with Store {
 
   @observable
   String searchQuery = '';
-
-  @observable
-  bool? includeInactive;
-
+  
   @observable
   bool? hasProducts;
 
@@ -77,26 +62,6 @@ abstract class SupplierStoreBase with Store {
   @observable
   Supplier? currentSupplier;
 
-  // ── Product-supplier links for current supplier ────────────────────────────
-
-  @observable
-  ObservableList<SupplierProductLink> supplierProducts = ObservableList();
-
-  // ── Product search (for picker) ────────────────────────────────────────────
-
-  @observable
-  ObservableList<ProductSummary> availableProducts = ObservableList();
-
-  @observable
-  int productSearchPage = 1;
-
-  @observable
-  bool hasMoreProducts = false;
-
-  // ── Private fields ─────────────────────────────────────────────────────────
-
-  Timer? _searchDebounce;
-
   // ── Async state ────────────────────────────────────────────────────────────
 
   @observable
@@ -107,6 +72,10 @@ abstract class SupplierStoreBase with Store {
 
   @observable
   String? errorMessage;
+
+  // ── Private ────────────────────────────────────────────────────────────────
+
+  Timer? _searchDebounce;
 
   // ── Computed ───────────────────────────────────────────────────────────────
 
@@ -127,7 +96,6 @@ abstract class SupplierStoreBase with Store {
         search: searchQuery,
         page: page,
         pageSize: pageSize,
-        includeInactive: includeInactive,
         hasProducts: hasProducts,
         sortBy: sortBy,
         sortOrder: sortOrder,
@@ -153,11 +121,7 @@ abstract class SupplierStoreBase with Store {
   }
 
   @action
-  Future<void> setFilters({
-    bool? includeInactive,
-    bool? hasProducts,
-  }) async {
-    this.includeInactive = includeInactive;
+  Future<void> setFilters({bool? hasProducts}) async {
     this.hasProducts = hasProducts;
     await fetchSuppliers(page: 1);
   }
@@ -207,9 +171,8 @@ abstract class SupplierStoreBase with Store {
     isSubmitting = true;
     errorMessage = null;
     try {
-      final created = await _createSupplier(payload);
-      suppliers.insert(0, created);
-      totalItems += 1;
+      await _createSupplier(payload);
+      await fetchSuppliers(page: currentPage);
       isSubmitting = false;
       return true;
     } catch (e) {
@@ -220,17 +183,13 @@ abstract class SupplierStoreBase with Store {
   }
 
   @action
-  Future<bool> updateSupplier(
-    String id,
-    SupplierUpsertPayload payload,
-  ) async {
+  Future<bool> updateSupplier(String id, SupplierUpsertPayload payload) async {
     isSubmitting = true;
     errorMessage = null;
     try {
       final updated = await _updateSupplier(id, payload);
-      final index = suppliers.indexWhere((s) => s.id == id);
-      if (index >= 0) suppliers[index] = updated;
       if (currentSupplier?.id == id) currentSupplier = updated;
+      await fetchSuppliers(page: currentPage);
       isSubmitting = false;
       return true;
     } catch (e) {
@@ -246,183 +205,30 @@ abstract class SupplierStoreBase with Store {
     errorMessage = null;
     try {
       await _deleteSupplier(id);
-      suppliers.removeWhere((s) => s.id == id);
-      totalItems -= 1;
       if (currentSupplier?.id == id) currentSupplier = null;
+      final targetPage =
+          currentPage > 1 && suppliers.length <= 1 ? currentPage - 1 : currentPage;
+      await fetchSuppliers(page: targetPage);
       isSubmitting = false;
       return true;
     } catch (e) {
       errorMessage = _parseError(e);
       isSubmitting = false;
       return false;
-    }
-  }
-
-  // ── Supplier products ──────────────────────────────────────────────────────
-
-  @action
-  Future<void> loadSupplierProducts(String supplierId) async {
-    isLoading = true;
-    errorMessage = null;
-    try {
-      final links = await _getSupplierProducts(supplierId);
-      supplierProducts = ObservableList.of(links);
-    } catch (e) {
-      errorMessage = _parseError(e);
-    } finally {
-      isLoading = false;
-    }
-  }
-
-  @action
-  Future<bool> addProductToSupplier(
-    String productId,
-    String supplierId, {
-    String? supplierSku,
-    double? costPrice,
-    bool isPrimary = false,
-  }) async {
-    isSubmitting = true;
-    errorMessage = null;
-    try {
-      await _addProductToSupplier(
-        productId,
-        supplierId,
-        supplierSku: supplierSku,
-        costPrice: costPrice,
-        isPrimary: isPrimary,
-      );
-      // Reload to get server-confirmed state (e.g. isPrimary cascade)
-      await loadSupplierProducts(supplierId);
-      isSubmitting = false;
-      return true;
-    } catch (e) {
-      errorMessage = _parseError(e);
-      isSubmitting = false;
-      return false;
-    }
-  }
-
-  @action
-  Future<bool> updateProductSupplierLink(
-    String productId,
-    String supplierId, {
-    String? supplierSku,
-    double? costPrice,
-    bool? isPrimary,
-  }) async {
-    isSubmitting = true;
-    errorMessage = null;
-    try {
-      await _updateProductSupplierLink(
-        productId,
-        supplierId,
-        supplierSku: supplierSku,
-        costPrice: costPrice,
-        isPrimary: isPrimary,
-      );
-      // Reload to reflect isPrimary cascade from server
-      await loadSupplierProducts(supplierId);
-      isSubmitting = false;
-      return true;
-    } catch (e) {
-      errorMessage = _parseError(e);
-      isSubmitting = false;
-      return false;
-    }
-  }
-
-  @action
-  Future<bool> removeProductFromSupplier(
-    String productId,
-    String supplierId,
-  ) async {
-    isSubmitting = true;
-    errorMessage = null;
-    try {
-      await _removeProductFromSupplier(productId, supplierId);
-      supplierProducts.removeWhere(
-        (p) => p.productId == productId && p.supplierId == supplierId,
-      );
-      isSubmitting = false;
-      return true;
-    } catch (e) {
-      errorMessage = _parseError(e);
-      isSubmitting = false;
-      return false;
-    }
-  }
-
-  // ── Product search (for picker dialog) ────────────────────────────────────
-
-  @action
-  Future<void> searchProducts(String query, {bool reset = true}) async {
-    if (reset) {
-      productSearchPage = 1;
-      availableProducts.clear();
-    }
-    try {
-      final result = await _searchProducts(
-        search: query,
-        page: productSearchPage,
-        pageSize: 20,
-      );
-      availableProducts.addAll(result.data);
-      hasMoreProducts = result.hasNextPage;
-      productSearchPage += 1;
-    } catch (e) {
-      errorMessage = _parseError(e);
     }
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
-  void clearError() {
-    errorMessage = null;
-  }
-
-  void clearCurrentSupplier() {
-    currentSupplier = null;
-    supplierProducts.clear();
-  }
-
-  // ── Product Supplier Widget helpers (for ProductSupplierSection) ────────────
-
-  @action
-  Future<void> fetchSuppliersForProduct(String productId) async {
-    // No-op for now: product suppliers are managed from supplier detail
-  }
-
-  List<Supplier> getUnlinkedSuppliersForProduct(String productId) {
-    return []; // No-op for now
-  }
-
-  Future<void> linkSupplierToProduct(String productId, String supplierId) async {
-    // Call the add product to supplier use case instead
-    await _addProductToSupplier(productId, supplierId);
-  }
-
-  Future<void> unlinkSupplierFromProduct(String productId, String supplierId) async {
-    // Call the remove product from supplier use case instead
-    await _removeProductFromSupplier(productId, supplierId);
-  }
-
-  List<Supplier> getSuppliersForProduct(String productId) {
-    return []; // No-op for now
-  }
+  void clearError() => errorMessage = null;
 
   String _parseError(dynamic error) {
     if (error is DioException) {
       final data = error.response?.data;
-
-      // Try to extract message from response (prefer backend message)
       if (data is Map<String, dynamic>) {
-        // Check direct message field (root level)
         final message = data['message'];
         if (message is String) return message;
         if (message is List) return message.join(', ');
-
-        // Check nested message in error object
         final errorObj = data['error'];
         if (errorObj is Map<String, dynamic>) {
           final nestedMessage = errorObj['message'];
@@ -431,8 +237,6 @@ abstract class SupplierStoreBase with Store {
         }
       }
       if (data is String && data.isNotEmpty) return data;
-
-      // Fall back to status code generic messages
       switch (error.response?.statusCode) {
         case 400:
           return 'Invalid request. Please check your input.';
