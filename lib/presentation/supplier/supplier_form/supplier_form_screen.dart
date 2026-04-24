@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../domain/entity/supplier/supplier.dart';
 import '../../../domain/entity/supplier/supplier_upsert_payload.dart';
-import '../../../core/stores/supplier/supplier_store.dart';
+import '../store/supplier_store.dart';
 import 'widgets/supplier_form_body.dart';
 
 class SupplierFormScreen extends StatefulWidget {
