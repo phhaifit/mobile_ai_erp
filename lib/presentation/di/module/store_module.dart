@@ -2,7 +2,8 @@ import 'dart:async';
 
 import 'package:mobile_ai_erp/core/stores/error/error_store.dart';
 import 'package:mobile_ai_erp/core/stores/form/form_store.dart';
-import 'package:mobile_ai_erp/core/stores/supplier/supplier_store.dart';
+import 'package:mobile_ai_erp/presentation/supplier/store/supplier_store.dart';
+import 'package:mobile_ai_erp/presentation/supplier/store/supplier_products_store.dart';
 import 'package:mobile_ai_erp/domain/repository/customer/customer_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/dashboard/dashboard_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadata_repository.dart';
@@ -218,6 +219,11 @@ class StoreModule {
         getIt<CreateSupplierUseCase>(),
         getIt<UpdateSupplierUseCase>(),
         getIt<DeleteSupplierUseCase>(),
+      ),
+    );
+
+    getIt.registerLazySingleton<SupplierProductsStore>(
+      () => SupplierProductsStore(
         getIt<GetSupplierProductsUseCase>(),
         getIt<AddProductToSupplierUseCase>(),
         getIt<UpdateProductSupplierLinkUseCase>(),

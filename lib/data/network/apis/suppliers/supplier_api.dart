@@ -1,5 +1,8 @@
 import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
+import 'package:mobile_ai_erp/domain/entity/shared/paginated_result.dart';
+import 'package:mobile_ai_erp/domain/entity/supplier/product_summary.dart';
+import 'package:mobile_ai_erp/data/network/mappers/suppliers/product_summary_mapper.dart';
 
 class SupplierApi {
   final DioClient _dioClient;
@@ -10,7 +13,6 @@ class SupplierApi {
     String search = '',
     int page = 1,
     int pageSize = 10,
-    bool? includeInactive,
     bool? hasProducts,
     String? sortBy,
     String? sortOrder,
@@ -20,9 +22,6 @@ class SupplierApi {
       'pageSize': pageSize,
     };
     if (search.isNotEmpty) queryParameters['search'] = search;
-    if (includeInactive != null) {
-      queryParameters['includeInactive'] = includeInactive;
-    }
     if (hasProducts != null) queryParameters['hasProducts'] = hasProducts;
     if (sortBy != null) queryParameters['sortBy'] = sortBy;
     if (sortOrder != null) queryParameters['sortOrder'] = sortOrder;
@@ -44,11 +43,16 @@ class SupplierApi {
   Future<Map<String, dynamic>> getSupplierProducts(
     String supplierId, {
     int page = 1,
-    int pageSize = 50,
+    int pageSize = 10,
+    String search = '',
   }) async {
     final response = await _dioClient.dio.get(
       '${Endpoints.suppliers}/$supplierId/products',
-      queryParameters: {'page': page, 'pageSize': pageSize},
+      queryParameters: {
+        'page': page,
+        'pageSize': pageSize,
+        if (search.isNotEmpty) 'search': search,
+      },
     );
     return response.data as Map<String, dynamic>;
   }
@@ -108,10 +112,10 @@ class SupplierApi {
     );
   }
 
-  Future<Map<String, dynamic>> searchProducts({
+  Future<PaginatedResult<ProductSummary>> searchProducts({
     String search = '',
     int page = 1,
-    int pageSize = 20,
+    int pageSize = 10,
   }) async {
     final queryParameters = <String, dynamic>{
       'page': page,
@@ -123,6 +127,19 @@ class SupplierApi {
       Endpoints.products,
       queryParameters: queryParameters,
     );
-    return response.data as Map<String, dynamic>;
+
+    final data = response.data as Map<String, dynamic>;
+    final products = (data['data'] as List<dynamic>?)
+        ?.map((item) => ProductSummaryMapper.fromJson(item as Map<String, dynamic>))
+        .toList() ?? [];
+
+    final meta = data['meta'] as Map<String, dynamic>?;
+    return PaginatedResult(
+      data: products,
+      page: meta?['page'] as int? ?? page,
+      pageSize: meta?['pageSize'] as int? ?? pageSize,
+      totalItems: meta?['totalItems'] as int? ?? products.length,
+      totalPages: meta?['totalPages'] as int? ?? 1,
+    );
   }
 }

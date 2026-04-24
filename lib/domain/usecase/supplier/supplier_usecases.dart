@@ -16,7 +16,6 @@ class GetSuppliersUseCase {
     String search = '',
     int page = 1,
     int pageSize = 10,
-    bool? includeInactive,
     bool? hasProducts,
     String? sortBy,
     String? sortOrder,
@@ -25,7 +24,6 @@ class GetSuppliersUseCase {
       search: search,
       page: page,
       pageSize: pageSize,
-      includeInactive: includeInactive,
       hasProducts: hasProducts,
       sortBy: sortBy,
       sortOrder: sortOrder,
@@ -72,12 +70,18 @@ class GetSupplierProductsUseCase {
 
   GetSupplierProductsUseCase(this._repository);
 
-  Future<List<SupplierProductLink>> call(
+  Future<PaginatedResult<SupplierProductLink>> call(
     String supplierId, {
     int page = 1,
-    int pageSize = 50,
+    int pageSize = 10,
+    String search = '',
   }) =>
-      _repository.getSupplierProducts(supplierId, page: page, pageSize: pageSize);
+      _repository.getSupplierProducts(
+        supplierId,
+        page: page,
+        pageSize: pageSize,
+        search: search,
+      );
 }
 
 class AddProductToSupplierUseCase {
@@ -139,7 +143,7 @@ class SearchProductsUseCase {
   Future<PaginatedResult<ProductSummary>> call({
     String search = '',
     int page = 1,
-    int pageSize = 20,
+    int pageSize = 10,
   }) =>
       _repository.searchProducts(
         search: search,
