@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:validators/validators.dart' as v;
 import 'form_field.dart';
 import 'section_label.dart';
 
@@ -72,8 +73,8 @@ class SupplierFormBody extends StatelessWidget {
               if (v == null || v.trim().isEmpty) {
                 return 'Supplier name is required';
               }
-              if (v.isEmpty || v.length > 100) {
-                return 'Name must be between 1-100 characters';
+              if (v.isEmpty || v.length > 255) {
+                return 'Name must be between 1-255 characters';
               }
               return null;
             },
@@ -89,6 +90,9 @@ class SupplierFormBody extends StatelessWidget {
             keyboardType: TextInputType.phone,
             validator: (v) {
               if (v != null && v.isNotEmpty) {
+                if (v.length > 20) {
+                  return 'Phone must not exceed 20 characters';
+                }
                 final cleaned = v.replaceAll(RegExp(r'[\s\-\(\)]'), '');
                 if (!RegExp(r'^\+?[0-9]{7,15}$').hasMatch(cleaned)) {
                   return 'Phone must be 7-15 digits (spaces, dashes allowed)';
@@ -104,9 +108,9 @@ class SupplierFormBody extends StatelessWidget {
             hint: 'e.g. supplier@example.com',
             icon: Icons.email_outlined,
             keyboardType: TextInputType.emailAddress,
-            validator: (v) {
-              if (v != null && v.isNotEmpty) {
-                if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v)) {
+            validator: (value) {
+              if (value != null && value.isNotEmpty) {
+                if (!v.isEmail(value)) {
                   return 'Invalid email format (e.g., supplier@example.com)';
                 }
               }
@@ -129,6 +133,12 @@ class SupplierFormBody extends StatelessWidget {
             label: 'Tax Code',
             hint: 'e.g. 0123456789',
             icon: Icons.receipt_outlined,
+            validator: (v) {
+              if (v != null && v.isNotEmpty && v.length > 20) {
+                return 'Tax code must not exceed 20 characters';
+              }
+              return null;
+            },
           ),
           const SizedBox(height: 12),
           SupplierFormField(
@@ -136,9 +146,15 @@ class SupplierFormBody extends StatelessWidget {
             label: 'ID Card',
             hint: 'e.g. 012345678901',
             icon: Icons.card_membership_outlined,
+            validator: (v) {
+              if (v != null && v.isNotEmpty && v.length > 20) {
+                return 'ID card must not exceed 20 characters';
+              }
+              return null;
+            },
           ),
           const SizedBox(height: 24),
-          SectionLabel('Bank Information'),
+          SectionLabel('Payment Information'),
           const SizedBox(height: 12),
           SupplierFormField(
             controller: bankNameCtrl,
