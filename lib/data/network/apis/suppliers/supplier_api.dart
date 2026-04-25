@@ -1,13 +1,19 @@
-import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
-import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
+import 'package:dio/dio.dart';
 import 'package:mobile_ai_erp/domain/entity/shared/paginated_result.dart';
 import 'package:mobile_ai_erp/domain/entity/supplier/product_summary.dart';
 import 'package:mobile_ai_erp/data/network/mappers/suppliers/product_summary_mapper.dart';
 
 class SupplierApi {
-  final DioClient _dioClient;
+  final Dio _dio;
+  final String _suppliersPath;
+  final String _productsPath;
 
-  SupplierApi(this._dioClient);
+  SupplierApi(
+    this._dio, {
+    String suppliersPath = '/erp/suppliers',
+    String productsPath = '/erp/products',
+  })  : _suppliersPath = suppliersPath,
+        _productsPath = productsPath;
 
   Future<Map<String, dynamic>> getSuppliers({
     String search = '',
@@ -26,16 +32,16 @@ class SupplierApi {
     if (sortBy != null) queryParameters['sortBy'] = sortBy;
     if (sortOrder != null) queryParameters['sortOrder'] = sortOrder;
 
-    final response = await _dioClient.dio.get(
-      Endpoints.suppliers,
+    final response = await _dio.get(
+      _suppliersPath,
       queryParameters: queryParameters,
     );
     return response.data as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> getSupplierById(String id) async {
-    final response = await _dioClient.dio.get(
-      '${Endpoints.suppliers}/$id',
+    final response = await _dio.get(
+      '$_suppliersPath/$id',
     );
     return response.data as Map<String, dynamic>;
   }
@@ -46,8 +52,8 @@ class SupplierApi {
     int pageSize = 10,
     String search = '',
   }) async {
-    final response = await _dioClient.dio.get(
-      '${Endpoints.suppliers}/$supplierId/products',
+    final response = await _dio.get(
+      '$_suppliersPath/$supplierId/products',
       queryParameters: {
         'page': page,
         'pageSize': pageSize,
@@ -58,8 +64,8 @@ class SupplierApi {
   }
 
   Future<Map<String, dynamic>> createSupplier(Map<String, dynamic> payload) async {
-    final response = await _dioClient.dio.post(
-      Endpoints.suppliers,
+    final response = await _dio.post(
+      _suppliersPath,
       data: payload,
     );
     return response.data as Map<String, dynamic>;
@@ -69,23 +75,23 @@ class SupplierApi {
     String id,
     Map<String, dynamic> payload,
   ) async {
-    final response = await _dioClient.dio.patch(
-      '${Endpoints.suppliers}/$id',
+    final response = await _dio.patch(
+      '$_suppliersPath/$id',
       data: payload,
     );
     return response.data as Map<String, dynamic>;
   }
 
   Future<void> deleteSupplier(String id) async {
-    await _dioClient.dio.delete('${Endpoints.suppliers}/$id');
+    await _dio.delete('$_suppliersPath/$id');
   }
 
   Future<Map<String, dynamic>> addProductToSupplier(
     String productId,
     Map<String, dynamic> payload,
   ) async {
-    final response = await _dioClient.dio.post(
-      '${Endpoints.products}/$productId/suppliers',
+    final response = await _dio.post(
+      '$_productsPath/$productId/suppliers',
       data: payload,
     );
     return response.data as Map<String, dynamic>;
@@ -96,8 +102,8 @@ class SupplierApi {
     String supplierId,
     Map<String, dynamic> payload,
   ) async {
-    final response = await _dioClient.dio.patch(
-      '${Endpoints.products}/$productId/suppliers/$supplierId',
+    final response = await _dio.patch(
+      '$_productsPath/$productId/suppliers/$supplierId',
       data: payload,
     );
     return response.data as Map<String, dynamic>;
@@ -107,8 +113,8 @@ class SupplierApi {
     String productId,
     String supplierId,
   ) async {
-    await _dioClient.dio.delete(
-      '${Endpoints.products}/$productId/suppliers/$supplierId',
+    await _dio.delete(
+      '$_productsPath/$productId/suppliers/$supplierId',
     );
   }
 
@@ -123,8 +129,8 @@ class SupplierApi {
     };
     if (search.isNotEmpty) queryParameters['search'] = search;
 
-    final response = await _dioClient.dio.get(
-      Endpoints.products,
+    final response = await _dio.get(
+      _productsPath,
       queryParameters: queryParameters,
     );
 
