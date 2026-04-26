@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:mobile_ai_erp/core/stores/supplier/supplier_store.dart';
 import 'package:mobile_ai_erp/data/sharedpref/constants/preferences.dart';
+import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/presentation/customer_management/navigation/customer_navigator.dart';
 import 'package:mobile_ai_erp/presentation/home/store/language/language_store.dart';
@@ -26,6 +27,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final ThemeStore _themeStore = getIt<ThemeStore>();
   final LanguageStore _languageStore = getIt<LanguageStore>();
+  final SharedPreferenceHelper _sharedPreferenceHelper = getIt<SharedPreferenceHelper>();
   late final CartStore _cartStore;
   late final WishlistStore _wishlistStore;
 
@@ -454,9 +456,10 @@ class _HomeScreenState extends State<HomeScreen> {
         _themeStore.changeBrightnessToDark(!_themeStore.darkMode);
         break;
       case 'logout':
-        SharedPreferences.getInstance().then((preference) {
-          preference.setBool(Preferences.is_logged_in, false);
-          Navigator.of(context).pushReplacementNamed(Routes.login);
+        _sharedPreferenceHelper.removeAuthToken().then((_) {
+          if (mounted) {
+            Navigator.of(context).pushReplacementNamed(Routes.login);
+          }
         });
         break;
     }
@@ -520,9 +523,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildLogoutButton() {
     return IconButton(
       onPressed: () {
-        SharedPreferences.getInstance().then((preference) {
-          preference.setBool(Preferences.is_logged_in, false);
-          Navigator.of(context).pushReplacementNamed(Routes.login);
+        _sharedPreferenceHelper.removeAuthToken().then((_) {
+          if (mounted) {
+            Navigator.of(context).pushReplacementNamed(Routes.login);
+          }
         });
       },
       icon: const Icon(Icons.power_settings_new),

@@ -1,0 +1,143 @@
+import 'dart:async';
+
+import 'package:dio/dio.dart';
+import 'package:mobile_ai_erp/core/data/network/constants/network_constants.dart';
+import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
+import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
+import 'package:mobile_ai_erp/domain/entity/user/user.dart';
+import 'package:mobile_ai_erp/domain/entity/user/user_status.dart';
+import 'package:mobile_ai_erp/domain/repository/user/auth_repository.dart';
+
+class AuthRepositoryImpl implements AuthRepository {
+  final DioClient dioClient;
+
+  AuthRepositoryImpl(this.dioClient);
+
+  @override
+  Future<User> getAuthStatus(String accessToken) async {
+    try {
+      final response = await dioClient.dio.get(
+        Endpoints.authStatus,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data;
+        return User(
+          id: data['id'] ?? 0,
+          name: data['name'] ?? '',
+          email: data['email'] ?? '',
+          phone: data['phone'] ?? '',
+          status: UserStatus.values.firstWhere(
+            (e) => e.name == data['status'],
+            orElse: () => UserStatus.active,
+          ),
+          roleId: data['roleId'] ?? 0,
+          ssoId: data['ssoId'],
+          tenantId: data['tenantId'],
+          tenantName: data['tenantName'],
+        );
+      } else {
+        throw Exception('Failed to get auth status');
+      }
+    } catch (e) {
+      throw Exception('Auth status request failed: $e');
+    }
+  }
+
+  @override
+  Future<Map<String, String>> refreshToken(String refreshToken) async {
+    try {
+      final response = await dioClient.dio.get(
+        Endpoints.authRefresh,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $refreshToken',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data;
+        return {
+          'accessToken': data['accessToken'] ?? '',
+          'refreshToken': data['refreshToken'], // May be null if not rotated
+        };
+      } else {
+        throw Exception('Failed to refresh token');
+      }
+    } catch (e) {
+      throw Exception('Token refresh request failed: $e');
+    }
+  }
+
+  @override
+  Future<void> signOut(String accessToken, String tenantId) async {
+    try {
+      await dioClient.dio.get(
+        Endpoints.authSignOut,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+            'X-Tenant-Id': tenantId,
+          },
+        ),
+      );
+    } catch (e) {
+      // Sign out should not fail the operation, just log
+      print('Sign out request failed: $e');
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> createTenant(String name, String subdomain) async {
+    try {
+      final response = await dioClient.dio.post(
+        Endpoints.tenantsCreate,
+        data: {
+          'name': name,
+          'subdomain': subdomain,
+        },
+      );
+
+      if (response.statusCode == 201 && response.data != null) {
+        return response.data;
+      } else {
+        throw Exception('Failed to create tenant');
+      }
+    } catch (e) {
+      throw Exception('Create tenant request failed: $e');
+    }
+  }
+
+  @override
+  Future<AuthToken> getAccessToken(String authorizationCode, String codeVerifier) async {
+    try {
+      final response = await dioClient.dio.post(
+        Endpoints.stackAuthToken,
+        data: {
+          'grant_type': 'authorization_code',
+          'client_id': NetworkConstants.stackAuthClientId,
+          'client_secret': NetworkConstants.stackAuthClientSecret,
+          'code': authorizationCode,
+          'code_verifier': codeVerifier,
+        },
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data;
+        final accessToken = data['access_token'] ?? '';
+        final refreshToken = data['refresh_token'] ?? '';
+        return AuthToken(accessToken, refreshToken);
+      } else {
+        throw Exception('Failed to get access token');
+      }
+    } catch (e) {
+      throw Exception('Create access token retrieval request failed: $e');
+    }
+  }
+}
