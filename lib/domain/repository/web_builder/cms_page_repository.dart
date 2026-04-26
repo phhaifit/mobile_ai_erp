@@ -11,4 +11,6 @@ abstract class CmsPageRepository {
   Future<void> savePage(CmsPage page);
 
   Future<void> deletePage(String id);
+
+  Future<void> publishPage(String id, bool published);
 }
