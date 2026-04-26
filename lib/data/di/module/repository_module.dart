@@ -124,7 +124,7 @@ class RepositoryModule {
 
     // web_builder:--------------------------------------------------------------
     getIt.registerLazySingleton<CmsPageRepository>(
-      () => CmsPageRepositoryImpl(),
+      () => CmsPageRepositoryImpl(getIt<WebBuilderApi>()),
     );
     getIt.registerLazySingleton<WebThemeRepository>(
       () => WebThemeRepositoryImpl(getIt<WebBuilderApi>()),
