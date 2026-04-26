@@ -58,7 +58,7 @@ class NetworkModule {
     // customer dio:-----------------------------------------------------------
     getIt.registerSingleton<DioConfigs>(
       const DioConfigs(
-        baseUrl: Endpoints.customerBaseUrl,
+        baseUrl: Endpoints.storefrontAccountUrl,
         connectionTimeout: Endpoints.connectionTimeout,
         receiveTimeout: Endpoints.receiveTimeout,
       ),

@@ -19,10 +19,25 @@ abstract class _AddressStore with Store {
 
   @action
   Future<void> fetchAddresses() async {
-    isLoading = true;
-    final data = await _repository.getAddresses(); // Use _repository here
-    addresses = ObservableList.of(data);
-    isLoading = false;
+    try {
+      print('🔵 [AddressStore.fetchAddresses] Starting addresses fetch');
+      isLoading = true;
+      
+      final data = await _repository.getAddresses();
+      print('✅ [AddressStore.fetchAddresses] Got ${data.length} addresses');
+      
+      if (data.isEmpty) {
+        print('⚠️ [AddressStore.fetchAddresses] Backend endpoint missing!');
+        print('⚠️ [AddressStore.fetchAddresses] See: report_missing_endpoints.md');
+      }
+      
+      addresses = ObservableList.of(data);
+      isLoading = false;
+    } catch (e) {
+      print('❌ [AddressStore.fetchAddresses] Error: $e');
+      isLoading = false;
+      // Don't rethrow - show empty list
+    }
   }
 
   @action

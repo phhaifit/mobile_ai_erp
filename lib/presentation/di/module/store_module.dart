@@ -30,6 +30,8 @@ import 'package:mobile_ai_erp/domain/usecase/post/get_post_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/customer/customer_forgot_password_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/customer/customer_login_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/customer/customer_register_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/get_profile_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/update_profile_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/create_role_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/is_logged_in_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/login_usecase.dart';
@@ -44,6 +46,11 @@ import 'package:mobile_ai_erp/domain/usecase/web_builder/get_web_theme_by_id_use
 import 'package:mobile_ai_erp/domain/usecase/web_builder/get_web_themes_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/save_cms_page_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/save_store_settings_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/order/cancel_order_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/order/get_order_details_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/order/get_order_history_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/order/reorder_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/order/submit_return_request_usecase.dart';
 import 'package:mobile_ai_erp/presentation/customer_management/store/customer_store.dart';
 import 'package:mobile_ai_erp/presentation/home/store/language/language_store.dart';
 import 'package:mobile_ai_erp/presentation/home/store/theme/theme_store.dart';
@@ -69,6 +76,7 @@ import 'package:mobile_ai_erp/presentation/web_builder/store/cms_page_store.dart
 import 'package:mobile_ai_erp/presentation/web_builder/store/store_settings_store.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/store/web_theme_store.dart';
 
+
 import '../../../di/service_locator.dart';
 
 class StoreModule {
@@ -79,9 +87,23 @@ class StoreModule {
       () => FormStore(getIt<FormErrorStore>(), getIt<ErrorStore>()),
     );
     
-    getIt.registerLazySingleton<ProfileStore>(() => ProfileStore(getIt<AccountCustomerRepository>()));
+    getIt.registerSingleton<ProfileStore>(
+      ProfileStore(
+        getIt<GetProfileUseCase>(),
+        getIt<UpdateProfileUseCase>(),
+      ),
+    );
+
     getIt.registerLazySingleton<AddressStore>(() => AddressStore(getIt<AddressRepository>()));
-    getIt.registerLazySingleton<OrderStore>(() => OrderStore(getIt<OrderRepository>()));
+    getIt.registerSingleton<OrderStore>(
+      OrderStore(
+        getIt<GetOrderHistoryUseCase>(),
+        getIt<GetOrderDetailsUseCase>(),
+        getIt<CancelOrderUseCase>(),
+        getIt<SubmitReturnRequestUseCase>(),
+        getIt<ReorderUseCase>(),
+      ),
+    );
     getIt.registerLazySingleton(() => ReportsMockRepository());
 
     getIt.registerSingleton<auth.LoginStore>(

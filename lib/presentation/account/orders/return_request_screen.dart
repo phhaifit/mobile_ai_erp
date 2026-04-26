@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../../../../domain/entity/order/order.dart';
 import '../../../../di/service_locator.dart';
 import '../store/order_store.dart';
+import '../../../../domain/entity/order/return_request.dart'; 
+import '../../../../di/service_locator.dart';
+import '../store/order_store.dart';
 
 class ReturnRequestScreen extends StatefulWidget {
   const ReturnRequestScreen({super.key});
@@ -125,9 +128,19 @@ class _ReturnRequestScreenState extends State<ReturnRequestScreen> {
                       : () async {
                           if (_formKey.currentState!.validate()) {
                             setState(() => _isLoading = true);
+                            
+                            final payload = SubmitReturnPayload(
+                              reason: '$_selectedReason: ${_reasonController.text}',
+                              items: order.items.map((item) => ReturnItemPayload(
+                                orderItemId: item.id,
+                                quantity: item.quantity, // Defaults to returning the full quantity
+                              )).toList(),
+                            );
+                            
                             try {
-                              await orderStore.submitReturnRequest(
-                                  order.id, _selectedReason);
+                              // FIX 2 & 3: Use orderStore and order.id
+                              await orderStore.submitReturnRequest(order.id, payload);
+                              
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
@@ -136,7 +149,6 @@ class _ReturnRequestScreenState extends State<ReturnRequestScreen> {
                                 Navigator.pop(context);
                               }
                             } catch (e) {
-                              // Handle network errors when implementing real API calls
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(content: Text('Failed to submit: $e')),

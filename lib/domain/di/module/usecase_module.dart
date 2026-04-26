@@ -48,6 +48,13 @@ import 'package:mobile_ai_erp/domain/usecase/customer/customer_login_usecase.dar
 import 'package:mobile_ai_erp/domain/usecase/customer/customer_register_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/customer/customer_forgot_password_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/customer/get_profile_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/order/get_order_details_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/order/get_order_history_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/order/reorder_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/order/submit_return_request_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/order/cancel_order_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/update_profile_usecase.dart';
+import 'package:mobile_ai_erp/domain/repository/account/order_repository.dart';
 
 import '../../../di/service_locator.dart';
 
@@ -181,6 +188,28 @@ class UseCaseModule {
     );
     getIt.registerSingleton<GetProfileUseCase>(
       GetProfileUseCase(getIt<AccountCustomerRepository>()),
+    );
+
+    getIt.registerSingleton<UpdateProfileUseCase>(
+      UpdateProfileUseCase(getIt<AccountCustomerRepository>()),
+    );
+
+    // Customer order:-------------------------------------------------------
+
+    getIt.registerSingleton<GetOrderHistoryUseCase>(
+      GetOrderHistoryUseCase(getIt<OrderRepository>()),
+    );
+    getIt.registerSingleton<GetOrderDetailsUseCase>(
+      GetOrderDetailsUseCase(getIt<OrderRepository>()),
+    );
+    getIt.registerSingleton<CancelOrderUseCase>(
+      CancelOrderUseCase(getIt<OrderRepository>()),
+    );
+    getIt.registerSingleton<SubmitReturnRequestUseCase>(
+      SubmitReturnRequestUseCase(getIt<OrderRepository>()),
+    );
+    getIt.registerSingleton<ReorderUseCase>(
+      ReorderUseCase(getIt<OrderRepository>()),
     );
   }
 }

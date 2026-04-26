@@ -94,15 +94,15 @@ class RepositoryModule {
     ));
     
     getIt.registerLazySingleton<AccountCustomerApiDataSource>(
-        () => AccountCustomerApiDataSource(getIt<CustomerApi>()));
+        () => AccountCustomerApiDataSource(getIt<CustomerApi>(), getIt<SharedPreferenceHelper>()));
 
     getIt.registerLazySingleton<AccountCustomerRepository>(
         () => AccountCustomerRepositoryImpl(getIt<AccountCustomerApiDataSource>()));
 
     getIt.registerLazySingleton<AddressApiDataSource>(
-        () => AddressApiDataSource(getIt<AddressApi>()));
+        () => AddressApiDataSource(getIt<AddressApi>(), getIt<SharedPreferenceHelper>()));
     getIt.registerLazySingleton<OrderApiDataSource>(
-        () => OrderApiDataSource(getIt<OrderApi>()));
+        () => OrderApiDataSource(getIt<OrderApi>(), getIt<SharedPreferenceHelper>()));
 
     getIt.registerLazySingleton<AddressRepository>(
         () => AddressRepositoryImpl(getIt<AddressApiDataSource>()));

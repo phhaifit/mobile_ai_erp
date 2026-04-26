@@ -1,52 +1,39 @@
-enum ReturnStatus { pending, approved, rejected }
+class ReturnItemPayload {
+  final String orderItemId;
+  final int quantity;
+  final String? reason;
 
-class ReturnRequest {
-  final String id;
-  final String orderId;
-  final String reason;
-  final String details;
-  final ReturnStatus status;
-  final DateTime createdAt;
-
-  ReturnRequest({
-    required this.id,
-    required this.orderId,
-    required this.reason,
-    required this.details,
-    this.status = ReturnStatus.pending,
-    required this.createdAt,
+  ReturnItemPayload({
+    required this.orderItemId,
+    required this.quantity,
+    this.reason,
   });
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
-      'orderId': orderId,
-      'reason': reason,
-      'details': details,
-      'status': status.name,
-      'createdAt': createdAt.toIso8601String(),
+      'orderItemId': orderItemId,
+      'quantity': quantity,
+      if (reason != null && reason!.isNotEmpty) 'reason': reason,
     };
   }
+}
 
-  factory ReturnRequest.fromJson(Map<String, dynamic> json) {
-    return ReturnRequest(
-      id: json['id'] ?? '',
-      orderId: json['orderId'] ?? '',
-      reason: json['reason'] ?? '',
-      details: json['details'] ?? '',
-      status: _parseReturnStatus(json['status']),
-      createdAt: json['createdAt'] != null
-          ? DateTime.parse(json['createdAt'])
-          : DateTime.now(),
-    );
-  }
+class SubmitReturnPayload {
+  final String type; // Usually 'return' or 'exchange'
+  final String? reason;
+  final List<ReturnItemPayload> items;
 
-  static ReturnStatus _parseReturnStatus(dynamic status) {
-    if (status == null) return ReturnStatus.pending;
-    final statusStr = status.toString().toLowerCase();
-    return ReturnStatus.values.firstWhere(
-      (e) => e.name.toLowerCase() == statusStr,
-      orElse: () => ReturnStatus.pending,
-    );
+  SubmitReturnPayload({
+    this.type = 'return',
+    this.reason,
+    required this.items,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'type': type,
+      if (reason != null && reason!.isNotEmpty) 'reason': reason,
+      'items': items.map((e) => e.toJson()).toList(),
+    };
   }
 }

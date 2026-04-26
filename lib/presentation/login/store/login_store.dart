@@ -8,6 +8,7 @@ import 'package:mobile_ai_erp/domain/usecase/user/is_logged_in_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/save_login_in_status_usecase.dart';
 import 'package:dio/dio.dart';
 import 'package:mobx/mobx.dart';
+import 'dart:convert';
 
 part 'login_store.g.dart';
 
@@ -91,6 +92,7 @@ abstract class _LoginStore with Store {
   // actions:-------------------------------------------------------------------
   @action
   Future login(String email, String password) async {
+    print('🔵 [LoginStore.login] Starting login for email: $email');
     final CustomerLoginParams loginParams =
         CustomerLoginParams(email: email, password: password);
     final future = _customerLoginUseCase.call(params: loginParams);
@@ -98,17 +100,78 @@ abstract class _LoginStore with Store {
 
     await future.then((value) async {
       if (value != null && value['accessToken'] != null) {
-        await _sharedPreferenceHelper.saveAuthToken(value['accessToken']);
+        print('✅ [LoginStore.login] Login successful, got accessToken');
+        final accessToken = value['accessToken'];
+        
+        // Save the auth token
+        await _sharedPreferenceHelper.saveAuthToken(accessToken);
+        print('✅ [LoginStore.login] Access token saved to SharedPreferences');
+        
+        // Extract customer ID from JWT token
+        final customerId = _extractCustomerIdFromJwt(accessToken);
+        if (customerId != null && customerId.isNotEmpty) {
+          print('🔑 [LoginStore.login] Extracted customer ID from JWT: $customerId');
+          await _sharedPreferenceHelper.saveCustomerId(customerId);
+          print('✅ [LoginStore.login] Customer ID saved to SharedPreferences');
+        } else {
+          print('⚠️ [LoginStore.login] Failed to extract customer ID from JWT');
+        }
+        
         await _saveLoginStatusUseCase.call(params: true);
         this.isLoggedIn = true;
         this.success = true;
+        print('✅ [LoginStore.login] Login completed successfully');
       }
     }).catchError((e) {
+      print('❌ [LoginStore.login] Login error: $e');
       this.isLoggedIn = false;
       this.success = false;
       errorStore.errorMessage = _parseError(e);
       throw e;
     });
+  }
+
+  /// Extract customer ID from JWT token
+  /// JWT format: header.payload.signature
+  /// Payload contains: {"sub": "customer-id", "email": "...", "tid": "...", ...}
+  String? _extractCustomerIdFromJwt(String token) {
+    try {
+      print('🔵 [LoginStore._extractCustomerIdFromJwt] Extracting customer ID from JWT');
+      final parts = token.split('.');
+      if (parts.length != 3) {
+        print('❌ [LoginStore._extractCustomerIdFromJwt] Invalid JWT format (not 3 parts)');
+        return null;
+      }
+
+      // Decode the payload (second part)
+      String payload = parts[1];
+      
+      // Add padding if needed
+      final padLength = 4 - (payload.length % 4);
+      if (padLength != 4) {
+        payload += '=' * padLength;
+      }
+
+      final decodedBytes = base64.decode(payload);
+      final decodedString = utf8.decode(decodedBytes);
+      final jsonPayload = jsonDecode(decodedString) as Map<String, dynamic>;
+
+      print('📦 [LoginStore._extractCustomerIdFromJwt] Decoded JWT payload: $jsonPayload');
+
+      // Extract the 'sub' claim which contains the customer ID
+      final customerId = jsonPayload['sub'] as String?;
+      
+      if (customerId != null && customerId.isNotEmpty) {
+        print('✅ [LoginStore._extractCustomerIdFromJwt] Found customer ID: $customerId');
+        return customerId;
+      } else {
+        print('⚠️ [LoginStore._extractCustomerIdFromJwt] "sub" claim not found in JWT payload');
+        return null;
+      }
+    } catch (e) {
+      print('❌ [LoginStore._extractCustomerIdFromJwt] Error decoding JWT: $e');
+      return null;
+    }
   }
 
   @action
@@ -152,9 +215,12 @@ abstract class _LoginStore with Store {
   }
 
   logout() async {
+    print('🔵 [LoginStore.logout] Starting logout');
     this.isLoggedIn = false;
     await _sharedPreferenceHelper.removeAuthToken();
+    await _sharedPreferenceHelper.removeCustomerId();
     await _saveLoginStatusUseCase.call(params: false);
+    print('✅ [LoginStore.logout] Logout completed, tokens and customer ID cleared');
   }
 
   // general methods:-----------------------------------------------------------

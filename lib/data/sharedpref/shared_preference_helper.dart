@@ -24,6 +24,19 @@ class SharedPreferenceHelper {
     return _sharedPreference.remove(Preferences.auth_token);
   }
 
+  // Customer ID:---------------------------------------------------------------
+  Future<String?> get customerId async {
+    return _sharedPreference.getString(Preferences.customer_id);
+  }
+
+  Future<bool> saveCustomerId(String customerId) async {
+    return _sharedPreference.setString(Preferences.customer_id, customerId);
+  }
+
+  Future<bool> removeCustomerId() async {
+    return _sharedPreference.remove(Preferences.customer_id);
+  }
+
   // Login:---------------------------------------------------------------------
   Future<bool> get isLoggedIn async {
     return _sharedPreference.getBool(Preferences.is_logged_in) ?? false;

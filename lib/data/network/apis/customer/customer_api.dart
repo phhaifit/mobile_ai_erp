@@ -1,6 +1,4 @@
 import 'dart:async';
-
-import 'package:dio/dio.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/customer.dart';
@@ -15,14 +13,11 @@ class CustomerApi {
     try {
       final res = await _dioClient.dio.post(
         Endpoints.customerLogin,
-        data: {
-          'email': email,
-          'password': password,
-        },
+        data: {'email': email, 'password': password},
       );
       return res.data;
     } catch (e) {
-      throw e;
+      rethrow;
     }
   }
 
@@ -31,15 +26,11 @@ class CustomerApi {
     try {
       final res = await _dioClient.dio.post(
         Endpoints.customerRegister,
-        data: {
-          'name': name,
-          'email': email,
-          'password': password,
-        },
+        data: {'name': name, 'email': email, 'password': password},
       );
       return res.data;
     } catch (e) {
-      throw e;
+      rethrow;
     }
   }
 
@@ -51,17 +42,18 @@ class CustomerApi {
         data: {'email': email},
       );
     } catch (e) {
-      throw e;
+      rethrow;
     }
   }
 
-  /// Get customer profile
+  /// Get customer profile (Token provides identity)
   Future<Customer> getProfile() async {
     try {
       final res = await _dioClient.dio.get(Endpoints.customerProfile);
       return Customer.fromJson(res.data);
     } catch (e) {
-      throw e;
+      print('❌ [CustomerApi.getProfile] Error: $e');
+      rethrow;
     }
   }
 
@@ -74,17 +66,19 @@ class CustomerApi {
       );
       return Customer.fromJson(res.data);
     } catch (e) {
-      throw e;
+      print('❌ [CustomerApi.updateProfile] Error: $e');
+      rethrow;
     }
   }
 
-  /// Get loyalty points
+  // Get loyalty points (NOTE: Backend endpoint needed)
   Future<Map<String, dynamic>> getLoyaltyPoints() async {
     try {
       final res = await _dioClient.dio.get(Endpoints.customerLoyalty);
       return res.data;
     } catch (e) {
-      throw e;
+      print('❌ [CustomerApi.getLoyaltyPoints] Error: $e');
+      rethrow;
     }
   }
 }

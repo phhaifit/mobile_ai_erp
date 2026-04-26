@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:mobile_ai_erp/data/network/apis/customer/customer_api.dart';
+import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/customer.dart';
 
 abstract class AccountCustomerDataSource {
@@ -14,8 +15,9 @@ abstract class AccountCustomerDataSource {
 
 class AccountCustomerApiDataSource implements AccountCustomerDataSource {
   final CustomerApi _customerApi;
+  final SharedPreferenceHelper _prefs;
 
-  AccountCustomerApiDataSource(this._customerApi);
+  AccountCustomerApiDataSource(this._customerApi, this._prefs);
 
   @override
   Future<Map<String, dynamic>> login(String email, String password) {
@@ -33,8 +35,26 @@ class AccountCustomerApiDataSource implements AccountCustomerDataSource {
   }
 
   @override
-  Future<Customer> getProfile() {
-    return _customerApi.getProfile();
+  Future<Customer> getProfile() async {
+    try {
+      // Get the stored customer ID (set during login)
+      final customerId = await _prefs.customerId;
+      print('🔵 [AccountCustomerApiDataSource.getProfile] Stored customer ID: $customerId');
+      
+      if (customerId == null || customerId.isEmpty) {
+        print('❌ [AccountCustomerApiDataSource.getProfile] Customer ID is null or empty!');
+        throw Exception('Customer ID not found. User may not be logged in.');
+      }
+      
+      print('📞 [AccountCustomerApiDataSource.getProfile] Calling CustomerApi.getProfile($customerId)');
+      // Use the new unified endpoint with Prisma include
+      final customer = await _customerApi.getProfile();
+      print('✅ [AccountCustomerApiDataSource.getProfile] Got customer: ${customer.name}');
+      return customer;
+    } catch (e) {
+      print('❌ [AccountCustomerApiDataSource.getProfile] Error: $e');
+      rethrow;
+    }
   }
 
   @override

@@ -19,7 +19,7 @@ class _ProfileDashboardScreenState extends State<ProfileDashboardScreen> {
   @override
   void initState() {
     super.initState();
-    _profileStore.fetchProfile();
+    Future.microtask(() => _profileStore.fetchProfile());
   }
 
   @override
@@ -75,7 +75,6 @@ class _ProfileDashboardScreenState extends State<ProfileDashboardScreen> {
           CircleAvatar(
             radius: 40,
             backgroundColor: Colors.blue.shade100,
-            // FIX: Safely check if the name is loaded before cutting the string
             child: Text(
               _profileStore.userName.isNotEmpty 
                   ? _profileStore.userName.substring(0, 1).toUpperCase() 

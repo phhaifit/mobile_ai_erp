@@ -1,66 +1,119 @@
 import 'package:mobx/mobx.dart';
 import '../../../../domain/entity/order/order.dart';
-import '../../../../domain/repository/account/order_repository.dart';
+import '../../../../domain/entity/order/return_request.dart';
+import '../../../../domain/usecase/order/get_order_history_usecase.dart';
+import '../../../../domain/usecase/order/get_order_details_usecase.dart';
+import '../../../../domain/usecase/order/cancel_order_usecase.dart';
+import '../../../../domain/usecase/order/submit_return_request_usecase.dart';
+import '../../../../domain/usecase/order/reorder_usecase.dart';
 
 part 'order_store.g.dart';
 
 class OrderStore = _OrderStore with _$OrderStore;
 
 abstract class _OrderStore with Store {
-  final OrderRepository _repository; // Changed type and name
+  final GetOrderHistoryUseCase _getOrderHistory;
+  final GetOrderDetailsUseCase _getOrderDetails;
+  final CancelOrderUseCase _cancelOrder;
+  final SubmitReturnRequestUseCase _submitReturnRequest;
+  final ReorderUseCase _reorder;
 
-  _OrderStore(this._repository);
+  _OrderStore(
+    this._getOrderHistory,
+    this._getOrderDetails,
+    this._cancelOrder,
+    this._submitReturnRequest,
+    this._reorder,
+  );
 
   @observable
   ObservableList<Order> orders = ObservableList<Order>();
 
   @observable
+  Order? currentOrderDetails;
+
+  @observable
   bool isLoading = false;
 
   @action
-  Future<void> fetchOrders({String? status}) async {
-    isLoading = true;
-    final data = await _repository.getOrderHistory(status: status);
-    orders = ObservableList.of(data);
-    isLoading = false;
+  Future<void> fetchOrders({String? status, int? page, int? pageSize}) async {
+    try {
+      // Only show full loading spinner on initial load
+      if (page == null || page == 1) isLoading = true; 
+      
+      final data = await _getOrderHistory.call(
+        params: GetOrderHistoryParams(status: status, page: page, pageSize: pageSize),
+      );
+      
+      if (page != null && page > 1) {
+        // Append to existing list for infinite scrolling
+        orders.addAll(data);
+      } else {
+        // Fresh load (page 1)
+        orders = ObservableList.of(data);
+      }
+    } catch (e) {
+      print('❌ [OrderStore.fetchOrders] Error: $e');
+    } finally {
+      isLoading = false;
+    }
   }
 
   @action
-  Future<Order> getOrderDetails(String orderId) async {
-    isLoading = true;
-    final order = await _repository.getOrderDetails(orderId);
-    isLoading = false;
-    return order;
+  Future<Order?> getOrderDetails(String orderId) async {
+    try {
+      isLoading = true;
+      final order = await _getOrderDetails.call(params: orderId);
+      currentOrderDetails = order;
+      return order;
+    } catch (e) {
+      print('❌ [OrderStore.getOrderDetails] Error: $e');
+      return null;
+    } finally {
+      isLoading = false;
+    }
   }
 
   @action
   Future<void> cancelOrder(String orderId) async {
-    isLoading = true;
-    await _repository.cancelOrder(orderId);
-    await fetchOrders(); // Refresh orders
-    isLoading = false;
+    try {
+      isLoading = true;
+      await _cancelOrder.call(params: orderId);
+      await fetchOrders(); 
+    } catch (e) {
+      print('❌ [OrderStore.cancelOrder] Error: $e');
+      rethrow;
+    } finally {
+      isLoading = false;
+    }
   }
 
   @action
-  Future<void> submitReturnRequest(String orderId, String reason) async {
-    isLoading = true;
-    await _repository.submitReturnRequest(orderId, {'reason': reason});
-    isLoading = false;
+  Future<void> submitReturnRequest(String orderId, SubmitReturnPayload payload) async {
+    try {
+      isLoading = true;
+      await _submitReturnRequest.call(
+        params: SubmitReturnParams(orderId: orderId, payload: payload),
+      );
+    } catch (e) {
+      print('❌ [OrderStore.submitReturnRequest] Error: $e');
+      rethrow;
+    } finally {
+      isLoading = false;
+    }
   }
 
   @action
-  Future<void> reorder(String orderId) async {
-    isLoading = true;
-    final result = await _repository.reorder(orderId);
-    // Handle reorder result, e.g., navigate to cart or checkout
-    print('Reorder result: $result');
-    isLoading = false;
-  }
-
-  @action
-  void buyAgain(Order order) {
-    // Phase 1 Mock Action: Feature 14 (Checkout) integration placeholder.
-    // In the UI, calling this will trigger a Snackbar saying "Redirecting to Checkout..."
-    print('Mock: Redirecting to Checkout with items from ${order.id}');
+  Future<String?> reorder(String orderId) async {
+    try {
+      isLoading = true;
+      final result = await _reorder.call(params: orderId);
+      return result['cartId'] as String?;
+    } catch (e) {
+      print('❌ [OrderStore.reorder] Error: $e');
+      rethrow;
+    } finally {
+      isLoading = false;
+    }
   }
 }

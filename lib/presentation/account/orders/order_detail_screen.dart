@@ -100,7 +100,7 @@ class OrderDetailScreen extends StatelessWidget {
                   backgroundColor: Colors.blue,
                 ),
                 onPressed: () {
-                  orderStore.buyAgain(order);
+                  orderStore.reorder(order.id);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                         content: Text('Mock: Redirecting to Checkout...')),

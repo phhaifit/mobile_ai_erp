@@ -1,0 +1,13 @@
+import '../../../core/domain/usecase/use_case.dart';
+import '../../repository/account/order_repository.dart';
+
+class CancelOrderUseCase extends UseCase<void, String> {
+  final OrderRepository _repository;
+
+  CancelOrderUseCase(this._repository);
+
+  @override
+  Future<void> call({required String params}) {
+    return _repository.cancelOrder(params); // params is the orderId
+  }
+}

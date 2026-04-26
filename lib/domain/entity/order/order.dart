@@ -1,19 +1,12 @@
 import 'package:decimal/decimal.dart';
 
-enum OrderStatus { 
-  pending, 
-  confirmed, 
-  packing, 
-  shipping, 
-  delivered, 
-  cancelled, 
-  returned 
-}
+enum OrderStatus { pending, confirmed, packing, shipping, delivered, cancelled, returned }
 
 class OrderItem {
   final String id;
   final String productId;
   final String productName;
+  final String? productImageUrl; // Added to show images in UI
   final String sku;
   final int quantity;
   final Decimal unitPrice;
@@ -26,6 +19,7 @@ class OrderItem {
     required this.id,
     required this.productId,
     required this.productName,
+    this.productImageUrl,
     required this.sku,
     required this.quantity,
     required this.unitPrice,
@@ -33,45 +27,54 @@ class OrderItem {
     Decimal? taxRate,
     Decimal? taxAmount,
     required this.totalPrice,
-  })  : discountAmount = discountAmount ?? Decimal.parse('0'),
-        taxRate = taxRate ?? Decimal.parse('0'),
-        taxAmount = taxAmount ?? Decimal.parse('0');
+  })  : discountAmount = discountAmount ?? Decimal.zero,
+        taxRate = taxRate ?? Decimal.zero,
+        taxAmount = taxAmount ?? Decimal.zero;
+
+  factory OrderItem.fromJson(Map<String, dynamic> json) {
+    // Safely extract the nested product data from Prisma
+    final productData = json['products'] as Map<String, dynamic>?;
+    
+    // Extract the primary image URL
+    String? imageUrl;
+    if (productData != null && productData['product_images'] != null) {
+      final images = productData['product_images'] as List;
+      if (images.isNotEmpty) {
+        imageUrl = images[0]['url'] as String?;
+      }
+    }
+
+    return OrderItem(
+      id: json['id'] ?? '',
+      productId: json['product_id'] ?? json['productId'] ?? '',
+      // Prioritize the nested product data, fallback to flat json
+      productName: productData?['name'] ?? json['productName'] ?? json['product_name'] ?? '',
+      productImageUrl: imageUrl,
+      sku: productData?['sku'] ?? json['sku'] ?? '',
+      quantity: json['quantity'] ?? 1,
+      // Use tryParse to prevent crashes on bad data, defaulting to zero
+      unitPrice: Decimal.tryParse((json['unit_price'] ?? json['unitPrice'] ?? '0').toString()) ?? Decimal.zero,
+      discountAmount: Decimal.tryParse((json['discount_amount'] ?? json['discountAmount'] ?? '0').toString()) ?? Decimal.zero,
+      taxRate: Decimal.tryParse((json['tax_rate'] ?? json['taxRate'] ?? '0').toString()) ?? Decimal.zero,
+      taxAmount: Decimal.tryParse((json['tax_amount'] ?? json['taxAmount'] ?? '0').toString()) ?? Decimal.zero,
+      totalPrice: Decimal.tryParse((json['total_price'] ?? json['totalPrice'] ?? '0').toString()) ?? Decimal.zero,
+    );
+  }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'productId': productId,
-      'product_id': productId,
       'productName': productName,
-      'product_name': productName,
+      'productImageUrl': productImageUrl,
       'sku': sku,
       'quantity': quantity,
       'unitPrice': unitPrice.toString(),
-      'unit_price': unitPrice.toString(),
       'discountAmount': discountAmount.toString(),
-      'discount_amount': discountAmount.toString(),
       'taxRate': taxRate.toString(),
-      'tax_rate': taxRate.toString(),
       'taxAmount': taxAmount.toString(),
-      'tax_amount': taxAmount.toString(),
       'totalPrice': totalPrice.toString(),
-      'total_price': totalPrice.toString(),
     };
-  }
-
-  factory OrderItem.fromJson(Map<String, dynamic> json) {
-    return OrderItem(
-      id: json['id'] ?? '',
-      productId: json['productId'] ?? json['product_id'] ?? '',
-      productName: json['productName'] ?? json['product_name'] ?? '',
-      sku: json['sku'] ?? '',
-      quantity: json['quantity'] ?? 0,
-      unitPrice: Decimal.parse((json['unitPrice'] ?? json['unit_price'] ?? '0').toString()),
-      discountAmount: Decimal.parse((json['discountAmount'] ?? json['discount_amount'] ?? '0').toString()),
-      taxRate: Decimal.parse((json['taxRate'] ?? json['tax_rate'] ?? '0').toString()),
-      taxAmount: Decimal.parse((json['taxAmount'] ?? json['tax_amount'] ?? '0').toString()),
-      totalPrice: Decimal.parse((json['totalPrice'] ?? json['total_price'] ?? '0').toString()),
-    );
   }
 }
 
@@ -87,6 +90,11 @@ class Order {
   final String? shippingWard;
   final String code;
   final List<OrderItem> items;
+  
+  // Added relations for the Order Details view
+  final List<dynamic> payments;
+  final List<dynamic> outboundReceipts;
+  final List<dynamic> returnRequests;
 
   Order({
     required this.id,
@@ -100,7 +108,52 @@ class Order {
     this.shippingWard,
     required this.code,
     required this.items,
+    this.payments = const [],
+    this.outboundReceipts = const [],
+    this.returnRequests = const [],
   });
+
+  factory Order.fromJson(Map<String, dynamic> json) {
+    // 1. Bulletproof parsing for the items list
+    List<OrderItem> parsedItems = [];
+    final itemsData = json['items'] ?? json['order_items'] ?? json['orderItems'];
+    
+    if (itemsData != null && itemsData is List) {
+      // Explicitly mapping to OrderItem and casting the list prevents the dynamic type error
+      parsedItems = itemsData
+          .map((item) => OrderItem.fromJson(item as Map<String, dynamic>))
+          .toList()
+          .cast<OrderItem>();
+    }
+
+    // 2. Return the safely parsed Order
+    return Order(
+      id: json['id'] ?? '',
+      status: _parseOrderStatus(json['status']),
+      createdAt: json['createdAt'] != null 
+          ? DateTime.parse(json['createdAt']) 
+          : json['created_at'] != null 
+              ? DateTime.parse(json['created_at']) 
+              : DateTime.now(),
+      
+      // Mapped to match your actual backend payload keys
+      totalAmount: Decimal.tryParse((json['totalPrice'] ?? json['total_price'] ?? json['totalAmount'] ?? '0').toString()) ?? Decimal.zero,
+      shippingFee: Decimal.tryParse((json['shippingFee'] ?? json['shipping_fee'] ?? '0').toString()) ?? Decimal.zero,
+      shippingAddress: json['customerAddress'] ?? json['shippingAddress'] ?? json['shipping_address'] ?? '',
+      
+      shippingProvince: json['shippingProvince'] ?? json['shipping_province'],
+      shippingDistrict: json['shippingDistrict'] ?? json['shipping_district'],
+      shippingWard: json['shippingWard'] ?? json['shipping_ward'],
+      code: json['code'] ?? '',
+      
+      // 🚀 Inject the safely parsed list here
+      items: parsedItems,
+      
+      payments: json['payments'] != null ? List.from(json['payments']) : [],
+      outboundReceipts: json['outbound_receipts'] != null ? List.from(json['outbound_receipts']) : [],
+      returnRequests: json['return_requests'] != null ? List.from(json['return_requests']) : [],
+    );
+  }
 
   Map<String, dynamic> toJson() {
     return {
@@ -118,31 +171,19 @@ class Order {
     };
   }
 
-  factory Order.fromJson(Map<String, dynamic> json) {
-    return Order(
-      id: json['id'] ?? '',
-      status: _parseOrderStatus(json['status']),
-      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : json['created_at'] != null ? DateTime.parse(json['created_at']) : DateTime.now(),
-      totalAmount: Decimal.parse((json['totalAmount'] ?? json['total_amount'] ?? '0').toString()),
-      shippingFee: Decimal.parse((json['shippingFee'] ?? json['shipping_fee'] ?? '0').toString()),
-      shippingAddress: json['shippingAddress'] ?? json['shipping_address'] ?? '',
-      shippingProvince: json['shippingProvince'] ?? json['shipping_province'],
-      shippingDistrict: json['shippingDistrict'] ?? json['shipping_district'],
-      shippingWard: json['shippingWard'] ?? json['shipping_ward'],
-      code: json['code'] ?? '',
-      items: (json['orderItems'] ?? json['order_items'] ?? json['items'] as List<dynamic>?)
-              ?.map((item) => OrderItem.fromJson(item as Map<String, dynamic>))
-              .toList() ??
-          [],
-    );
-  }
-
   static OrderStatus _parseOrderStatus(dynamic status) {
     if (status == null) return OrderStatus.pending;
     final statusStr = status.toString().toLowerCase();
-    return OrderStatus.values.firstWhere(
-      (e) => e.name.toLowerCase() == statusStr,
-      orElse: () => OrderStatus.pending,
-    );
+    switch (statusStr) {
+      case 'confirmed': return OrderStatus.confirmed;
+      case 'packing': return OrderStatus.packing;
+      case 'shipping': return OrderStatus.shipping;
+      case 'delivered': return OrderStatus.delivered;
+      case 'cancelled': return OrderStatus.cancelled;
+      case 'returned': return OrderStatus.returned;
+      case 'pending':
+      default:
+        return OrderStatus.pending;
+    }
   }
 }

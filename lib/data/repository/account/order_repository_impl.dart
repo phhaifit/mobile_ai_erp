@@ -19,7 +19,7 @@ class OrderRepositoryImpl implements OrderRepository {
   Future<void> cancelOrder(String orderId) => _dataSource.cancelOrder(orderId);
 
   @override
-  Future<ReturnRequest> submitReturnRequest(String orderId, Map<String, dynamic> data) =>
+  Future<void> submitReturnRequest(String orderId, Map<String, dynamic> data) =>
       _dataSource.submitReturnRequest(orderId, data);
 
   @override
