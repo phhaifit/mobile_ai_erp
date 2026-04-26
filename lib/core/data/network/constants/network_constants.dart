@@ -9,4 +9,9 @@ class NetworkConstants {
 
   // connectTimeout
   static const int connectionTimeout = 30000;
+
+
+  // DO NOT COMMIT
+  static const String stackAuthClientId = '';
+  static const String stackAuthClientSecret = '';
 }

@@ -7,6 +7,9 @@ class User {
   final String phone;
   final UserStatus status;
   final int roleId;
+  final String? ssoId;
+  final String? tenantId;
+  final String? tenantName;
 
   User({
     required this.id,
@@ -15,6 +18,9 @@ class User {
     required this.phone,
     required this.status,
     required this.roleId,
+    this.ssoId,
+    this.tenantId,
+    this.tenantName,
   });
 
   User copyWith({
@@ -23,6 +29,9 @@ class User {
     String? phone,
     UserStatus? status,
     int? roleId,
+    String? ssoId,
+    String? tenantId,
+    String? tenantName,
   }) {
     return User(
       id: id,
@@ -31,6 +40,9 @@ class User {
       phone: phone ?? this.phone,
       status: status ?? this.status,
       roleId: roleId ?? this.roleId,
+      ssoId: ssoId ?? this.ssoId,
+      tenantId: tenantId ?? this.tenantId,
+      tenantName: tenantName ?? this.tenantName,
     );
   }
 }

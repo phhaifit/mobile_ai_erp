@@ -1,22 +1,32 @@
+import 'dart:math';
+
 import 'package:another_flushbar/flushbar_helper.dart';
+import 'package:flutter/foundation.dart';
 import 'package:mobile_ai_erp/constants/assets.dart';
+import 'package:mobile_ai_erp/core/data/network/constants/network_constants.dart';
 import 'package:mobile_ai_erp/core/stores/form/form_store.dart';
 import 'package:mobile_ai_erp/core/widgets/app_icon_widget.dart';
 import 'package:mobile_ai_erp/core/widgets/empty_app_bar_widget.dart';
 import 'package:mobile_ai_erp/core/widgets/progress_indicator_widget.dart';
 import 'package:mobile_ai_erp/core/widgets/rounded_button_widget.dart';
 import 'package:mobile_ai_erp/core/widgets/textfield_widget.dart';
+import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
 import 'package:mobile_ai_erp/data/sharedpref/constants/preferences.dart';
+import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
+import 'package:mobile_ai_erp/domain/repository/user/auth_repository.dart';
 import 'package:mobile_ai_erp/presentation/home/store/theme/theme_store.dart';
 import 'package:mobile_ai_erp/presentation/login/store/login_store.dart';
 import 'package:mobile_ai_erp/utils/device/device_utils.dart';
 import 'package:mobile_ai_erp/utils/locale/app_localization.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
+import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-import '../../di/service_locator.dart';
+import 'package:mobile_ai_erp/presentation/auth/onboarding_screen.dart';
+import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -24,22 +34,15 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  //text controllers:-----------------------------------------------------------
-  TextEditingController _userEmailController = TextEditingController();
-  TextEditingController _passwordController = TextEditingController();
-
   //stores:---------------------------------------------------------------------
   final ThemeStore _themeStore = getIt<ThemeStore>();
-  final FormStore _formStore = getIt<FormStore>();
   final UserStore _userStore = getIt<UserStore>();
-
-  //focus node:-----------------------------------------------------------------
-  late FocusNode _passwordFocusNode;
+  final AuthRepository _authRepository = getIt<AuthRepository>();
+  final SharedPreferenceHelper _sharedPreferenceHelper = getIt<SharedPreferenceHelper>();
 
   @override
   void initState() {
     super.initState();
-    _passwordFocusNode = FocusNode();
   }
 
   @override
@@ -71,9 +74,11 @@ class _LoginScreenState extends State<LoginScreen> {
             : Center(child: _buildRightSide()),
         Observer(
           builder: (context) {
-            return _userStore.success
-                ? navigate(context)
-                : _showErrorMessage(_formStore.errorStore.errorMessage);
+            return _userStore.isAuthenticated && !_userStore.needsOnboarding
+                ? navigateToHome(context)
+                : _userStore.needsOnboarding
+                    ? navigateToOnboarding(context)
+                    : _showErrorMessage(_userStore.errorMessage ?? '');
           },
         ),
         Observer(
@@ -108,101 +113,100 @@ class _LoginScreenState extends State<LoginScreen> {
           children: <Widget>[
             AppIconWidget(image: 'assets/icons/ic_appicon.png'),
             SizedBox(height: 24.0),
-            _buildUserIdField(),
-            _buildPasswordField(),
-            _buildForgotPasswordButton(),
-            _buildSignInButton()
+            _buildSignInWithStackAuthButton()
           ],
         ),
       ),
     );
   }
 
-  Widget _buildUserIdField() {
-    return Observer(
-      builder: (context) {
-        return TextFieldWidget(
-          hint: AppLocalizations.of(context).translate('login_et_user_email'),
-          inputType: TextInputType.emailAddress,
-          icon: Icons.person,
-          iconColor: _themeStore.darkMode ? Colors.white70 : Colors.black54,
-          textController: _userEmailController,
-          inputAction: TextInputAction.next,
-          autoFocus: false,
-          onChanged: (value) {
-            _formStore.setUserId(_userEmailController.text);
-          },
-          onFieldSubmitted: (value) {
-            FocusScope.of(context).requestFocus(_passwordFocusNode);
-          },
-          errorText: _formStore.formErrorStore.userEmail,
-        );
-      },
-    );
-  }
-
-  Widget _buildPasswordField() {
-    return Observer(
-      builder: (context) {
-        return TextFieldWidget(
-          hint:
-              AppLocalizations.of(context).translate('login_et_user_password'),
-          isObscure: true,
-          padding: EdgeInsets.only(top: 16.0),
-          icon: Icons.lock,
-          iconColor: _themeStore.darkMode ? Colors.white70 : Colors.black54,
-          textController: _passwordController,
-          focusNode: _passwordFocusNode,
-          errorText: _formStore.formErrorStore.password,
-          onChanged: (value) {
-            _formStore.setPassword(_passwordController.text);
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildForgotPasswordButton() {
-    return Align(
-      alignment: FractionalOffset.centerRight,
-      child: MaterialButton(
-        padding: EdgeInsets.all(0.0),
-        child: Text(
-          AppLocalizations.of(context).translate('login_btn_forgot_password'),
-          style: Theme.of(context)
-              .textTheme
-              .bodySmall
-              ?.copyWith(color: Colors.orangeAccent),
-        ),
-        onPressed: () {},
-      ),
-    );
-  }
-
-  Widget _buildSignInButton() {
+  Widget _buildSignInWithStackAuthButton() {
     return RoundedButtonWidget(
-      buttonText: AppLocalizations.of(context).translate('login_btn_sign_in'),
-      buttonColor: Colors.orangeAccent,
+      buttonText: 'Sign In with Stack Auth',
+      buttonColor: Colors.blueAccent,
       textColor: Colors.white,
       onPressed: () async {
-        if (_formStore.canLogin) {
-          DeviceUtils.hideKeyboard(context);
-          _userStore.login(_userEmailController.text, _passwordController.text);
-        } else {
-          _showErrorMessage('Please fill in all fields');
+        DeviceUtils.hideKeyboard(context);
+        try {
+          await _authenticate();
+        } catch (e) {
+          debugPrint(e.toString());
+          _showErrorMessage("Failed to authenticate");
         }
       },
     );
   }
 
-  Widget navigate(BuildContext context) {
-    SharedPreferences.getInstance().then((prefs) {
-      prefs.setBool(Preferences.is_logged_in, true);
+  (String, String) _getRedirectUri() {
+    if (defaultTargetPlatform == TargetPlatform.windows ||
+       defaultTargetPlatform == TargetPlatform.linux ||
+       defaultTargetPlatform == TargetPlatform.macOS) {
+        // TODO: dynamic port
+        return ('http://localhost:13123', 'http://localhost:13123/');
+    }
+    throw UnimplementedError();
+  }
+
+  (String, String) _generateCodeChallenge() {
+    const codeChallenge = "xf6HY7PIgoaCf_eMniSt-45brYE2J_05C9BnfIbueik";
+    const codeVerifier = "W2LPAD4M4ES-3wBjzU6J5ApykmuxQy5VTs3oSmtboDM";
+    return (codeChallenge, codeVerifier);
+  }
+
+  String _randomState(int len) {
+    var r = Random();
+    return String.fromCharCodes(List.generate(len, (index) => r.nextInt(33) + 89));
+  }
+
+  Future<void> _authenticate() async {
+    final (callbackUrlScheme, redirectUri) = _getRedirectUri();
+    final (codeChallenge, codeVerifier) = _generateCodeChallenge();
+    const authProviderId = "google";
+    final state = _randomState(32);
+    final stackAuthUrl = Uri.https(Endpoints.stackAuthHost, "${Endpoints.stackAuthAuthenticate}/$authProviderId", {
+      'client_id': NetworkConstants.stackAuthClientId,
+      'client_secret': NetworkConstants.stackAuthClientSecret,
+      'redirect_uri': redirectUri,
+      'scope': 'legacy',
+      'grant_type': 'authorization_code',
+      'response_type': 'code',
+      'code_challenge_method': "S256",
+      'code_challenge': codeChallenge,
+
+      'state': state,
+    });
+    final resultUriStr = await FlutterWebAuth2.authenticate(url: stackAuthUrl.toString(), callbackUrlScheme: callbackUrlScheme, options: const FlutterWebAuth2Options(useWebview: false));
+    final resultUri = Uri.parse(resultUriStr);
+
+    if (state != (resultUri.queryParameters['code'] ?? '')) {
+      throw ErrorSummary('invalid state received back');
+    }
+    final authorizationCode = resultUri.queryParameters['code'] ?? '';
+    final tokens = await _authRepository.getAccessToken(authorizationCode, codeVerifier);
+    debugPrint("Access token: ${tokens.accessToken}");
+    debugPrint("Refresh token: ${tokens.refreshToken}");
+
+    final user = await _authRepository.getAuthStatus(tokens.accessToken);
+    debugPrint(user.toString());
+
+    await _sharedPreferenceHelper.saveAuthToken(accessToken: tokens.accessToken, refreshToken: tokens.refreshToken);
+  }
+
+  Widget navigateToHome(BuildContext context) {
+    Future.delayed(Duration(milliseconds: 0), () {
+      if (context.mounted) {
+        Navigator.of(context).pushNamedAndRemoveUntil(Routes.home, (Route<dynamic> route) => false);
+      }
     });
 
+    return Container();
+  }
+
+  Widget navigateToOnboarding(BuildContext context) {
     Future.delayed(Duration(milliseconds: 0), () {
-      Navigator.of(context).pushNamedAndRemoveUntil(
-          Routes.home, (Route<dynamic> route) => false);
+      if (context.mounted) {
+        Navigator.of(context).pushNamedAndRemoveUntil(Routes.onboarding, (Route<dynamic> route) => false);
+      }
     });
 
     return Container();
@@ -228,10 +232,6 @@ class _LoginScreenState extends State<LoginScreen> {
   // dispose:-------------------------------------------------------------------
   @override
   void dispose() {
-    // Clean up the controller when the Widget is removed from the Widget tree
-    _userEmailController.dispose();
-    _passwordController.dispose();
-    _passwordFocusNode.dispose();
     super.dispose();
   }
 }

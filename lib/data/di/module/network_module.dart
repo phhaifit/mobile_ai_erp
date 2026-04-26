@@ -1,7 +1,10 @@
+import 'package:dio/dio.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/configs/dio_configs.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/auth_interceptor.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/logging_interceptor.dart';
+import 'package:mobile_ai_erp/core/data/network/dio/interceptors/tenant_header_interceptor.dart';
+import 'package:mobile_ai_erp/core/data/network/dio/interceptors/token_refresh_interceptor.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
 import 'package:mobile_ai_erp/data/network/interceptors/error_interceptor.dart';
@@ -24,6 +27,20 @@ class NetworkModule {
         accessToken: () async => await getIt<SharedPreferenceHelper>().authToken,
       ),
     );
+    getIt.registerSingleton<TenantHeaderInterceptor>(
+      TenantHeaderInterceptor(
+        tenantId: () async => await getIt<SharedPreferenceHelper>().tenantId,
+      ),
+    );
+    getIt.registerSingleton<TokenRefreshInterceptor>(
+      TokenRefreshInterceptor(
+        accessToken: () async => await getIt<SharedPreferenceHelper>().authToken,
+        getRefreshToken: () async => await getIt<SharedPreferenceHelper>().refreshToken,
+        saveAuthToken: (tokens) async => await getIt<SharedPreferenceHelper>().saveAuthToken(accessToken: tokens.$1, refreshToken: tokens.$2),
+        tenantId: () async => await getIt<SharedPreferenceHelper>().tenantId,
+        dio: Dio(BaseOptions(baseUrl: Endpoints.baseUrl)), // Separate Dio with same baseUrl
+      ),
+    );
 
     // rest client:-------------------------------------------------------------
     getIt.registerSingleton(RestClient());
@@ -40,6 +57,8 @@ class NetworkModule {
       DioClient(dioConfigs: getIt())
         ..addInterceptors(
           [
+            getIt<TokenRefreshInterceptor>(),
+            getIt<TenantHeaderInterceptor>(),
             getIt<AuthInterceptor>(),
             getIt<ErrorInterceptor>(),
             getIt<LoggingInterceptor>(),

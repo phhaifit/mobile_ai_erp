@@ -16,21 +16,33 @@ class SharedPreferenceHelper {
     return _sharedPreference.getString(Preferences.auth_token);
   }
 
-  Future<bool> saveAuthToken(String authToken) async {
-    return _sharedPreference.setString(Preferences.auth_token, authToken);
+  Future<bool> saveAuthToken({required String accessToken, required String refreshToken}) async {
+    return _sharedPreference.setStringList(Preferences.auth_token, [accessToken, refreshToken]);
   }
 
   Future<bool> removeAuthToken() async {
     return _sharedPreference.remove(Preferences.auth_token);
   }
 
-  // Login:---------------------------------------------------------------------
-  Future<bool> get isLoggedIn async {
-    return _sharedPreference.getBool(Preferences.is_logged_in) ?? false;
+  Future<String?> get refreshToken async {
+    return _sharedPreference.getStringList(Preferences.auth_token)?.first;
   }
 
-  Future<bool> saveIsLoggedIn(bool value) async {
-    return _sharedPreference.setBool(Preferences.is_logged_in, value);
+  Future<String?> get tenantId async {
+    return _sharedPreference.getString(Preferences.tenant_id);
+  }
+
+  Future<bool> saveTenantId(String tenantId) async {
+    return _sharedPreference.setString(Preferences.tenant_id, tenantId);
+  }
+
+  Future<bool> removeTenantId() async {
+    return _sharedPreference.remove(Preferences.tenant_id);
+  }
+
+  // Login:---------------------------------------------------------------------
+  Future<bool> get isLoggedIn async {
+    return _sharedPreference.containsKey(Preferences.auth_token);
   }
 
   // Theme:------------------------------------------------------
