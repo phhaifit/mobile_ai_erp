@@ -15,4 +15,7 @@ class Endpoints {
 
   // brand endpoints
   static const String brandsUrl = '$baseUrl/brands';
+
+  // category endpoints
+  static const String categoriesUrl = '$baseUrl/categories';
 }

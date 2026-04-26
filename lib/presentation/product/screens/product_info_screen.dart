@@ -170,9 +170,9 @@ class _ProductInfoScreenState extends State<ProductInfoScreen> {
                 SizedBox(height: 20),
                 _buildDetailRow(ProductStrings.skuLabel, product.sku),
                 SizedBox(height: 16),
-                _buildDetailRow(ProductStrings.category, MockProductDataSource.getCategoryName(product.categoryId)),
+                _buildDetailRow(ProductStrings.category, MockProductDataSource.getCategoryName(int.parse(product.categoryId ?? '0'))),
                 SizedBox(height: 16),
-                _buildDetailRow(ProductStrings.brand, MockProductDataSource.getBrandName(product.brandId)),
+                _buildDetailRow(ProductStrings.brand, MockProductDataSource.getBrandName(int.parse(product.brandId ?? '0'))),
                 SizedBox(height: 16),
                 _buildDetailRow(
                   ProductStrings.tags,

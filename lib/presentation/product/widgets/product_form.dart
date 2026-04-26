@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter/services.dart';
+// import 'package:mobile_ai_erp/data/network/apis/brands/brand_api.dart';
+// import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
+// import 'package:mobile_ai_erp/data/network/exceptions/network_exceptions.dart';
+// import 'package:mobile_ai_erp/data/network/rest_client.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/entity/product/product_status.dart';
 import 'package:mobile_ai_erp/presentation/product/store/product_form_store.dart';
@@ -20,6 +24,7 @@ class ProductForm extends StatefulWidget {
 }
 
 class _ProductFormState extends State<ProductForm> {
+  // final BrandApi _brandApi = BrandApi(RestClient());
   late TextEditingController _nameController;
   late TextEditingController _skuController;
   late TextEditingController _priceController;
@@ -39,9 +44,23 @@ class _ProductFormState extends State<ProductForm> {
     {'id': 4, 'name': 'oz'},
   ];
 
+  // void fetchBrands() async {
+  //   try {
+  //     final test = await _brandApi.getBrands();
+  //     log(test.toString());
+  //   }
+  //   on NetworkException catch(e) {
+  //     log('Error fetching brands: ${e.message} - status ${e.statusCode}');
+  //   }
+  //   catch (e) {
+  //     log('Unexpected error: ${e.toString()}');
+  //   }
+  // }
+
   @override
   void initState() {
     super.initState();
+    // fetchBrands();
     _initializeControllers();
     
     // Sync controllers with form store values (especially important for edit mode)

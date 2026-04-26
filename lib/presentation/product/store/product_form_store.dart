@@ -51,10 +51,10 @@ abstract class _ProductFormStore with Store {
   ProductStatus status = ProductStatus.ACTIVE;
 
   @observable
-  int categoryId = 1;
+  String? categoryId; // category ID of product (UUID string from backend). product can have no category (send null)
 
   @observable
-  int brandId = 1;
+  String? brandId; // brand ID of product (UUID string from backend). product can have no brand (send null)
 
   @observable
   String? warranteeMonths; // warrantee time for product, in months
@@ -110,9 +110,7 @@ abstract class _ProductFormStore with Store {
         priceError.isEmpty &&
         categoryBrandError.isEmpty &&
         name.isNotEmpty &&
-        sku.isNotEmpty &&
-        categoryId > 0 &&
-        brandId > 0;
+        sku.isNotEmpty;
   }
 
   @computed
@@ -172,12 +170,6 @@ abstract class _ProductFormStore with Store {
     //   sellingPriceError = "";
     // }
 
-    // Validate category and brand
-    if (categoryId <= 0 || brandId <= 0) {
-      categoryBrandError = 'Please select a category and brand';
-    } else {
-      categoryBrandError = "";
-    }
 
     // Validate weight and unit
     weightError = "";
@@ -255,13 +247,13 @@ abstract class _ProductFormStore with Store {
   }
 
   @action
-  void setCategoryId(int value) {
+  void setCategoryId(String? value) {
     categoryId = value;
     validateForm();
   }
 
   @action
-  void setBrandId(int value) {
+  void setBrandId(String? value) {
     brandId = value;
     validateForm();
   }
@@ -455,8 +447,8 @@ abstract class _ProductFormStore with Store {
     weight = null;
     weightUnitId = null;
     status = ProductStatus.ACTIVE;
-    categoryId = 1;
-    brandId = 1;
+    categoryId = null;
+    brandId = null;
     tagIds = [];
     imageUrls = [];
     editingProduct = null;

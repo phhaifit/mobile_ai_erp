@@ -15,8 +15,8 @@ class Product {
   final double rating; // average rating from customers, between 0 and 5
   final String description;
   final ProductStatus status;
-  final int categoryId;
-  final int brandId;
+  final String? categoryId;
+  final String? brandId;
   final List<int> tagIds;
   final List<String> imageUrls;
   final DateTime? createdAt;
@@ -99,8 +99,8 @@ class Product {
     double? rating,
     String? description,
     ProductStatus? status,
-    int? categoryId,
-    int? brandId,
+    String? categoryId,
+    String? brandId,
     List<int>? tagIds,
     List<String>? imageUrls,
     DateTime? createdAt,

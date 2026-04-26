@@ -1,6 +1,8 @@
+import 'package:mobile_ai_erp/data/datasources/product_metadata/product_metadata_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/product_metadata/product_metadata_datasource.dart';
 import 'package:mobile_ai_erp/data/network/apis/brands/brand_api.dart';
 import 'package:mobile_ai_erp/data/network/rest_client.dart';
+import 'package:mobile_ai_erp/domain/entity/product/product.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/attribute.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/attribute_option.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/brand.dart';
@@ -12,11 +14,12 @@ import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadat
 class ProductMetadataRepositoryImpl extends ProductMetadataRepository {
   ProductMetadataRepositoryImpl(this._dataSource);
 
-  final ProductMetadataDataSource _dataSource;
-  final BrandApi _brandApi = BrandApi(RestClient());
+  final ProductMetadataDataSource _dataSource; // mock source, remove later
+
+  final ProductMetadataDatasource _metadataSource  = ProductMetadataDatasource(); // local source, remove later
 
   @override
-  Future<List<Category>> getCategories() => _dataSource.getCategories();
+  Future<List<Category>> getCategories() => _metadataSource.getCategories();
 
   @override
   Future<Category> saveCategory(Category category) =>
@@ -69,13 +72,7 @@ class ProductMetadataRepositoryImpl extends ProductMetadataRepository {
 
   @override
   Future<List<Brand>> getBrands() {
-    return _brandApi.getBrands().then((response) {
-      if (response is List) {
-        return response.map((item) => Brand.fromJson(item)).toList();
-      } else {
-        throw Exception('Unexpected response format');
-      }
-    });
+    return _metadataSource.getBrands();
   }
 
   @override

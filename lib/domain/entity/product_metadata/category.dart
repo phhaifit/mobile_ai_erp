@@ -22,13 +22,13 @@ class Category {
 
   final String id;
   final String name;
-  final String code;
+  final String code; // not in db design, remove from model when refactoring
   final String slug;
   final String? parentId;
-  final int sortOrder;
+  final int sortOrder; // what is sort order
   final CategoryStatus status;
   final String? description;
-  final String? coverImageUrl;
+  final String? coverImageUrl; // not in db design, remove from model when refactoring
 
   bool get isActive => status == CategoryStatus.active;
 
@@ -58,6 +58,22 @@ class Category {
       coverImageUrl: identical(coverImageUrl, _sentinel)
           ? this.coverImageUrl
           : coverImageUrl as String?,
+    );
+  }
+
+  factory Category.fromJson(Map<String, dynamic> json) {
+    return Category(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      code: "", // not in db design, remove from model when refactoring
+      slug: json['slug'] as String,
+      parentId: json['parent_id'] as String?,
+      sortOrder: 0, 
+      status: (json['is_active'] as bool? ?? true)
+          ? CategoryStatus.active
+          : CategoryStatus.archived,
+      description: json['description'] as String?,
+      coverImageUrl: null, // not in db design, remove from model when refactoring
     );
   }
 }
