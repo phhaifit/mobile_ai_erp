@@ -205,16 +205,22 @@ class _FulfillmentListScreenState extends State<FulfillmentListScreen> {
 
   Color _getStatusColor(FulfillmentStatus status) {
     switch (status) {
+      case FulfillmentStatus.newOrder:
+        return Colors.grey.shade500;
       case FulfillmentStatus.pending:
         return Colors.orange;
-      case FulfillmentStatus.processing:
-        return Colors.blue;
+      case FulfillmentStatus.confirmed:
+        return Colors.indigo;
+      case FulfillmentStatus.packing:
+        return Colors.deepOrange;
+      case FulfillmentStatus.shipping:
+        return Colors.teal;
       case FulfillmentStatus.partiallyShipped:
         return Colors.cyan;
-      case FulfillmentStatus.shipped:
-        return Colors.teal;
       case FulfillmentStatus.delivered:
         return Colors.green;
+      case FulfillmentStatus.success:
+        return Colors.green.shade700;
       case FulfillmentStatus.cancelled:
         return Colors.red;
       case FulfillmentStatus.returned:
