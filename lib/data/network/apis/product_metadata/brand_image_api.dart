@@ -19,7 +19,7 @@ class BrandImageApi {
   Future<BrandImage?> getBrandImage(String brandId) async {
     try {
       final response = await _dioClient.dio.get<dynamic>(
-        '/brands/$brandId/images',
+        erpMetadataPath('/brands/$brandId/images'),
       );
       final data = response.data;
       if (data == null || data is String) {
@@ -44,7 +44,7 @@ class BrandImageApi {
     try {
       final multipartFile = await _buildMultipartFile(file);
       final response = await _dioClient.dio.post<Map<String, dynamic>>(
-        '/brands/$brandId/images/upload',
+        erpMetadataPath('/brands/$brandId/images/upload'),
         data: FormData.fromMap(<String, dynamic>{'file': multipartFile}),
       );
       return _mapBrandImage(response.data ?? const <String, dynamic>{});
@@ -55,7 +55,7 @@ class BrandImageApi {
 
   Future<void> deleteBrandImage(String brandId) async {
     try {
-      await _dioClient.dio.delete<void>('/brands/$brandId/images');
+      await _dioClient.dio.delete<void>(erpMetadataPath('/brands/$brandId/images'));
     } on DioException catch (error) {
       throw mapMetadataWriteError(error);
     }

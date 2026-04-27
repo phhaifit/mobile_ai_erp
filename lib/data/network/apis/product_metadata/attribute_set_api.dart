@@ -33,7 +33,7 @@ class AttributeSetApi {
         queryParams['sortOrder'] = sortOrder;
       }
       final response = await _dioClient.dio.get<Map<String, dynamic>>(
-        '/attribute-sets',
+        erpMetadataPath('/attribute-sets'),
         queryParameters: queryParams,
       );
       final data = response.data?['data'] as List<dynamic>? ?? const <dynamic>[];
@@ -55,7 +55,7 @@ class AttributeSetApi {
   Future<AttributeSet> getAttributeSetById(String attributeSetId) async {
     try {
       final response = await _dioClient.dio
-          .get<Map<String, dynamic>>('/attribute-sets/$attributeSetId');
+          .get<Map<String, dynamic>>(erpMetadataPath('/attribute-sets/$attributeSetId'));
       return _mapAttributeSet(response.data ?? const <String, dynamic>{});
     } on DioException catch (error) {
       throw mapMetadataWriteError(error);
@@ -64,7 +64,7 @@ class AttributeSetApi {
 
   Future<List<AttributeValue>> getAllAttributeValues() async {
     try {
-      final response = await _dioClient.dio.get<List<dynamic>>('/attribute-sets/values/all');
+      final response = await _dioClient.dio.get<List<dynamic>>(erpMetadataPath('/attribute-sets/values/all'));
       final data = response.data ?? const <dynamic>[];
       return data
           .map((item) => _mapAttributeValue(item as Map<String, dynamic>))
@@ -92,12 +92,12 @@ class AttributeSetApi {
     try {
       final response = attributeSet.id.isEmpty
           ? await _dioClient.dio.post<Map<String, dynamic>>(
-              '/attribute-sets',
+              erpMetadataPath('/attribute-sets'),
               data: encodeMetadataJsonBody(payload),
               options: Options(contentType: Headers.jsonContentType),
             )
           : await _dioClient.dio.patch<Map<String, dynamic>>(
-              '/attribute-sets/${attributeSet.id}',
+              erpMetadataPath('/attribute-sets/${attributeSet.id}'),
               data: encodeMetadataJsonBody(payload),
               options: Options(contentType: Headers.jsonContentType),
             );
@@ -109,7 +109,7 @@ class AttributeSetApi {
 
   Future<void> deleteAttributeSet(String attributeSetId) async {
     try {
-      await _dioClient.dio.delete<void>('/attribute-sets/$attributeSetId');
+      await _dioClient.dio.delete<void>(erpMetadataPath('/attribute-sets/$attributeSetId'));
     } on DioException catch (error) {
       throw mapMetadataWriteError(error);
     }
@@ -120,7 +120,7 @@ class AttributeSetApi {
     try {
       // Fetch current attribute set to get existing values
       final getResponse = await _dioClient.dio.get<Map<String, dynamic>>(
-        '/attribute-sets/${attributeValue.attributeSetId}',
+        erpMetadataPath('/attribute-sets/${attributeValue.attributeSetId}'),
       );
       final currentAttributeSet = getResponse.data ?? const <String, dynamic>{};
       final currentValuesData = currentAttributeSet['values'] as List<dynamic>? ?? const <dynamic>[];
@@ -150,7 +150,7 @@ class AttributeSetApi {
       };
 
       final response = await _dioClient.dio.patch<Map<String, dynamic>>(
-        '/attribute-sets/${attributeValue.attributeSetId}',
+        erpMetadataPath('/attribute-sets/${attributeValue.attributeSetId}'),
         data: encodeMetadataJsonBody(payload),
         options: Options(contentType: Headers.jsonContentType),
       );
@@ -187,7 +187,7 @@ class AttributeSetApi {
   Future<void> deleteAttributeValue(String attributeSetId, String valueId) async {
     try {
       final getResponse = await _dioClient.dio.get<Map<String, dynamic>>(
-        '/attribute-sets/$attributeSetId',
+        erpMetadataPath('/attribute-sets/$attributeSetId'),
       );
 
       final attributeSet = getResponse.data ?? const <String, dynamic>{};
@@ -210,7 +210,7 @@ class AttributeSetApi {
       final payload = <String, dynamic>{'values': updatedValues};
 
       await _dioClient.dio.patch<Map<String, dynamic>>(
-        '/attribute-sets/$attributeSetId',
+        erpMetadataPath('/attribute-sets/$attributeSetId'),
         data: encodeMetadataJsonBody(payload),
         options: Options(contentType: Headers.jsonContentType),
       );

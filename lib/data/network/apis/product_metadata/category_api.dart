@@ -37,7 +37,7 @@ class CategoryApi {
         queryParams['status'] = status.name;
       }
       final response = await _dioClient.dio.get<Map<String, dynamic>>(
-        '/categories',
+        erpMetadataPath('/categories'),
         queryParameters: queryParams,
       );
       final data =
@@ -66,7 +66,7 @@ class CategoryApi {
         queryParams['status'] = status.name;
       }
       final response = await _dioClient.dio.get<List<dynamic>>(
-        '/categories/tree',
+        erpMetadataPath('/categories/tree'),
         queryParameters: queryParams.isEmpty ? null : queryParams,
       );
       final data = response.data ?? const <dynamic>[];
@@ -93,7 +93,7 @@ class CategoryApi {
   Future<Category> getCategoryById(String categoryId) async {
     try {
       final response = await _dioClient.dio.get<Map<String, dynamic>>(
-        '/categories/$categoryId',
+        erpMetadataPath('/categories/$categoryId'),
       );
       return _mapCategory(response.data ?? const <String, dynamic>{});
     } on DioException catch (error) {
@@ -113,12 +113,12 @@ class CategoryApi {
     try {
       final response = category.id.isEmpty
           ? await _dioClient.dio.post<Map<String, dynamic>>(
-              '/categories',
+              erpMetadataPath('/categories'),
               data: encodeMetadataJsonBody(payload),
               options: Options(contentType: Headers.jsonContentType),
             )
           : await _dioClient.dio.patch<Map<String, dynamic>>(
-              '/categories/${category.id}',
+              erpMetadataPath('/categories/${category.id}'),
               data: encodeMetadataJsonBody(payload),
               options: Options(contentType: Headers.jsonContentType),
             );
@@ -130,7 +130,7 @@ class CategoryApi {
 
   Future<void> deleteCategory(String categoryId) async {
     try {
-      await _dioClient.dio.delete<void>('/categories/$categoryId');
+      await _dioClient.dio.delete<void>(erpMetadataPath('/categories/$categoryId'));
     } on DioException catch (error) {
       throw mapMetadataWriteError(error);
     }

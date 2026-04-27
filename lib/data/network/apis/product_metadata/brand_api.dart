@@ -33,7 +33,7 @@ class BrandApi {
         queryParams['sortOrder'] = sortOrder;
       }
       final response = await _dioClient.dio.get<Map<String, dynamic>>(
-        '/brands',
+        erpMetadataPath('/brands'),
         queryParameters: queryParams,
       );
       final data =
@@ -58,7 +58,7 @@ class BrandApi {
   Future<Brand> getBrandById(String brandId) async {
     try {
       final response = await _dioClient.dio.get<Map<String, dynamic>>(
-        '/brands/$brandId',
+        erpMetadataPath('/brands/$brandId'),
       );
       return _mapBrand(response.data ?? const <String, dynamic>{});
     } on DioException catch (error) {
@@ -76,12 +76,12 @@ class BrandApi {
     try {
       final response = brand.id.isEmpty
           ? await _dioClient.dio.post<Map<String, dynamic>>(
-              '/brands',
+              erpMetadataPath('/brands'),
               data: encodeMetadataJsonBody(payload),
               options: Options(contentType: Headers.jsonContentType),
             )
           : await _dioClient.dio.patch<Map<String, dynamic>>(
-              '/brands/${brand.id}',
+              erpMetadataPath('/brands/${brand.id}'),
               data: encodeMetadataJsonBody(payload),
               options: Options(contentType: Headers.jsonContentType),
             );
@@ -93,7 +93,7 @@ class BrandApi {
 
   Future<void> deleteBrand(String brandId) async {
     try {
-      await _dioClient.dio.delete<void>('/brands/$brandId');
+      await _dioClient.dio.delete<void>(erpMetadataPath('/brands/$brandId'));
     } on DioException catch (error) {
       throw mapMetadataWriteError(error);
     }

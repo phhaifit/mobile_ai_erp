@@ -33,7 +33,7 @@ class TagApi {
         queryParams['sortOrder'] = sortOrder;
       }
       final response = await _dioClient.dio.get<Map<String, dynamic>>(
-        '/tags',
+        erpMetadataPath('/tags'),
         queryParameters: queryParams,
       );
       final data =
@@ -58,7 +58,7 @@ class TagApi {
   Future<Tag> getTagById(String tagId) async {
     try {
       final response = await _dioClient.dio.get<Map<String, dynamic>>(
-        '/tags/$tagId',
+        erpMetadataPath('/tags/$tagId'),
       );
       return _mapTag(response.data ?? const <String, dynamic>{});
     } on DioException catch (error) {
@@ -75,12 +75,12 @@ class TagApi {
     try {
       final response = tag.id.isEmpty
           ? await _dioClient.dio.post<Map<String, dynamic>>(
-              '/tags',
+              erpMetadataPath('/tags'),
               data: encodeMetadataJsonBody(payload),
               options: Options(contentType: Headers.jsonContentType),
             )
           : await _dioClient.dio.patch<Map<String, dynamic>>(
-              '/tags/${tag.id}',
+              erpMetadataPath('/tags/${tag.id}'),
               data: encodeMetadataJsonBody(payload),
               options: Options(contentType: Headers.jsonContentType),
             );
@@ -92,7 +92,7 @@ class TagApi {
 
   Future<void> deleteTag(String tagId) async {
     try {
-      await _dioClient.dio.delete<void>('/tags/$tagId');
+      await _dioClient.dio.delete<void>(erpMetadataPath('/tags/$tagId'));
     } on DioException catch (error) {
       throw mapMetadataWriteError(error);
     }

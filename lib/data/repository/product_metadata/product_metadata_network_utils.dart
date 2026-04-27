@@ -75,6 +75,10 @@ String encodeMetadataJsonBody(Map<String, dynamic> payload) {
   return jsonEncode(payload);
 }
 
+String erpMetadataPath(String path) {
+  return '/erp$path';
+}
+
 DateTime parseRequiredMetadataTimestamp(
   Map<String, dynamic> json,
   String fieldName, {
