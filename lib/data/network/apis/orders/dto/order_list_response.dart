@@ -25,7 +25,7 @@ class OrderSummaryDto {
       status: json['status'] as String,
       paymentStatus: json['paymentStatus'] as String,
       customerName: json['customerName'] as String?,
-      totalAmount: json['totalAmount'] as String,
+      totalAmount: json['totalPrice'] as String,
       createdAt: json['createdAt'] as String,
     );
   }

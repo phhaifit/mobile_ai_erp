@@ -55,6 +55,5 @@ class Endpoints {
     String orderId,
     String shipmentId,
     String printJobId,
-  ) =>
-      "/orders/$orderId/shipments/$shipmentId/print-jobs/$printJobId/attempts";
+  ) => "/orders/$orderId/shipments/$shipmentId/print-jobs/$printJobId/attempts";
 }

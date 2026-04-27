@@ -68,7 +68,10 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
           );
         }
 
-        if (_shipmentCheckedOrderId != order.id && !_isCheckingCarrierShipment) {
+        // Only check for carrier shipment when the order is actively being shipped.
+        if (order.status.isActiveShippingPhase &&
+            _shipmentCheckedOrderId != order.id &&
+            !_isCheckingCarrierShipment) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _loadCarrierShipmentState(order.id);
           });
@@ -260,32 +263,18 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
   }
 
   Widget _buildActionButtons(FulfillmentOrder order) {
-    final nextStatus = _getNextStatus(order.status);
-    final isShipmentState =
-      order.status == FulfillmentStatus.partiallyShipped ||
-      order.status == FulfillmentStatus.shipped ||
-      order.status == FulfillmentStatus.delivered ||
-      order.status == FulfillmentStatus.returned;
+    // Active shipping phase: carrier (GHN) drives transitions via webhook — no manual buttons.
+    final isActiveShipping = order.status.isActiveShippingPhase;
     final hasResolvedCarrierState =
-      _shipmentCheckedOrderId == order.id && !_isCheckingCarrierShipment;
+        _shipmentCheckedOrderId == order.id && !_isCheckingCarrierShipment;
+    final isAwaitingCarrierCheck = isActiveShipping && !hasResolvedCarrierState;
+    final isCarrierManaged = _hasCarrierShipment && isActiveShipping;
+    final canUseManualStatusActions = !isAwaitingCarrierCheck && !isCarrierManaged;
 
-    final isAwaitingCarrierCheck =
-      isShipmentState && !hasResolvedCarrierState;
+    // Nothing to show for terminal statuses.
+    if (order.status.isTerminal) return const SizedBox.shrink();
 
-    final isCarrierManaged = _hasCarrierShipment &&
-      isShipmentState;
-
-    final canUseManualStatusActions =
-      !isAwaitingCarrierCheck && !isCarrierManaged;
-
-    if (nextStatus == null &&
-        order.status != FulfillmentStatus.pending &&
-        order.status != FulfillmentStatus.processing &&
-        order.status != FulfillmentStatus.partiallyShipped &&
-        order.status != FulfillmentStatus.shipped &&
-        !isCarrierManaged) {
-      return const SizedBox.shrink();
-    }
+    final nextStatus = _getNextStatus(order.status);
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -307,11 +296,7 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),
-          if (
-            (order.status == FulfillmentStatus.shipped ||
-                order.status == FulfillmentStatus.partiallyShipped) &&
-            !isCarrierManaged
-          )
+          if (isActiveShipping && !isCarrierManaged)
             Container(
               padding: const EdgeInsets.all(12),
               margin: const EdgeInsets.only(bottom: 8),
@@ -350,9 +335,11 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
             ),
-          if (order.status != FulfillmentStatus.cancelled &&
+          // Cancel is available for pre-shipping statuses only.
+          if (!order.status.isTerminal &&
+              !isActiveShipping &&
               order.status != FulfillmentStatus.delivered &&
-              order.status != FulfillmentStatus.returned &&
+              order.status != FulfillmentStatus.success &&
               canUseManualStatusActions) ...[
             const SizedBox(height: 8),
             OutlinedButton.icon(
@@ -420,16 +407,26 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
     );
   }
 
+  /// Returns the next manual transition target per BE valid transitions.
+  /// Returns null when no manual action is allowed (carrier-driven or terminal).
   FulfillmentStatus? _getNextStatus(FulfillmentStatus current) {
     switch (current) {
+      case FulfillmentStatus.newOrder:
+        return FulfillmentStatus.pending;
       case FulfillmentStatus.pending:
-        return FulfillmentStatus.processing;
-      case FulfillmentStatus.processing:
+        return FulfillmentStatus.confirmed;
+      case FulfillmentStatus.confirmed:
+        return FulfillmentStatus.packing;
+      case FulfillmentStatus.packing:
+        return FulfillmentStatus.shipping;
+      // shipping & partiallyShipped: no manual next — carrier webhook drives these.
+      case FulfillmentStatus.shipping:
       case FulfillmentStatus.partiallyShipped:
-        return FulfillmentStatus.shipped;
-      case FulfillmentStatus.shipped:
         return null;
+      // delivered → success is the only manual terminal transition.
       case FulfillmentStatus.delivered:
+        return FulfillmentStatus.success;
+      case FulfillmentStatus.success:
       case FulfillmentStatus.cancelled:
       case FulfillmentStatus.returned:
         return null;
@@ -438,16 +435,22 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
 
   IconData _getStatusIcon(FulfillmentStatus status) {
     switch (status) {
+      case FulfillmentStatus.newOrder:
+        return Icons.fiber_new_outlined;
       case FulfillmentStatus.pending:
         return Icons.hourglass_empty;
-      case FulfillmentStatus.processing:
-        return Icons.sync;
+      case FulfillmentStatus.confirmed:
+        return Icons.check_circle_outline;
+      case FulfillmentStatus.packing:
+        return Icons.inventory_2_outlined;
+      case FulfillmentStatus.shipping:
+        return Icons.local_shipping;
       case FulfillmentStatus.partiallyShipped:
         return Icons.local_shipping_outlined;
-      case FulfillmentStatus.shipped:
-        return Icons.local_shipping;
       case FulfillmentStatus.delivered:
         return Icons.done_all;
+      case FulfillmentStatus.success:
+        return Icons.verified;
       case FulfillmentStatus.cancelled:
         return Icons.cancel;
       case FulfillmentStatus.returned:
@@ -475,16 +478,22 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
 
   Color _getStatusColor(FulfillmentStatus status) {
     switch (status) {
+      case FulfillmentStatus.newOrder:
+        return Colors.grey.shade500;
       case FulfillmentStatus.pending:
         return Colors.orange;
-      case FulfillmentStatus.processing:
-        return Colors.blue;
+      case FulfillmentStatus.confirmed:
+        return Colors.indigo;
+      case FulfillmentStatus.packing:
+        return Colors.deepOrange;
+      case FulfillmentStatus.shipping:
+        return Colors.teal;
       case FulfillmentStatus.partiallyShipped:
         return Colors.cyan;
-      case FulfillmentStatus.shipped:
-        return Colors.teal;
       case FulfillmentStatus.delivered:
         return Colors.green;
+      case FulfillmentStatus.success:
+        return Colors.green.shade700;
       case FulfillmentStatus.cancelled:
         return Colors.red;
       case FulfillmentStatus.returned:

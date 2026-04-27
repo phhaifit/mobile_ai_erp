@@ -22,9 +22,10 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
   bool _isRefreshingCarrier = false;
 
   bool _canUseCarrierTracking(FulfillmentStatus status) {
-    return status == FulfillmentStatus.partiallyShipped ||
-        status == FulfillmentStatus.shipped ||
-        status == FulfillmentStatus.delivered;
+    return status == FulfillmentStatus.shipping ||
+        status == FulfillmentStatus.partiallyShipped ||
+        status == FulfillmentStatus.delivered ||
+        status == FulfillmentStatus.success;
   }
 
   @override
@@ -444,16 +445,22 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
 
   Color _getStatusColor(FulfillmentStatus status) {
     switch (status) {
+      case FulfillmentStatus.newOrder:
+        return Colors.grey.shade500;
       case FulfillmentStatus.pending:
         return Colors.orange;
-      case FulfillmentStatus.processing:
-        return Colors.blue;
+      case FulfillmentStatus.confirmed:
+        return Colors.indigo;
+      case FulfillmentStatus.packing:
+        return Colors.deepOrange;
+      case FulfillmentStatus.shipping:
+        return Colors.teal;
       case FulfillmentStatus.partiallyShipped:
         return Colors.cyan;
-      case FulfillmentStatus.shipped:
-        return Colors.teal;
       case FulfillmentStatus.delivered:
         return Colors.green;
+      case FulfillmentStatus.success:
+        return Colors.green.shade700;
       case FulfillmentStatus.cancelled:
         return Colors.red;
       case FulfillmentStatus.returned:
@@ -463,16 +470,22 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
 
   IconData _getStatusIcon(FulfillmentStatus status) {
     switch (status) {
+      case FulfillmentStatus.newOrder:
+        return Icons.fiber_new_outlined;
       case FulfillmentStatus.pending:
         return Icons.hourglass_empty;
-      case FulfillmentStatus.processing:
-        return Icons.sync;
+      case FulfillmentStatus.confirmed:
+        return Icons.check_circle_outline;
+      case FulfillmentStatus.packing:
+        return Icons.inventory_2_outlined;
+      case FulfillmentStatus.shipping:
+        return Icons.local_shipping;
       case FulfillmentStatus.partiallyShipped:
         return Icons.local_shipping_outlined;
-      case FulfillmentStatus.shipped:
-        return Icons.local_shipping;
       case FulfillmentStatus.delivered:
         return Icons.done_all;
+      case FulfillmentStatus.success:
+        return Icons.verified;
       case FulfillmentStatus.cancelled:
         return Icons.cancel;
       case FulfillmentStatus.returned:

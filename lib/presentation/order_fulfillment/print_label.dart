@@ -32,9 +32,11 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
   final Map<String, int> _manualAllocations = <String, int>{};
 
   bool _canManageShipment(FulfillmentOrder order) {
-    return order.status == FulfillmentStatus.partiallyShipped ||
-        order.status == FulfillmentStatus.shipped ||
-        order.status == FulfillmentStatus.delivered;
+    // Shipment actions are available from first shipping status through completion.
+    return order.status == FulfillmentStatus.shipping ||
+        order.status == FulfillmentStatus.partiallyShipped ||
+        order.status == FulfillmentStatus.delivered ||
+        order.status == FulfillmentStatus.success;
   }
 
   String _displayShipmentStatus(
@@ -397,7 +399,7 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
     final hasRemainingItems =
       remainingByItem.values.any((remaining) => remaining > 0);
     final canCreateShipment =
-      (order.status == FulfillmentStatus.shipped ||
+      (order.status == FulfillmentStatus.shipping ||
         order.status == FulfillmentStatus.partiallyShipped) &&
       hasRemainingItems;
 
@@ -441,7 +443,7 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
           ),
           if (!canManageShipment)
             Text(
-              'Shipment actions are available when order status is Shipped, Partially Shipped, or Delivered.',
+              'Shipment actions are available when order status is Shipping, Partially Shipped, or Delivered.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
           if (shipment == null)
@@ -527,7 +529,7 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
               ),
             ),
           if (
-            (order.status == FulfillmentStatus.shipped ||
+            (order.status == FulfillmentStatus.shipping ||
                 order.status == FulfillmentStatus.partiallyShipped) &&
             shipment != null
           )
@@ -546,7 +548,7 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
   Widget _buildRoutingRecommendationSection(FulfillmentOrder order) {
     final recommendation = _routingRecommendation;
     final canCreateShipment =
-        order.status == FulfillmentStatus.shipped ||
+        order.status == FulfillmentStatus.shipping ||
         order.status == FulfillmentStatus.partiallyShipped;
     final isApplied = recommendation?.selectedProvider != null;
 
@@ -942,7 +944,7 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
         ? hasShipment
             ? 'This screen queues shipment print jobs and tracks print attempts from backend API.'
             : 'Please create or link at least one shipment batch before printing labels.'
-        : 'Print label is available only when order status is Shipped, Partially Shipped, or Delivered.';
+        : 'Print label is available only when order status is Shipping, Partially Shipped, or Delivered.';
 
     return Container(
       width: double.infinity,
@@ -992,7 +994,7 @@ class _PrintLabelScreenState extends State<PrintLabelScreen> {
 
     if (!_canManageShipment(order)) {
       return Text(
-        'Current status: ${order.status.displayName}. Print is enabled only for Shipped, Partially Shipped, or Delivered.',
+        'Current status: ${order.status.displayName}. Print is enabled only for Shipping, Partially Shipped, Delivered, or Completed.',
         style: Theme.of(context).textTheme.bodySmall,
       );
     }
