@@ -53,9 +53,9 @@ class OrderDto {
       customer: json['customer'] != null
           ? OrderCustomerDto.fromJson(json['customer'] as Map<String, dynamic>)
           : null,
-      shippingName: json['shippingName'] as String?,
-      shippingPhone: json['shippingPhone'] as String?,
-      shippingAddress: json['shippingAddress'] as String?,
+      shippingName: json['customerName'] as String?,
+      shippingPhone: json['customerPhone'] as String?,
+      shippingAddress: json['customerAddress'] as String?,
       shippingProvince: json['shippingProvince'] as String?,
       shippingDistrict: json['shippingDistrict'] as String?,
       shippingWard: json['shippingWard'] as String?,
@@ -63,7 +63,7 @@ class OrderDto {
       discountAmount: json['discountAmount'] as String,
       taxAmount: json['taxAmount'] as String,
       shippingFee: json['shippingFee'] as String,
-      totalAmount: json['totalAmount'] as String,
+      totalAmount: json['totalPrice'] as String,
       note: json['note'] as String?,
       source: json['source'] as String,
       createdAt: json['createdAt'] as String,
@@ -123,8 +123,8 @@ class OrderItemDto {
       id: json['id'] as String,
       productId: json['productId'] as String,
       variantId: json['variantId'] as String?,
-      productName: json['productName'] as String,
-      sku: json['sku'] as String,
+      productName: json['product'] != null ? json['product']['name'] as String : '',
+      sku: json['product'] != null ? json['product']['sku'] as String : '',
       quantity: json['quantity'] as int,
       unitPrice: json['unitPrice'] as String,
       totalPrice: json['totalPrice'] as String,
@@ -156,9 +156,9 @@ class OrderStatusLogDto {
       oldStatus: json['oldStatus'] as String?,
       newStatus: json['newStatus'] as String,
       note: json['note'] as String?,
-      changedAt: json['changedAt'] as String,
-      changedBy: json['changedBy'] != null
-          ? OrderActorDto.fromJson(json['changedBy'] as Map<String, dynamic>)
+      changedAt: json['createdAt'] as String,
+      changedBy: json['actor'] != null
+          ? OrderActorDto.fromJson(json['actor'] as Map<String, dynamic>)
           : null,
     );
   }
@@ -199,13 +199,17 @@ class OrderDetailResponse {
 
   factory OrderDetailResponse.fromJson(Map<String, dynamic> json) {
     return OrderDetailResponse(
-      order: OrderDto.fromJson(json['order'] as Map<String, dynamic>),
-      items: (json['items'] as List<dynamic>)
-          .map((e) => OrderItemDto.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      statusLogs: (json['statusLogs'] as List<dynamic>)
-          .map((e) => OrderStatusLogDto.fromJson(e as Map<String, dynamic>))
-          .toList(),
+      order: OrderDto.fromJson(json),
+      items: json['items'] != null
+          ? (json['items'] as List<dynamic>)
+              .map((e) => OrderItemDto.fromJson(e as Map<String, dynamic>))
+              .toList()
+          : [],
+      statusLogs: json['statusLogs'] != null
+          ? (json['statusLogs'] as List<dynamic>)
+              .map((e) => OrderStatusLogDto.fromJson(e as Map<String, dynamic>))
+              .toList()
+          : [],
     );
   }
 }

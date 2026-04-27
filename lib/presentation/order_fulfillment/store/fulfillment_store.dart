@@ -26,10 +26,10 @@ abstract class _FulfillmentStore with Store {
   final GetFulfillmentOrderDetailUseCase _getOrderDetailUseCase;
   final UpdateFulfillmentStatusUseCase _updateStatusUseCase;
   final CreateOrLinkShipmentUseCase _createOrLinkShipmentUseCase;
-    final GetOrderRoutingRecommendationUseCase
-      _getOrderRoutingRecommendationUseCase;
-    final ApplyOrderRoutingRecommendationUseCase
-      _applyOrderRoutingRecommendationUseCase;
+  final GetOrderRoutingRecommendationUseCase
+  _getOrderRoutingRecommendationUseCase;
+  final ApplyOrderRoutingRecommendationUseCase
+  _applyOrderRoutingRecommendationUseCase;
   final GetShipmentTrackingUseCase _getShipmentTrackingUseCase;
   final GetOrderShipmentsTrackingUseCase _getOrderShipmentsTrackingUseCase;
   final GetShipmentLabelArtifactsUseCase _getShipmentLabelArtifactsUseCase;
@@ -156,10 +156,7 @@ abstract class _FulfillmentStore with Store {
   }) async {
     try {
       final shipment = await _createOrLinkShipmentUseCase.call(
-        params: CreateOrLinkShipmentParams(
-          orderId: orderId,
-          items: items,
-        ),
+        params: CreateOrLinkShipmentParams(orderId: orderId, items: items),
       );
 
       final refreshed = await getShipmentTracking(orderId, refresh: true);
@@ -223,6 +220,10 @@ abstract class _FulfillmentStore with Store {
       if (refresh) {
         await getOrderDetail(orderId);
         await getOrders();
+      }
+
+      for (final shipment in shipments) {
+        _mergeCarrierTrackingEvents(shipment);
       }
 
       return shipments;
@@ -375,12 +376,11 @@ abstract class _FulfillmentStore with Store {
         return FulfillmentStatus.cancelled;
       case 'processing':
       case 'pending':
-        return FulfillmentStatus.processing;
       case 'created':
       case 'linked':
       case 'in_transit':
       default:
-        return FulfillmentStatus.shipped;
+        return FulfillmentStatus.shipping;
     }
   }
 }
