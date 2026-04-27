@@ -94,23 +94,35 @@ class _LoginScreenState extends State<LoginScreen> {
           children: <Widget>[
             AppIconWidget(image: 'assets/icons/ic_appicon.png'),
             SizedBox(height: 24.0),
-            _buildSignInWithStackAuthButton()
+            _buildSignInButtons()
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSignInWithStackAuthButton() {
+  Widget _buildSignInButtons() {
+    return Column(
+      children: [
+        _buildSignInButton(OAuthProvider.google),
+        SizedBox(height: 16),
+        _buildSignInButton(OAuthProvider.github),
+      ],
+    );
+  }
+
+  Widget _buildSignInButton(OAuthProvider provider) {
+    String text = provider == OAuthProvider.google ? 'Sign In with Google' : 'Sign In with GitHub';
+    Color buttonColor = provider == OAuthProvider.google ? Colors.red : Colors.black;
     return RoundedButtonWidget(
-      buttonText: 'Sign In with Stack Auth',
-      buttonColor: Colors.blueAccent,
+      buttonText: text,
+      buttonColor: buttonColor,
       textColor: Colors.white,
       onPressed: () async {
         DeviceUtils.hideKeyboard(context);
         try {
           _loginStore.isLoading = true;
-          await _loginStore.authenticate();
+          await _loginStore.authenticate(provider);
         } catch (e) {
           debugPrint(e.toString());
           _showErrorMessage("Failed to authenticate");
