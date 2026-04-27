@@ -51,7 +51,6 @@ import 'package:mobile_ai_erp/domain/usecase/order_tracking/get_order_tracking_s
 import 'package:mobile_ai_erp/domain/usecase/post/get_post_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/assign_role_to_user_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/create_role_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/user/is_logged_in_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/login_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/update_role_usercase.dart';
 import 'package:mobile_ai_erp/domain/usecase/auth/refresh_token_usecase.dart';
@@ -114,7 +113,6 @@ class StoreModule {
 
     getIt.registerSingleton<auth.LoginStore>(
       auth.LoginStore(
-        getIt<IsLoggedInUseCase>(),
         getIt<LoginUseCase>(),
         getIt<RefreshTokenUseCase>(),
         getIt<CreateTenantUseCase>(),

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/cupertino.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'constants/preferences.dart';
@@ -41,7 +42,7 @@ class SharedPreferenceHelper {
   }
 
   // Login:---------------------------------------------------------------------
-  Future<bool> get isLoggedIn async {
+  bool get isLoggedIn {
     return _sharedPreference.containsKey(Preferences.auth_token);
   }
 

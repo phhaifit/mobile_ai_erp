@@ -2,7 +2,6 @@ import 'package:mobile_ai_erp/core/stores/error/error_store.dart';
 import 'package:mobile_ai_erp/core/stores/form/form_store.dart';
 import 'package:mobile_ai_erp/domain/usecase/auth/create_tenant_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/auth/refresh_token_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/user/is_logged_in_usecase.dart';
 import 'package:mobx/mobx.dart';
 
 import '../../../domain/entity/user/user.dart';
@@ -22,7 +21,6 @@ class LoginStore = _LoginStore with _$LoginStore;
 abstract class _LoginStore with Store {
   // constructor:---------------------------------------------------------------
   _LoginStore(
-    this._isLoggedInUseCase,
     this._loginUseCase,
     this._refreshTokenUseCase,
     this._createTenantUseCase,
@@ -33,15 +31,10 @@ abstract class _LoginStore with Store {
   ) {
     // setting up disposers
     _setupDisposers();
-
-    // checking if user is logged in
-    _isLoggedInUseCase.call(params: null).then((value) async {
-      isLoggedIn = value;
-    });
+    isLoggedIn = _sharedPreferenceHelper.isLoggedIn;
   }
 
   // use cases:-----------------------------------------------------------------
-  final IsLoggedInUseCase _isLoggedInUseCase;
   final LoginUseCase _loginUseCase;
   final RefreshTokenUseCase _refreshTokenUseCase;
   final CreateTenantUseCase _createTenantUseCase;
@@ -124,10 +117,10 @@ abstract class _LoginStore with Store {
       currentTenantId = null;
       currentTenantName = null;
       needsOnboarding = false;
-      isLoggedIn = false;
       success = false;
       errorMessage = null;
       await _sharedPreferenceHelper.removeAuthToken();
+      isLoggedIn = false;
     }
   }
 
@@ -170,9 +163,9 @@ abstract class _LoginStore with Store {
     currentTenantName = authStatusResponse.user?.tenantName;
     
 
+    this.needsOnboarding = needsOnboarding;
     await _sharedPreferenceHelper.saveAuthToken(accessToken: tokens.accessToken, refreshToken: tokens.refreshToken);
     isLoggedIn = true;
-    this.needsOnboarding = needsOnboarding;
   }
 
   (String, String) _getRedirectUri() {
