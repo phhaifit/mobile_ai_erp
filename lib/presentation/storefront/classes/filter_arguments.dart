@@ -6,10 +6,16 @@ class FilterArguments {
     this.selectedBrands,
     this.searchQuery,
     this.sortOption,
+    this.categoryKey,
+    this.brandKey,
+    this.collectionSlug,
   });
 
   final List<String>? selectedCategories;
   final List<String>? selectedBrands;
   final String? searchQuery;
   final SortOption? sortOption;
+  final String? categoryKey;
+  final String? brandKey;
+  final String? collectionSlug;
 }

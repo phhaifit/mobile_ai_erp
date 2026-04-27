@@ -16,16 +16,26 @@ class ProductListingScreen extends StatefulWidget {
 
 class _ProductListingScreenState extends State<ProductListingScreen> {
   final _listingFilters = getIt<ListingFilters>();
+  final ScrollController _scrollController = ScrollController();
+  bool _appliedArgs = false;
 
   @override
   void initState() {
     super.initState();
-    _listingFilters.updateProducts();
+    _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      _listingFilters.loadMore();
+    }
   }
 
   @override
@@ -34,22 +44,19 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
     final colorScheme = theme.colorScheme;
 
     final args = ModalRoute.of(context)?.settings.arguments as FilterArguments?;
-    if (args != null) {
-      if (args.searchQuery != null) {
-        _listingFilters.setSearchQuery(args.searchQuery!);
-      }
-      if (args.selectedBrands != null) {
-        _listingFilters.clearBrandFilters();
-        _listingFilters.setBrandFilter(args.selectedBrands!);
-      }
-      if (args.selectedCategories != null) {
-        _listingFilters.clearCategoryFilters();
-        _listingFilters.setCategoryFilter(args.selectedCategories!);
-      }
-      if (args.sortOption != null) {
-        _listingFilters.setSortOption(args.sortOption!);
-      }
-      _listingFilters.updateProducts();
+    if (!_appliedArgs) {
+      _appliedArgs = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _listingFilters.applyArguments(
+          search: args?.searchQuery,
+          categories: args?.selectedCategories,
+          brands: args?.selectedBrands,
+          sort: args?.sortOption,
+          categoryKey: args?.categoryKey,
+          brandKey: args?.brandKey,
+          collectionSlug: args?.collectionSlug,
+        );
+      });
     }
         
     return Scaffold(
@@ -72,21 +79,69 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
       ),
       body: Stack(
         children: [
-          Observer(builder: (_) => Container(
-              color: Colors.teal[100],
-              child: ListView.builder(
-                itemCount: _listingFilters.products.length,
-                itemBuilder: (context, index) {
-                  return Observer(builder: (_) => ProductListingItem(productListing: _listingFilters.products[index], highlightText: _listingFilters.searchQuery));
-                },
-              ),
-            )
+          Observer(
+            builder: (_) {
+              if (_listingFilters.isLoading && _listingFilters.products.isEmpty) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (_listingFilters.errorMessage != null &&
+                  _listingFilters.products.isEmpty) {
+                return Center(child: Text(_listingFilters.errorMessage!));
+              }
+              return Container(
+                color: Colors.teal[100],
+                child: ListView.builder(
+                  controller: _scrollController,
+                  padding: EdgeInsets.only(
+                    bottom: kBottomNavigationBarHeight + 24,
+                    top: 8,
+                  ),
+                  itemCount: (_listingFilters.breadcrumb.isNotEmpty ? 1 : 0) +
+                      _listingFilters.products.length +
+                      (_listingFilters.isLoadingMore ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (_listingFilters.breadcrumb.isNotEmpty && index == 0) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        child: Text(
+                          _listingFilters.breadcrumb
+                              .map((item) => item.name)
+                              .join(' / '),
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      );
+                    }
+                    final productIndex =
+                        index - (_listingFilters.breadcrumb.isNotEmpty ? 1 : 0);
+                    if (productIndex >= _listingFilters.products.length) {
+                      return const Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    }
+                    return ProductListingItem(
+                      productListing: _listingFilters.products[productIndex],
+                      highlightText: _listingFilters.searchQuery,
+                    );
+                  },
+                ),
+              );
+            },
           ),
           Positioned( 
             left: 0,
             right: 0,
             bottom: 0,
-            child: SearchFilterBar(brands: _listingFilters.testBrands, categories: _listingFilters.testCategories)
+            child: Observer(
+              builder: (_) => SearchFilterBar(
+                brands: _listingFilters.brands.toList(),
+                categories: _listingFilters.categories.toList(),
+                attributes: _listingFilters.attributeFacets.toList(),
+              ),
+            ),
           )
         ],
       ),

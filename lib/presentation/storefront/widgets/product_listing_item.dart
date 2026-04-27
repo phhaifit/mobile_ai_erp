@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:highlight_text/highlight_text.dart';
-import 'package:mobile_ai_erp/domain/entity/product/product.dart';
+import 'package:mobile_ai_erp/presentation/storefront/models/storefront_models.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
 
 /// Widget for a product shown in homepage, product listing page (with or without search/filters), brand and collection landing pages
@@ -13,7 +13,7 @@ class ProductListingItem extends StatelessWidget {
     this.highlightText,
   });
 
-  final Product productListing;
+  final StorefrontProduct productListing;
   final String? highlightText;
 
   @override
@@ -56,9 +56,9 @@ class ProductListingItem extends StatelessWidget {
               // Product Image
               ClipRRect(
                 borderRadius: BorderRadius.circular(6.0),
-                child: productListing.imageUrls.isNotEmpty 
+                child: productListing.images.isNotEmpty
                   ? Image.network(
-                      productListing.imageUrls.first,
+                      productListing.images.first,
                       width: imageSize,
                       height: imageSize,
                       fit: BoxFit.cover,
@@ -80,7 +80,7 @@ class ProductListingItem extends StatelessWidget {
                   children: [
                     // Product Name
                     TextHighlight(
-                      text: productListing.name,
+                      text: productListing.title,
                       words: highlightedWords,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -96,7 +96,7 @@ class ProductListingItem extends StatelessWidget {
                       children: [
                         Flexible(
                           child: TextHighlight(
-                            text: productListing.category?.name ?? 'No category information',
+                            text: productListing.category ?? 'No category information',
                             words: highlightedWords,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -109,7 +109,7 @@ class ProductListingItem extends StatelessWidget {
                         Text('•', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5))),
                         Flexible(
                           child: TextHighlight(
-                            text: productListing.brand?.name ?? 'No brand information',
+                            text: productListing.brand ?? 'No brand information',
                             words: highlightedWords,
                             maxLines: 1,    
                             overflow: TextOverflow.ellipsis,
@@ -138,7 +138,7 @@ class ProductListingItem extends StatelessWidget {
                     ),
                     // Product Description
                     TextHighlight(
-                      text: productListing.description,
+                      text: productListing.description ?? '',
                       words: highlightedWords,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -154,7 +154,7 @@ class ProductListingItem extends StatelessWidget {
                       spacing: 4.0,
                       children: [
                         Text(
-                          productListing.price.toString(),
+                          productListing.price.toStringAsFixed(0),
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 18,
@@ -162,7 +162,7 @@ class ProductListingItem extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          productListing.currency,
+                          'VND',
                           style: TextStyle(
                             fontSize: 12,
                             color: colorScheme.onSurface.withOpacity(0.7),

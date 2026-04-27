@@ -25,11 +25,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   final CartStore _cartStore = getIt<CartStore>();
 
   int _quantity = 1;
+  bool _hasLoadedInitialProduct = false;
 
   @override
   void initState() {
     super.initState();
-    _store.loadProduct('prod_001');
   }
 
   void _onShare() {
@@ -111,7 +111,22 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Observer(
       builder: (_) {
         final product = _store.product;
-        if (product == null) {
+        final routeProductId =
+            ModalRoute.of(context)?.settings.arguments as String?;
+        if (!_hasLoadedInitialProduct && routeProductId != null) {
+          _hasLoadedInitialProduct = true;
+          _store.loadProduct(routeProductId);
+        }
+
+        if (routeProductId == null && product == null) {
+          return const Scaffold(
+            body: Center(
+              child: Text('Please open a product from the storefront listing.'),
+            ),
+          );
+        }
+
+        if (_store.isLoading || product == null) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );

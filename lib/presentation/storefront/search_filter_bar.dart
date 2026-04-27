@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
-import 'package:mobile_ai_erp/domain/entity/product_metadata/brand.dart';
-import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
+import 'package:mobile_ai_erp/presentation/storefront/models/storefront_models.dart';
 import 'package:mobile_ai_erp/presentation/storefront/store/product_listing_store.dart';
 
 class SearchFilterBar extends StatefulWidget {
-  final List<Category> categories;
-  final List<Brand> brands;
+  final List<StorefrontFacetOption> categories;
+  final List<StorefrontFacetOption> brands;
+  final List<StorefrontAttributeFacet> attributes;
 
-  const SearchFilterBar({super.key, required this.categories, required this.brands});
+  const SearchFilterBar({
+    super.key,
+    required this.categories,
+    required this.brands,
+    required this.attributes,
+  });
 
   @override
   State<SearchFilterBar> createState() => _SearchFilterBarState();
@@ -85,7 +90,6 @@ class _SearchFilterBarState extends State<SearchFilterBar> {
           ),
           onChanged: (value) {
             _listingFilters.setSearchQuery(value);
-            _listingFilters.updateProducts();
           },
         ),
       ],
@@ -142,7 +146,31 @@ class _SearchFilterBarState extends State<SearchFilterBar> {
             )
             )
           ]
-        )
+        ),
+        const SizedBox(height: 12),
+        for (final attribute in widget.attributes) ...[
+          Text(attribute.attributeSetName),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 3.0,
+            runSpacing: 3.0,
+            children: [
+              for (final value in attribute.values)
+                Observer(
+                  builder: (_) => FilterChip(
+                    label: Text(value.name),
+                    selected: _listingFilters.attributeValueFilter
+                        .contains(value.id),
+                    onSelected: (selected) {
+                      _listingFilters.toggleAttributeFilter(value.id);
+                      _listingFilters.updateProducts();
+                    },
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+        ],
       ],
     );
   }
@@ -167,8 +195,6 @@ class _SearchFilterBarState extends State<SearchFilterBar> {
               ListTile(title: Text('Most Popular'), leading: Radio<SortOption>(value: SortOption.popular)),
               ListTile(title: Text('Newest Arrivals'), leading: Radio<SortOption>(value: SortOption.timeDesc)),
               ListTile(title: Text('Oldest Arrivals'), leading: Radio<SortOption>(value: SortOption.timeAsc)),
-              ListTile(title: Text('Name: A-Z'), leading: Radio<SortOption>(value: SortOption.nameAsc)),
-              ListTile(title: Text('Name: Z-A'), leading: Radio<SortOption>(value: SortOption.nameDesc)),
               ListTile(title: Text('Price: Low to High'), leading: Radio<SortOption>(value: SortOption.priceAsc)),
               ListTile(title: Text('Price: High to Low'), leading: Radio<SortOption>(value: SortOption.priceDesc)),
               ListTile(title: Text('Rating'), leading: Radio<SortOption>(value: SortOption.rating)),
@@ -277,7 +303,9 @@ class _SearchFilterBarState extends State<SearchFilterBar> {
                         _chatOpen = false;
                       });
                     }, 
-                    _listingFilters.categoryFilter.isNotEmpty || _listingFilters.brandFilter.isNotEmpty,
+                    _listingFilters.categoryFilter.isNotEmpty ||
+                        _listingFilters.brandFilter.isNotEmpty ||
+                        _listingFilters.attributeValueFilter.isNotEmpty,
                     Icon(Icons.filter_list_alt)
                   )
                 ),
