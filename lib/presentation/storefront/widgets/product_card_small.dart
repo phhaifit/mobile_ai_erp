@@ -4,7 +4,7 @@ import 'package:mobile_ai_erp/utils/routes/routes.dart';
 class ProductCardSmall extends StatelessWidget {
   const ProductCardSmall({super.key, required this.productId, required this.productName, this.imageSource});
 
-  final int? productId;
+  final String productId;
   final String productName;
   final String? imageSource;
 
