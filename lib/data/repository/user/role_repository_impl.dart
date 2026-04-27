@@ -17,5 +17,5 @@ class RoleRepositoryImpl implements RoleRepository {
   Future<void> update(Role role) => dataSource.updateRole(role);
 
   @override
-  Future<void> delete(int id) => dataSource.deleteRole(id);
+  Future<void> delete(String id) => dataSource.deleteRole(id);
 }

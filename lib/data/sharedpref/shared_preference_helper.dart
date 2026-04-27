@@ -12,8 +12,8 @@ class SharedPreferenceHelper {
   SharedPreferenceHelper(this._sharedPreference);
 
   // General Methods: ----------------------------------------------------------
-  Future<String?> get authToken async {
-    return _sharedPreference.getString(Preferences.auth_token);
+  Future<String?> get accessToken async {
+    return _sharedPreference.getStringList(Preferences.auth_token)?.first;
   }
 
   Future<bool> saveAuthToken({required String accessToken, required String refreshToken}) async {

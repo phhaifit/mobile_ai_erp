@@ -1,11 +1,8 @@
 import 'package:mobile_ai_erp/core/stores/error/error_store.dart';
 import 'package:mobile_ai_erp/core/stores/form/form_store.dart';
 import 'package:mobile_ai_erp/domain/usecase/auth/create_tenant_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/auth/get_auth_status_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/auth/refresh_token_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/auth/sign_out_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/is_logged_in_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/user/save_login_in_status_usecase.dart';
 import 'package:mobx/mobx.dart';
 
 import '../../../domain/entity/user/user.dart';
@@ -26,11 +23,8 @@ abstract class _LoginStore with Store {
   // constructor:---------------------------------------------------------------
   _LoginStore(
     this._isLoggedInUseCase,
-    this._saveLoginStatusUseCase,
     this._loginUseCase,
-    this._getAuthStatusUseCase,
     this._refreshTokenUseCase,
-    this._signOutUseCase,
     this._createTenantUseCase,
     this._authRepository,
     this._sharedPreferenceHelper,
@@ -48,11 +42,8 @@ abstract class _LoginStore with Store {
 
   // use cases:-----------------------------------------------------------------
   final IsLoggedInUseCase _isLoggedInUseCase;
-  final SaveLoginStatusUseCase _saveLoginStatusUseCase;
   final LoginUseCase _loginUseCase;
-  final GetAuthStatusUseCase _getAuthStatusUseCase;
   final RefreshTokenUseCase _refreshTokenUseCase;
-  final SignOutUseCase _signOutUseCase;
   final CreateTenantUseCase _createTenantUseCase;
 
   // repositories:---------------------------------------------------------------
@@ -120,13 +111,9 @@ abstract class _LoginStore with Store {
   @action
   Future<void> logout() async {
     try {
-      if (currentUser != null && currentTenantId != null) {
-        await _signOutUseCase.call(
-          params: SignOutParams(
-            accessToken: 'dummy_token', // Token will be retrieved from storage
-            tenantId: currentTenantId!,
-          ),
-        );
+      final accessToken = await _sharedPreferenceHelper.accessToken;
+      if (accessToken != null && currentUser != null && currentTenantId != null) {
+        await _authRepository.signOut(accessToken, currentTenantId!);
       }
     } catch (e) {
       // Sign out should not fail the operation
@@ -140,7 +127,7 @@ abstract class _LoginStore with Store {
       isLoggedIn = false;
       success = false;
       errorMessage = null;
-      await _saveLoginStatusUseCase.call(params: false);
+      await _sharedPreferenceHelper.removeAuthToken();
     }
   }
 

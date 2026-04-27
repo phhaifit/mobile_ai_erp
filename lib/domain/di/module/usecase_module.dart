@@ -56,12 +56,9 @@ import 'package:mobile_ai_erp/domain/usecase/user/assign_role_to_user_usecase.da
 import 'package:mobile_ai_erp/domain/usecase/user/create_role_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/is_logged_in_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/login_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/user/save_login_in_status_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/update_role_usercase.dart';
 import 'package:mobile_ai_erp/domain/usecase/auth/create_tenant_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/auth/get_auth_status_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/auth/refresh_token_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/auth/sign_out_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/apply_web_theme_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/delete_cms_page_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/get_cms_page_by_id_usecase.dart';
@@ -80,9 +77,6 @@ class UseCaseModule {
     getIt.registerSingleton<IsLoggedInUseCase>(
       IsLoggedInUseCase(getIt<SharedPreferenceHelper>()),
     );
-    getIt.registerSingleton<SaveLoginStatusUseCase>(
-      SaveLoginStatusUseCase(getIt<UserRepository>()),
-    );
     getIt.registerSingleton<LoginUseCase>(
       LoginUseCase(getIt<UserRepository>()),
     );
@@ -100,14 +94,8 @@ class UseCaseModule {
     );
 
     // auth:--------------------------------------------------------------------
-    getIt.registerSingleton<GetAuthStatusUseCase>(
-      GetAuthStatusUseCase(getIt<AuthRepository>()),
-    );
     getIt.registerSingleton<RefreshTokenUseCase>(
       RefreshTokenUseCase(getIt<AuthRepository>()),
-    );
-    getIt.registerSingleton<SignOutUseCase>(
-      SignOutUseCase(getIt<AuthRepository>()),
     );
     getIt.registerSingleton<CreateTenantUseCase>(
       CreateTenantUseCase(getIt<AuthRepository>()),
