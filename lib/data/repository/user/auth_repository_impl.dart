@@ -34,7 +34,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Map<String, String>> refreshToken(String refreshToken) async {
+  Future<(String?, String?)> refreshToken(String refreshToken) async {
     try {
       final response = await dioClient.dio.get(
         Endpoints.authRefresh,
@@ -46,17 +46,13 @@ class AuthRepositoryImpl implements AuthRepository {
       );
 
       if (response.statusCode == 200 && response.data != null) {
-        final data = response.data;
-        return {
-          'accessToken': data['accessToken'] ?? '',
-          'refreshToken': data['refreshToken'], // May be null if not rotated
-        };
-      } else {
-        throw Exception('Failed to refresh token');
+        return (response.data['token']?['accessToken'] as String?, response.data['token']?['refreshToken'] as String?);
       }
     } catch (e) {
-      throw Exception('Token refresh request failed: $e');
+      throw Exception('Refresh token request failed: $e');
     }
+
+    return (null, null);
   }
 
   @override

@@ -1,7 +1,6 @@
 import 'package:mobile_ai_erp/core/stores/error/error_store.dart';
 import 'package:mobile_ai_erp/core/stores/form/form_store.dart';
 import 'package:mobile_ai_erp/domain/usecase/auth/create_tenant_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/auth/refresh_token_usecase.dart';
 import 'package:mobx/mobx.dart';
 
 import '../../../domain/entity/user/user.dart';
@@ -27,7 +26,6 @@ abstract class _LoginStore with Store {
   // constructor:---------------------------------------------------------------
   _LoginStore(
     this._loginUseCase,
-    this._refreshTokenUseCase,
     this._createTenantUseCase,
     this._authRepository,
     this._sharedPreferenceHelper,
@@ -41,7 +39,6 @@ abstract class _LoginStore with Store {
 
   // use cases:-----------------------------------------------------------------
   final LoginUseCase _loginUseCase;
-  final RefreshTokenUseCase _refreshTokenUseCase;
   final CreateTenantUseCase _createTenantUseCase;
 
   // repositories:---------------------------------------------------------------
@@ -98,6 +95,9 @@ abstract class _LoginStore with Store {
       );
       currentTenantId = result['tenantId'];
       currentTenantName = result['name'];
+      if (currentTenantId != null) {
+        await _sharedPreferenceHelper.saveTenantId(currentTenantId!);
+      }
       needsOnboarding = false;
       success = true;
     } catch (e) {
@@ -124,6 +124,7 @@ abstract class _LoginStore with Store {
       needsOnboarding = false;
       success = false;
       errorMessage = null;
+      await _sharedPreferenceHelper.removeTenantId();
       await _sharedPreferenceHelper.removeAuthToken();
       isLoggedIn = false;
     }
@@ -166,6 +167,9 @@ abstract class _LoginStore with Store {
     currentUser = authStatusResponse.user;
     currentTenantId = authStatusResponse.user?.tenantId;
     currentTenantName = authStatusResponse.user?.tenantName;
+    if (currentTenantId != null) {
+      await _sharedPreferenceHelper.saveTenantId(currentTenantId!);
+    }
     
 
     this.needsOnboarding = needsOnboarding;
