@@ -11,6 +11,7 @@ import 'package:mobile_ai_erp/data/network/interceptors/error_interceptor.dart';
 import 'package:mobile_ai_erp/data/network/rest_client.dart';
 import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
 import 'package:event_bus/event_bus.dart';
+import 'package:mobile_ai_erp/domain/repository/user/auth_repository.dart';
 
 import '../../../di/service_locator.dart';
 
@@ -18,6 +19,15 @@ class NetworkModule {
   static Future<void> configureNetworkModuleInjection() async {
     // event bus:---------------------------------------------------------------
     getIt.registerSingleton<EventBus>(EventBus());
+
+    // dio configs:---------------------------------------------------------------
+    getIt.registerSingleton<DioConfigs>(
+      const DioConfigs(
+        baseUrl: Endpoints.baseUrl,
+        connectionTimeout: Endpoints.connectionTimeout,
+        receiveTimeout:Endpoints.receiveTimeout,
+      ),
+    );
 
     // interceptors:------------------------------------------------------------
     getIt.registerSingleton<LoggingInterceptor>(LoggingInterceptor());
@@ -36,9 +46,31 @@ class NetworkModule {
       TokenRefreshInterceptor(
         accessToken: () async => await getIt<SharedPreferenceHelper>().accessToken,
         getRefreshToken: () async => await getIt<SharedPreferenceHelper>().refreshToken,
-        saveAuthToken: (tokens) async => await getIt<SharedPreferenceHelper>().saveAuthToken(accessToken: tokens.$1, refreshToken: tokens.$2),
+        saveAuthToken: (tokens) async {
+          if (tokens.$1 != null && tokens.$2 != null) {
+            await getIt<SharedPreferenceHelper>().saveAuthToken(accessToken: tokens.$1!, refreshToken: tokens.$2!);
+          } else {
+            await getIt<SharedPreferenceHelper>().removeTenantId();
+            await getIt<SharedPreferenceHelper>().removeAuthToken();
+          }
+        },
+        getNewTokens: () async {
+          try {
+            final SharedPreferenceHelper sharedPreferenceHelper = getIt<SharedPreferenceHelper>();
+            final refreshToken = await sharedPreferenceHelper.refreshToken;
+            if (refreshToken == null) {
+              return (null, null);
+            }
+            final AuthRepository authRepository = getIt<AuthRepository>();
+            final (newAccessToken, newRefreshToken) = await authRepository.refreshToken(refreshToken);
+            return (newAccessToken, newRefreshToken ?? refreshToken);
+          } catch (_) {
+            return (null, null);
+          }
+        },
         tenantId: () async => await getIt<SharedPreferenceHelper>().tenantId,
-        dio: Dio(BaseOptions(baseUrl: Endpoints.baseUrl)), // Separate Dio with same baseUrl
+        dioClient: DioClient(dioConfigs: getIt())
+          ..addInterceptors([getIt<LoggingInterceptor>()]), // Separate Dio with same config
       ),
     );
 
@@ -46,13 +78,6 @@ class NetworkModule {
     getIt.registerSingleton(RestClient());
 
     // dio:---------------------------------------------------------------------
-    getIt.registerSingleton<DioConfigs>(
-      const DioConfigs(
-        baseUrl: Endpoints.baseUrl,
-        connectionTimeout: Endpoints.connectionTimeout,
-        receiveTimeout:Endpoints.receiveTimeout,
-      ),
-    );
     getIt.registerSingleton<DioClient>(
       DioClient(dioConfigs: getIt())
         ..addInterceptors(

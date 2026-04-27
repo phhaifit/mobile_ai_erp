@@ -26,14 +26,14 @@ class SharedPreferenceHelper {
   }
 
   Future<String?> get refreshToken async {
-    return _sharedPreference.getStringList(Preferences.auth_token)?.first;
+    return _sharedPreference.getStringList(Preferences.auth_token)?.last;
   }
 
   Future<String?> get tenantId async {
     return _sharedPreference.getString(Preferences.tenant_id);
   }
 
-  Future<bool> saveTenantId(String tenantId) async {
+  Future<bool> saveTenantId(String tenantId) {
     return _sharedPreference.setString(Preferences.tenant_id, tenantId);
   }
 
