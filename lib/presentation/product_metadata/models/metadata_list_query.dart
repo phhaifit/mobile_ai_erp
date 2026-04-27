@@ -3,8 +3,8 @@ class MetadataListQuery {
     this.search = '',
     this.page = 1,
     this.pageSize = 10,
-    this.sortBy,
-    this.sortOrder,
+    this.sortBy = 'name',
+    this.sortOrder = 'asc',
   });
 
   final String search;
@@ -14,8 +14,8 @@ class MetadataListQuery {
   final String? sortOrder;
 
   bool get hasCustomSort =>
-      (sortBy?.trim().isNotEmpty ?? false) ||
-      (sortOrder?.trim().isNotEmpty ?? false);
+      sortBy != null && sortBy != 'name' ||
+      sortOrder != null && sortOrder != 'asc';
 
   MetadataListQuery copyWith({
     String? search,

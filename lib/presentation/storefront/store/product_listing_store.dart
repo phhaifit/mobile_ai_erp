@@ -29,7 +29,6 @@ abstract class _ListingFiltersStore with Store {
       id: id,
       tenantId: 'tenant_demo',
       name: name,
-      isActive: true,
       createdAt: _mockTimestamp,
       updatedAt: _mockTimestamp,
     );

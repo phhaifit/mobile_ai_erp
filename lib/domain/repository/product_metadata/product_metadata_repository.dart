@@ -12,8 +12,9 @@ abstract class ProductMetadataRepository {
     String? search,
     String? sortBy,
     String? sortOrder,
+    CategoryStatus? status,
   });
-  Future<List<Category>> getCategoryTree();
+  Future<List<Category>> getCategoryTree({CategoryStatus? status});
   Future<Category> getCategoryById(String categoryId);
   Future<Category> saveCategory(Category category);
   Future<void> deleteCategory(String categoryId);

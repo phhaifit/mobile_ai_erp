@@ -16,6 +16,7 @@ class GetCategoriesUseCase extends UseCase<MetadataPage<Category>, GetCategories
       search: params.search,
       sortBy: params.sortBy,
       sortOrder: params.sortOrder,
+      status: params.status,
     );
   }
 }
@@ -26,6 +27,7 @@ class GetCategoriesParams {
   final String? search;
   final String? sortBy;
   final String? sortOrder;
+  final CategoryStatus? status;
 
   GetCategoriesParams({
     this.page = 1,
@@ -33,5 +35,6 @@ class GetCategoriesParams {
     this.search,
     this.sortBy,
     this.sortOrder,
+    this.status,
   });
 }

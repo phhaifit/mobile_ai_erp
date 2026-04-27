@@ -27,7 +27,6 @@ class _CategoriesLandingPageState extends State<CategoriesLandingPage> {
       id: id,
       tenantId: 'tenant_demo',
       name: name,
-      isActive: true,
       createdAt: _mockTimestamp,
       updatedAt: _mockTimestamp,
     );

@@ -5,6 +5,7 @@ class AttributeSet {
     required this.name,
     this.description,
     required this.createdAt,
+    required this.updatedAt,
     this.values = const <AttributeValue>[],
   });
 
@@ -13,6 +14,7 @@ class AttributeSet {
   final String name;
   final String? description;
   final DateTime createdAt;
+  final DateTime updatedAt;
   final List<AttributeValue> values;
 
   AttributeSet copyWith({
@@ -21,6 +23,7 @@ class AttributeSet {
     String? name,
     Object? description = _sentinel,
     DateTime? createdAt,
+    DateTime? updatedAt,
     List<AttributeValue>? values,
   }) {
     return AttributeSet(
@@ -31,6 +34,7 @@ class AttributeSet {
           ? this.description
           : description as String?,
       createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
       values: values ?? this.values,
     );
   }

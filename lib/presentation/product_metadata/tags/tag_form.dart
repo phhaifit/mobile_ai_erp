@@ -4,7 +4,6 @@ import 'package:mobile_ai_erp/domain/entity/product_metadata/product_metadata_va
 import 'package:mobile_ai_erp/domain/entity/product_metadata/tag.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_route_args.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
-import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_active_switch.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_form_decoration.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/utils/metadata_error_formatter.dart';
 
@@ -29,7 +28,6 @@ class _ProductMetadataTagFormScreenState
   final TextEditingController _descriptionController = TextEditingController();
 
   Tag? _editingTag;
-  bool _isActive = true;
   bool _isInitializing = true;
   bool _isSaving = false;
   String? _nameErrorText;
@@ -52,7 +50,6 @@ class _ProductMetadataTagFormScreenState
     if (_editingTag != null) {
       _nameController.text = _editingTag!.name;
       _descriptionController.text = _editingTag!.description ?? '';
-      _isActive = _editingTag!.isActive;
     }
     if (mounted) {
       setState(() {
@@ -83,66 +80,56 @@ class _ProductMetadataTagFormScreenState
                 child: ListView(
                   padding: const EdgeInsets.all(16),
                   children: <Widget>[
-              TextFormField(
-                controller: _nameController,
-                decoration: metadataFormDecoration(
-                  labelText: 'Name',
-                  errorText: _nameErrorText,
+                    TextFormField(
+                      controller: _nameController,
+                      decoration: metadataFormDecoration(
+                        labelText: 'Name',
+                        errorText: _nameErrorText,
+                      ),
+                      validator: (value) {
+                        final trimmed = value?.trim() ?? '';
+                        if (trimmed.isEmpty) {
+                          return 'Name is required.';
+                        }
+                        if (trimmed.length > 100) {
+                          return 'Name must be 100 characters or fewer.';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _descriptionController,
+                      decoration: metadataFormDecoration(
+                        labelText: 'Description',
+                      ),
+                      minLines: 2,
+                      maxLines: 4,
+                      validator: (value) {
+                        if ((value?.trim().length ?? 0) > 1000) {
+                          return 'Description must be 1000 characters or fewer.';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    FilledButton.icon(
+                      onPressed: _isSaving ? null : _save,
+                      icon: _isSaving
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.save_outlined),
+                      label: Text(
+                        _editingTag == null ? 'Create tag' : 'Save changes',
+                      ),
+                    ),
+                  ],
                 ),
-                validator: (value) {
-                  final trimmed = value?.trim() ?? '';
-                  if (trimmed.isEmpty) {
-                    return 'Name is required.';
-                  }
-                  if (trimmed.length > 100) {
-                    return 'Name must be 100 characters or fewer.';
-                  }
-                  return null;
-                },
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _descriptionController,
-                decoration: metadataFormDecoration(
-                  labelText: 'Description',
-                ),
-                minLines: 2,
-                maxLines: 4,
-                validator: (value) {
-                  if ((value?.trim().length ?? 0) > 1000) {
-                    return 'Description must be 1000 characters or fewer.';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              if (_editingTag != null) ...[
-                const SizedBox(height: 16),
-                MetadataActiveSwitch(
-                  value: _isActive,
-                  resourceLabel: 'tag',
-                  onChanged: (value) => setState(() {
-                    _isActive = value;
-                  }),
-                ),
-              ],
-              const SizedBox(height: 24),
-              FilledButton.icon(
-                onPressed: _isSaving ? null : _save,
-                icon: _isSaving
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.save_outlined),
-                label:
-                    Text(_editingTag == null ? 'Create tag' : 'Save changes'),
-              ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 
@@ -162,7 +149,6 @@ class _ProductMetadataTagFormScreenState
         tenantId: _editingTag?.tenantId ?? '',
         name: _nameController.text.trim(),
         description: _trimOrNull(_descriptionController.text),
-        isActive: _isActive,
         createdAt: _editingTag?.createdAt ?? DateTime.now(),
         updatedAt: _editingTag?.updatedAt ?? DateTime.now(),
       );

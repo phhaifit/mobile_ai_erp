@@ -15,11 +15,8 @@ import 'package:mobx/mobx.dart';
 
 part 'product_metadata_store.g.dart';
 
-class ProductMetadataStore = ProductMetadataStoreBase
-    with _$ProductMetadataStore;
+class ProductMetadataStore = ProductMetadataStoreBase with _$ProductMetadataStore;
 
-/// Main coordinator store for all product metadata resources.
-/// Thin delegation layer - all business logic resides in sub-stores.
 abstract class ProductMetadataStoreBase with Store {
   ProductMetadataStoreBase({
     required CategoryStore categoryStore,
@@ -53,27 +50,18 @@ abstract class ProductMetadataStoreBase with Store {
   @observable
   bool hasLoadedDashboard = false;
 
-  // Category delegation
   ObservableList<Category> get categories => _categoryStore.categories;
   ObservableList<Category> get categoryTree => _categoryStore.categoryTree;
   int get categoryCurrentPage => _categoryStore.currentPage;
   int get categoryPageSize => _categoryStore.pageSize;
   int get categoryTotalItems => _categoryStore.totalItems;
+  int get categoryUnfilteredTotal => _categoryStore.unfilteredTotal;
   int get categoryTotalPages => _categoryStore.totalPages;
-  Future<void> loadCategories({
-    int page = 1,
-    int pageSize = 10,
-    String? search,
-    String? sortBy,
-    String? sortOrder,
-  }) => _categoryStore.loadCategories(
-    page: page,
-    pageSize: pageSize,
-    search: search,
-    sortBy: sortBy,
-    sortOrder: sortOrder,
-  );
-  Future<void> loadCategoryTree() => _categoryStore.loadCategoryTree();
+  bool get isCategoryLoading => _categoryStore.isLoading;
+  Future<void> loadCategories({int page = 1, int pageSize = 10, String? search, String? sortBy, String? sortOrder, CategoryStatus? status}) =>
+      _categoryStore.loadCategories(page: page, pageSize: pageSize, search: search, sortBy: sortBy, sortOrder: sortOrder, status: status);
+  Future<void> loadCategoryTree({CategoryStatus? status}) =>
+      _categoryStore.loadCategoryTree(status: status);
   Future<Category> createCategory(Category category) =>
       _categoryStore.createCategory(category);
   Future<Category> updateCategory(Category category) =>
@@ -83,80 +71,50 @@ abstract class ProductMetadataStoreBase with Store {
   Future<Category> getCategoryById(String categoryId) =>
       _getCategoryByIdUseCase.call(params: categoryId);
 
-  // Brand delegation
   ObservableList<Brand> get brands => _brandStore.brands;
   int get brandCurrentPage => _brandStore.currentPage;
   int get brandPageSize => _brandStore.pageSize;
   int get brandTotalItems => _brandStore.totalItems;
+  int get brandUnfilteredTotal => _brandStore.unfilteredTotal;
   int get brandTotalPages => _brandStore.totalPages;
-  Future<void> loadBrands({
-    int page = 1,
-    int pageSize = 10,
-    String? search,
-    String? sortBy,
-    String? sortOrder,
-  }) => _brandStore.loadBrands(
-    page: page,
-    pageSize: pageSize,
-    search: search,
-    sortBy: sortBy,
-    sortOrder: sortOrder,
-  );
+  bool get isBrandLoading => _brandStore.isLoading;
+  Future<void> loadBrands({int page = 1, int pageSize = 10, String? search, String? sortBy, String? sortOrder}) =>
+      _brandStore.loadBrands(page: page, pageSize: pageSize, search: search, sortBy: sortBy, sortOrder: sortOrder);
   Future<Brand> createBrand(Brand brand) => _brandStore.createBrand(brand);
   Future<Brand> updateBrand(Brand brand) => _brandStore.updateBrand(brand);
   Future<void> deleteBrand(String brandId) => _brandStore.deleteBrand(brandId);
   Future<Brand> getBrandById(String brandId) =>
       _getBrandByIdUseCase.call(params: brandId);
 
-  // Tag delegation
   ObservableList<Tag> get tags => _tagStore.tags;
   int get tagCurrentPage => _tagStore.currentPage;
   int get tagPageSize => _tagStore.pageSize;
   int get tagTotalItems => _tagStore.totalItems;
+  int get tagUnfilteredTotal => _tagStore.unfilteredTotal;
   int get tagTotalPages => _tagStore.totalPages;
-  Future<void> loadTags({
-    int page = 1,
-    int pageSize = 10,
-    String? search,
-    String? sortBy,
-    String? sortOrder,
-  }) => _tagStore.loadTags(
-    page: page,
-    pageSize: pageSize,
-    search: search,
-    sortBy: sortBy,
-    sortOrder: sortOrder,
-  );
+  bool get isTagLoading => _tagStore.isLoading;
+  Future<void> loadTags({int page = 1, int pageSize = 10, String? search, String? sortBy, String? sortOrder}) =>
+      _tagStore.loadTags(page: page, pageSize: pageSize, search: search, sortBy: sortBy, sortOrder: sortOrder);
   Future<Tag> createTag(Tag tag) => _tagStore.createTag(tag);
   Future<Tag> updateTag(Tag tag) => _tagStore.updateTag(tag);
   Future<void> deleteTag(String tagId) => _tagStore.deleteTag(tagId);
   Future<Tag> getTagById(String tagId) =>
       _getTagByIdUseCase.call(params: tagId);
 
-  // AttributeSet delegation
   ObservableList<AttributeSet> get attributeSets =>
       _attributeSetStore.attributeSets;
   int get attributeSetCurrentPage => _attributeSetStore.currentPage;
   int get attributeSetPageSize => _attributeSetStore.pageSize;
   int get attributeSetTotalItems => _attributeSetStore.totalItems;
+  int get attributeSetUnfilteredTotal => _attributeSetStore.unfilteredTotal;
   int get attributeSetTotalPages => _attributeSetStore.totalPages;
+  bool get isAttributeSetLoading => _attributeSetStore.isLoading;
   ObservableList<AttributeValue> get allAttributeValues =>
       _attributeSetStore.allAttributeValues;
   Future<void> loadAllAttributeValues() =>
       _attributeSetStore.loadAllAttributeValues();
-  Future<void> loadAttributeSets({
-    int page = 1,
-    int pageSize = 10,
-    String? search,
-    String? sortBy,
-    String? sortOrder,
-  }) => _attributeSetStore.loadAttributeSets(
-    page: page,
-    pageSize: pageSize,
-    search: search,
-    sortBy: sortBy,
-    sortOrder: sortOrder,
-  );
+  Future<void> loadAttributeSets({int page = 1, int pageSize = 10, String? search, String? sortBy, String? sortOrder}) =>
+      _attributeSetStore.loadAttributeSets(page: page, pageSize: pageSize, search: search, sortBy: sortBy, sortOrder: sortOrder);
   Future<AttributeSet> createAttributeSet(AttributeSet attributeSet) =>
       _attributeSetStore.createAttributeSet(attributeSet);
   Future<AttributeSet> updateAttributeSet(AttributeSet attributeSet) =>
@@ -166,7 +124,6 @@ abstract class ProductMetadataStoreBase with Store {
   Future<AttributeSet> getAttributeSetById(String attributeSetId) =>
       _getAttributeSetByIdUseCase.call(params: attributeSetId);
 
-  // AttributeValue delegation
   ObservableList<AttributeValue> get attributeValues =>
       _attributeSetStore.attributeValues;
   Future<void> loadAttributeValues(String attributeSetId) =>
@@ -178,7 +135,6 @@ abstract class ProductMetadataStoreBase with Store {
   Future<void> deleteAttributeValue(String attributeSetId, String valueId) =>
       _attributeSetStore.deleteAttributeValue(attributeSetId, valueId);
 
-  // Aggregated state
   @computed
   bool get isLoading =>
       _categoryStore.isLoading ||
@@ -193,7 +149,6 @@ abstract class ProductMetadataStoreBase with Store {
       _tagStore.error ??
       _attributeSetStore.error;
 
-  // Dashboard load - parallel Future.wait for all resources
   @action
   Future<void> loadDashboard({bool force = false}) async {
     if (hasLoadedDashboard && !force) {

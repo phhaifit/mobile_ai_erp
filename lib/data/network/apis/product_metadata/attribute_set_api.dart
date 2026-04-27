@@ -224,6 +224,10 @@ class AttributeSetApi {
       throw FormatException(
           'AttributeSet response missing required field: createdAt');
     }
+    if (json['updatedAt'] == null) {
+      throw FormatException(
+          'AttributeSet response missing required field: updatedAt');
+    }
     return AttributeSet(
       id: json['id'] as String? ?? '',
       tenantId: json['tenantId'] as String? ?? '',
@@ -232,6 +236,11 @@ class AttributeSetApi {
       createdAt: parseRequiredMetadataTimestamp(
         json,
         'createdAt',
+        contextLabel: 'AttributeSet',
+      ),
+      updatedAt: parseRequiredMetadataTimestamp(
+        json,
+        'updatedAt',
         contextLabel: 'AttributeSet',
       ),
       values: (json['values'] as List<dynamic>?)

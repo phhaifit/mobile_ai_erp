@@ -79,6 +79,9 @@ abstract class AttributeSetStoreBase with Store {
   int totalPages = 0;
 
   @observable
+  int unfilteredTotal = 0;
+
+  @observable
   bool isLoading = false;
 
   @observable
@@ -133,6 +136,7 @@ abstract class AttributeSetStoreBase with Store {
           ),
         );
         _applyMetadataPage(result);
+        if (search == null) unfilteredTotal = result.totalItems;
         searchQuery = search;
         this.sortBy = sortBy;
         this.sortOrder = sortOrder;
@@ -365,6 +369,7 @@ abstract class AttributeSetStoreBase with Store {
         ),
       );
       _applyMetadataPage(result);
+      if (searchQuery == null) unfilteredTotal = result.totalItems;
     });
   }
 

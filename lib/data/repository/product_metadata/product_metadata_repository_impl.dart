@@ -19,6 +19,7 @@ class ProductMetadataRepositoryImpl extends ProductMetadataRepository {
     String? search,
     String? sortBy,
     String? sortOrder,
+    CategoryStatus? status,
   }) =>
       _apiClient.categories.getCategories(
         page: page,
@@ -26,11 +27,12 @@ class ProductMetadataRepositoryImpl extends ProductMetadataRepository {
         search: search,
         sortBy: sortBy,
         sortOrder: sortOrder,
+        status: status,
       );
 
   @override
-  Future<List<Category>> getCategoryTree() =>
-      _apiClient.categories.getCategoryTree();
+  Future<List<Category>> getCategoryTree({CategoryStatus? status}) =>
+      _apiClient.categories.getCategoryTree(status: status);
 
   @override
   Future<Category> getCategoryById(String categoryId) =>

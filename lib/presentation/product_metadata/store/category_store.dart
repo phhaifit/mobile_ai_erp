@@ -53,6 +53,9 @@ abstract class CategoryStoreBase with Store {
   int totalPages = 0;
 
   @observable
+  int unfilteredTotal = 0;
+
+  @observable
   bool isLoading = false;
 
   @observable
@@ -67,6 +70,9 @@ abstract class CategoryStoreBase with Store {
   @observable
   String? sortOrder;
 
+  @observable
+  CategoryStatus? statusFilter;
+
   @action
   Future<void> loadCategories({
     int page = 1,
@@ -74,6 +80,7 @@ abstract class CategoryStoreBase with Store {
     String? search,
     String? sortBy,
     String? sortOrder,
+    CategoryStatus? status,
   }) async {
     await _runWithLoading(() async {
       try {
@@ -84,12 +91,15 @@ abstract class CategoryStoreBase with Store {
             search: search,
             sortBy: sortBy,
             sortOrder: sortOrder,
+            status: status,
           ),
         );
         _applyMetadataPage(result);
+        if (search == null && status == null) unfilteredTotal = result.totalItems;
         searchQuery = search;
         this.sortBy = sortBy;
         this.sortOrder = sortOrder;
+        statusFilter = status;
         error = null;
       } catch (e) {
         error = e.toString();
@@ -100,10 +110,10 @@ abstract class CategoryStoreBase with Store {
   }
 
   @action
-  Future<void> loadCategoryTree() async {
+  Future<void> loadCategoryTree({CategoryStatus? status}) async {
     await _runWithLoading(() async {
       try {
-        final result = await _getCategoryTreeUseCase.call(params: null);
+        final result = await _getCategoryTreeUseCase.call(params: status);
         categoryTree = ObservableList.of(result);
         error = null;
       } catch (e) {
@@ -119,7 +129,7 @@ abstract class CategoryStoreBase with Store {
     return await _runWithLoading(() async {
       try {
         final result = await _createCategoryUseCase.call(params: category);
-        await loadCategoryTree();
+        await loadCategoryTree(status: statusFilter);
         await _reloadCurrentQuery();
         error = null;
         return result;
@@ -136,7 +146,7 @@ abstract class CategoryStoreBase with Store {
     return await _runWithLoading(() async {
       try {
         final result = await _updateCategoryUseCase.call(params: category);
-        await loadCategoryTree();
+        await loadCategoryTree(status: statusFilter);
         await _reloadCurrentQuery();
         error = null;
         return result;
@@ -153,7 +163,7 @@ abstract class CategoryStoreBase with Store {
     await _runWithLoading(() async {
       try {
         await _deleteCategoryUseCase.call(params: categoryId);
-        await loadCategoryTree();
+        await loadCategoryTree(status: statusFilter);
         await _reloadCurrentQuery();
         error = null;
       } catch (e) {
@@ -198,9 +208,13 @@ abstract class CategoryStoreBase with Store {
           search: searchQuery,
           sortBy: sortBy,
           sortOrder: sortOrder,
+          status: statusFilter,
         ),
       );
       _applyMetadataPage(result);
+      if (searchQuery == null && statusFilter == null) {
+        unfilteredTotal = result.totalItems;
+      }
     });
   }
 

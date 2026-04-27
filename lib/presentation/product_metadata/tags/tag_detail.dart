@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_ai_erp/core/utils/date_formatter.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/tag.dart';
-import 'package:mobile_ai_erp/domain/entity/product_metadata/tag_extensions.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_navigator.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_route_args.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
-import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_detail_section_card.dart';
-import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_status_chip.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/tags/tag_detail_body.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_detail_shell.dart';
 
 class ProductMetadataTagDetailScreen extends StatefulWidget {
   const ProductMetadataTagDetailScreen({
@@ -41,82 +39,32 @@ class _ProductMetadataTagDetailScreenState
       future: _loadTagFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return Scaffold(
-            appBar: AppBar(
-              title: const Text('Tag detail'),
-              leading: BackButton(
-                onPressed: () => Navigator.of(context).pop(_hasChanged),
-              ),
-            ),
-            body: const Center(child: CircularProgressIndicator()),
-          );
+          return _shell(const Center(child: CircularProgressIndicator()));
         }
         final tag = _tag;
         if (tag == null) {
-          return Scaffold(
-            appBar: AppBar(
-              title: const Text('Tag detail'),
-              leading: BackButton(
-                onPressed: () => Navigator.of(context).pop(_hasChanged),
-              ),
-            ),
-            body: const Center(child: Text('Tag not found.')),
-          );
+          return _shell(const Center(child: Text('Tag not found.')));
         }
-
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('Tag detail'),
-            leading: BackButton(
-              onPressed: () => Navigator.of(context).pop(_hasChanged),
+        return _shell(
+          TagDetailBody(tag: tag),
+          actions: <Widget>[
+            IconButton(
+              onPressed: () => _editTag(tag),
+              icon: const Icon(Icons.edit_outlined),
+              tooltip: 'Edit tag',
             ),
-            actions: <Widget>[
-              IconButton(
-                onPressed: () => _editTag(tag),
-                icon: const Icon(Icons.edit_outlined),
-                tooltip: 'Edit tag',
-              ),
-            ],
-          ),
-          body: ListView(
-            padding: const EdgeInsets.all(16),
-            children: <Widget>[
-              Text(
-                tag.name,
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              const SizedBox(height: 16),
-              MetadataDetailSectionCard(
-                title: 'Main information',
-                children: <Widget>[
-                  MetadataDetailRow(
-                    label: 'Status',
-                    valueChild: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: <Widget>[
-                        MetadataStatusChip(
-                          label: tag.isActive ? 'Active' : 'Inactive',
-                        ),
-                      ],
-                    ),
-                  ),
-                  MetadataDetailRow(
-                    label: 'Description',
-                    value: tag.descriptionOrNull ?? 'Not set',
-                  ),
-                  MetadataDetailRow(
-                    label: 'Created at',
-                    value: DateFormatter.formatFull(tag.createdAt),
-                  ),
-                ],
-              ),
-            ],
-          ),
+          ],
         );
       },
     );
   }
+
+  Widget _shell(Widget body, {List<Widget>? actions}) => MetadataDetailShell(
+      title: 'Tag detail',
+      hasChanged: _hasChanged,
+      body: body,
+      actions: actions,
+    );
 
   Future<void> _loadTag() async {
     try {
@@ -138,15 +86,11 @@ class _ProductMetadataTagDetailScreenState
       if (!mounted) {
         return;
       }
-      // If tag was deactivated or not found, go back to tags list immediately
-      if (updatedTag == null || !updatedTag.isActive) {
+      if (updatedTag == null) {
         Navigator.of(context).pop(true);
         return;
       }
-      // Otherwise, refresh the detail view
-      setState(() {
-        _loadTagFuture = _loadTag();
-      });
+      setState(() {});
     }
   }
 }

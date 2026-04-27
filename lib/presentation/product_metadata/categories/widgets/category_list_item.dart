@@ -4,6 +4,7 @@ import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_m
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_route_args.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_list_card.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/categories/widgets/category_actions_menu.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/categories/widgets/category_status_chip.dart';
 
 class CategoryListItem extends StatelessWidget {
   const CategoryListItem({
@@ -24,10 +25,11 @@ class CategoryListItem extends StatelessWidget {
         size: 28,
       ),
       detailLines: [
+        'Parent: ${category.parentName ?? 'Top-level category'}',
         'Slug: ${category.slug}',
-        if (category.description?.trim().isNotEmpty == true)
-          category.description!.replaceAll(RegExp(r'\s+'), ' ').trim(),
+        'Level: ${category.level}',
       ],
+      chips: <Widget>[CategoryStatusChip(status: category.status)],
       trailing: CategoryActionsMenu(
         onSelected: (CategoryMenuAction action) {
           switch (action) {

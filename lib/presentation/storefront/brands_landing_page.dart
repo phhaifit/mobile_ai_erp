@@ -32,7 +32,6 @@ class _BrandsLandingPageState extends State<BrandsLandingPage> {
       name: name,
       description: description,
       logoUrl: logoUrl,
-      isActive: true,
       createdAt: _mockTimestamp,
       updatedAt: _mockTimestamp,
     );
