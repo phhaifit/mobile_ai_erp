@@ -16,6 +16,11 @@ import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 
 part 'login_store.g.dart';
 
+enum OAuthProvider {
+  google,
+  github,
+}
+
 class LoginStore = _LoginStore with _$LoginStore;
 
 abstract class _LoginStore with Store {
@@ -125,10 +130,10 @@ abstract class _LoginStore with Store {
   }
 
   @action
-  Future<void> authenticate() async {
+  Future<void> authenticate(OAuthProvider provider) async {
     final (callbackUrlScheme, redirectUri) = _getRedirectUri();
     final (codeChallenge, codeVerifier) = _generateCodeChallenge();
-    const authProviderId = "google";
+    final authProviderId = provider.name;
     final state = _randomState(32);
     final stackAuthUrl = Uri.https(Endpoints.stackAuthHost, "${Endpoints.stackAuthAuthenticate}/$authProviderId", {
       'client_id': NetworkConstants.stackAuthClientId,
