@@ -2,7 +2,7 @@ class Endpoints {
   Endpoints._();
 
   // base url
-  static const String baseUrl = "http://localhost:10000";
+  static const String baseUrl = "http://192.168.1.199:10000";
 
   // receiveTimeout
   static const int receiveTimeout = 15000;

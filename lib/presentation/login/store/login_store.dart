@@ -186,7 +186,9 @@ abstract class _LoginStore with Store {
        defaultTargetPlatform == TargetPlatform.linux ||
        defaultTargetPlatform == TargetPlatform.macOS) {
         // TODO: dynamic port
-        return ('http://localhost:13123', 'http://localhost:13123/');
+      return ('http://localhost:13123', 'http://localhost:13123/');
+    } else if (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS) {
+      return ('mobile-ai-erp', 'mobile-ai-erp://');
     }
     throw UnimplementedError();
   }
