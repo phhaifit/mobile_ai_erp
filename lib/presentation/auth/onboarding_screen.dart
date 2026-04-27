@@ -21,8 +21,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   TextEditingController _tenantNameController = TextEditingController();
   TextEditingController _subdomainController = TextEditingController();
 
+  // error messages:------------------------------------------------------------
+  String? _tenantNameError;
+  String? _subdomainError;
+
   //stores:---------------------------------------------------------------------
-  final LoginStore _userStore = getIt<LoginStore>();
+  final LoginStore _loginStore = getIt<LoginStore>();
 
   @override
   void initState() {
@@ -47,15 +51,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         _buildContent(),
         Observer(
           builder: (context) {
-            return _userStore.isLoggedIn && !_userStore.needsOnboarding
+            return _loginStore.isLoggedIn && !_loginStore.needsOnboarding
                 ? _navigateToHome(context)
-                : _showErrorMessage(_userStore.errorMessage ?? '');
+                : _showErrorMessage(_loginStore.errorMessage ?? '');
           },
         ),
         Observer(
           builder: (context) {
             return Visibility(
-              visible: _userStore.isLoading,
+              visible: _loginStore.isLoading,
               child: CustomProgressIndicatorWidget(),
             );
           },
@@ -104,8 +108,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       icon: Icons.business,
       textController: _tenantNameController,
       inputAction: TextInputAction.next,
-      errorText: 'Error _buildTenantNameField',
-      onChanged: (value) {},
+      errorText: _tenantNameError,
+      onChanged: (value) {
+        if (_tenantNameError != null) {
+          setState(() {
+            _tenantNameError = null;
+          });
+        }
+      },
       onFieldSubmitted: (value) {
         FocusScope.of(context).nextFocus();
       },
@@ -119,8 +129,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       icon: Icons.link,
       textController: _subdomainController,
       inputAction: TextInputAction.done,
-      errorText: 'Error _buildSubdomainField',
-      onChanged: (value) {},
+      errorText: _subdomainError,
+      onChanged: (value) {
+        if (_subdomainError != null) {
+          setState(() {
+            _subdomainError = null;
+          });
+        }
+      },
       onFieldSubmitted: (value) {
         _createTenant();
       },
@@ -144,7 +160,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget _buildCancelButton() {
     return TextButton(
       onPressed: () async {
-        await _userStore.logout();
+        await _loginStore.logout();
         Navigator.of(context).pushNamedAndRemoveUntil(
             Routes.login, (Route<dynamic> route) => false);
       },
@@ -159,20 +175,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final name = _tenantNameController.text.trim();
     final subdomain = _subdomainController.text.trim();
 
+    setState(() {
+      _tenantNameError = null;
+      _subdomainError = null;
+    });
+
     if (name.isEmpty) {
-      _showErrorMessage('Please enter a workspace name');
+      setState(() {
+        _tenantNameError = 'Please enter a workspace name';
+      });
       return false;
     }
 
     if (subdomain.isEmpty) {
-      _showErrorMessage('Please enter a subdomain');
+      setState(() {
+        _subdomainError = 'Please enter a subdomain';
+      });
       return false;
     }
 
     // Basic subdomain validation (alphanumeric + hyphens, 3-63 chars)
     final subdomainRegex = RegExp(r'^[a-z0-9][a-z0-9\-]{1,61}[a-z0-9]$');
     if (!subdomainRegex.hasMatch(subdomain)) {
-      _showErrorMessage('Subdomain must be 3-63 characters, contain only lowercase letters, numbers, and hyphens');
+      setState(() {
+        _subdomainError = 'Subdomain must be 3-63 characters, contain only lowercase letters, numbers, and hyphens';
+      });
       return false;
     }
 
@@ -181,7 +208,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Future<void> _createTenant() async {
     try {
-      await _userStore.createTenant(
+      await _loginStore.createTenant(
         _tenantNameController.text.trim(),
         _subdomainController.text.trim(),
       );

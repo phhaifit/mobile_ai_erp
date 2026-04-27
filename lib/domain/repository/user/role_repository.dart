@@ -4,5 +4,5 @@ abstract class RoleRepository {
   Future<List<Role>> getAll();
   Future<void> create(Role role);
   Future<void> update(Role role);
-  Future<void> delete(int id);
+  Future<void> delete(String id);
 }

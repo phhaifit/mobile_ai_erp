@@ -24,7 +24,7 @@ class NetworkModule {
     getIt.registerSingleton<ErrorInterceptor>(ErrorInterceptor(getIt()));
     getIt.registerSingleton<AuthInterceptor>(
       AuthInterceptor(
-        accessToken: () async => await getIt<SharedPreferenceHelper>().authToken,
+        accessToken: () async => await getIt<SharedPreferenceHelper>().accessToken,
       ),
     );
     getIt.registerSingleton<TenantHeaderInterceptor>(
@@ -34,7 +34,7 @@ class NetworkModule {
     );
     getIt.registerSingleton<TokenRefreshInterceptor>(
       TokenRefreshInterceptor(
-        accessToken: () async => await getIt<SharedPreferenceHelper>().authToken,
+        accessToken: () async => await getIt<SharedPreferenceHelper>().accessToken,
         getRefreshToken: () async => await getIt<SharedPreferenceHelper>().refreshToken,
         saveAuthToken: (tokens) async => await getIt<SharedPreferenceHelper>().saveAuthToken(accessToken: tokens.$1, refreshToken: tokens.$2),
         tenantId: () async => await getIt<SharedPreferenceHelper>().tenantId,
