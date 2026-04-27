@@ -22,7 +22,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   TextEditingController _subdomainController = TextEditingController();
 
   //stores:---------------------------------------------------------------------
-  final UserStore _userStore = getIt<UserStore>();
+  final LoginStore _userStore = getIt<LoginStore>();
 
   @override
   void initState() {
@@ -47,7 +47,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         _buildContent(),
         Observer(
           builder: (context) {
-            return _userStore.isAuthenticated && !_userStore.needsOnboarding
+            return _userStore.isLoggedIn && !_userStore.needsOnboarding
                 ? _navigateToHome(context)
                 : _showErrorMessage(_userStore.errorMessage ?? '');
           },

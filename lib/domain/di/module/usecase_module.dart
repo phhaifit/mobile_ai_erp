@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
 import 'package:mobile_ai_erp/domain/repository/checkout/checkout_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/fulfillment/fulfillment_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/post/post_repository.dart';
@@ -77,7 +78,7 @@ class UseCaseModule {
   static Future<void> configureUseCaseModuleInjection() async {
     // user:--------------------------------------------------------------------
     getIt.registerSingleton<IsLoggedInUseCase>(
-      IsLoggedInUseCase(getIt<UserRepository>()),
+      IsLoggedInUseCase(getIt<SharedPreferenceHelper>()),
     );
     getIt.registerSingleton<SaveLoginStatusUseCase>(
       SaveLoginStatusUseCase(getIt<UserRepository>()),

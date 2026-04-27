@@ -3,12 +3,14 @@ import 'dart:async';
 import 'package:mobile_ai_erp/core/stores/error/error_store.dart';
 import 'package:mobile_ai_erp/core/stores/form/form_store.dart';
 import 'package:mobile_ai_erp/core/stores/supplier/supplier_store.dart';
+import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
 import 'package:mobile_ai_erp/domain/repository/customer/customer_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/dashboard/dashboard_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadata_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/setting/setting_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/stock_operations/stock_operations_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/supplier/supplier_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/user/auth_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/role_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/user_repository.dart';
 import 'package:mobile_ai_erp/domain/usecase/checkout/checkout_usecases.dart';
@@ -113,8 +115,8 @@ class StoreModule {
     getIt.registerLazySingleton<OrderStore>(() => OrderStore(getIt<OrderRepository>()));
     getIt.registerLazySingleton(() => ReportsMockRepository());
 
-    getIt.registerSingleton<auth.UserStore>(
-      auth.UserStore(
+    getIt.registerSingleton<auth.LoginStore>(
+      auth.LoginStore(
         getIt<IsLoggedInUseCase>(),
         getIt<SaveLoginStatusUseCase>(),
         getIt<LoginUseCase>(),
@@ -122,6 +124,8 @@ class StoreModule {
         getIt<RefreshTokenUseCase>(),
         getIt<SignOutUseCase>(),
         getIt<CreateTenantUseCase>(),
+        getIt<AuthRepository>(),
+        getIt<SharedPreferenceHelper>(),
         getIt<FormErrorStore>(),
         getIt<ErrorStore>(),
       ),
