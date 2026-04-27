@@ -174,7 +174,15 @@ abstract class _LoginStore with Store {
   }
 
   (String, String) _getRedirectUri() {
-    if (defaultTargetPlatform == TargetPlatform.windows ||
+    if (kIsWeb) {
+      final callbackUri = Uri(
+        scheme: Uri.base.scheme,
+        host: Uri.base.host,
+        port: Uri.base.port,
+        path: '/auth.html',
+      );
+      return (Uri.base.scheme, callbackUri.toString());
+    } else if (defaultTargetPlatform == TargetPlatform.windows ||
        defaultTargetPlatform == TargetPlatform.linux ||
        defaultTargetPlatform == TargetPlatform.macOS) {
         // TODO: dynamic port
