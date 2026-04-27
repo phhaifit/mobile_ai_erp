@@ -17,6 +17,7 @@ import 'package:mobile_ai_erp/presentation/product_detail/product_detail_screen.
 import 'package:mobile_ai_erp/presentation/order_tracking/order_tracking.dart';
 import 'package:mobile_ai_erp/presentation/reports/reports_analytics.dart';
 import 'package:mobile_ai_erp/presentation/account/profile/profile_dashboard_screen.dart';
+import 'package:mobile_ai_erp/presentation/account/profile/profile_form_screen.dart';
 import 'package:mobile_ai_erp/presentation/account/address/address_book_screen.dart';
 import 'package:mobile_ai_erp/presentation/account/address/address_form_screen.dart';
 import 'package:mobile_ai_erp/presentation/account/orders/order_history_screen.dart';
@@ -79,6 +80,7 @@ class Routes {
   static const String productManagementFilter = '/products-management/filter';
 
   static const String profileDashboard = '/profile';
+  static const String profileEdit = '/profile/edit';
   static const String addressBook = '/address_book';
   static const String addressForm = '/address_form';
   static const String orderHistory = '/order_history';
@@ -105,6 +107,7 @@ class Routes {
     ...CartRoutes.getRoutes(),
     reports: (BuildContext context) => ReportsAnalyticsScreen(),
     profileDashboard: (BuildContext context) => ProfileDashboardScreen(),
+    profileEdit: (BuildContext context) => ProfileFormScreen(),
     addressBook: (BuildContext context) => const AddressBookScreen(),
     addressForm: (BuildContext context) => const AddressFormScreen(),
     orderHistory: (BuildContext context) => const OrderHistoryScreen(),

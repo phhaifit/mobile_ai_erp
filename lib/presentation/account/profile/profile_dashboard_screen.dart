@@ -61,7 +61,16 @@ class _ProfileDashboardScreenState extends State<ProfileDashboardScreen> {
               title: 'Order History',
               subtitle: 'Track, return, or buy again',
               onTap: () => Navigator.pushNamed(context, Routes.orderHistory),
-            )
+            ),
+            _buildMenuOption(
+              context,
+              icon: Icons.person_outline,
+              title: 'Personal Information',
+              subtitle: 'Update your name and phone number',
+              onTap: () => Navigator.pushNamed(context, Routes.profileEdit),
+            ),
+            const SizedBox(height: 32),
+            _buildLogoutButton(context),
           ],
         ),
       ),
@@ -150,5 +159,60 @@ class _ProfileDashboardScreenState extends State<ProfileDashboardScreen> {
         onTap: onTap,
       ),
     );
+  }
+
+  Widget _buildLogoutButton(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          foregroundColor: Colors.red,
+          side: BorderSide(color: Colors.red.shade200),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        icon: const Icon(Icons.logout),
+        label: const Text(
+          'Log Out',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        onPressed: () => _confirmLogout(context),
+      ),
+    );
+  }
+
+  Future<void> _confirmLogout(BuildContext context) async {
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Log Out'),
+          content: const Text('Are you sure you want to log out of your account?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Log Out', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm == true && context.mounted) {
+      // Call the store to wipe data
+      await _profileStore.logout();
+      
+      // Navigate back to the login screen and wipe the navigation stack so they can't press "Back"
+      if (context.mounted) {
+         // Assuming you have a Routes.login defined in your routes file
+        Navigator.pushNamedAndRemoveUntil(context, Routes.login, (route) => false);
+      }
+    }
   }
 }

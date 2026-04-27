@@ -1,7 +1,10 @@
 import 'package:mobx/mobx.dart';
+import '../../../../di/service_locator.dart';
+import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
 import '../../../../domain/entity/customer/customer.dart';
 import '../../../../domain/usecase/customer/get_profile_usecase.dart';
 import '../../../../domain/usecase/customer/update_profile_usecase.dart';
+
 
 part 'profile_store.g.dart';
 
@@ -10,8 +13,9 @@ class ProfileStore = _ProfileStore with _$ProfileStore;
 abstract class _ProfileStore with Store {
   final GetProfileUseCase _getProfileUseCase;
   final UpdateProfileUseCase _updateProfileUseCase;
+  final SharedPreferenceHelper _prefs;
 
-  _ProfileStore(this._getProfileUseCase, this._updateProfileUseCase);
+  _ProfileStore(this._getProfileUseCase, this._updateProfileUseCase, this._prefs);
 
   @observable
   Customer? customer;
@@ -65,6 +69,27 @@ abstract class _ProfileStore with Store {
     } catch (e) {
       print('❌ [ProfileStore.updateProfile] Error: $e');
       return false;
+    } finally {
+      isLoading = false;
+    }
+  }
+
+  @action
+  Future<void> logout() async {
+    try {
+      isLoading = true;
+      
+      // 1. Clear the local MobX state
+      customer = null;
+
+      // 2. Clear local storage
+      await _prefs.removeAuthToken();
+      await _prefs.removeCustomerId();
+      await _prefs.saveIsLoggedIn(false);
+
+      print('✅ [ProfileStore.logout] Successfully cleared session data.');
+    } catch (e) {
+      print('❌ [ProfileStore.logout] Error: $e');
     } finally {
       isLoading = false;
     }

@@ -91,6 +91,7 @@ class StoreModule {
       ProfileStore(
         getIt<GetProfileUseCase>(),
         getIt<UpdateProfileUseCase>(),
+        getIt<SharedPreferenceHelper>(),
       ),
     );
 
