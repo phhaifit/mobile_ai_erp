@@ -3,6 +3,7 @@ import 'package:mobile_ai_erp/constants/strings.dart';
 import 'package:mobile_ai_erp/presentation/home/home.dart';
 import 'package:mobile_ai_erp/presentation/home/store/language/language_store.dart';
 import 'package:mobile_ai_erp/presentation/home/store/theme/theme_store.dart';
+import 'package:mobile_ai_erp/presentation/login/store/login_store.dart';
 import 'package:mobile_ai_erp/utils/locale/app_localization.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +11,25 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 
 import '../di/service_locator.dart';
+
+class AuthWrapper extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Observer(
+      builder: (context) {
+        final loginStore = getIt<LoginStore>();
+        if (loginStore.isLoggedIn) {
+          return HomeScreen();
+        } else {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Navigator.of(context).pushReplacementNamed(Routes.login);
+          });
+          return const SizedBox();
+        }
+      },
+    );
+  }
+}
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
@@ -44,7 +64,7 @@ class MyApp extends StatelessWidget {
             // Built-in localization of basic text for Cupertino widgets
             GlobalCupertinoLocalizations.delegate,
           ],
-          home: HomeScreen(),
+          home: AuthWrapper(),
         );
       },
     );
