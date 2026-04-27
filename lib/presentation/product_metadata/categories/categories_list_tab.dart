@@ -10,6 +10,7 @@ class CategoriesListTab extends StatelessWidget {
     super.key,
     required this.store,
     required this.searchQuery,
+    required this.hasActiveFilter,
     required this.currentPage,
     required this.totalPages,
     required this.onPreviousPage,
@@ -19,6 +20,7 @@ class CategoriesListTab extends StatelessWidget {
 
   final ProductMetadataStore store;
   final String searchQuery;
+  final bool hasActiveFilter;
   final int currentPage;
   final int totalPages;
   final VoidCallback? onPreviousPage;
@@ -28,13 +30,14 @@ class CategoriesListTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = store.categories.toList(growable: false);
+    final hasActiveQuery = searchQuery.isNotEmpty || hasActiveFilter;
 
     if (items.isEmpty) {
       return MetadataEmptyState(
         icon: Icons.account_tree_outlined,
-        title: searchQuery.isNotEmpty ? 'No matching categories' : 'No categories yet',
-        message: searchQuery.isNotEmpty
-            ? 'Try a different search keyword.'
+        title: hasActiveQuery ? 'No matching categories' : 'No categories yet',
+        message: hasActiveQuery
+            ? 'Try a different search keyword or filter.'
             : 'Add the first category to organize product metadata.',
       );
     }

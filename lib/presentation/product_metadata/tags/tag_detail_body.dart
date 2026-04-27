@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_ai_erp/core/utils/date_formatter.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/tag.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/tag_extensions.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/utils/metadata_date_text.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_detail_section_card.dart';
 
 class TagDetailBody extends StatelessWidget {
@@ -31,11 +31,11 @@ class TagDetailBody extends StatelessWidget {
           children: <Widget>[
             MetadataDetailRow(
               label: 'Created at',
-              value: DateFormatter.formatFull(tag.createdAt),
+              value: metadataDateText(tag.createdAt),
             ),
             MetadataDetailRow(
               label: 'Updated at',
-              value: DateFormatter.formatFull(tag.updatedAt),
+              value: metadataDateText(tag.updatedAt),
             ),
           ],
         ),

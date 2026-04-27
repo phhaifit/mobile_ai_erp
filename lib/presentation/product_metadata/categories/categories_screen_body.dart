@@ -61,6 +61,7 @@ class CategoriesScreenBody extends StatelessWidget {
           child: CategoriesListTab(
             store: store,
             searchQuery: queryState.search,
+            hasActiveFilter: hasActiveFilter,
             currentPage: store.categoryCurrentPage,
             totalPages: store.categoryTotalPages,
             onPreviousPage: store.categoryCurrentPage > 1 ? onPreviousPage : null,

@@ -220,25 +220,17 @@ class AttributeSetApi {
   }
 
   AttributeSet _mapAttributeSet(Map<String, dynamic> json) {
-    if (json['createdAt'] == null) {
-      throw FormatException(
-          'AttributeSet response missing required field: createdAt');
-    }
-    if (json['updatedAt'] == null) {
-      throw FormatException(
-          'AttributeSet response missing required field: updatedAt');
-    }
     return AttributeSet(
       id: json['id'] as String? ?? '',
       tenantId: json['tenantId'] as String? ?? '',
       name: json['name'] as String? ?? '',
       description: json['description'] as String?,
-      createdAt: parseRequiredMetadataTimestamp(
+      createdAt: parseOptionalMetadataTimestamp(
         json,
         'createdAt',
         contextLabel: 'AttributeSet',
       ),
-      updatedAt: parseRequiredMetadataTimestamp(
+      updatedAt: parseOptionalMetadataTimestamp(
         json,
         'updatedAt',
         contextLabel: 'AttributeSet',
@@ -251,16 +243,12 @@ class AttributeSetApi {
   }
 
   AttributeValue _mapAttributeValue(Map<String, dynamic> json) {
-    if (json['createdAt'] == null) {
-      throw FormatException(
-          'AttributeValue response missing required field: createdAt');
-    }
     return AttributeValue(
       id: json['id'] as String? ?? '',
       attributeSetId: json['attributeSetId'] as String? ?? '',
       value: json['value'] as String? ?? '',
       sortOrder: json['sortOrder'] as int? ?? 0,
-      createdAt: parseRequiredMetadataTimestamp(
+      createdAt: parseOptionalMetadataTimestamp(
         json,
         'createdAt',
         contextLabel: 'AttributeValue',

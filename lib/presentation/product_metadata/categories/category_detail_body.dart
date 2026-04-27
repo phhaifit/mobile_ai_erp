@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_ai_erp/core/utils/date_formatter.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/categories/widgets/category_status_chip.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/utils/metadata_date_text.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_detail_section_card.dart';
 
 class CategoryDetailBody extends StatelessWidget {
@@ -42,8 +42,8 @@ class CategoryDetailBody extends StatelessWidget {
         MetadataDetailSectionCard(
           title: 'System information',
           children: <Widget>[
-            MetadataDetailRow(label: 'Created at', value: DateFormatter.formatFull(category.createdAt)),
-            MetadataDetailRow(label: 'Updated at', value: DateFormatter.formatFull(category.updatedAt)),
+            MetadataDetailRow(label: 'Created at', value: metadataDateText(category.createdAt)),
+            MetadataDetailRow(label: 'Updated at', value: metadataDateText(category.updatedAt)),
           ],
         ),
       ],

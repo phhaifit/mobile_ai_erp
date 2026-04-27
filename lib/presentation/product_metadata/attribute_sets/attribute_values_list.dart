@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/attribute.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/utils/metadata_date_text.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_empty_state.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_list_card.dart';
 
@@ -34,7 +35,10 @@ class AttributeValuesList extends StatelessWidget {
         return MetadataListCard(
           title: value.value,
           leading: const Icon(Icons.radio_button_checked),
-          detailLines: <String>['Sort order: ${value.sortOrder}'],
+          detailLines: <String>[
+            'Sort order: ${value.sortOrder}',
+            'Created at: ${metadataDateText(value.createdAt)}',
+          ],
           trailing: PopupMenuButton<String>(
             onSelected: (action) {
               if (action == 'edit') {

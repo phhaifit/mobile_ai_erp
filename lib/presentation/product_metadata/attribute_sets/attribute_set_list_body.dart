@@ -9,6 +9,7 @@ class AttributeSetListBody extends StatelessWidget {
   const AttributeSetListBody({
     super.key,
     required this.store,
+    required this.searchQuery,
     required this.currentPage,
     required this.totalPages,
     required this.onPageChange,
@@ -18,6 +19,7 @@ class AttributeSetListBody extends StatelessWidget {
   });
 
   final ProductMetadataStore store;
+  final String searchQuery;
   final int currentPage;
   final int totalPages;
   final void Function(int page) onPageChange;
@@ -28,16 +30,17 @@ class AttributeSetListBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = store.attributeSets.toList(growable: false);
+    final hasActiveQuery = searchQuery.isNotEmpty;
 
     if (items.isEmpty) {
       return MetadataEmptyState(
         icon: Icons.tune_outlined,
-        title: store.attributeSetTotalItems == 0
-            ? 'No attribute sets'
-            : 'No matching attribute sets',
-        message: store.attributeSetTotalItems == 0
-            ? 'Create the first attribute set to manage values.'
-            : 'Try a different search keyword.',
+        title: hasActiveQuery
+            ? 'No matching attribute sets'
+            : 'No attribute sets',
+        message: hasActiveQuery
+            ? 'Try a different search keyword.'
+            : 'Create the first attribute set to manage values.',
       );
     }
 

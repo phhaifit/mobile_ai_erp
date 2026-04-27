@@ -99,23 +99,17 @@ class TagApi {
   }
 
   Tag _mapTag(Map<String, dynamic> json) {
-    if (json['createdAt'] == null) {
-      throw FormatException('Tag response missing required field: createdAt');
-    }
-    if (json['updatedAt'] == null) {
-      throw FormatException('Tag response missing required field: updatedAt');
-    }
     return Tag(
       id: json['id'] as String? ?? '',
       tenantId: json['tenantId'] as String? ?? '',
       name: json['name'] as String? ?? '',
       description: json['description'] as String?,
-      createdAt: parseRequiredMetadataTimestamp(
+      createdAt: parseOptionalMetadataTimestamp(
         json,
         'createdAt',
         contextLabel: 'Tag',
       ),
-      updatedAt: parseRequiredMetadataTimestamp(
+      updatedAt: parseOptionalMetadataTimestamp(
         json,
         'updatedAt',
         contextLabel: 'Tag',

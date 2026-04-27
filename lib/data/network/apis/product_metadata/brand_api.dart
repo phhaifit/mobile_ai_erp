@@ -100,24 +100,18 @@ class BrandApi {
   }
 
   Brand _mapBrand(Map<String, dynamic> json) {
-    if (json['createdAt'] == null) {
-      throw FormatException('Brand response missing required field: createdAt');
-    }
-    if (json['updatedAt'] == null) {
-      throw FormatException('Brand response missing required field: updatedAt');
-    }
     return Brand(
       id: json['id'] as String? ?? '',
       tenantId: json['tenantId'] as String? ?? '',
       name: json['name'] as String? ?? '',
       description: json['description'] as String?,
       logoUrl: json['logoUrl'] as String?,
-      createdAt: parseRequiredMetadataTimestamp(
+      createdAt: parseOptionalMetadataTimestamp(
         json,
         'createdAt',
         contextLabel: 'Brand',
       ),
-      updatedAt: parseRequiredMetadataTimestamp(
+      updatedAt: parseOptionalMetadataTimestamp(
         json,
         'updatedAt',
         contextLabel: 'Brand',

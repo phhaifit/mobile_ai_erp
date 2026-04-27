@@ -5,8 +5,8 @@ class Brand {
     required this.name,
     this.description,
     this.logoUrl,
-    required this.createdAt,
-    required this.updatedAt,
+    this.createdAt,
+    this.updatedAt,
   });
 
   final String id;
@@ -14,8 +14,8 @@ class Brand {
   final String name;
   final String? description;
   final String? logoUrl;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   Brand copyWith({
     String? id,

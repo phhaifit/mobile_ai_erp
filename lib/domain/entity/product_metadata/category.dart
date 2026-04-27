@@ -11,8 +11,8 @@ class Category {
     this.level = 0,
     this.description,
     this.status = CategoryStatus.active,
-    required this.createdAt,
-    required this.updatedAt,
+    this.createdAt,
+    this.updatedAt,
   });
 
   final String id;
@@ -24,8 +24,8 @@ class Category {
   final int level;
   final String? description;
   final CategoryStatus status;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   bool get isActive => status == CategoryStatus.active;
 

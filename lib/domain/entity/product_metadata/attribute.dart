@@ -4,8 +4,8 @@ class AttributeSet {
     required this.tenantId,
     required this.name,
     this.description,
-    required this.createdAt,
-    required this.updatedAt,
+    this.createdAt,
+    this.updatedAt,
     this.values = const <AttributeValue>[],
   });
 
@@ -13,8 +13,8 @@ class AttributeSet {
   final String tenantId;
   final String name;
   final String? description;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
   final List<AttributeValue> values;
 
   AttributeSet copyWith({
@@ -46,14 +46,14 @@ class AttributeValue {
     required this.attributeSetId,
     required this.value,
     this.sortOrder = 0,
-    required this.createdAt,
+    this.createdAt,
   });
 
   final String id;
   final String attributeSetId;
   final String value;
   final int sortOrder;
-  final DateTime createdAt;
+  final DateTime? createdAt;
 
   AttributeValue copyWith({
     String? id,

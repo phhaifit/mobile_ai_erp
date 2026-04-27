@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_ai_erp/core/utils/date_formatter.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/brand.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/brand_extensions.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/utils/metadata_date_text.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/brand_logo_avatar.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_detail_section_card.dart';
 
@@ -52,11 +52,11 @@ class BrandDetailBody extends StatelessWidget {
           children: <Widget>[
             MetadataDetailRow(
               label: 'Created at',
-              value: DateFormatter.formatFull(brand.createdAt),
+              value: metadataDateText(brand.createdAt),
             ),
             MetadataDetailRow(
               label: 'Updated at',
-              value: DateFormatter.formatFull(brand.updatedAt),
+              value: metadataDateText(brand.updatedAt),
             ),
           ],
         ),

@@ -30,14 +30,15 @@ class TagListBody extends StatelessWidget {
     final tags = store.tags.toList(growable: false);
     final totalPages = store.tagTotalPages;
     final currentPage = store.tagCurrentPage;
+    final hasActiveQuery = queryState.search.isNotEmpty;
 
     if (tags.isEmpty) {
       return MetadataEmptyState(
         icon: Icons.sell_outlined,
-        title: store.tagTotalItems == 0 ? 'No tags yet' : 'No matching tags',
-        message: store.tagTotalItems == 0
-            ? 'Add your first tag to classify products faster.'
-            : 'Try a different search keyword.',
+        title: hasActiveQuery ? 'No matching tags' : 'No tags yet',
+        message: hasActiveQuery
+            ? 'Try a different search keyword.'
+            : 'Add your first tag to classify products faster.',
       );
     }
 

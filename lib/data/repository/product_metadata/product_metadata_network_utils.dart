@@ -93,3 +93,25 @@ DateTime parseRequiredMetadataTimestamp(
     );
   }
 }
+
+DateTime? parseOptionalMetadataTimestamp(
+  Map<String, dynamic> json,
+  String fieldName, {
+  required String contextLabel,
+}) {
+  final value = json[fieldName];
+  if (value == null || value == '') {
+    return null;
+  }
+  if (value is! String) {
+    throw FormatException('$contextLabel response has an invalid "$fieldName" timestamp.');
+  }
+
+  try {
+    return DateTime.parse(value);
+  } on FormatException {
+    throw FormatException(
+      '$contextLabel response has an invalid "$fieldName" timestamp.',
+    );
+  }
+}

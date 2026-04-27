@@ -31,14 +31,15 @@ class BrandListBody extends StatelessWidget {
     final brands = store.brands.toList(growable: false);
     final totalPages = store.brandTotalPages;
     final currentPage = store.brandCurrentPage;
+    final hasActiveQuery = queryState.search.isNotEmpty;
 
     if (brands.isEmpty) {
       return MetadataEmptyState(
         icon: Icons.workspace_premium_outlined,
-        title: store.brandTotalItems == 0 ? 'No brands yet' : 'No matching brands',
-        message: store.brandTotalItems == 0
-            ? 'Add your first brand to keep product data consistent.'
-            : 'Try a different search keyword.',
+        title: hasActiveQuery ? 'No matching brands' : 'No brands yet',
+        message: hasActiveQuery
+            ? 'Try a different search keyword.'
+            : 'Add your first brand to keep product data consistent.',
       );
     }
 

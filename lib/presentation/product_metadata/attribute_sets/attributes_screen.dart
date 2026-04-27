@@ -60,6 +60,7 @@ class _ProductMetadataAttributesScreenState extends State<ProductMetadataAttribu
       ),
       child: AttributeSetListBody(
         store: _store,
+        searchQuery: _queryState.search,
         currentPage: _store.attributeSetCurrentPage,
         totalPages: _store.attributeSetTotalPages,
         onPageChange: (p) { _setQuery(_queryState.copyWith(page: p)); _loadAttributeSets(); },

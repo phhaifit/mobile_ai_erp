@@ -137,16 +137,6 @@ class CategoryApi {
   }
 
   Category _mapCategory(Map<String, dynamic> json) {
-    if (json['createdAt'] == null) {
-      throw FormatException(
-        'Category response missing required field: createdAt',
-      );
-    }
-    if (json['updatedAt'] == null) {
-      throw FormatException(
-        'Category response missing required field: updatedAt',
-      );
-    }
     return Category(
       id: json['id'] as String? ?? '',
       tenantId: json['tenantId'] as String? ?? '',
@@ -157,12 +147,12 @@ class CategoryApi {
       slug: json['slug'] as String? ?? '',
       description: json['description'] as String?,
       status: _parseCategoryStatus(json['status'] as String?),
-      createdAt: parseRequiredMetadataTimestamp(
+      createdAt: parseOptionalMetadataTimestamp(
         json,
         'createdAt',
         contextLabel: 'Category',
       ),
-      updatedAt: parseRequiredMetadataTimestamp(
+      updatedAt: parseOptionalMetadataTimestamp(
         json,
         'updatedAt',
         contextLabel: 'Category',

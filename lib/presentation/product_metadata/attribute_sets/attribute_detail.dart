@@ -68,7 +68,7 @@ class _ProductMetadataAttributeDetailScreenState
     );
     if (changed == true && mounted) {
       _hasChanged = true;
-      setState(() => _itemFuture = _loadItem());
+      setState(() { _itemFuture = _loadItem(); });
     }
   }
 
@@ -93,7 +93,7 @@ class _ProductMetadataAttributeDetailScreenState
         Navigator.of(context).pop(true);
         return;
       }
-      setState(() => _itemFuture = Future.value(updatedItem));
+      setState(() { _itemFuture = Future.value(updatedItem); });
     }
   }
 }
