@@ -2,7 +2,7 @@ class Endpoints {
   Endpoints._();
 
   // base url
-  static const String baseUrl = "http://jsonplaceholder.typicode.com";
+  static const String baseUrl = "http://localhost:10000";
 
   // receiveTimeout
   static const int receiveTimeout = 15000;

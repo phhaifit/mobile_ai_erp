@@ -4,8 +4,6 @@ import 'package:dio/dio.dart';
 import 'package:mobile_ai_erp/core/data/network/constants/network_constants.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
-import 'package:mobile_ai_erp/domain/entity/user/user.dart';
-import 'package:mobile_ai_erp/domain/entity/user/user_status.dart';
 import 'package:mobile_ai_erp/domain/repository/user/auth_repository.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
@@ -14,7 +12,7 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl(this.dioClient);
 
   @override
-  Future<User> getAuthStatus(String accessToken) async {
+  Future<AuthStatusResponse> getAuthStatus(String accessToken) async {
     try {
       final response = await dioClient.dio.get(
         Endpoints.authStatus,
@@ -26,21 +24,7 @@ class AuthRepositoryImpl implements AuthRepository {
       );
 
       if (response.statusCode == 200 && response.data != null) {
-        final data = response.data;
-        return User(
-          id: data['id'] ?? 0,
-          name: data['name'] ?? '',
-          email: data['email'] ?? '',
-          phone: data['phone'] ?? '',
-          status: UserStatus.values.firstWhere(
-            (e) => e.name == data['status'],
-            orElse: () => UserStatus.active,
-          ),
-          roleId: data['roleId'] ?? 0,
-          ssoId: data['ssoId'],
-          tenantId: data['tenantId'],
-          tenantName: data['tenantName'],
-        );
+        return AuthStatusResponse.fromJson(response.data!);
       } else {
         throw Exception('Failed to get auth status');
       }
@@ -115,7 +99,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<AuthToken> getAccessToken(String authorizationCode, String codeVerifier) async {
+  Future<AuthToken> getAccessToken(String authorizationCode, String codeVerifier, String redirectUri) async {
     try {
       final response = await dioClient.dio.post(
         Endpoints.stackAuthToken,
@@ -125,6 +109,7 @@ class AuthRepositoryImpl implements AuthRepository {
           'client_secret': NetworkConstants.stackAuthClientSecret,
           'code': authorizationCode,
           'code_verifier': codeVerifier,
+          'redirect_uri': redirectUri,
         },
       );
 
