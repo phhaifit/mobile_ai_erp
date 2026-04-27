@@ -1,10 +1,10 @@
 import 'package:mobile_ai_erp/data/network/apis/product_metadata/metadata_api_client.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/attribute.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/brand.dart';
+import 'package:mobile_ai_erp/domain/entity/product_metadata/brand_image.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/metadata_page.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/tag.dart';
-import 'package:mobile_ai_erp/domain/entity/product_metadata/unit.dart';
 import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadata_repository.dart';
 
 class ProductMetadataRepositoryImpl extends ProductMetadataRepository {
@@ -51,13 +51,14 @@ class ProductMetadataRepositoryImpl extends ProductMetadataRepository {
     String? search,
     String? sortBy,
     String? sortOrder,
-  }) => _apiClient.attributeSets.getAttributeSets(
-    page: page,
-    pageSize: pageSize,
-    search: search,
-    sortBy: sortBy,
-    sortOrder: sortOrder,
-  );
+  }) =>
+      _apiClient.attributeSets.getAttributeSets(
+        page: page,
+        pageSize: pageSize,
+        search: search,
+        sortBy: sortBy,
+        sortOrder: sortOrder,
+      );
 
   @override
   Future<AttributeSet> getAttributeSetById(String attributeSetId) =>
@@ -94,17 +95,16 @@ class ProductMetadataRepositoryImpl extends ProductMetadataRepository {
     int page = 1,
     int pageSize = 10,
     String? search,
-    bool includeInactive = false,
     String? sortBy,
     String? sortOrder,
-  }) => _apiClient.brands.getBrands(
-    page: page,
-    pageSize: pageSize,
-    search: search,
-    includeInactive: includeInactive,
-    sortBy: sortBy,
-    sortOrder: sortOrder,
-  );
+  }) =>
+      _apiClient.brands.getBrands(
+        page: page,
+        pageSize: pageSize,
+        search: search,
+        sortBy: sortBy,
+        sortOrder: sortOrder,
+      );
 
   @override
   Future<Brand> getBrandById(String brandId) =>
@@ -118,21 +118,32 @@ class ProductMetadataRepositoryImpl extends ProductMetadataRepository {
       _apiClient.brands.deleteBrand(brandId);
 
   @override
+  Future<BrandImage?> getBrandImage(String brandId) =>
+      _apiClient.brandImages.getBrandImage(brandId);
+
+  @override
+  Future<BrandImage> uploadBrandImage(String brandId, dynamic file) =>
+      _apiClient.brandImages.uploadBrandImage(brandId: brandId, file: file);
+
+  @override
+  Future<void> deleteBrandImage(String brandId) =>
+      _apiClient.brandImages.deleteBrandImage(brandId);
+
+  @override
   Future<MetadataPage<Tag>> getTags({
     int page = 1,
     int pageSize = 10,
     String? search,
-    bool includeInactive = false,
     String? sortBy,
     String? sortOrder,
-  }) => _apiClient.tags.getTags(
-    page: page,
-    pageSize: pageSize,
-    search: search,
-    includeInactive: includeInactive,
-    sortBy: sortBy,
-    sortOrder: sortOrder,
-  );
+  }) =>
+      _apiClient.tags.getTags(
+        page: page,
+        pageSize: pageSize,
+        search: search,
+        sortBy: sortBy,
+        sortOrder: sortOrder,
+      );
 
   @override
   Future<Tag> getTagById(String tagId) => _apiClient.tags.getTagById(tagId);
@@ -142,31 +153,4 @@ class ProductMetadataRepositoryImpl extends ProductMetadataRepository {
 
   @override
   Future<void> deleteTag(String tagId) => _apiClient.tags.deleteTag(tagId);
-
-  @override
-  Future<MetadataPage<Unit>> getUnits({
-    int page = 1,
-    int pageSize = 10,
-    String? search,
-    bool includeInactive = false,
-    String? sortBy,
-    String? sortOrder,
-  }) => _apiClient.units.getUnits(
-    page: page,
-    pageSize: pageSize,
-    search: search,
-    includeInactive: includeInactive,
-    sortBy: sortBy,
-    sortOrder: sortOrder,
-  );
-
-  @override
-  Future<Unit> getUnitById(String unitId) =>
-      _apiClient.units.getUnitById(unitId);
-
-  @override
-  Future<Unit> saveUnit(Unit unit) => _apiClient.units.saveUnit(unit);
-
-  @override
-  Future<void> deleteUnit(String unitId) => _apiClient.units.deleteUnit(unitId);
 }

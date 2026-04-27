@@ -13,8 +13,7 @@ class TagApi {
     int page = 1,
     int pageSize = 10,
     String? search,
-    bool includeInactive = false, 
-    String? sortBy, 
+    String? sortBy,
     String? sortOrder,
   }) async {
     try {
@@ -23,7 +22,6 @@ class TagApi {
       final queryParams = <String, dynamic>{
         'page': normalizedPage,
         'pageSize': normalizedPageSize,
-        'includeInactive': includeInactive,
       };
       if (search != null && search.trim().isNotEmpty) {
         queryParams['search'] = search.trim();
@@ -72,7 +70,6 @@ class TagApi {
     final payload = <String, dynamic>{
       'name': sanitizeMetadataJsonText(tag.name),
       'description': sanitizeNullableMetadataJsonText(tag.description),
-      if (tag.id.isNotEmpty) 'isActive': tag.isActive,
     };
 
     try {
@@ -113,7 +110,6 @@ class TagApi {
       tenantId: json['tenantId'] as String? ?? '',
       name: json['name'] as String? ?? '',
       description: json['description'] as String?,
-      isActive: json['isActive'] as bool? ?? true,
       createdAt: parseRequiredMetadataTimestamp(
         json,
         'createdAt',

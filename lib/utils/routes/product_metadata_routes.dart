@@ -15,9 +15,6 @@ import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_m
 import 'package:mobile_ai_erp/presentation/product_metadata/tags/tag_detail.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/tags/tag_form.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/tags/tags_screen.dart';
-import 'package:mobile_ai_erp/presentation/product_metadata/units/unit_detail.dart';
-import 'package:mobile_ai_erp/presentation/product_metadata/units/unit_form.dart';
-import 'package:mobile_ai_erp/presentation/product_metadata/units/units_screen.dart';
 
 class ProductMetadataRoutes {
   ProductMetadataRoutes._();
@@ -136,27 +133,6 @@ class ProductMetadataRoutes {
           settings: settings,
           builder: (args) => ProductMetadataTagDetailScreen(args: args),
           fallbackBuilder: () => const ProductMetadataTagsScreen(),
-        );
-
-      case ProductMetadataNavigator.unitsRoute:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (context) => const ProductMetadataUnitsScreen(),
-        );
-
-      case ProductMetadataNavigator.unitFormRoute:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (context) => ProductMetadataUnitFormScreen(
-            args: args is UnitFormArgs ? args : null,
-          ),
-        );
-
-      case ProductMetadataNavigator.unitDetailRoute:
-        return _buildMetadataRoute<UnitDetailArgs>(
-          settings: settings,
-          builder: (args) => ProductMetadataUnitDetailScreen(args: args),
-          fallbackBuilder: () => const ProductMetadataUnitsScreen(),
         );
 
       default:

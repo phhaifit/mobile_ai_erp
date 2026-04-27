@@ -5,7 +5,6 @@ class Brand {
     required this.name,
     this.description,
     this.logoUrl,
-    required this.isActive,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -15,7 +14,6 @@ class Brand {
   final String name;
   final String? description;
   final String? logoUrl;
-  final bool isActive;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -25,7 +23,6 @@ class Brand {
     String? name,
     Object? description = _sentinel,
     Object? logoUrl = _sentinel,
-    bool? isActive,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -38,7 +35,6 @@ class Brand {
           : description as String?,
       logoUrl:
           identical(logoUrl, _sentinel) ? this.logoUrl : logoUrl as String?,
-      isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

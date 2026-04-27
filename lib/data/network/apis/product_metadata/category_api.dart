@@ -12,9 +12,10 @@ class CategoryApi {
   Future<MetadataPage<Category>> getCategories({
     int page = 1,
     int pageSize = 10,
-    String? search, 
-    String? sortBy, 
+    String? search,
+    String? sortBy,
     String? sortOrder,
+    CategoryStatus? status,
   }) async {
     try {
       final normalizedPage = page < 1 ? 1 : page;
@@ -31,6 +32,9 @@ class CategoryApi {
       }
       if (sortOrder != null) {
         queryParams['sortOrder'] = sortOrder;
+      }
+      if (status != null) {
+        queryParams['status'] = status.name;
       }
       final response = await _dioClient.dio.get<Map<String, dynamic>>(
         '/categories',
@@ -55,10 +59,15 @@ class CategoryApi {
     }
   }
 
-  Future<List<Category>> getCategoryTree() async {
+  Future<List<Category>> getCategoryTree({CategoryStatus? status}) async {
     try {
+      final queryParams = <String, dynamic>{};
+      if (status != null) {
+        queryParams['status'] = status.name;
+      }
       final response = await _dioClient.dio.get<List<dynamic>>(
         '/categories/tree',
+        queryParameters: queryParams.isEmpty ? null : queryParams,
       );
       final data = response.data ?? const <dynamic>[];
       final List<Category> flattened = [];
@@ -98,6 +107,7 @@ class CategoryApi {
       'slug': sanitizeMetadataJsonText(category.slug),
       'description': sanitizeNullableMetadataJsonText(category.description),
       'parentId': category.parentId,
+      'status': category.status.name,
     };
 
     try {
@@ -141,9 +151,12 @@ class CategoryApi {
       id: json['id'] as String? ?? '',
       tenantId: json['tenantId'] as String? ?? '',
       parentId: json['parentId'] as String?,
+      parentName: json['parentName'] as String?,
+      level: json['level'] as int? ?? 0,
       name: json['name'] as String? ?? '',
       slug: json['slug'] as String? ?? '',
       description: json['description'] as String?,
+      status: _parseCategoryStatus(json['status'] as String?),
       createdAt: parseRequiredMetadataTimestamp(
         json,
         'createdAt',
@@ -155,5 +168,15 @@ class CategoryApi {
         contextLabel: 'Category',
       ),
     );
+  }
+
+  CategoryStatus _parseCategoryStatus(String? value) {
+    switch (value) {
+      case 'inactive':
+        return CategoryStatus.inactive;
+      case 'active':
+      default:
+        return CategoryStatus.active;
+    }
   }
 }

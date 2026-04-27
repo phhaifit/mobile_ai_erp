@@ -71,6 +71,9 @@ import 'package:mobile_ai_erp/domain/usecase/product_metadata/brands/get_brand_b
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/brands/create_brand_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/brands/update_brand_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/brands/delete_brand_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/brands/get_brand_image_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/brands/upload_brand_image_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/brands/delete_brand_image_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/tags/get_tags_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/tags/get_tag_by_id_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/tags/create_tag_usecase.dart';
@@ -82,11 +85,6 @@ import 'package:mobile_ai_erp/domain/usecase/product_metadata/categories/get_cat
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/categories/create_category_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/categories/update_category_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/categories/delete_category_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/product_metadata/units/get_units_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/product_metadata/units/get_unit_by_id_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/product_metadata/units/create_unit_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/product_metadata/units/update_unit_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/product_metadata/units/delete_unit_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/get_attribute_sets_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/get_attribute_set_by_id_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/get_all_attribute_values_usecase.dart';
@@ -323,6 +321,15 @@ class UseCaseModule {
     getIt.registerSingleton<DeleteBrandUseCase>(
       DeleteBrandUseCase(getIt<ProductMetadataRepository>()),
     );
+    getIt.registerSingleton<GetBrandImageUseCase>(
+      GetBrandImageUseCase(getIt<ProductMetadataRepository>()),
+    );
+    getIt.registerSingleton<UploadBrandImageUseCase>(
+      UploadBrandImageUseCase(getIt<ProductMetadataRepository>()),
+    );
+    getIt.registerSingleton<DeleteBrandImageUseCase>(
+      DeleteBrandImageUseCase(getIt<ProductMetadataRepository>()),
+    );
 
     // tags
     getIt.registerSingleton<GetTagsUseCase>(
@@ -359,23 +366,6 @@ class UseCaseModule {
     );
     getIt.registerSingleton<DeleteCategoryUseCase>(
       DeleteCategoryUseCase(getIt<ProductMetadataRepository>()),
-    );
-
-    // units
-    getIt.registerSingleton<GetUnitsUseCase>(
-      GetUnitsUseCase(getIt<ProductMetadataRepository>()),
-    );
-    getIt.registerSingleton<GetUnitByIdUseCase>(
-      GetUnitByIdUseCase(getIt<ProductMetadataRepository>()),
-    );
-    getIt.registerSingleton<CreateUnitUseCase>(
-      CreateUnitUseCase(getIt<ProductMetadataRepository>()),
-    );
-    getIt.registerSingleton<UpdateUnitUseCase>(
-      UpdateUnitUseCase(getIt<ProductMetadataRepository>()),
-    );
-    getIt.registerSingleton<DeleteUnitUseCase>(
-      DeleteUnitUseCase(getIt<ProductMetadataRepository>()),
     );
 
     // attribute sets

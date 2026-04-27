@@ -1,9 +1,9 @@
 import 'package:mobile_ai_erp/domain/entity/product_metadata/attribute.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/brand.dart';
+import 'package:mobile_ai_erp/domain/entity/product_metadata/brand_image.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/metadata_page.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/tag.dart';
-import 'package:mobile_ai_erp/domain/entity/product_metadata/unit.dart';
 
 abstract class ProductMetadataRepository {
   Future<MetadataPage<Category>> getCategories({
@@ -41,35 +41,24 @@ abstract class ProductMetadataRepository {
     int page = 1,
     int pageSize = 10,
     String? search,
-    bool includeInactive = false,
     String? sortBy,
     String? sortOrder,
   });
   Future<Brand> getBrandById(String brandId);
   Future<Brand> saveBrand(Brand brand);
   Future<void> deleteBrand(String brandId);
+  Future<BrandImage?> getBrandImage(String brandId);
+  Future<BrandImage> uploadBrandImage(String brandId, dynamic file);
+  Future<void> deleteBrandImage(String brandId);
 
   Future<MetadataPage<Tag>> getTags({
     int page = 1,
     int pageSize = 10,
     String? search,
-    bool includeInactive = false,
     String? sortBy,
     String? sortOrder,
   });
   Future<Tag> getTagById(String tagId);
   Future<Tag> saveTag(Tag tag);
   Future<void> deleteTag(String tagId);
-
-  Future<MetadataPage<Unit>> getUnits({
-    int page = 1,
-    int pageSize = 10,
-    String? search,
-    bool includeInactive = false,
-    String? sortBy,
-    String? sortOrder,
-  });
-  Future<Unit> getUnitById(String unitId);
-  Future<Unit> saveUnit(Unit unit);
-  Future<void> deleteUnit(String unitId);
 }

@@ -6,7 +6,6 @@ import 'package:mobile_ai_erp/data/network/apis/product_metadata/brand_api.dart'
 import 'package:mobile_ai_erp/data/network/apis/product_metadata/brand_image_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/product_metadata/category_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/product_metadata/tag_api.dart';
-import 'package:mobile_ai_erp/data/network/apis/product_metadata/unit_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/product_metadata/attribute_set_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
@@ -58,7 +57,6 @@ class NetworkModule {
     getIt.registerSingleton(BrandImageApi(getIt<DioClient>()));
     getIt.registerSingleton(CategoryApi(getIt<DioClient>()));
     getIt.registerSingleton(TagApi(getIt<DioClient>()));
-    getIt.registerSingleton(UnitApi(getIt<DioClient>()));
     getIt.registerSingleton(AttributeSetApi(getIt<DioClient>()));
     getIt.registerSingleton(PostApi(getIt<DioClient>(), getIt<RestClient>()));
   }

@@ -55,9 +55,6 @@ abstract class BrandStoreBase with Store {
   String? searchQuery;
 
   @observable
-  bool includeInactive = false;
-
-  @observable
   String? sortBy;
 
   @observable
@@ -68,7 +65,6 @@ abstract class BrandStoreBase with Store {
     int page = 1,
     int pageSize = 10,
     String? search,
-    bool includeInactive = false,
     String? sortBy,
     String? sortOrder,
   }) async {
@@ -79,14 +75,12 @@ abstract class BrandStoreBase with Store {
             page: page,
             pageSize: pageSize,
             search: search,
-            includeInactive: includeInactive,
             sortBy: sortBy,
             sortOrder: sortOrder,
           ),
         );
         _applyMetadataPage(result);
         searchQuery = search;
-        this.includeInactive = includeInactive;
         this.sortBy = sortBy;
         this.sortOrder = sortOrder;
         error = null;
@@ -177,7 +171,6 @@ abstract class BrandStoreBase with Store {
           page: currentPage,
           pageSize: pageSize,
           search: searchQuery,
-          includeInactive: includeInactive,
           sortBy: sortBy,
           sortOrder: sortOrder,
         ),

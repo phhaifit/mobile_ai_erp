@@ -13,7 +13,6 @@ class BrandApi {
     int page = 1,
     int pageSize = 10,
     String? search,
-    bool includeInactive = false,
     String? sortBy,
     String? sortOrder,
   }) async {
@@ -23,7 +22,6 @@ class BrandApi {
       final queryParams = <String, dynamic>{
         'page': normalizedPage,
         'pageSize': normalizedPageSize,
-        'includeInactive': includeInactive,
       };
       if (search != null && search.trim().isNotEmpty) {
         queryParams['search'] = search.trim();
@@ -73,7 +71,6 @@ class BrandApi {
       'name': sanitizeMetadataJsonText(brand.name),
       'description': sanitizeNullableMetadataJsonText(brand.description),
       'logoUrl': sanitizeNullableMetadataJsonText(brand.logoUrl),
-      if (brand.id.isNotEmpty) 'isActive': brand.isActive,
     };
 
     try {
@@ -115,7 +112,6 @@ class BrandApi {
       name: json['name'] as String? ?? '',
       description: json['description'] as String?,
       logoUrl: json['logoUrl'] as String?,
-      isActive: json['isActive'] as bool? ?? true,
       createdAt: parseRequiredMetadataTimestamp(
         json,
         'createdAt',

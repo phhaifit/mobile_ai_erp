@@ -31,11 +31,6 @@ import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/get
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/create_attribute_value_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/update_attribute_value_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/delete_attribute_value_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/product_metadata/units/get_units_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/product_metadata/units/get_unit_by_id_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/product_metadata/units/create_unit_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/product_metadata/units/update_unit_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/product_metadata/units/delete_unit_usecase.dart';
 import 'package:mobile_ai_erp/domain/repository/setting/setting_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/stock_operations/stock_operations_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/supplier/supplier_repository.dart';
@@ -72,7 +67,6 @@ import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metada
 import 'package:mobile_ai_erp/presentation/product_metadata/store/category_store.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/brand_store.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/tag_store.dart';
-import 'package:mobile_ai_erp/presentation/product_metadata/store/unit_store.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/attribute_set_store.dart';
 import 'package:mobile_ai_erp/domain/usecase/inventory_audit_outbound/get_inventory_audit_records_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/inventory_audit_outbound/get_inventory_by_warehouse_usecase.dart';
@@ -197,16 +191,6 @@ class StoreModule {
       ),
     );
 
-    getIt.registerSingleton<UnitStore>(
-      UnitStore(
-        getUnitsUseCase: getIt<GetUnitsUseCase>(),
-        createUnitUseCase: getIt<CreateUnitUseCase>(),
-        updateUnitUseCase: getIt<UpdateUnitUseCase>(),
-        deleteUnitUseCase: getIt<DeleteUnitUseCase>(),
-        errorStore: getIt<ErrorStore>(),
-      ),
-    );
-
     getIt.registerSingleton<AttributeSetStore>(
       AttributeSetStore(
         getAttributeSetsUseCase: getIt<GetAttributeSetsUseCase>(),
@@ -229,13 +213,11 @@ class StoreModule {
         categoryStore: getIt<CategoryStore>(),
         brandStore: getIt<BrandStore>(),
         tagStore: getIt<TagStore>(),
-        unitStore: getIt<UnitStore>(),
         attributeSetStore: getIt<AttributeSetStore>(),
         getBrandByIdUseCase: getIt<GetBrandByIdUseCase>(),
         getTagByIdUseCase: getIt<GetTagByIdUseCase>(),
         getCategoryByIdUseCase: getIt<GetCategoryByIdUseCase>(),
         getAttributeSetByIdUseCase: getIt<GetAttributeSetByIdUseCase>(),
-        getUnitByIdUseCase: getIt<GetUnitByIdUseCase>(),
         errorStore: getIt<ErrorStore>(),
       ),
     );

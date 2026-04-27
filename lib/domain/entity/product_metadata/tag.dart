@@ -4,7 +4,6 @@ class Tag {
     required this.tenantId,
     required this.name,
     this.description,
-    required this.isActive,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -13,7 +12,6 @@ class Tag {
   final String tenantId;
   final String name;
   final String? description;
-  final bool isActive;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -22,7 +20,6 @@ class Tag {
     String? tenantId,
     String? name,
     Object? description = _sentinel,
-    bool? isActive,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -33,7 +30,6 @@ class Tag {
       description: identical(description, _sentinel)
           ? this.description
           : description as String?,
-      isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

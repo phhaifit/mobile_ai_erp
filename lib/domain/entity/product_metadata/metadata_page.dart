@@ -12,4 +12,6 @@ class MetadataPage<T> {
   final int pageSize;
   final int totalItems;
   final int totalPages;
+
+  bool get hasNextPage => page < totalPages;
 }

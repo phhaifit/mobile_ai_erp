@@ -8,9 +8,9 @@ import 'package:mobile_ai_erp/data/local/datasources/post_purchase/post_purchase
 import 'package:mobile_ai_erp/data/local/datasources/user/role_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/user/user_datasource.dart';
 import 'package:mobile_ai_erp/data/network/apis/product_metadata/brand_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/product_metadata/brand_image_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/product_metadata/category_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/product_metadata/tag_api.dart';
-import 'package:mobile_ai_erp/data/network/apis/product_metadata/unit_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/product_metadata/attribute_set_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/product_metadata/metadata_api_client.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
@@ -97,9 +97,9 @@ class RepositoryModule {
     getIt.registerSingleton<MetadataApiClient>(
       MetadataApiClient(
         brands: getIt<BrandApi>(),
+        brandImages: getIt<BrandImageApi>(),
         categories: getIt<CategoryApi>(),
         tags: getIt<TagApi>(),
-        units: getIt<UnitApi>(),
         attributeSets: getIt<AttributeSetApi>(),
       ),
     );

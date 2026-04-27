@@ -14,7 +14,6 @@ class GetTagsUseCase extends UseCase<MetadataPage<Tag>, GetTagsParams> {
       page: params.page,
       pageSize: params.pageSize,
       search: params.search,
-      includeInactive: params.includeInactive,
       sortBy: params.sortBy,
       sortOrder: params.sortOrder,
     );
@@ -26,7 +25,6 @@ class GetTagsParams {
     this.page = 1,
     this.pageSize = 10,
     this.search,
-    this.includeInactive = false,
     this.sortBy,
     this.sortOrder,
   });
@@ -34,7 +32,6 @@ class GetTagsParams {
   final int page;
   final int pageSize;
   final String? search;
-  final bool includeInactive;
   final String? sortBy;
   final String? sortOrder;
 }

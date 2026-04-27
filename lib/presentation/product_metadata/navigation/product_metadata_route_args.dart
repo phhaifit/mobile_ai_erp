@@ -85,14 +85,3 @@ class TagDetailArgs {
   final String tagId;
 }
 
-class UnitFormArgs {
-  const UnitFormArgs({this.unitId});
-
-  final String? unitId;
-}
-
-class UnitDetailArgs {
-  const UnitDetailArgs({required this.unitId});
-
-  final String unitId;
-}

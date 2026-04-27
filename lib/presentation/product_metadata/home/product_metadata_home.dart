@@ -66,13 +66,6 @@ class _ProductMetadataHomeScreenState extends State<ProductMetadataHomeScreen> {
                 icon: Icons.sell_outlined,
                 onTap: () => ProductMetadataNavigator.openTags(context),
               ),
-              MetadataSectionCard(
-                title: 'Units',
-                description: 'Manage reusable units for products.',
-                countLabel: '${_store.unitTotalItems} units',
-                icon: Icons.straighten_outlined,
-                onTap: () => ProductMetadataNavigator.openUnits(context),
-              ),
             ],
           );
         },

@@ -3,17 +3,14 @@ import 'package:mobile_ai_erp/domain/entity/product_metadata/attribute.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/brand.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/tag.dart';
-import 'package:mobile_ai_erp/domain/entity/product_metadata/unit.dart';
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/get_attribute_set_by_id_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/brands/get_brand_by_id_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/tags/get_tag_by_id_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/categories/get_category_by_id_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/product_metadata/units/get_unit_by_id_usecase.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/attribute_set_store.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/brand_store.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/category_store.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/tag_store.dart';
-import 'package:mobile_ai_erp/presentation/product_metadata/store/unit_store.dart';
 import 'package:mobx/mobx.dart';
 
 part 'product_metadata_store.g.dart';
@@ -28,35 +25,29 @@ abstract class ProductMetadataStoreBase with Store {
     required CategoryStore categoryStore,
     required BrandStore brandStore,
     required TagStore tagStore,
-    required UnitStore unitStore,
     required AttributeSetStore attributeSetStore,
     required GetBrandByIdUseCase getBrandByIdUseCase,
     required GetTagByIdUseCase getTagByIdUseCase,
     required GetCategoryByIdUseCase getCategoryByIdUseCase,
     required GetAttributeSetByIdUseCase getAttributeSetByIdUseCase,
-    required GetUnitByIdUseCase getUnitByIdUseCase,
     required this.errorStore,
   }) : _categoryStore = categoryStore,
        _brandStore = brandStore,
        _tagStore = tagStore,
-       _unitStore = unitStore,
        _attributeSetStore = attributeSetStore,
        _getBrandByIdUseCase = getBrandByIdUseCase,
        _getTagByIdUseCase = getTagByIdUseCase,
        _getCategoryByIdUseCase = getCategoryByIdUseCase,
-       _getAttributeSetByIdUseCase = getAttributeSetByIdUseCase,
-       _getUnitByIdUseCase = getUnitByIdUseCase;
+       _getAttributeSetByIdUseCase = getAttributeSetByIdUseCase;
 
   final CategoryStore _categoryStore;
   final BrandStore _brandStore;
   final TagStore _tagStore;
-  final UnitStore _unitStore;
   final AttributeSetStore _attributeSetStore;
   final GetBrandByIdUseCase _getBrandByIdUseCase;
   final GetTagByIdUseCase _getTagByIdUseCase;
   final GetCategoryByIdUseCase _getCategoryByIdUseCase;
   final GetAttributeSetByIdUseCase _getAttributeSetByIdUseCase;
-  final GetUnitByIdUseCase _getUnitByIdUseCase;
   final ErrorStore errorStore;
 
   @observable
@@ -102,14 +93,12 @@ abstract class ProductMetadataStoreBase with Store {
     int page = 1,
     int pageSize = 10,
     String? search,
-    bool includeInactive = false,
     String? sortBy,
     String? sortOrder,
   }) => _brandStore.loadBrands(
     page: page,
     pageSize: pageSize,
     search: search,
-    includeInactive: includeInactive,
     sortBy: sortBy,
     sortOrder: sortOrder,
   );
@@ -129,14 +118,12 @@ abstract class ProductMetadataStoreBase with Store {
     int page = 1,
     int pageSize = 10,
     String? search,
-    bool includeInactive = false,
     String? sortBy,
     String? sortOrder,
   }) => _tagStore.loadTags(
     page: page,
     pageSize: pageSize,
     search: search,
-    includeInactive: includeInactive,
     sortBy: sortBy,
     sortOrder: sortOrder,
   );
@@ -145,33 +132,6 @@ abstract class ProductMetadataStoreBase with Store {
   Future<void> deleteTag(String tagId) => _tagStore.deleteTag(tagId);
   Future<Tag> getTagById(String tagId) =>
       _getTagByIdUseCase.call(params: tagId);
-
-  // Unit delegation
-  ObservableList<Unit> get units => _unitStore.units;
-  int get unitCurrentPage => _unitStore.currentPage;
-  int get unitPageSize => _unitStore.pageSize;
-  int get unitTotalItems => _unitStore.totalItems;
-  int get unitTotalPages => _unitStore.totalPages;
-  Future<void> loadUnits({
-    int page = 1,
-    int pageSize = 10,
-    String? search,
-    bool includeInactive = false,
-    String? sortBy,
-    String? sortOrder,
-  }) => _unitStore.loadUnits(
-    page: page,
-    pageSize: pageSize,
-    search: search,
-    includeInactive: includeInactive,
-    sortBy: sortBy,
-    sortOrder: sortOrder,
-  );
-  Future<Unit> createUnit(Unit unit) => _unitStore.createUnit(unit);
-  Future<Unit> updateUnit(Unit unit) => _unitStore.updateUnit(unit);
-  Future<void> deleteUnit(String unitId) => _unitStore.deleteUnit(unitId);
-  Future<Unit> getUnitById(String unitId) =>
-      _getUnitByIdUseCase.call(params: unitId);
 
   // AttributeSet delegation
   ObservableList<AttributeSet> get attributeSets =>
@@ -224,7 +184,6 @@ abstract class ProductMetadataStoreBase with Store {
       _categoryStore.isLoading ||
       _brandStore.isLoading ||
       _tagStore.isLoading ||
-      _unitStore.isLoading ||
       _attributeSetStore.isLoading;
 
   @computed
@@ -232,7 +191,6 @@ abstract class ProductMetadataStoreBase with Store {
       _categoryStore.error ??
       _brandStore.error ??
       _tagStore.error ??
-      _unitStore.error ??
       _attributeSetStore.error;
 
   // Dashboard load - parallel Future.wait for all resources
@@ -247,7 +205,6 @@ abstract class ProductMetadataStoreBase with Store {
         loadCategories(),
         loadCategoryTree(),
         loadTags(),
-        loadUnits(),
         loadAttributeSets(),
         loadBrands(),
       ]);
