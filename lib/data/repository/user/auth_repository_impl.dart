@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
-import 'package:mobile_ai_erp/core/data/network/constants/network_constants.dart';
+import 'package:mobile_ai_erp/constants/env.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
 import 'package:mobile_ai_erp/domain/repository/user/auth_repository.dart';
@@ -101,8 +101,8 @@ class AuthRepositoryImpl implements AuthRepository {
         Endpoints.stackAuthToken,
         data: {
           'grant_type': 'authorization_code',
-          'client_id': NetworkConstants.stackAuthClientId,
-          'client_secret': NetworkConstants.stackAuthClientSecret,
+          'client_id': Env.stackAuthClientId,
+          'client_secret': Env.stackAuthClientSecret,
           'code': authorizationCode,
           'code_verifier': codeVerifier,
           'redirect_uri': redirectUri,
