@@ -61,6 +61,7 @@ class Routes {
   static const String home = '/post';
   static const String dashboard = '/dashboard';
   static const String suppliers = '/suppliers';
+  static const String supplierDetail = '/supplier-detail';
   static const String stockOperations = '/stock-operations';
   static const String inventoryAudit = '/inventory-audit';
   static const String inventoryAuditSummary = '/inventory-audit-summary';
