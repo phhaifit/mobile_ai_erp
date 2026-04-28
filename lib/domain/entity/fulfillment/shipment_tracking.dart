@@ -179,6 +179,7 @@ class OrderRoutingRecommendation {
   final String orderId;
   final String recommendedProvider;
   final String? selectedProvider;
+  final String? selectedOptionId;
   final double? confidence;
   final String scoreStrategy;
   final bool fallbackUsed;
@@ -191,6 +192,7 @@ class OrderRoutingRecommendation {
     required this.orderId,
     required this.recommendedProvider,
     required this.selectedProvider,
+    required this.selectedOptionId,
     required this.confidence,
     required this.scoreStrategy,
     required this.fallbackUsed,

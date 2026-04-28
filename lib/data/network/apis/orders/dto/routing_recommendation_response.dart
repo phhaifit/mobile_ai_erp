@@ -35,6 +35,7 @@ class OrderRoutingRecommendationResponseDto {
   final String orderId;
   final String recommendedProvider;
   final String? selectedProvider;
+  final String? selectedOptionId;
   final double? confidence;
   final String scoreStrategy;
   final bool fallbackUsed;
@@ -47,6 +48,7 @@ class OrderRoutingRecommendationResponseDto {
     required this.orderId,
     required this.recommendedProvider,
     required this.selectedProvider,
+    this.selectedOptionId,
     required this.confidence,
     required this.scoreStrategy,
     required this.fallbackUsed,
@@ -71,6 +73,7 @@ class OrderRoutingRecommendationResponseDto {
       orderId: json['orderId'] as String,
       recommendedProvider: json['recommendedProvider'] as String,
       selectedProvider: json['selectedProvider'] as String?,
+      selectedOptionId: json['selectedOptionId'] as String?,
       confidence: (json['confidence'] as num?)?.toDouble(),
       scoreStrategy: json['scoreStrategy'] as String? ?? 'weighted_v1',
       fallbackUsed: json['fallbackUsed'] as bool? ?? false,
