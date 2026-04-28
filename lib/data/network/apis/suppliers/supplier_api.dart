@@ -1,17 +1,19 @@
-import 'package:dio/dio.dart';
+import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
 import 'package:mobile_ai_erp/domain/entity/shared/paginated_result.dart';
 import 'package:mobile_ai_erp/domain/entity/supplier/product_summary.dart';
 import 'package:mobile_ai_erp/data/network/mappers/suppliers/product_summary_mapper.dart';
 
 class SupplierApi {
-  final Dio _dio;
+  static const String _erpPath = '/erp';
+
+  final DioClient _dioClient;
   final String _suppliersPath;
   final String _productsPath;
 
   SupplierApi(
-    this._dio, {
-    String suppliersPath = '/erp/suppliers',
-    String productsPath = '/erp/products',
+    this._dioClient, {
+    String suppliersPath = '$_erpPath/suppliers',
+    String productsPath = '$_erpPath/products',
   })  : _suppliersPath = suppliersPath,
         _productsPath = productsPath;
 
@@ -32,7 +34,7 @@ class SupplierApi {
     if (sortBy != null) queryParameters['sortBy'] = sortBy;
     if (sortOrder != null) queryParameters['sortOrder'] = sortOrder;
 
-    final response = await _dio.get(
+    final response = await _dioClient.dio.get(
       _suppliersPath,
       queryParameters: queryParameters,
     );
@@ -40,7 +42,7 @@ class SupplierApi {
   }
 
   Future<Map<String, dynamic>> getSupplierById(String id) async {
-    final response = await _dio.get(
+    final response = await _dioClient.dio.get(
       '$_suppliersPath/$id',
     );
     return response.data as Map<String, dynamic>;
@@ -52,7 +54,7 @@ class SupplierApi {
     int pageSize = 10,
     String search = '',
   }) async {
-    final response = await _dio.get(
+    final response = await _dioClient.dio.get(
       '$_suppliersPath/$supplierId/products',
       queryParameters: {
         'page': page,
@@ -64,7 +66,7 @@ class SupplierApi {
   }
 
   Future<Map<String, dynamic>> createSupplier(Map<String, dynamic> payload) async {
-    final response = await _dio.post(
+    final response = await _dioClient.dio.post(
       _suppliersPath,
       data: payload,
     );
@@ -75,7 +77,7 @@ class SupplierApi {
     String id,
     Map<String, dynamic> payload,
   ) async {
-    final response = await _dio.patch(
+    final response = await _dioClient.dio.patch(
       '$_suppliersPath/$id',
       data: payload,
     );
@@ -83,14 +85,14 @@ class SupplierApi {
   }
 
   Future<void> deleteSupplier(String id) async {
-    await _dio.delete('$_suppliersPath/$id');
+    await _dioClient.dio.delete('$_suppliersPath/$id');
   }
 
   Future<Map<String, dynamic>> addProductToSupplier(
     String productId,
     Map<String, dynamic> payload,
   ) async {
-    final response = await _dio.post(
+    final response = await _dioClient.dio.post(
       '$_productsPath/$productId/suppliers',
       data: payload,
     );
@@ -102,7 +104,7 @@ class SupplierApi {
     String supplierId,
     Map<String, dynamic> payload,
   ) async {
-    final response = await _dio.patch(
+    final response = await _dioClient.dio.patch(
       '$_productsPath/$productId/suppliers/$supplierId',
       data: payload,
     );
@@ -113,7 +115,7 @@ class SupplierApi {
     String productId,
     String supplierId,
   ) async {
-    await _dio.delete(
+    await _dioClient.dio.delete(
       '$_productsPath/$productId/suppliers/$supplierId',
     );
   }
@@ -129,7 +131,7 @@ class SupplierApi {
     };
     if (search.isNotEmpty) queryParameters['search'] = search;
 
-    final response = await _dio.get(
+    final response = await _dioClient.dio.get(
       _productsPath,
       queryParameters: queryParameters,
     );

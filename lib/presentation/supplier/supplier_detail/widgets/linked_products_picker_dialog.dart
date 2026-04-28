@@ -24,7 +24,7 @@ Future<void> showLinkedProductsPickerDialog({
           children: [
             Text(product.name, style: Theme.of(context).textTheme.bodySmall),
             Text(
-              product.sku,
+              'SKU: ${product.sku}',
               style: Theme.of(context)
                   .textTheme
                   .bodySmall
