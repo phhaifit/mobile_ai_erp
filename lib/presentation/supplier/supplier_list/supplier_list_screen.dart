@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:mobile_ai_erp/utils/routes/routes.dart';
 
 import '../store/supplier_store.dart';
 import '../store/supplier_products_store.dart';
@@ -50,6 +51,7 @@ class _SupplierListScreenState extends State<SupplierListScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
+        settings: const RouteSettings(name: Routes.supplierDetail),
         builder: (_) => SupplierDetailScreen(
           store: widget.store,
           productsStore: widget.productsStore,
