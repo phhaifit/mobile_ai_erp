@@ -26,6 +26,8 @@ class FulfillmentOrder {
   final double shippingFee;
   final double totalAmount;
   final String? notes;
+  final int? summaryItemCount;
+  final int? summaryTotalQuantity;
 
   FulfillmentOrder({
     required this.id,
@@ -41,7 +43,7 @@ class FulfillmentOrder {
     required this.paymentStatus,
     required this.createdAt,
     this.updatedAt,
-    required this.items,
+    this.items = const [],
     List<PackageInfo>? packages,
     List<TrackingEvent>? trackingEvents,
     this.subtotal = 0,
@@ -50,10 +52,13 @@ class FulfillmentOrder {
     this.shippingFee = 0,
     required this.totalAmount,
     this.notes,
+    this.summaryItemCount,
+    this.summaryTotalQuantity,
   })  : packages = packages ?? [],
         trackingEvents = trackingEvents ?? [];
 
-  int get itemCount => items.fold(0, (sum, item) => sum + item.quantity);
+  int get itemCount => summaryItemCount ?? items.fold(0, (sum, item) => sum + 1);
+  int get totalQuantity => summaryTotalQuantity ?? items.fold(0, (sum, item) => sum + item.quantity);
 
   FulfillmentOrder copyWith({
     String? id,
@@ -78,6 +83,8 @@ class FulfillmentOrder {
     double? shippingFee,
     double? totalAmount,
     String? notes,
+    int? summaryItemCount,
+    int? summaryTotalQuantity,
   }) {
     return FulfillmentOrder(
       id: id ?? this.id,
@@ -102,6 +109,8 @@ class FulfillmentOrder {
       shippingFee: shippingFee ?? this.shippingFee,
       totalAmount: totalAmount ?? this.totalAmount,
       notes: notes ?? this.notes,
+      summaryItemCount: summaryItemCount ?? this.summaryItemCount,
+      summaryTotalQuantity: summaryTotalQuantity ?? this.summaryTotalQuantity,
     );
   }
 }

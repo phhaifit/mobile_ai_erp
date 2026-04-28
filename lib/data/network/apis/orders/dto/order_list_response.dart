@@ -7,6 +7,8 @@ class OrderSummaryDto {
   final String? customerName;
   final String totalAmount;
   final String createdAt;
+  final int totalItems;
+  final int totalQuantity;
 
   OrderSummaryDto({
     required this.id,
@@ -16,6 +18,8 @@ class OrderSummaryDto {
     this.customerName,
     required this.totalAmount,
     required this.createdAt,
+    this.totalItems = 0,
+    this.totalQuantity = 0,
   });
 
   factory OrderSummaryDto.fromJson(Map<String, dynamic> json) {
@@ -27,6 +31,8 @@ class OrderSummaryDto {
       customerName: json['customerName'] as String?,
       totalAmount: json['totalPrice'] as String,
       createdAt: json['createdAt'] as String,
+      totalItems: json['totalItems'] as int? ?? 0,
+      totalQuantity: json['totalQuantity'] as int? ?? 0,
     );
   }
 }
