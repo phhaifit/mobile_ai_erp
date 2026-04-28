@@ -245,8 +245,9 @@ class FulfillmentRepositoryImpl extends FulfillmentRepository {
           FulfillmentStatus.pending,
       paymentStatus: dto.paymentStatus,
       createdAt: DateTime.parse(dto.createdAt),
-      items: [],
       totalAmount: double.tryParse(dto.totalAmount) ?? 0,
+      summaryItemCount: dto.totalItems,
+      summaryTotalQuantity: dto.totalQuantity,
     );
   }
 
@@ -353,6 +354,7 @@ class FulfillmentRepositoryImpl extends FulfillmentRepository {
       orderId: dto.orderId,
       recommendedProvider: dto.recommendedProvider,
       selectedProvider: dto.selectedProvider,
+      selectedOptionId: dto.selectedOptionId,
       confidence: dto.confidence,
       scoreStrategy: dto.scoreStrategy,
       fallbackUsed: dto.fallbackUsed,
