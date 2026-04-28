@@ -23,6 +23,7 @@ import 'package:mobile_ai_erp/presentation/account/address/address_form_screen.d
 import 'package:mobile_ai_erp/presentation/account/orders/order_history_screen.dart';
 import 'package:mobile_ai_erp/presentation/account/orders/order_detail_screen.dart';
 import 'package:mobile_ai_erp/presentation/account/orders/return_request_screen.dart';
+import 'package:mobile_ai_erp/presentation/account/orders/cancel_order_screen.dart';
 import 'package:mobile_ai_erp/presentation/order_fulfillment/fulfillment_detail.dart';
 import 'package:mobile_ai_erp/presentation/order_fulfillment/fulfillment_list.dart';
 import 'package:mobile_ai_erp/presentation/order_fulfillment/order_tracking.dart';
@@ -85,6 +86,7 @@ class Routes {
   static const String addressForm = '/address_form';
   static const String orderHistory = '/order_history';
   static const String orderDetail = '/order_detail';
+  static const String cancelOrder = '/cancel_order';
   static const String returnRequest = '/return_request';
 
   static final routes = <String, WidgetBuilder>{
@@ -113,6 +115,7 @@ class Routes {
     orderHistory: (BuildContext context) => const OrderHistoryScreen(),
     orderDetail: (BuildContext context) => const OrderDetailScreen(),
     returnRequest: (BuildContext context) => const ReturnRequestScreen(),
+    cancelOrder: (BuildContext context) => const CancelOrderScreen(),
     users: (BuildContext context) => UserManagementScreen(
       userStore: getIt<UserStore>(),
       roleStore: getIt<RoleStore>(),

@@ -43,6 +43,10 @@ class OrderStatusBadge extends StatelessWidget {
         bgColor = Colors.purple.shade100;
         text = 'Returned';
         break;
+      case OrderStatus.success:
+        bgColor = Colors.green.shade200;
+        text = 'Success';
+        break;
     }
 
     return Chip(

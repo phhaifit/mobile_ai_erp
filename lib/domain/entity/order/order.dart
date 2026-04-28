@@ -1,6 +1,6 @@
 import 'package:decimal/decimal.dart';
 
-enum OrderStatus { pending, confirmed, packing, shipping, delivered, cancelled, returned }
+enum OrderStatus { pending, confirmed, packing, shipping, delivered, success, cancelled, returned }
 
 class OrderItem {
   final String id;
@@ -179,6 +179,7 @@ class Order {
       case 'packing': return OrderStatus.packing;
       case 'shipping': return OrderStatus.shipping;
       case 'delivered': return OrderStatus.delivered;
+      case 'success': return OrderStatus.success;
       case 'cancelled': return OrderStatus.cancelled;
       case 'returned': return OrderStatus.returned;
       case 'pending':

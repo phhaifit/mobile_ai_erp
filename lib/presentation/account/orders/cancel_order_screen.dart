@@ -2,27 +2,27 @@ import 'package:flutter/material.dart';
 import '../../../../domain/entity/order/order.dart';
 import '../../../../di/service_locator.dart';
 import '../store/order_store.dart';
-import '../../../../domain/entity/order/return_request.dart'; 
-import '../../../../di/service_locator.dart';
-import '../store/order_store.dart';
 
-class ReturnRequestScreen extends StatefulWidget {
-  const ReturnRequestScreen({super.key});
+class CancelOrderScreen extends StatefulWidget {
+  const CancelOrderScreen({super.key});
 
   @override
-  State<ReturnRequestScreen> createState() => _ReturnRequestScreenState();
+  State<CancelOrderScreen> createState() => _CancelOrderScreenState();
 }
 
-class _ReturnRequestScreenState extends State<ReturnRequestScreen> {
+class _CancelOrderScreenState extends State<CancelOrderScreen> {
   final _formKey = GlobalKey<FormState>();
   final _reasonController = TextEditingController();
-  String _selectedReason = 'Damaged Item';
+  String _selectedReason = 'Changed my mind';
   bool _isLoading = false;
 
+  // Custom cancellation reasons
   final List<String> _reasons = [
-    'Damaged Item',
-    'Wrong Item Received',
-    'Missing Parts',
+    'Changed my mind',
+    'Found a better price or coupon',
+    'Ordered by mistake',
+    'Shipping time is too long',
+    'Need to change shipping address',
     'Other'
   ];
 
@@ -47,7 +47,7 @@ class _ReturnRequestScreenState extends State<ReturnRequestScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Return / Exchange'),
+        title: const Text('Cancel Order'),
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -57,14 +57,19 @@ class _ReturnRequestScreenState extends State<ReturnRequestScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Request for Order: ${order.id}',
+              Text('Cancel Order: #${order.code}',
                   style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 16)),
+                      fontWeight: FontWeight.bold, fontSize: 18)),
+              const SizedBox(height: 8),
+              Text('You can only cancel orders that have not yet been packed or shipped.',
+                  style: TextStyle(color: Colors.grey.shade700)),
               const SizedBox(height: 24),
+              
+              // Reason Dropdown
               DropdownButtonFormField<String>(
                 initialValue: _selectedReason,
                 decoration: const InputDecoration(
-                    labelText: 'Reason for Return',
+                    labelText: 'Reason for Cancellation',
                     border: OutlineInputBorder()),
                 items: _reasons.map((String reason) {
                   return DropdownMenuItem<String>(
@@ -79,49 +84,35 @@ class _ReturnRequestScreenState extends State<ReturnRequestScreen> {
                 },
               ),
               const SizedBox(height: 16),
+              
+              // Additional Details
               TextFormField(
                 controller: _reasonController,
                 maxLines: 4,
                 enabled: !_isLoading,
                 maxLength: 500,
                 decoration: const InputDecoration(
-                  labelText: 'Additional Details',
+                  labelText: 'Additional Details (Optional)',
                   alignLabelWithHint: true,
                   border: OutlineInputBorder(),
                 ),
                 validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please provide details';
+                  // If they select "Other", force them to type a reason
+                  if (_selectedReason == 'Other' && (value == null || value.trim().isEmpty)) {
+                    return 'Please provide a reason for cancellation';
                   }
                   return null;
                 },
               ),
-              const SizedBox(height: 24),
-               Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(32),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  border: Border.all(
-                      color: Colors.grey.shade300, style: BorderStyle.solid),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Column(
-                  children: [
-                    Icon(Icons.upload_file, size: 40, color: Colors.grey),
-                    SizedBox(height: 8),
-                    Text('Tap to upload photo evidence (Mock)',
-                        style: TextStyle(color: Colors.grey)),
-                  ],
-                ),
-              ),
               const SizedBox(height: 32),
+              
+              // Submit Button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: Colors.blue,
+                    backgroundColor: Colors.red, // Red for destructive action
                   ),
                   onPressed: _isLoading
                       ? null
@@ -129,35 +120,28 @@ class _ReturnRequestScreenState extends State<ReturnRequestScreen> {
                           if (_formKey.currentState!.validate()) {
                             setState(() => _isLoading = true);
                             
-                            // Using the exact classes you provided
-                            final payload = SubmitReturnPayload(
-                              type: 'return',
-                              reason: '$_selectedReason: ${_reasonController.text}',
-                              items: order.items.map((item) => ReturnItemPayload(
-                                orderItemId: item.id, // The specific item UUID
-                                quantity: item.quantity, // Returning all of them
-                                reason: _selectedReason,
-                              )).toList(),
-                            );
+                            // Combine the reason for the backend
+                            final finalReason = '$_selectedReason: ${_reasonController.text}'.trim();
                             
                             try {
-                              // Pass the ID and the raw JSON map to the store
-                              await orderStore.submitReturnRequest(
-                                order.id, 
-                                payload, // Make sure your Store is expecting the Payload object
-                              );
+                              // Call the existing store method
+                              // Note: If you want to send `finalReason` to the backend, 
+                              // you will need to update `orderStore.cancelOrder` to accept a reason string.
+                              await orderStore.cancelOrder(order.id);
                               
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                      content: Text('Return request submitted successfully!')),
+                                      content: Text('Order has been cancelled successfully.')),
                                 );
-                                Navigator.pop(context); // Go back to order details
+                                // Pop twice to go back to the Order History list
+                                Navigator.of(context).pop(); 
+                                Navigator.of(context).pop(); 
                               }
                             } catch (e) {
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Failed to submit: $e')),
+                                  SnackBar(content: Text('Failed to cancel order: $e')),
                                 );
                               }
                             } finally {
@@ -167,7 +151,7 @@ class _ReturnRequestScreenState extends State<ReturnRequestScreen> {
                         },
                   child: _isLoading 
                       ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text('Submit Request', style: TextStyle(color: Colors.white, fontSize: 16)),
+                      : const Text('Confirm Cancellation', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
               ),
             ],

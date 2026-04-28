@@ -21,7 +21,7 @@ class Endpoints {
   // These now correctly point to the secure controller we just built
   static const String customerProfile = "$storefrontAccountUrl/account/profile";
   static const String customerAddresses = "$storefrontAccountUrl/addresses";
-  static const String customerOrders = "$storefrontAccountUrl/orders";
+  static const String customerOrders = "$storefrontAccountUrl/account/orders";
 
   // ─── UNUSED ENDPOINTS ──────────────────────────────────────────────
   static const String customerLoyalty = "$storefrontAccountUrl/loyalty";

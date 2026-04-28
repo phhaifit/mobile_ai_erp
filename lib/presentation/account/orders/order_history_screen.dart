@@ -24,16 +24,14 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 6 Tabs: All, Pending, Shipped, Delivered, Canceled, Returned
     return DefaultTabController(
-      length: 6,
+      length: 9, // 🚀 UPDATED from 6 to 9
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Order History'),
           elevation: 0,
           bottom: const TabBar(
-            isScrollable:
-                true, // Allows tabs to scroll horizontally if they don't fit
+            isScrollable: true,
             indicatorColor: Colors.blue,
             labelColor: Colors.blue,
             unselectedLabelColor: Colors.grey,
@@ -41,9 +39,12 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               Tab(text: 'All'),
               Tab(text: 'Pending'),
               Tab(text: 'Confirmed'),
+              Tab(text: 'Packing'),    // 🚀 NEW
               Tab(text: 'Shipping'),
               Tab(text: 'Delivered'),
+              Tab(text: 'Success'),    // 🚀 NEW
               Tab(text: 'Cancelled'),
+              Tab(text: 'Returned'),   // 🚀 NEW
             ],
           ),
         ),
@@ -58,9 +59,12 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                 _buildOrderList(null), // All
                 _buildOrderList(OrderStatus.pending),
                 _buildOrderList(OrderStatus.confirmed),
+                _buildOrderList(OrderStatus.packing),
                 _buildOrderList(OrderStatus.shipping),
                 _buildOrderList(OrderStatus.delivered),
+                _buildOrderList(OrderStatus.success),
                 _buildOrderList(OrderStatus.cancelled),
+                _buildOrderList(OrderStatus.returned),
               ],
             );
           },

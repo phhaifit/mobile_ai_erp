@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../utils/routes/cart_routes.dart';
 import '../../../../domain/entity/order/order.dart';
 import '../../../../di/service_locator.dart';
 import '../../../../utils/routes/routes.dart';
@@ -92,63 +93,83 @@ class OrderDetailScreen extends StatelessWidget {
             ),
             // 1. Buy Again Button (Always visible)
             const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: Colors.blue,
+            
+            // LOGIC 1: Success, Cancelled, Returned -> Buy Again
+            if (order.status == OrderStatus.success || 
+                order.status == OrderStatus.cancelled || 
+                order.status == OrderStatus.returned)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: Colors.blue,
+                  ),
+                  onPressed: () async {
+                    try {
+                      await orderStore.reorder(order.id);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Items added to your cart!')),
+                        );
+                        Navigator.pushNamed(context, CartRoutes.cartScreen);
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to reorder: $e')),
+                        );
+                      }
+                    }
+                  },
+                  child: const Text('Buy Again', style: TextStyle(color: Colors.white, fontSize: 16)),
                 ),
-                onPressed: () {
-                  orderStore.reorder(order.id);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Mock: Redirecting to Checkout...')),
-                  );
-                },
-                child: const Text('Buy Again',
-                    style: TextStyle(color: Colors.white, fontSize: 16)),
               ),
-            ),
-            const SizedBox(height: 12),
 
-            // Return / Exchange Button (ONLY visible if Delivered)
-            if (order.status == OrderStatus.delivered)
+            // LOGIC 2: Delivered -> Confirm Success OR Return
+            if (order.status == OrderStatus.delivered) ...[
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: Colors.green,
+                  ),
+                  onPressed: () {
+                    // TODO: Implement backend endpoint for Confirming Order Success
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Mock: Order Confirmed!')),
+                    );
+                  },
+                  child: const Text('Confirm Received', style: TextStyle(color: Colors.white, fontSize: 16)),
+                ),
+              ),
+              const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16)),
+                  style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
                   onPressed: () {
-                    Navigator.pushNamed(context, Routes.returnRequest,
-                        arguments: order);
+                    Navigator.pushNamed(context, Routes.returnRequest, arguments: order);
                   },
-                  child: const Text('Return / Exchange Items',
-                      style: TextStyle(color: Colors.red)),
+                  child: const Text('Return / Exchange Items', style: TextStyle(color: Colors.red)),
                 ),
               ),
+            ],
 
-            // Cancel Order Button (ONLY visible if Pending)
-            if (order.status == OrderStatus.pending)
+            if (order.status == OrderStatus.pending || order.status == OrderStatus.confirmed)
               SizedBox(
                 width: double.infinity,
                 child: TextButton(
-                  style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16)),
-                  onPressed: () async {
-                    await orderStore.cancelOrder(order.id);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('Order has been canceled.')),
-                      );
-                      Navigator.pop(context); // Go back to the history list
-                    }
+                  style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+                  onPressed: () {
+                    // Navigate to the new cancellation screen and pass the order
+                    Navigator.pushNamed(context, Routes.cancelOrder, arguments: order);
                   },
-                  child: const Text('Cancel Order',
-                      style: TextStyle(color: Colors.grey)),
+                  child: const Text('Cancel Order', style: TextStyle(color: Color.fromARGB(255, 217, 97, 97), fontSize: 16)),
                 ),
               ),
+            // LOGIC 4: Packing, Shipping -> No buttons (Intentionally blank)
           ],
         ),
       ),

@@ -53,22 +53,27 @@ class OrderApi {
   /// Submit return request
   Future<void> submitReturnRequest(String orderId, Map<String, dynamic> data) async {
     try {
+      // Hits the NestJS: @Post(':orderId/return')
       await _dioClient.dio.post(
         '${Endpoints.customerOrders}/$orderId/return',
-        data: data,
+        data: data, // This will be your SubmitReturnPayload mapped to JSON
       );
-      // Removed: return ReturnRequest.fromJson(res.data);
     } catch (e) {
+      print('❌ [OrderApi.submitReturnRequest] Error: $e');
       rethrow;
     }
   }
 
-  /// Re-order (NOTE: Backend endpoint needed)
+  /// Re-order
   Future<Map<String, dynamic>> reorder(String orderId) async {
     try {
-      final res = await _dioClient.dio.post('${Endpoints.customerOrders}/$orderId/reorder');
-      return res.data;
+      // Hits the NestJS: @Post(':orderId/reorder')
+      final response = await _dioClient.dio.post(
+        '${Endpoints.customerOrders}/$orderId/reorder', 
+      );
+      return response.data; // Returns { message, cartId } from your backend
     } catch (e) {
+      print('❌ [OrderApi.reorder] Error: $e');
       rethrow;
     }
   }

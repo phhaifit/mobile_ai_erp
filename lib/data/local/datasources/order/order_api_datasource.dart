@@ -22,22 +22,12 @@ class OrderApiDataSource implements OrderDataSource {
   @override
   Future<List<Order>> getOrderHistory({String? status, int? page, int? pageSize}) async {
     try {
-      // Get the stored customer ID (set during login)
       final customerId = await _prefs.customerId;
-      print('🔵 [OrderApiDataSource.getOrderHistory] Stored customer ID: $customerId');
-      
       if (customerId == null || customerId.isEmpty) {
-        print('❌ [OrderApiDataSource.getOrderHistory] Customer ID is null or empty!');
         throw Exception('Customer ID not found. User may not be logged in.');
       }
-      
-      print('📞 [OrderApiDataSource.getOrderHistory] Calling OrderApi.getOrderHistory()');
-      // Use the new unified endpoint with Prisma include
-      final orders = await _orderApi.getOrderHistory();
-      print('✅ [OrderApiDataSource.getOrderHistory] Got ${orders.length} orders');
-      return orders;
+      return await _orderApi.getOrderHistory();
     } catch (e) {
-      print('❌ [OrderApiDataSource.getOrderHistory] Error: $e');
       rethrow;
     }
   }
@@ -53,12 +43,12 @@ class OrderApiDataSource implements OrderDataSource {
   }
 
   @override
-  Future<void> submitReturnRequest(String orderId, Map<String, dynamic> data) {
-    return _orderApi.submitReturnRequest(orderId, data);
+  Future<Map<String, dynamic>> reorder(String orderId) {
+    return _orderApi.reorder(orderId);
   }
 
   @override
-  Future<Map<String, dynamic>> reorder(String orderId) {
-    return _orderApi.reorder(orderId);
+  Future<void> submitReturnRequest(String orderId, Map<String, dynamic> data) {
+    return _orderApi.submitReturnRequest(orderId, data);
   }
 }
