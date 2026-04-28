@@ -1,3 +1,4 @@
+import 'package:mobile_ai_erp/constants/env.dart';
 import 'package:mobile_ai_erp/core/stores/error/error_store.dart';
 import 'package:mobile_ai_erp/core/stores/form/form_store.dart';
 import 'package:mobile_ai_erp/domain/usecase/auth/create_tenant_usecase.dart';
@@ -6,7 +7,6 @@ import 'package:mobx/mobx.dart';
 import '../../../domain/entity/user/user.dart';
 import '../../../domain/usecase/user/login_usecase.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
-import 'package:mobile_ai_erp/core/data/network/constants/network_constants.dart';
 import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
 import 'package:mobile_ai_erp/domain/repository/user/auth_repository.dart';
 import 'package:flutter/foundation.dart';
@@ -137,8 +137,8 @@ abstract class _LoginStore with Store {
     final authProviderId = provider.name;
     final state = _randomState(32);
     final stackAuthUrl = Uri.https(Endpoints.stackAuthHost, "${Endpoints.stackAuthAuthenticate}/$authProviderId", {
-      'client_id': NetworkConstants.stackAuthClientId,
-      'client_secret': NetworkConstants.stackAuthClientSecret,
+      'client_id': Env.stackAuthClientId,
+      'client_secret': Env.stackAuthClientSecret,
       'redirect_uri': redirectUri,
       'scope': 'legacy',
       'grant_type': 'authorization_code',
