@@ -9,6 +9,7 @@ import 'package:mobile_ai_erp/data/local/datasources/product_metadata/product_me
 import 'package:mobile_ai_erp/data/local/datasources/user/role_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/user/user_datasource.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/web_builder/web_builder_api.dart';
 import 'package:mobile_ai_erp/data/repository/checkout/checkout_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/customer/customer_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/dashboard/mock_dashboard_repository.dart';
@@ -123,13 +124,13 @@ class RepositoryModule {
 
     // web_builder:--------------------------------------------------------------
     getIt.registerLazySingleton<CmsPageRepository>(
-      () => CmsPageRepositoryImpl(),
+      () => CmsPageRepositoryImpl(getIt<WebBuilderApi>()),
     );
     getIt.registerLazySingleton<WebThemeRepository>(
-      () => WebThemeRepositoryImpl(),
+      () => WebThemeRepositoryImpl(getIt<WebBuilderApi>()),
     );
     getIt.registerLazySingleton<StoreSettingsRepository>(
-      () => StoreSettingsRepositoryImpl(),
+      () => StoreSettingsRepositoryImpl(getIt<WebBuilderApi>()),
     );
 
     getIt.registerLazySingleton<SupplierRepository>(() => SupplierMockRepository());
