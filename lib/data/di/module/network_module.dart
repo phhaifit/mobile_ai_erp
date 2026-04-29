@@ -3,8 +3,10 @@ import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/auth_interceptor.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/logging_interceptor.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/web_builder/web_builder_api.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
 import 'package:mobile_ai_erp/data/network/interceptors/error_interceptor.dart';
+import 'package:mobile_ai_erp/data/network/interceptors/tenant_interceptor.dart';
 import 'package:mobile_ai_erp/data/network/rest_client.dart';
 import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
 import 'package:event_bus/event_bus.dart';
@@ -12,6 +14,8 @@ import 'package:event_bus/event_bus.dart';
 import '../../../di/service_locator.dart';
 
 class NetworkModule {
+  static const String erpDioClientName = 'erpDioClient';
+
   static Future<void> configureNetworkModuleInjection() async {
     // event bus:---------------------------------------------------------------
     getIt.registerSingleton<EventBus>(EventBus());
@@ -24,16 +28,19 @@ class NetworkModule {
         accessToken: () async => await getIt<SharedPreferenceHelper>().authToken,
       ),
     );
+    getIt.registerSingleton<TenantInterceptor>(
+      TenantInterceptor(Endpoints.tenantId),
+    );
 
     // rest client:-------------------------------------------------------------
     getIt.registerSingleton(RestClient());
 
-    // dio:---------------------------------------------------------------------
+    // dio (legacy posts API):--------------------------------------------------
     getIt.registerSingleton<DioConfigs>(
       const DioConfigs(
         baseUrl: Endpoints.baseUrl,
         connectionTimeout: Endpoints.connectionTimeout,
-        receiveTimeout:Endpoints.receiveTimeout,
+        receiveTimeout: Endpoints.receiveTimeout,
       ),
     );
     getIt.registerSingleton<DioClient>(
@@ -47,7 +54,25 @@ class NetworkModule {
         ),
     );
 
+    // dio (ERP backend - separate base URL + tenant header):-------------------
+    final erpDioClient = DioClient(
+      dioConfigs: const DioConfigs(
+        baseUrl: Endpoints.erpBaseUrl,
+        connectionTimeout: Endpoints.connectionTimeout,
+        receiveTimeout: Endpoints.receiveTimeout,
+      ),
+    )..addInterceptors([
+        getIt<AuthInterceptor>(),
+        getIt<TenantInterceptor>(),
+        getIt<ErrorInterceptor>(),
+        getIt<LoggingInterceptor>(),
+      ]);
+    getIt.registerSingleton<DioClient>(erpDioClient, instanceName: erpDioClientName);
+
     // api's:-------------------------------------------------------------------
     getIt.registerSingleton(PostApi(getIt<DioClient>(), getIt<RestClient>()));
+    getIt.registerSingleton<WebBuilderApi>(
+      WebBuilderApi(getIt<DioClient>(instanceName: erpDioClientName)),
+    );
   }
 }
