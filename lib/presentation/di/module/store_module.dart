@@ -272,11 +272,7 @@ class StoreModule {
     getIt.registerSingleton<ListingFilters>(ListingFilters());
     // Cart and Wishlist stores:------------------------------------------------
     getIt.registerSingleton<WishlistStore>(
-      WishlistStore(
-        cartRepository: getIt<CartRepository>(),
-        customerId: 'mock_user_001',
-        tenantId: 'mock_tenant_001',
-      ),
+      WishlistStore(cartRepository: getIt<CartRepository>()),
     );
 
     getIt.registerSingleton<CartStore>(
@@ -285,8 +281,6 @@ class StoreModule {
         couponRepository: getIt<CouponRepository>(),
 
         wishlistStore: getIt<WishlistStore>(),
-        customerId: 'mock_user_001',
-        tenantId: 'mock_tenant_001',
       ),
     );
 

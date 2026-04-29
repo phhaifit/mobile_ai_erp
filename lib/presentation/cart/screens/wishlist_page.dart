@@ -56,11 +56,7 @@ class _WishlistPageState extends State<WishlistPage> {
                 onMoveToCart: () async {
                   final messenger = ScaffoldMessenger.of(context);
 
-                  await cartStore.addToCart(
-                    productId: item.productId,
-                    variantId: item.variantId,
-                    qty: 1,
-                  );
+                  await cartStore.addToCart(productId: item.productId, qty: 1);
 
                   if (!context.mounted) return;
 

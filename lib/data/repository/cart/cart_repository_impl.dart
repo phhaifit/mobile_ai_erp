@@ -18,35 +18,24 @@ class CartRepositoryImpl implements CartRepository {
        _wishlistApi = wishlistApi;
 
   @override
-  Future<Cart> getCart({
-    required String customerId,
-    required String tenantId,
-  }) async {
-    final res = await _cartApi.getCart(tenantId: tenantId);
+  Future<Cart> getCart() async {
+    final res = await _cartApi.getCart();
     return _mapCart(_unwrapData(res));
   }
 
   @override
-  Future<Map<String, dynamic>> getCartSummary({
-    required String customerId,
-    required String tenantId,
-  }) async {
-    final res = await _cartApi.getCartSummary(tenantId: tenantId);
+  Future<Map<String, dynamic>> getCartSummary() async {
+    final res = await _cartApi.getCartSummary();
     return _unwrapData(res);
   }
 
   @override
   Future<Cart> addCartItem({
-    required String customerId,
-    required String tenantId,
     required String productId,
-    String? variantId,
     required int quantity,
   }) async {
     final res = await _cartApi.addCartItem(
-      tenantId: tenantId,
       productId: productId,
-      variantId: variantId,
       quantity: quantity,
     );
     return _mapCart(_unwrapData(res));
@@ -54,13 +43,10 @@ class CartRepositoryImpl implements CartRepository {
 
   @override
   Future<Cart> updateCartItemQuantity({
-    required String customerId,
-    required String tenantId,
     required String itemId,
     required int quantity,
   }) async {
     final res = await _cartApi.updateCartItemQuantity(
-      tenantId: tenantId,
       itemId: itemId,
       quantity: quantity,
     );
@@ -68,99 +54,56 @@ class CartRepositoryImpl implements CartRepository {
   }
 
   @override
-  Future<Cart> removeCartItem({
-    required String customerId,
-    required String tenantId,
-    required String itemId,
-  }) async {
-    final res = await _cartApi.removeCartItem(
-      tenantId: tenantId,
-      itemId: itemId,
-    );
-    return _mapCart(_unwrapData(res));
+  Future<void> removeCartItem({required String itemId}) async {
+    await _cartApi.removeCartItem(itemId: itemId);
   }
 
   @override
   Future<CartCalculation> calculateCart({
-    required String customerId,
-    required String tenantId,
     required List<String> selectedItemIds,
     String? couponCode,
   }) async {
     final res = await _cartApi.calculateCart(
-      tenantId: tenantId,
-      selectedItemIds: selectedItemIds,
+      itemIds: selectedItemIds,
       couponCode: couponCode,
     );
     return _mapCartCalculation(_unwrapData(res));
   }
 
   @override
-  Future<Cart> mergeCart({
-    required String customerId,
-    required String tenantId,
-    required List<Map<String, dynamic>> items,
-  }) async {
-    final res = await _cartApi.mergeCart(tenantId: tenantId, items: items);
+  Future<Cart> mergeCart({required List<Map<String, dynamic>> items}) async {
+    final res = await _cartApi.mergeCart(items: items);
     return _mapCart(_unwrapData(res));
   }
 
   @override
-  Future<Wishlist> getWishlist({
-    required String customerId,
-    required String tenantId,
-  }) async {
-    final res = await _wishlistApi.getWishlist(tenantId: tenantId);
+  Future<Wishlist> getWishlist() async {
+    final res = await _wishlistApi.getWishlist();
     return _mapWishlist(_unwrapData(res));
   }
 
   @override
-  Future<Map<String, dynamic>> getWishlistSummary({
-    required String customerId,
-    required String tenantId,
-  }) async {
-    final res = await _wishlistApi.getWishlistSummary(tenantId: tenantId);
+  Future<Map<String, dynamic>> getWishlistSummary() async {
+    final res = await _wishlistApi.getWishlistSummary();
     return _unwrapData(res);
   }
 
   @override
-  Future<Wishlist> addToWishlist({
-    required String customerId,
-    required String tenantId,
-    required String productId,
-    String? variantId,
-  }) async {
-    final res = await _wishlistApi.addToWishlist(
-      tenantId: tenantId,
-      productId: productId,
-      variantId: variantId,
-    );
+  Future<Wishlist> addToWishlist({required String productId}) async {
+    final res = await _wishlistApi.addToWishlist(productId: productId);
     return _mapWishlist(_unwrapData(res));
   }
 
   @override
-  Future<Wishlist> removeFromWishlist({
-    required String customerId,
-    required String tenantId,
-    required String itemId,
-  }) async {
-    final res = await _wishlistApi.removeFromWishlist(
-      tenantId: tenantId,
-      itemId: itemId,
-    );
-    return _mapWishlist(_unwrapData(res));
+  Future<void> removeFromWishlist({required String itemId}) async {
+    await _wishlistApi.removeFromWishlist(itemId: itemId);
   }
 
   @override
   Future<Wishlist> mergeWishlist({
-    required String customerId,
-    required String tenantId,
     required List<Map<String, dynamic>> items,
   }) async {
-    final res = await _wishlistApi.mergeWishlist(
-      tenantId: tenantId,
-      items: items,
-    );
+    final res = await _wishlistApi.mergeWishlist(items: items);
     return _mapWishlist(_unwrapData(res));
   }
 
