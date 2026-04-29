@@ -68,6 +68,7 @@ import 'package:mobile_ai_erp/domain/usecase/web_builder/get_cms_pages_usecase.d
 import 'package:mobile_ai_erp/domain/usecase/web_builder/get_store_settings_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/get_web_theme_by_id_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/get_web_themes_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/web_builder/publish_cms_page_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/save_cms_page_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/save_store_settings_usecase.dart';
 import 'package:mobile_ai_erp/presentation/customer_management/store/customer_store.dart';
@@ -237,6 +238,7 @@ class StoreModule {
         getIt<GetCmsPageByIdUseCase>(),
         getIt<SaveCmsPageUseCase>(),
         getIt<DeleteCmsPageUseCase>(),
+        getIt<PublishCmsPageUseCase>(),
         getIt<ErrorStore>(),
       ),
     );
