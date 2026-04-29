@@ -1,131 +1,115 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
+import 'package:mobile_ai_erp/data/network/apis/web_builder/web_builder_api.dart';
 import 'package:mobile_ai_erp/domain/entity/web_builder/cms_page.dart';
 import 'package:mobile_ai_erp/domain/entity/web_builder/cms_page_list.dart';
 import 'package:mobile_ai_erp/domain/entity/web_builder/content_block.dart';
 import 'package:mobile_ai_erp/domain/repository/web_builder/cms_page_repository.dart';
 
+class CmsPageStatus {
+  CmsPageStatus._();
+  static const String published = 'Published';
+  static const String draft = 'Draft';
+}
+
 class CmsPageRepositoryImpl extends CmsPageRepository {
-  final List<CmsPage> _mockPages = [
-    CmsPage(
-      id: '1',
-      title: 'Home Page',
-      description:
-          'Main landing page with hero banner, featured products, and promotions',
-      type: 'Landing',
-      status: 'Published',
-      lastModified: DateTime(2026, 3, 15),
-      isPublished: true,
-      blocks: [
-        ContentBlock(type: 'hero', title: 'Hero Banner'),
-        ContentBlock(type: 'products', title: 'Product Showcase'),
-        ContentBlock(type: 'cta', title: 'Call to Action'),
-      ],
-      metaTitle: 'Jarvis Store — Smart Shopping',
-      metaDescription: 'Welcome to Jarvis Store. Discover the best products.',
-      slug: 'home',
-    ),
-    CmsPage(
-      id: '2',
-      title: 'About Us',
-      description: 'Company story, mission, and team introduction',
-      type: 'Info',
-      status: 'Published',
-      lastModified: DateTime(2026, 3, 10),
-      isPublished: true,
-      blocks: [
-        ContentBlock(type: 'hero', title: 'Hero Banner'),
-        ContentBlock(type: 'text', title: 'Our Story'),
-        ContentBlock(type: 'gallery', title: 'Team Photos'),
-      ],
-      metaTitle: 'About Us — Jarvis Store',
-      metaDescription: 'Learn about our mission and team.',
-      slug: 'about-us',
-    ),
-    CmsPage(
-      id: '3',
-      title: 'Contact',
-      description: 'Contact form, store locations, and business hours',
-      type: 'Info',
-      status: 'Draft',
-      lastModified: DateTime(2026, 3, 18),
-      isPublished: false,
-      blocks: [
-        ContentBlock(type: 'text', title: 'Contact Info'),
-        ContentBlock(type: 'cta', title: 'Send Message'),
-      ],
-      metaTitle: 'Contact Us — Jarvis Store',
-      metaDescription: 'Get in touch with our team.',
-      slug: 'contact',
-    ),
-    CmsPage(
-      id: '4',
-      title: 'Spring Sale 2026',
-      description:
-          'Seasonal promotion page with countdown timer and featured deals',
-      type: 'Marketing',
-      status: 'Published',
-      lastModified: DateTime(2026, 3, 20),
-      isPublished: true,
-      blocks: [
-        ContentBlock(type: 'hero', title: 'Sale Banner'),
-        ContentBlock(type: 'products', title: 'Featured Deals'),
-        ContentBlock(type: 'cta', title: 'Shop Now'),
-      ],
-      metaTitle: 'Spring Sale 2026 — Up to 50% Off',
-      metaDescription: "Don't miss our biggest sale of the season!",
-      slug: 'spring-sale-2026',
-    ),
-    CmsPage(
-      id: '5',
-      title: 'FAQ',
-      description:
-          'Frequently asked questions about shipping, returns, and payments',
-      type: 'Support',
-      status: 'Draft',
-      lastModified: DateTime(2026, 3, 12),
-      isPublished: false,
-      blocks: [
-        ContentBlock(type: 'text', title: 'Shipping Questions'),
-        ContentBlock(type: 'text', title: 'Return Policy'),
-        ContentBlock(type: 'text', title: 'Payment Methods'),
-      ],
-      metaTitle: 'FAQ — Jarvis Store',
-      metaDescription: 'Find answers to common questions.',
-      slug: 'faq',
-    ),
-  ];
+  final WebBuilderApi _api;
+
+  CmsPageRepositoryImpl(this._api);
 
   @override
   Future<CmsPageList> getPages() async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    return CmsPageList(pages: List.from(_mockPages));
+    final res = await _api.getCmsPages(pageSize: 100);
+    final data = (res['data'] as List?) ?? const [];
+    final pages = data
+        .whereType<Map>()
+        .map((m) => _mapFromApi(Map<String, dynamic>.from(m)))
+        .toList();
+    return CmsPageList(pages: pages);
   }
 
   @override
   Future<CmsPage?> getPageById(String id) async {
-    await Future.delayed(const Duration(milliseconds: 300));
     try {
-      return _mockPages.firstWhere((p) => p.id == id);
-    } catch (_) {
-      return null;
+      final json = await _api.getCmsPageById(id);
+      return _mapFromApi(json);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null;
+      rethrow;
     }
   }
 
   @override
   Future<void> savePage(CmsPage page) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    final index = _mockPages.indexWhere((p) => p.id == page.id);
-    if (index >= 0) {
-      _mockPages[index] = page;
+    final body = _mapToApi(page);
+    if (page.id == null || page.id!.isEmpty) {
+      await _api.createCmsPage(body);
     } else {
-      _mockPages.add(page);
+      // server doesn't accept publish state in PATCH — strip if present
+      body.remove('is_published');
+      await _api.updateCmsPage(page.id!, body);
     }
   }
 
   @override
   Future<void> deletePage(String id) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    _mockPages.removeWhere((p) => p.id == id);
+    await _api.deleteCmsPage(id);
+  }
+
+  @override
+  Future<void> publishPage(String id, bool published) async {
+    await _api.publishCmsPage(id, published);
+  }
+
+  CmsPage _mapFromApi(Map<String, dynamic> json) {
+    final isPublished = json['isPublished'] as bool? ?? false;
+    final updatedAt = json['updatedAt'] as String?;
+    final blocksJson = json['contentBlocks'] as List?;
+    return CmsPage(
+      id: json['id'] as String?,
+      title: json['title'] as String?,
+      description: json['description'] as String?,
+      type: json['pageType'] as String?,
+      status: isPublished ? CmsPageStatus.published : CmsPageStatus.draft,
+      lastModified: updatedAt != null ? DateTime.tryParse(updatedAt) : null,
+      isPublished: isPublished,
+      blocks: blocksJson
+          ?.whereType<Map>()
+          .map(
+            (b) => ContentBlock(
+              type: b['type'] as String?,
+              title: b['title'] as String? ?? b['type'] as String?,
+            ),
+          )
+          .toList(),
+      metaTitle: json['metaTitle'] as String?,
+      metaDescription: json['metaDescription'] as String?,
+      slug: json['urlSlug'] as String?,
+    );
+  }
+
+  Map<String, dynamic> _mapToApi(CmsPage page) {
+    final body = <String, dynamic>{};
+    if (page.title != null) body['title'] = page.title;
+    if (page.description != null) body['description'] = page.description;
+    if (page.type != null) body['page_type'] = page.type;
+    if (page.slug != null) body['url_slug'] = page.slug;
+    if (page.metaTitle != null) body['meta_title'] = page.metaTitle;
+    if (page.metaDescription != null) {
+      body['meta_description'] = page.metaDescription;
+    }
+    if (page.blocks != null) {
+      body['content_blocks'] = page.blocks!
+          .asMap()
+          .entries
+          .map((e) => {
+                'type': e.value.type,
+                'title': e.value.title,
+                'order': e.key,
+              })
+          .toList();
+    }
+    return body;
   }
 }
