@@ -38,6 +38,7 @@ class SupplierHeaderCard extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               supplier.name,
+              textAlign: TextAlign.center,
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),

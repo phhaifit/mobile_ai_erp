@@ -18,45 +18,47 @@ Future<void> showLinkedProductsPickerDialog({
     builder: (dialogContext) => StatefulBuilder(
       builder: (dialogContext, setState) => AlertDialog(
         title: const Text('Add Product Details'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(product.name, style: Theme.of(context).textTheme.bodySmall),
-            Text(
-              'SKU: ${product.sku}',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: Colors.grey[600]),
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: supplierSkuCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Supplier SKU (Optional)',
-                border: OutlineInputBorder(),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(product.name, style: Theme.of(context).textTheme.bodySmall),
+              Text(
+                'SKU: ${product.sku}',
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: Colors.grey[600]),
               ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: costPriceCtrl,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(
-                labelText: 'Cost Price (Optional)',
-                border: OutlineInputBorder(),
-                prefixText: '\$ ',
+              const SizedBox(height: 20),
+              TextField(
+                controller: supplierSkuCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Supplier SKU (Optional)',
+                  border: OutlineInputBorder(),
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            CheckboxListTile(
-              contentPadding: EdgeInsets.zero,
-              value: isPrimary,
-              onChanged: (value) => setState(() => isPrimary = value ?? false),
-              title: const Text('Set as Primary Supplier'),
-            ),
-          ],
+              const SizedBox(height: 12),
+              TextField(
+                controller: costPriceCtrl,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                  labelText: 'Cost Price (Optional)',
+                  border: OutlineInputBorder(),
+                  prefixText: '\$ ',
+                ),
+              ),
+              const SizedBox(height: 16),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                value: isPrimary,
+                onChanged: (value) => setState(() => isPrimary = value ?? false),
+                title: const Text('Set as Primary Supplier'),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(

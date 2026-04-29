@@ -23,6 +23,7 @@ class ProductPickerSearchBar extends StatelessWidget {
           onChanged: onChanged,
           decoration: InputDecoration(
             hintText: 'Search by name, SKU, barcode, brand or category',
+            hintMaxLines: 2,
             prefixIcon: const Icon(Icons.search_outlined),
             suffixIcon: controller.text.isNotEmpty
                 ? IconButton(
