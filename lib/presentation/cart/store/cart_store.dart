@@ -16,22 +16,18 @@ abstract class CartStoreBase with Store {
   final CartRepository _cartRepository;
   final CouponRepository _couponRepository;
   final WishlistStore _wishlistStore;
-  final String customerId;
-  final String tenantId;
 
   CartStoreBase({
     required CartRepository cartRepository,
     required CouponRepository couponRepository,
     required WishlistStore wishlistStore,
-    required this.customerId,
-    required this.tenantId,
   }) : _cartRepository = cartRepository,
        _couponRepository = couponRepository,
        _wishlistStore = wishlistStore {
     cart = Cart(
-      id: 'cart_$customerId',
-      tenantId: tenantId,
-      customerId: customerId,
+      id: '',
+      tenantId: '',
+      customerId: '',
       subtotal: '0',
       totalItems: 0,
       items: const [],
@@ -184,11 +180,7 @@ abstract class CartStoreBase with Store {
     errorMessage = null;
 
     try {
-      final result = await _cartRepository.getCart(
-        customerId: customerId,
-        tenantId: tenantId,
-      );
-      cart = result;
+      cart = await _cartRepository.getCart();
       await loadCartSummary();
     } catch (e) {
       errorMessage = e.toString();
@@ -200,10 +192,7 @@ abstract class CartStoreBase with Store {
   @action
   Future<void> loadCartSummary() async {
     try {
-      cartSummary = await _cartRepository.getCartSummary(
-        customerId: customerId,
-        tenantId: tenantId,
-      );
+      cartSummary = await _cartRepository.getCartSummary();
     } catch (_) {}
   }
 
@@ -213,7 +202,7 @@ abstract class CartStoreBase with Store {
     couponValidationError = null;
 
     try {
-      final result = await _couponRepository.getCoupons(tenantId: tenantId);
+      final result = await _couponRepository.getCoupons();
       availableCoupons = ObservableList<Coupon>.of(result);
     } catch (e) {
       couponValidationError = e.toString();
@@ -223,11 +212,7 @@ abstract class CartStoreBase with Store {
   }
 
   @action
-  Future<void> addToCart({
-    required String productId,
-    String? variantId,
-    int qty = 1,
-  }) async {
+  Future<void> addToCart({required String productId, int qty = 1}) async {
     if (qty <= 0) {
       errorMessage = 'Quantity must be greater than 0';
       return;
@@ -238,10 +223,7 @@ abstract class CartStoreBase with Store {
 
     try {
       cart = await _cartRepository.addCartItem(
-        customerId: customerId,
-        tenantId: tenantId,
         productId: productId,
-        variantId: variantId,
         quantity: qty,
       );
       await loadCartSummary();
@@ -259,14 +241,10 @@ abstract class CartStoreBase with Store {
     errorMessage = null;
 
     try {
-      cart = await _cartRepository.removeCartItem(
-        customerId: customerId,
-        tenantId: tenantId,
-        itemId: itemId,
-      );
+      await _cartRepository.removeCartItem(itemId: itemId);
       selectedItemIds.remove(itemId);
       calculation = null;
-      await loadCartSummary();
+      await loadCart();
     } catch (e) {
       errorMessage = e.toString();
     } finally {
@@ -286,8 +264,6 @@ abstract class CartStoreBase with Store {
 
     try {
       cart = await _cartRepository.updateCartItemQuantity(
-        customerId: customerId,
-        tenantId: tenantId,
         itemId: itemId,
         quantity: newQuantity,
       );
@@ -309,15 +285,11 @@ abstract class CartStoreBase with Store {
 
     try {
       for (final itemId in itemIds) {
-        cart = await _cartRepository.removeCartItem(
-          customerId: customerId,
-          tenantId: tenantId,
-          itemId: itemId,
-        );
+        await _cartRepository.removeCartItem(itemId: itemId);
         selectedItemIds.remove(itemId);
       }
       calculation = null;
-      await loadCartSummary();
+      await loadCart();
     } catch (e) {
       errorMessage = e.toString();
     } finally {
@@ -360,8 +332,6 @@ abstract class CartStoreBase with Store {
 
     try {
       calculation = await _cartRepository.calculateCart(
-        customerId: customerId,
-        tenantId: tenantId,
         selectedItemIds: selectedItemIds.toList(),
         couponCode: couponCode ?? selectedCouponCode,
       );
@@ -389,7 +359,6 @@ abstract class CartStoreBase with Store {
 
     try {
       final result = await _couponRepository.validateCoupon(
-        tenantId: tenantId,
         couponCode: code,
         subtotal: subtotal,
       );
@@ -486,14 +455,11 @@ abstract class CartStoreBase with Store {
     errorMessage = null;
 
     try {
-      if (!_wishlistStore.containsItem(item.productId, item.variantId)) {
-        await _wishlistStore.addToWishlist(
-          productId: item.productId,
-          variantId: item.variantId,
-        );
+      if (!_wishlistStore.containsItem(item.productId)) {
+        await _wishlistStore.addToWishlist(productId: item.productId);
       }
 
-      await loadCart();
+      await removeItemFromCart(item.id);
       selectedItemIds.remove(item.id);
     } catch (e) {
       errorMessage = e.toString();

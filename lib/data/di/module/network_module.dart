@@ -25,7 +25,16 @@ class NetworkModule {
     getIt.registerSingleton<ErrorInterceptor>(ErrorInterceptor(getIt()));
     getIt.registerSingleton<AuthInterceptor>(
       AuthInterceptor(
-        accessToken: () async => await getIt<SharedPreferenceHelper>().authToken,
+        // accessToken: () async => await getIt<SharedPreferenceHelper>().authToken,
+        accessToken: () async {
+          const envToken = String.fromEnvironment('ACCESS_TOKEN');
+
+          if (envToken.isNotEmpty) {
+            return envToken;
+          }
+
+          return await getIt<SharedPreferenceHelper>().authToken;
+        },
       ),
     );
     getIt.registerSingleton<TenantInterceptor>(
@@ -44,30 +53,31 @@ class NetworkModule {
       ),
     );
     getIt.registerSingleton<DioClient>(
-      DioClient(dioConfigs: getIt())
-        ..addInterceptors(
-          [
-            getIt<AuthInterceptor>(),
-            getIt<ErrorInterceptor>(),
-            getIt<LoggingInterceptor>(),
-          ],
-        ),
+      DioClient(dioConfigs: getIt())..addInterceptors([
+        getIt<AuthInterceptor>(),
+        getIt<ErrorInterceptor>(),
+        getIt<LoggingInterceptor>(),
+      ]),
     );
 
     // dio (ERP backend - separate base URL + tenant header):-------------------
-    final erpDioClient = DioClient(
-      dioConfigs: const DioConfigs(
-        baseUrl: Endpoints.erpBaseUrl,
-        connectionTimeout: Endpoints.connectionTimeout,
-        receiveTimeout: Endpoints.receiveTimeout,
-      ),
-    )..addInterceptors([
-        getIt<AuthInterceptor>(),
-        getIt<TenantInterceptor>(),
-        getIt<ErrorInterceptor>(),
-        getIt<LoggingInterceptor>(),
-      ]);
-    getIt.registerSingleton<DioClient>(erpDioClient, instanceName: erpDioClientName);
+    final erpDioClient =
+        DioClient(
+          dioConfigs: const DioConfigs(
+            baseUrl: Endpoints.erpBaseUrl,
+            connectionTimeout: Endpoints.connectionTimeout,
+            receiveTimeout: Endpoints.receiveTimeout,
+          ),
+        )..addInterceptors([
+          getIt<AuthInterceptor>(),
+          getIt<TenantInterceptor>(),
+          getIt<ErrorInterceptor>(),
+          getIt<LoggingInterceptor>(),
+        ]);
+    getIt.registerSingleton<DioClient>(
+      erpDioClient,
+      instanceName: erpDioClientName,
+    );
 
     // api's:-------------------------------------------------------------------
     getIt.registerSingleton(PostApi(getIt<DioClient>(), getIt<RestClient>()));

@@ -1,5 +1,5 @@
-import 'package:mobile_ai_erp/data/repository/coupon/coupon_repository.dart';
 import 'package:mobile_ai_erp/data/network/apis/coupon/coupon_api.dart';
+import 'package:mobile_ai_erp/data/repository/coupon/coupon_repository.dart';
 import 'package:mobile_ai_erp/domain/entity/coupon/coupon.dart';
 import 'package:mobile_ai_erp/domain/entity/coupon/validated_coupon.dart';
 
@@ -9,20 +9,17 @@ class CouponRepositoryImpl implements CouponRepository {
   CouponRepositoryImpl({required CouponApi couponApi}) : _couponApi = couponApi;
 
   @override
-  Future<List<Coupon>> getCoupons({required String tenantId}) async {
-    final res = await _couponApi.getCoupons(tenantId: tenantId);
-
+  Future<List<Coupon>> getCoupons() async {
+    final res = await _couponApi.getCoupons();
     return res.map((e) => _mapCoupon(e)).toList();
   }
 
   @override
   Future<ValidatedCoupon> validateCoupon({
-    required String tenantId,
     required String couponCode,
     required num subtotal,
   }) async {
     final res = await _couponApi.validateCoupon(
-      tenantId: tenantId,
       couponCode: couponCode,
       subtotal: subtotal,
     );
@@ -54,8 +51,9 @@ class CouponRepositoryImpl implements CouponRepository {
       minOrderAmount:
           (json['min_order_amount'] ?? json['minOrderAmount'] ?? '0')
               .toString(),
-      maxUses: (json['max_uses'] as num?)?.toInt(),
-      usedCount: (json['used_count'] as num?)?.toInt() ?? 0,
+      maxUses: (json['max_uses'] ?? json['maxUses'] as num?)?.toInt(),
+      usedCount:
+          (json['used_count'] ?? json['usedCount'] as num?)?.toInt() ?? 0,
       validFrom: DateTime.parse(
         (json['valid_from'] ?? json['validFrom']).toString(),
       ),
@@ -64,9 +62,9 @@ class CouponRepositoryImpl implements CouponRepository {
           json['is_active'] as bool? ?? json['isActive'] as bool? ?? false,
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'].toString())
-          : (json['createdAt'] != null
-                ? DateTime.parse(json['createdAt'].toString())
-                : null),
+          : json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'].toString())
+          : null,
     );
   }
 }

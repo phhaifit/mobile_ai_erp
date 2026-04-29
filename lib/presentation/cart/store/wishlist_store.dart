@@ -9,18 +9,13 @@ class WishlistStore = WishlistStoreBase with _$WishlistStore;
 
 abstract class WishlistStoreBase with Store {
   final CartRepository _cartRepository;
-  final String customerId;
-  final String tenantId;
 
-  WishlistStoreBase({
-    required CartRepository cartRepository,
-    required this.customerId,
-    required this.tenantId,
-  }) : _cartRepository = cartRepository {
+  WishlistStoreBase({required CartRepository cartRepository})
+    : _cartRepository = cartRepository {
     wishlist = Wishlist(
-      id: 'wishlist_$customerId',
-      tenantId: tenantId,
-      customerId: customerId,
+      id: '',
+      tenantId: '',
+      customerId: '',
       totalItems: 0,
       items: const [],
       createdAt: DateTime.now(),
@@ -134,10 +129,8 @@ abstract class WishlistStoreBase with Store {
     }
   }
 
-  bool containsItem(String productId, String? variantId) {
-    return wishlist.items.any(
-      (item) => item.productId == productId && item.variantId == variantId,
-    );
+  bool containsItem(String productId) {
+    return wishlist.items.any((item) => item.productId == productId);
   }
 
   void _pruneInvalidSelections() {
@@ -151,11 +144,7 @@ abstract class WishlistStoreBase with Store {
     errorMessage = null;
 
     try {
-      final result = await _cartRepository.getWishlist(
-        customerId: customerId,
-        tenantId: tenantId,
-      );
-      wishlist = result;
+      wishlist = await _cartRepository.getWishlist();
       _pruneInvalidSelections();
       await loadWishlistSummary();
     } catch (e) {
@@ -168,32 +157,21 @@ abstract class WishlistStoreBase with Store {
   @action
   Future<void> loadWishlistSummary() async {
     try {
-      wishlistSummary = await _cartRepository.getWishlistSummary(
-        customerId: customerId,
-        tenantId: tenantId,
-      );
+      wishlistSummary = await _cartRepository.getWishlistSummary();
     } catch (_) {}
   }
 
   @action
-  Future<void> addToWishlist({
-    required String productId,
-    String? variantId,
-  }) async {
+  Future<void> addToWishlist({required String productId}) async {
     isLoading = true;
     errorMessage = null;
 
     try {
-      if (containsItem(productId, variantId)) {
+      if (containsItem(productId)) {
         return;
       }
 
-      wishlist = await _cartRepository.addToWishlist(
-        customerId: customerId,
-        tenantId: tenantId,
-        productId: productId,
-        variantId: variantId,
-      );
+      wishlist = await _cartRepository.addToWishlist(productId: productId);
       _pruneInvalidSelections();
       await loadWishlistSummary();
     } catch (e) {
@@ -209,14 +187,9 @@ abstract class WishlistStoreBase with Store {
     errorMessage = null;
 
     try {
-      wishlist = await _cartRepository.removeFromWishlist(
-        customerId: customerId,
-        tenantId: tenantId,
-        itemId: item.id,
-      );
+      await _cartRepository.removeFromWishlist(itemId: item.id);
       selectedItemIds.remove(item.id);
-      _pruneInvalidSelections();
-      await loadWishlistSummary();
+      await loadWishlist();
     } catch (e) {
       errorMessage = e.toString();
     } finally {
@@ -234,20 +207,12 @@ abstract class WishlistStoreBase with Store {
     errorMessage = null;
 
     try {
-      var currentWishlist = wishlist;
-
       for (final item in itemsToRemove) {
-        currentWishlist = await _cartRepository.removeFromWishlist(
-          customerId: customerId,
-          tenantId: tenantId,
-          itemId: item.id,
-        );
+        await _cartRepository.removeFromWishlist(itemId: item.id);
       }
 
-      wishlist = currentWishlist;
       selectedItemIds.clear();
-      _pruneInvalidSelections();
-      await loadWishlistSummary();
+      await loadWishlist();
     } catch (e) {
       errorMessage = e.toString();
     } finally {
