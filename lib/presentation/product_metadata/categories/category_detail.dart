@@ -3,6 +3,7 @@ import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/categories/category_detail_body.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/categories/category_detail_state_scaffold.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/categories/category_view_mode.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_navigator.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_route_args.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
@@ -49,7 +50,11 @@ class _ProductMetadataCategoryDetailScreenState extends State<ProductMetadataCat
               ),
             ],
           ),
-          body: CategoryDetailBody(category: category, parent: _parent),
+          body: CategoryDetailBody(
+            category: category,
+            parent: _parent,
+            onViewChildren: (category.childrenCount ?? 0) > 0 ? () => _openChildrenTree(category) : null,
+          ),
         );
       },
     );
@@ -57,10 +62,13 @@ class _ProductMetadataCategoryDetailScreenState extends State<ProductMetadataCat
   Future<void> _loadCategory() async {
     try {
       _category = await _store.getCategoryById(widget.args.categoryId);
-      await _store.loadCategoryTree();
       final parentId = _category?.parentId;
       if (parentId != null && parentId.isNotEmpty) {
-        _parent = _store.categoryTree.cast<Category?>().firstWhere((item) => item?.id == parentId, orElse: () => null);
+        try {
+          _parent = await _store.getCategoryById(parentId);
+        } catch (_) {
+          _parent = null;
+        }
       }
     } catch (_) {
       _category = null;
@@ -71,16 +79,22 @@ class _ProductMetadataCategoryDetailScreenState extends State<ProductMetadataCat
     final didChange = await ProductMetadataNavigator.openCategoryForm<bool>(context, args: CategoryFormArgs(categoryId: category.id));
     if (didChange == true && mounted) {
       _hasChanged = true;
-      // Reload the category to get the latest state
       await _loadCategory();
       if (!mounted) return;
-      // If category was not found (deleted), go back to tree immediately
       if (_category == null) {
         Navigator.of(context).pop(true);
         return;
       }
-      // Otherwise, refresh the detail view
       setState(() {});
     }
+  }
+  Future<void> _openChildrenTree(Category category) async {
+    await ProductMetadataNavigator.openCategories<bool>(
+      context,
+      args: CategoriesArgs(
+        initialViewMode: CategoryViewMode.tree,
+        initialTreePath: <Category>[category],
+      ),
+    );
   }
 }

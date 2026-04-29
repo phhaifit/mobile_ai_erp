@@ -1,16 +1,15 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:mobx/mobx.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
-import 'package:mobile_ai_erp/presentation/product_metadata/logic/metadata_pagination_logic.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/categories/categories_screen_body.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/categories/category_view_mode.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/categories/category_filter_sheet.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/models/metadata_list_query.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_navigator.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_route_args.dart';
-import 'package:mobile_ai_erp/presentation/product_metadata/categories/category_filter_sheet.dart';
-import 'package:mobile_ai_erp/presentation/product_metadata/categories/categories_screen_body.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/utils/metadata_confirm_delete.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/utils/metadata_error_reaction.dart';
@@ -18,95 +17,83 @@ import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_sor
 
 class ProductMetadataCategoriesScreen extends StatefulWidget {
   const ProductMetadataCategoriesScreen({super.key, this.args});
-
   final CategoriesArgs? args;
-
   @override
   State<ProductMetadataCategoriesScreen> createState() =>
-  _ProductMetadataCategoriesScreenState();
+      _ProductMetadataCategoriesScreenState();
 }
 
-class _ProductMetadataCategoriesScreenState extends State<ProductMetadataCategoriesScreen> with SingleTickerProviderStateMixin {
+class _ProductMetadataCategoriesScreenState
+    extends State<ProductMetadataCategoriesScreen> {
   final ProductMetadataStore _store = getIt<ProductMetadataStore>();
   final TextEditingController _searchController = TextEditingController();
   MetadataListQuery _queryState = const MetadataListQuery();
   CategoryStatus? _statusFilter;
-  late TabController _tabController;
   Timer? _searchDebounce;
   late List<ReactionDisposer> _disposers;
+  late CategoryViewMode _viewMode;
+  List<Category> _treePath = const <Category>[];
+  int _refreshVersion = 0;
 
   @override
   void initState() {
     super.initState();
-    final initialIndex = widget.args?.initialTabIndex ?? (widget.args?.parentCategoryId == null ? 0 : 1);
-    _tabController = TabController(length: 2, vsync: this, initialIndex: initialIndex);
-    _tabController.addListener(() { if (_tabController.indexIsChanging) setState(() {}); });
-    _disposers = [createMetadataErrorReaction(context: context, errorMessage: () => _store.errorStore.errorMessage, isMounted: () => mounted, actionLabel: 'load categories')];
-    Future<void>.microtask(_loadCategoryPage);
+    _viewMode = widget.args?.initialViewMode ?? CategoryViewMode.list;
+    _treePath = widget.args?.initialTreePath ?? const <Category>[];
+    _disposers = [createMetadataErrorReaction(context: context,
+      errorMessage: () => _store.errorStore.errorMessage,
+      isMounted: () => mounted, actionLabel: 'load categories')];
+    Future<void>.microtask(_loadCategories);
   }
 
   @override
   void dispose() {
     for (final d in _disposers) { d(); }
     _searchDebounce?.cancel();
-    _tabController.dispose();
     _searchController.dispose();
     super.dispose();
   }
 
   @override
-  Widget build(BuildContext context) {
-    final parentId = widget.args?.parentCategoryId;
-    return Scaffold(
-      appBar: AppBar(
-        title: Observer(builder: (_) {
-          final tree = _store.categoryTree;
-          final title = _tabController.index == 0
-              ? 'Categories'
-              : tree.where((c) => c.id == parentId).firstOrNull?.name ?? 'Categories Tree';
-          return Text(title);
-        }),
-        bottom: TabBar(controller: _tabController, tabs: const [Tab(text: 'List'), Tab(text: 'Tree')]),
-        actions: <Widget>[
-          IconButton(
-            onPressed: () => Navigator.of(context).popUntil(
-              (r) => r.settings.name == ProductMetadataNavigator.productMetadataHomeRoute || r.isFirst,
-            ),
-            icon: const Icon(Icons.dashboard_outlined),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => ProductMetadataNavigator.openCategoryForm(context,
-            args: CategoryFormArgs(initialParentId: _tabController.index == 1 ? parentId : null)),
-        icon: const Icon(Icons.add),
-        label: Text(_tabController.index == 1 && parentId != null ? 'Add subcategory' : 'Add category'),
-      ),
-      body: CategoriesScreenBody(
-        store: _store,
-        tabController: _tabController,
-        searchController: _searchController,
-        queryState: _queryState,
-        parentId: parentId,
-        hasActiveFilter: _statusFilter != null,
-        onSearchChanged: _onSearchChanged,
-        onOpenFilter: _openFilterSheet,
-        onOpenSort: _openSortSheet,
-        onPreviousPage: _previousPage,
-        onNextPage: _nextPage,
-        onDelete: _deleteCategory,
-        onReloadTree: _loadCategoryPage,
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(
+      title: const Text('Categories'),
+      actions: [IconButton(
+        icon: const Icon(Icons.dashboard_outlined),
+        onPressed: () => Navigator.of(context).popUntil(
+          (r) => r.settings.name == ProductMetadataNavigator.productMetadataHomeRoute || r.isFirst),
+      )],
+    ),
+    floatingActionButton: FloatingActionButton.extended(
+      onPressed: _openCreateCategory,
+      icon: const Icon(Icons.add),
+      label: const Text('Add category'),
+    ),
+    body: CategoriesScreenBody(
+      store: _store,
+      viewMode: _viewMode,
+      searchController: _searchController, queryState: _queryState,
+      statusFilter: _statusFilter, hasActiveFilter: _statusFilter != null,
+      onSearchChanged: _onSearchChanged,
+      onSwitchView: _switchView,
+      onOpenFilter: _openFilterSheet, onOpenSort: _openSortSheet,
+      onPreviousPage: _previousPage, onNextPage: _nextPage,
+      onDelete: _deleteCategory,
+      onOpenTreeAt: _openTreeAt,
+      onRefresh: _refreshActiveView,
+      refreshVersion: _refreshVersion,
+      initialTreePath: _treePath,
+    ),
+  );
+
   void _previousPage() { _setQuery(_queryState.copyWith(page: _store.categoryCurrentPage - 1)); _loadCategories(); }
-  void _nextPage() { _setQuery(_queryState.copyWith(page: _store.categoryCurrentPage + 1)); _loadCategories(); }
+  void _nextPage()     { _setQuery(_queryState.copyWith(page: _store.categoryCurrentPage + 1)); _loadCategories(); }
 
   Future<void> _openFilterSheet() async {
     final selected = await showCategoryFilterSheet(context, selectedStatus: _statusFilter);
     if (!mounted || selected == _statusFilter) return;
     setState(() { _statusFilter = selected; _queryState = _queryState.copyWith(page: 1); });
-    await _loadCategoryPage();
+    if (_isListTab) await _loadCategories();
   }
 
   void _onSearchChanged(String value) {
@@ -115,29 +102,61 @@ class _ProductMetadataCategoriesScreenState extends State<ProductMetadataCategor
     _searchDebounce = Timer(const Duration(milliseconds: 300), _loadCategories);
   }
 
-  void _openSortSheet() => showMetadataSortSheet(context,
-    title: 'Sort categories',
-    options: const [defaultMetadataSortOption],
-    onSelected: (by, order) { _setQuery(_queryState.copyWith(sortBy: by, sortOrder: order, page: 1)); _loadCategories(); },
-  );
+  void _switchView() {
+    _searchDebounce?.cancel();
+    setState(() {
+      _viewMode = _viewMode.toggled;
+      _queryState = _queryState.copyWith(page: 1);
+    });
+    if (_isListTab) {
+      _loadCategories();
+    } else {
+      setState(() => _refreshVersion++);
+    }
+  }
 
-  Future<void> _deleteCategory(Category category) async {
-    final hasChildren = _store.categoryTree.any((c) => c.parentId == category.id);
-    if (hasChildren) {
-      await showMetadataDeleteDialog(context, title: 'Can\'t delete category', message: 'Remove or move the child categories under "${category.name}" first.', confirmLabel: 'Got it');
+  void _openTreeAt(Category category) {
+    if ((category.childrenCount ?? 0) <= 0) return;
+    _searchDebounce?.cancel();
+    setState(() {
+      _viewMode = CategoryViewMode.tree;
+      _treePath = <Category>[category];
+      _queryState = _queryState.copyWith(page: 1);
+      _refreshVersion++;
+    });
+  }
+
+  void _openSortSheet() => showMetadataSortSheet(context, title: 'Sort categories',
+    options: const [defaultMetadataSortOption],
+    onSelected: (by, order) { _setQuery(_queryState.copyWith(sortBy: by, sortOrder: order, page: 1)); _loadCategories(); });
+
+  void _deleteCategory(Category c) => deleteCategoryWithConfirm(context: context, category: c,
+    currentTotalItems: _store.categoryTotalItems, queryState: _queryState,
+    deleteFn: _store.deleteCategory, onQueryChanged: _setQuery,
+    onReload: _loadCategories);
+
+  Future<void> _openCreateCategory() async {
+    final didChange = await ProductMetadataNavigator.openCategoryForm<bool>(
+      context,
+      args: const CategoryFormArgs(),
+    );
+    if (didChange == true) await _refreshActiveView();
+  }
+
+  Future<void> _refreshActiveView() async {
+    if (_isListTab) {
+      await _loadCategories();
       return;
     }
-    final confirmed = await showMetadataDeleteDialog(context, title: 'Delete category?', message: 'Delete "${category.name}"? This can\'t be undone.');
-    if (!confirmed) return;
-    final prev = _store.categoryTotalItems;
-    await _store.deleteCategory(category.id);
-    _setQuery(_queryState.copyWith(page: resolveMetadataPageAfterDelete(currentPage: _queryState.page, pageSize: _queryState.pageSize, totalItems: prev)));
-    await _loadCategoryPage();
-    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Deleted "${category.name}".')));
+    if (mounted) setState(() => _refreshVersion++);
   }
+
+  bool get _isListTab => _viewMode == CategoryViewMode.list;
 
   void _setQuery(MetadataListQuery q) { if (mounted) setState(() => _queryState = q); }
 
-  Future<void> _loadCategoryPage() => Future.wait([_loadCategories(), _store.loadCategoryTree(status: _statusFilter)]);
-  Future<void> _loadCategories() => _store.loadCategories(page: _queryState.page, pageSize: _queryState.pageSize, search: _queryState.search, sortBy: _queryState.sortBy, sortOrder: _queryState.sortOrder, status: _statusFilter);
+  Future<void> _loadCategories() => _store.loadCategories(
+    page: _queryState.page, pageSize: _queryState.pageSize,
+    search: _queryState.search, sortBy: _queryState.sortBy,
+    sortOrder: _queryState.sortOrder, status: _statusFilter);
 }

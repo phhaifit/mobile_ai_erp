@@ -10,6 +10,9 @@ class MetadataListControls extends StatelessWidget {
     required this.resultLabel,
     this.hasActiveFilter = false,
     this.hasCustomSort = false,
+    this.viewSwitchIcon,
+    this.viewSwitchTooltip,
+    this.onSwitchView,
     this.onOpenFilter,
     this.onOpenSort,
   });
@@ -20,6 +23,9 @@ class MetadataListControls extends StatelessWidget {
   final String resultLabel;
   final bool hasActiveFilter;
   final bool hasCustomSort;
+  final IconData? viewSwitchIcon;
+  final String? viewSwitchTooltip;
+  final VoidCallback? onSwitchView;
   final VoidCallback? onOpenFilter;
   final VoidCallback? onOpenSort;
 
@@ -45,6 +51,9 @@ class MetadataListControls extends StatelessWidget {
                 searchHint: searchHint,
                 hasActiveFilter: hasActiveFilter,
                 hasCustomSort: hasCustomSort,
+                viewSwitchIcon: viewSwitchIcon,
+                viewSwitchTooltip: viewSwitchTooltip,
+                onSwitchView: onSwitchView,
                 onOpenFilter: onOpenFilter,
                 onOpenSort: onOpenSort,
               )
@@ -57,6 +66,9 @@ class MetadataListControls extends StatelessWidget {
                 resultLabelStyle: resultLabelStyle,
                 hasActiveFilter: hasActiveFilter,
                 hasCustomSort: hasCustomSort,
+                viewSwitchIcon: viewSwitchIcon,
+                viewSwitchTooltip: viewSwitchTooltip,
+                onSwitchView: onSwitchView,
                 onOpenFilter: onOpenFilter,
                 onOpenSort: onOpenSort,
               ),

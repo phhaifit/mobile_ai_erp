@@ -9,6 +9,7 @@ class Category {
     this.parentId,
     this.parentName,
     this.level = 0,
+    this.childrenCount,
     this.description,
     this.status = CategoryStatus.active,
     this.createdAt,
@@ -22,6 +23,7 @@ class Category {
   final String? parentId;
   final String? parentName;
   final int level;
+  final int? childrenCount;
   final String? description;
   final CategoryStatus status;
   final DateTime? createdAt;
@@ -37,6 +39,7 @@ class Category {
     Object? parentId = _sentinel,
     Object? parentName = _sentinel,
     int? level,
+    Object? childrenCount = _sentinel,
     Object? description = _sentinel,
     CategoryStatus? status,
     DateTime? createdAt,
@@ -53,6 +56,9 @@ class Category {
           ? this.parentName
           : parentName as String?,
       level: level ?? this.level,
+      childrenCount: identical(childrenCount, _sentinel)
+          ? this.childrenCount
+          : childrenCount as int?,
       description: identical(description, _sentinel)
           ? this.description
           : description as String?,

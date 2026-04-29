@@ -1,5 +1,6 @@
 import 'package:mobile_ai_erp/core/stores/error/error_store.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/attribute.dart';
+import 'package:mobile_ai_erp/domain/entity/product_metadata/metadata_page.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/brand.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/tag.dart';
@@ -51,17 +52,26 @@ abstract class ProductMetadataStoreBase with Store {
   bool hasLoadedDashboard = false;
 
   ObservableList<Category> get categories => _categoryStore.categories;
-  ObservableList<Category> get categoryTree => _categoryStore.categoryTree;
+  ObservableList<Category> get categoryParentOptions => _categoryStore.parentOptions;
   int get categoryCurrentPage => _categoryStore.currentPage;
   int get categoryPageSize => _categoryStore.pageSize;
   int get categoryTotalItems => _categoryStore.totalItems;
   int get categoryUnfilteredTotal => _categoryStore.unfilteredTotal;
   int get categoryTotalPages => _categoryStore.totalPages;
   bool get isCategoryLoading => _categoryStore.isLoading;
-  Future<void> loadCategories({int page = 1, int pageSize = 10, String? search, String? sortBy, String? sortOrder, CategoryStatus? status}) =>
-      _categoryStore.loadCategories(page: page, pageSize: pageSize, search: search, sortBy: sortBy, sortOrder: sortOrder, status: status);
-  Future<void> loadCategoryTree({CategoryStatus? status}) =>
-      _categoryStore.loadCategoryTree(status: status);
+  Future<void> loadCategories({int page = 1, int pageSize = 10, String? search, String? sortBy, String? sortOrder, CategoryStatus? status, String? parentId, bool rootOnly = false}) =>
+      _categoryStore.loadCategories(page: page, pageSize: pageSize, search: search, sortBy: sortBy, sortOrder: sortOrder, status: status, parentId: parentId, rootOnly: rootOnly);
+  Future<void> loadCategoryParentOptions() =>
+      _categoryStore.loadParentOptions();
+  Future<MetadataPage<Category>> fetchCategoriesPage({
+    int page = 1, int pageSize = 10, String? search,
+    String? sortBy, String? sortOrder,
+    CategoryStatus? status, String? parentId, bool rootOnly = false,
+  }) => _categoryStore.fetchCategoriesPage(
+    page: page, pageSize: pageSize, search: search,
+    sortBy: sortBy, sortOrder: sortOrder,
+    status: status, parentId: parentId, rootOnly: rootOnly,
+  );
   Future<Category> createCategory(Category category) =>
       _categoryStore.createCategory(category);
   Future<Category> updateCategory(Category category) =>
@@ -158,7 +168,6 @@ abstract class ProductMetadataStoreBase with Store {
     try {
       await Future.wait([
         loadCategories(),
-        loadCategoryTree(),
         loadTags(),
         loadAttributeSets(),
         loadBrands(),

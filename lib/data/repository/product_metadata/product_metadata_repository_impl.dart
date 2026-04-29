@@ -20,6 +20,8 @@ class ProductMetadataRepositoryImpl extends ProductMetadataRepository {
     String? sortBy,
     String? sortOrder,
     CategoryStatus? status,
+    String? parentId,
+    bool rootOnly = false,
   }) =>
       _apiClient.categories.getCategories(
         page: page,
@@ -28,11 +30,9 @@ class ProductMetadataRepositoryImpl extends ProductMetadataRepository {
         sortBy: sortBy,
         sortOrder: sortOrder,
         status: status,
+        parentId: parentId,
+        rootOnly: rootOnly,
       );
-
-  @override
-  Future<List<Category>> getCategoryTree({CategoryStatus? status}) =>
-      _apiClient.categories.getCategoryTree(status: status);
 
   @override
   Future<Category> getCategoryById(String categoryId) =>

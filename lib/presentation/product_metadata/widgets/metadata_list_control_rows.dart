@@ -10,6 +10,9 @@ class MetadataTabletListControls extends StatelessWidget {
     required this.searchHint,
     required this.hasActiveFilter,
     required this.hasCustomSort,
+    this.viewSwitchIcon,
+    this.viewSwitchTooltip,
+    this.onSwitchView,
     this.onOpenFilter,
     this.onOpenSort,
   });
@@ -19,6 +22,9 @@ class MetadataTabletListControls extends StatelessWidget {
   final String searchHint;
   final bool hasActiveFilter;
   final bool hasCustomSort;
+  final IconData? viewSwitchIcon;
+  final String? viewSwitchTooltip;
+  final VoidCallback? onSwitchView;
   final VoidCallback? onOpenFilter;
   final VoidCallback? onOpenSort;
 
@@ -26,6 +32,10 @@ class MetadataTabletListControls extends StatelessWidget {
   Widget build(BuildContext context) => Row(
     children: <Widget>[
       Expanded(child: MetadataSearchField(searchController: searchController, searchHint: searchHint, showHelperText: false, onSearchChanged: onSearchChanged)),
+      if (onSwitchView != null && viewSwitchIcon != null) ...<Widget>[
+        const SizedBox(width: 12),
+        MetadataToolbarButton(icon: viewSwitchIcon!, label: viewSwitchTooltip ?? 'Switch view', isActive: false, onPressed: onSwitchView!),
+      ],
       if (onOpenFilter != null) ...<Widget>[
         const SizedBox(width: 12),
         MetadataToolbarButton(icon: Icons.filter_list_outlined, label: 'Filter', isActive: hasActiveFilter, onPressed: onOpenFilter!),
@@ -48,6 +58,9 @@ class MetadataCompactListControls extends StatelessWidget {
     required this.resultLabelStyle,
     required this.hasActiveFilter,
     required this.hasCustomSort,
+    this.viewSwitchIcon,
+    this.viewSwitchTooltip,
+    this.onSwitchView,
     this.onOpenFilter,
     this.onOpenSort,
   });
@@ -59,6 +72,9 @@ class MetadataCompactListControls extends StatelessWidget {
   final TextStyle? resultLabelStyle;
   final bool hasActiveFilter;
   final bool hasCustomSort;
+  final IconData? viewSwitchIcon;
+  final String? viewSwitchTooltip;
+  final VoidCallback? onSwitchView;
   final VoidCallback? onOpenFilter;
   final VoidCallback? onOpenSort;
 
@@ -75,6 +91,7 @@ class MetadataCompactListControls extends StatelessWidget {
           onPressed: () => MetadataSearchSheet.show(context, searchController: searchController, searchHint: searchHint, onSearchChanged: onSearchChanged),
         ),
       ),
+      if (onSwitchView != null && viewSwitchIcon != null) MetadataActionIconButton(icon: viewSwitchIcon!, tooltip: viewSwitchTooltip ?? 'Switch view', isActive: false, onPressed: onSwitchView!),
       if (onOpenFilter != null) MetadataActionIconButton(icon: Icons.filter_list_outlined, tooltip: 'Filter', isActive: hasActiveFilter, onPressed: onOpenFilter!),
       if (onOpenSort != null) MetadataActionIconButton(icon: Icons.sort_outlined, tooltip: 'Sort', isActive: hasCustomSort, onPressed: onOpenSort!),
     ],

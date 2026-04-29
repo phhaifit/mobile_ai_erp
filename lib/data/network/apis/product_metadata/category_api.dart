@@ -16,6 +16,8 @@ class CategoryApi {
     String? sortBy,
     String? sortOrder,
     CategoryStatus? status,
+    String? parentId,
+    bool rootOnly = false,
   }) async {
     try {
       final normalizedPage = page < 1 ? 1 : page;
@@ -36,6 +38,11 @@ class CategoryApi {
       if (status != null) {
         queryParams['status'] = status.name;
       }
+      if (parentId != null) {
+        queryParams['parentId'] = parentId;
+      } else if (rootOnly) {
+        queryParams['rootOnly'] = true;
+      }
       final response = await _dioClient.dio.get<Map<String, dynamic>>(
         erpMetadataPath('/categories'),
         queryParameters: queryParams,
@@ -54,37 +61,6 @@ class CategoryApi {
         totalItems: meta['totalItems'] as int? ?? data.length,
         totalPages: meta['totalPages'] as int? ?? (data.isEmpty ? 0 : 1),
       );
-    } on DioException catch (error) {
-      throw mapMetadataWriteError(error);
-    }
-  }
-
-  Future<List<Category>> getCategoryTree({CategoryStatus? status}) async {
-    try {
-      final queryParams = <String, dynamic>{};
-      if (status != null) {
-        queryParams['status'] = status.name;
-      }
-      final response = await _dioClient.dio.get<List<dynamic>>(
-        erpMetadataPath('/categories/tree'),
-        queryParameters: queryParams.isEmpty ? null : queryParams,
-      );
-      final data = response.data ?? const <dynamic>[];
-      final List<Category> flattened = [];
-
-      void traverse(List<dynamic> nodes) {
-        for (final node in nodes) {
-          final item = node as Map<String, dynamic>;
-          flattened.add(_mapCategory(item));
-          final children = item['children'] as List<dynamic>?;
-          if (children != null && children.isNotEmpty) {
-            traverse(children);
-          }
-        }
-      }
-
-      traverse(data);
-      return flattened;
     } on DioException catch (error) {
       throw mapMetadataWriteError(error);
     }
@@ -143,6 +119,7 @@ class CategoryApi {
       parentId: json['parentId'] as String?,
       parentName: json['parentName'] as String?,
       level: json['level'] as int? ?? 0,
+      childrenCount: json['childrenCount'] as int?,
       name: json['name'] as String? ?? '',
       slug: json['slug'] as String? ?? '',
       description: json['description'] as String?,

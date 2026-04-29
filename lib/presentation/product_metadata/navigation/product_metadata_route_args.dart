@@ -1,8 +1,14 @@
-class CategoriesArgs {
-  const CategoriesArgs({this.parentCategoryId, this.initialTabIndex});
+import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/categories/category_view_mode.dart';
 
-  final String? parentCategoryId;
-  final int? initialTabIndex;
+class CategoriesArgs {
+  const CategoriesArgs({
+    this.initialViewMode = CategoryViewMode.list,
+    this.initialTreePath = const <Category>[],
+  });
+
+  final CategoryViewMode initialViewMode;
+  final List<Category> initialTreePath;
 }
 
 class CategoryFormArgs {

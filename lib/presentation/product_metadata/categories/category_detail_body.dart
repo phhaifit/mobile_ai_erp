@@ -9,10 +9,12 @@ class CategoryDetailBody extends StatelessWidget {
     super.key,
     required this.category,
     required this.parent,
+    required this.onViewChildren,
   });
 
   final Category category;
   final Category? parent;
+  final VoidCallback? onViewChildren;
 
   @override
   Widget build(BuildContext context) {
@@ -36,6 +38,14 @@ class CategoryDetailBody extends StatelessWidget {
           children: <Widget>[
             MetadataDetailRow(label: 'Parent', value: parent?.name ?? 'Top-level category'),
             MetadataDetailRow(label: 'Level', value: category.level.toString()),
+            if (category.childrenCount != null)
+              MetadataDetailRow(
+                label: 'Children',
+                valueChild: _ChildrenCountAction(
+                  count: category.childrenCount!,
+                  onPressed: onViewChildren,
+                ),
+              ),
           ],
         ),
         const SizedBox(height: 12),
@@ -53,5 +63,23 @@ class CategoryDetailBody extends StatelessWidget {
   String _optional(String? value) {
     final trimmed = value?.trim() ?? '';
     return trimmed.isEmpty ? 'Not set' : trimmed;
+  }
+}
+
+class _ChildrenCountAction extends StatelessWidget {
+  const _ChildrenCountAction({required this.count, required this.onPressed});
+
+  final int count;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = '$count ${count == 1 ? 'child' : 'children'}';
+    if (count == 0 || onPressed == null) return Text(text);
+    return TextButton.icon(
+      onPressed: onPressed,
+      icon: const Icon(Icons.account_tree_outlined),
+      label: Text(text),
+    );
   }
 }

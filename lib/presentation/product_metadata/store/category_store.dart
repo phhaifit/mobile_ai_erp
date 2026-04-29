@@ -4,7 +4,6 @@ import 'package:mobile_ai_erp/domain/entity/product_metadata/metadata_page.dart'
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/categories/create_category_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/categories/delete_category_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/categories/get_categories_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/product_metadata/categories/get_category_tree_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/categories/update_category_usecase.dart';
 import 'package:mobx/mobx.dart';
 
@@ -13,75 +12,47 @@ part 'category_store.g.dart';
 class CategoryStore = CategoryStoreBase with _$CategoryStore;
 
 abstract class CategoryStoreBase with Store {
-  CategoryStoreBase({
-    required GetCategoriesUseCase getCategoriesUseCase,
-    required GetCategoryTreeUseCase getCategoryTreeUseCase,
-    required CreateCategoryUseCase createCategoryUseCase,
-    required UpdateCategoryUseCase updateCategoryUseCase,
-    required DeleteCategoryUseCase deleteCategoryUseCase,
-    required this.errorStore,
-  })  : _getCategoriesUseCase = getCategoriesUseCase,
-        _getCategoryTreeUseCase = getCategoryTreeUseCase,
+  CategoryStoreBase({required GetCategoriesUseCase getCategoriesUseCase, required CreateCategoryUseCase createCategoryUseCase, required UpdateCategoryUseCase updateCategoryUseCase, required DeleteCategoryUseCase deleteCategoryUseCase, required this.errorStore})
+      : _getCategoriesUseCase = getCategoriesUseCase,
         _createCategoryUseCase = createCategoryUseCase,
         _updateCategoryUseCase = updateCategoryUseCase,
         _deleteCategoryUseCase = deleteCategoryUseCase;
 
   final GetCategoriesUseCase _getCategoriesUseCase;
-  final GetCategoryTreeUseCase _getCategoryTreeUseCase;
   final CreateCategoryUseCase _createCategoryUseCase;
   final UpdateCategoryUseCase _updateCategoryUseCase;
   final DeleteCategoryUseCase _deleteCategoryUseCase;
 
   final ErrorStore errorStore;
 
-  @observable
-  ObservableList<Category> categories = ObservableList<Category>();
+  @observable ObservableList<Category> categories = ObservableList<Category>();
 
-  @observable
-  ObservableList<Category> categoryTree = ObservableList<Category>();
+  final ObservableList<Category> parentOptions = ObservableList<Category>();
 
-  @observable
-  int currentPage = 1;
+  @observable int currentPage = 1;
 
-  @observable
-  int pageSize = 10;
+  @observable int pageSize = 10;
 
-  @observable
-  int totalItems = 0;
+  @observable int totalItems = 0;
 
-  @observable
-  int totalPages = 0;
+  @observable int totalPages = 0;
 
-  @observable
-  int unfilteredTotal = 0;
+  @observable int unfilteredTotal = 0;
 
-  @observable
-  bool isLoading = false;
+  @observable bool isLoading = false;
 
-  @observable
-  String? error;
+  @observable String? error;
 
-  @observable
-  String? searchQuery;
+  @observable String? searchQuery;
 
-  @observable
-  String? sortBy;
+  @observable String? sortBy;
 
-  @observable
-  String? sortOrder;
+  @observable String? sortOrder;
 
-  @observable
-  CategoryStatus? statusFilter;
+  @observable CategoryStatus? statusFilter;
 
   @action
-  Future<void> loadCategories({
-    int page = 1,
-    int pageSize = 10,
-    String? search,
-    String? sortBy,
-    String? sortOrder,
-    CategoryStatus? status,
-  }) async {
+  Future<void> loadCategories({int page = 1, int pageSize = 10, String? search, String? sortBy, String? sortOrder, CategoryStatus? status, String? parentId, bool rootOnly = false}) async {
     await _runWithLoading(() async {
       try {
         final result = await _getCategoriesUseCase.call(
@@ -92,6 +63,8 @@ abstract class CategoryStoreBase with Store {
             sortBy: sortBy,
             sortOrder: sortOrder,
             status: status,
+            parentId: parentId,
+            rootOnly: rootOnly,
           ),
         );
         _applyMetadataPage(result);
@@ -102,40 +75,44 @@ abstract class CategoryStoreBase with Store {
         statusFilter = status;
         error = null;
       } catch (e) {
-        error = e.toString();
-        errorStore.setErrorMessage(e.toString());
+        _handleError(e);
         rethrow;
       }
     });
   }
 
-  @action
-  Future<void> loadCategoryTree({CategoryStatus? status}) async {
-    await _runWithLoading(() async {
-      try {
-        final result = await _getCategoryTreeUseCase.call(params: status);
-        categoryTree = ObservableList.of(result);
-        error = null;
-      } catch (e) {
-        error = e.toString();
-        errorStore.setErrorMessage(e.toString());
-        rethrow;
-      }
-    });
+  Future<void> loadParentOptions() async {
+    final result = await _getCategoriesUseCase.call(
+      params: GetCategoriesParams(pageSize: 200, rootOnly: false),
+    );
+    parentOptions
+      ..clear()
+      ..addAll(result.items);
   }
+
+  Future<MetadataPage<Category>> fetchCategoriesPage({int page = 1, int pageSize = 10, String? search, String? sortBy, String? sortOrder, CategoryStatus? status, String? parentId, bool rootOnly = false}) =>
+      _getCategoriesUseCase.call(
+        params: GetCategoriesParams(
+          page: page,
+          pageSize: pageSize,
+          search: search,
+          sortBy: sortBy,
+          sortOrder: sortOrder,
+          status: status,
+          parentId: parentId,
+          rootOnly: rootOnly,
+        ),
+      );
 
   @action
   Future<Category> createCategory(Category category) async {
     return await _runWithLoading(() async {
       try {
         final result = await _createCategoryUseCase.call(params: category);
-        await loadCategoryTree(status: statusFilter);
-        await _reloadCurrentQuery();
         error = null;
         return result;
       } catch (e) {
-        error = e.toString();
-        errorStore.setErrorMessage(e.toString());
+        _handleError(e);
         rethrow;
       }
     });
@@ -146,13 +123,10 @@ abstract class CategoryStoreBase with Store {
     return await _runWithLoading(() async {
       try {
         final result = await _updateCategoryUseCase.call(params: category);
-        await loadCategoryTree(status: statusFilter);
-        await _reloadCurrentQuery();
         error = null;
         return result;
       } catch (e) {
-        error = e.toString();
-        errorStore.setErrorMessage(e.toString());
+        _handleError(e);
         rethrow;
       }
     });
@@ -163,12 +137,9 @@ abstract class CategoryStoreBase with Store {
     await _runWithLoading(() async {
       try {
         await _deleteCategoryUseCase.call(params: categoryId);
-        await loadCategoryTree(status: statusFilter);
-        await _reloadCurrentQuery();
         error = null;
       } catch (e) {
-        error = e.toString();
-        errorStore.setErrorMessage(e.toString());
+        _handleError(e);
         rethrow;
       }
     });
@@ -177,17 +148,17 @@ abstract class CategoryStoreBase with Store {
   int _loadingOperations = 0;
 
   @action
-  void _beginLoadingOperation() {
-    _loadingOperations++;
-    isLoading = _loadingOperations > 0;
-  }
+  void _beginLoadingOperation() { _loadingOperations++; isLoading = true; }
 
   @action
   void _endLoadingOperation() {
-    if (_loadingOperations > 0) {
-      _loadingOperations--;
-    }
+    if (_loadingOperations > 0) _loadingOperations--;
     isLoading = _loadingOperations > 0;
+  }
+
+  void _handleError(Object e) {
+    error = e.toString();
+    errorStore.setErrorMessage(e.toString());
   }
 
   Future<T> _runWithLoading<T>(Future<T> Function() fn) async {
@@ -197,25 +168,6 @@ abstract class CategoryStoreBase with Store {
     } finally {
       _endLoadingOperation();
     }
-  }
-
-  Future<void> _reloadCurrentQuery() async {
-    await _runWithLoading(() async {
-      final result = await _getCategoriesUseCase.call(
-        params: GetCategoriesParams(
-          page: currentPage,
-          pageSize: pageSize,
-          search: searchQuery,
-          sortBy: sortBy,
-          sortOrder: sortOrder,
-          status: statusFilter,
-        ),
-      );
-      _applyMetadataPage(result);
-      if (searchQuery == null && statusFilter == null) {
-        unfilteredTotal = result.totalItems;
-      }
-    });
   }
 
   @action

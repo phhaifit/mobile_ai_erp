@@ -32,7 +32,7 @@ class CategoryParentDropdown extends StatelessWidget {
 
     return DropdownButtonFormField<String?>(
       isExpanded: true,
-      value: selectedParentId,
+      initialValue: selectedParentId,
       decoration: metadataFormDecoration(labelText: 'Parent'),
       items: <DropdownMenuItem<String?>>[
         const DropdownMenuItem<String?>(

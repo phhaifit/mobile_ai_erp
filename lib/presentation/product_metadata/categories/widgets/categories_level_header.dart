@@ -5,15 +5,16 @@ class CategoriesLevelHeader extends StatelessWidget {
   const CategoriesLevelHeader({
     super.key,
     required this.path,
-    required this.hasActiveFilter,
     required this.onNavigateToLevel,
-    required this.onOpenFilter,
+    this.hasActiveFilter = false,
+    this.onOpenFilter,
   });
 
   final List<Category> path;
-  final bool hasActiveFilter;
   final ValueChanged<String?> onNavigateToLevel;
-  final VoidCallback onOpenFilter;
+  final bool hasActiveFilter;
+  final VoidCallback? onOpenFilter;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -22,6 +23,7 @@ class CategoriesLevelHeader extends StatelessWidget {
       fontWeight: FontWeight.bold,
     );
 
+    final filterFn = onOpenFilter;
     return LayoutBuilder(
       builder: (context, constraints) {
         final showTextButton = constraints.maxWidth >= 720;
@@ -33,15 +35,17 @@ class CategoriesLevelHeader extends StatelessWidget {
                 child: Row(children: _breadcrumbItems(textStyle)),
               ),
             ),
-            const SizedBox(width: 12),
-            showTextButton
-                ? _HeaderFilterButton(hasActiveFilter: hasActiveFilter, onOpenFilter: onOpenFilter)
-                : IconButton(
-                    onPressed: onOpenFilter,
-                    icon: const Icon(Icons.filter_list_outlined),
-                    tooltip: 'Filter',
-                    color: hasActiveFilter ? theme.colorScheme.primary : null,
-                  ),
+            if (filterFn != null) ...[
+              const SizedBox(width: 12),
+              showTextButton
+                  ? _HeaderFilterButton(hasActiveFilter: hasActiveFilter, onOpenFilter: filterFn)
+                  : IconButton(
+                      onPressed: filterFn,
+                      icon: const Icon(Icons.filter_list_outlined),
+                      tooltip: 'Filter',
+                      color: hasActiveFilter ? theme.colorScheme.primary : null,
+                    ),
+            ],
           ],
         );
       },
