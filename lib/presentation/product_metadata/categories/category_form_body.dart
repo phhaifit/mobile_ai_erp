@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/categories/category_parent_dropdown.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/constants/metadata_validation.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_form_decoration.dart';
 
 class CategoryFormBody extends StatelessWidget {
@@ -69,8 +70,8 @@ class CategoryFormBody extends StatelessWidget {
               decoration: metadataFormDecoration(labelText: 'Description'),
               minLines: 2,
               maxLines: 4,
-              validator: (val) => (val?.trim().length ?? 0) > 1000
-                  ? 'Description must be 1000 characters or fewer.'
+              validator: (val) => (val?.trim().length ?? 0) > MetadataValidation.categoryDescriptionMax
+                  ? 'Description must be ${MetadataValidation.categoryDescriptionMax} characters or fewer.'
                   : null,
             ),
             const SizedBox(height: 16),
@@ -92,14 +93,18 @@ class CategoryFormBody extends StatelessWidget {
   String? _validateName(String? val) {
     final t = val?.trim() ?? '';
     if (t.isEmpty) return 'Name is required.';
-    if (t.length > 150) return 'Name must be 150 characters or fewer.';
+    if (t.length > MetadataValidation.categoryNameMax) {
+      return 'Name must be ${MetadataValidation.categoryNameMax} characters or fewer.';
+    }
     return null;
   }
 
   String? _validateSlugField(String? val) {
     final t = val?.trim() ?? '';
     if (t.isEmpty) return 'Slug is required.';
-    if (t.length > 150) return 'Slug must be 150 characters or fewer.';
+    if (t.length > MetadataValidation.categorySlugMax) {
+      return 'Slug must be ${MetadataValidation.categorySlugMax} characters or fewer.';
+    }
     return validateSlug(t);
   }
 }

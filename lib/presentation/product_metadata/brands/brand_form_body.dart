@@ -1,6 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/brands/brand_logo_section.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/constants/metadata_validation.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_form_decoration.dart';
 
 class BrandFormBody extends StatelessWidget {
@@ -61,8 +62,8 @@ class BrandFormBody extends StatelessWidget {
               decoration: metadataFormDecoration(labelText: 'Description'),
               minLines: 2,
               maxLines: 4,
-              validator: (v) => (v?.trim().length ?? 0) > 1000
-                  ? 'Description must be 1000 characters or fewer.'
+              validator: (v) => (v?.trim().length ?? 0) > MetadataValidation.brandDescriptionMax
+                  ? 'Description must be ${MetadataValidation.brandDescriptionMax} characters or fewer.'
                   : null,
             ),
             const SizedBox(height: 16),

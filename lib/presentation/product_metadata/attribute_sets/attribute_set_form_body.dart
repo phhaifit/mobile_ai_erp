@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/attribute_sets/attribute_values_editor.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/constants/metadata_validation.dart';
 
 class AttributeSetFormBody extends StatelessWidget {
   const AttributeSetFormBody({
@@ -51,8 +52,8 @@ class AttributeSetFormBody extends StatelessWidget {
               labelText: 'Description',
               border: OutlineInputBorder(),
             ),
-            validator: (val) => (val?.trim().length ?? 0) > 500
-                ? 'Description must be 500 characters or fewer.'
+            validator: (val) => (val?.trim().length ?? 0) > MetadataValidation.attributeSetDescriptionMax
+                ? 'Description must be ${MetadataValidation.attributeSetDescriptionMax} characters or fewer.'
                 : null,
           ),
           const SizedBox(height: 24),
@@ -75,7 +76,9 @@ class AttributeSetFormBody extends StatelessWidget {
   String? _validateName(String? val) {
     final t = val?.trim() ?? '';
     if (t.isEmpty) return 'Name is required.';
-    if (t.length > 100) return 'Name must be 100 characters or fewer.';
+    if (t.length > MetadataValidation.attributeSetNameMax) {
+      return 'Name must be ${MetadataValidation.attributeSetNameMax} characters or fewer.';
+    }
     return null;
   }
 }

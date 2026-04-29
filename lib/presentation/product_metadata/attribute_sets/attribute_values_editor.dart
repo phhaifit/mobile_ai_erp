@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/constants/metadata_validation.dart';
 
 class AttributeValueField {
   AttributeValueField({this.id = '', required String initialText, int sortOrder = 0})
@@ -116,7 +117,9 @@ class _ValueRow extends StatelessWidget {
               validator: (val) {
                 final t = val?.trim() ?? '';
                 if (t.isEmpty) return 'Required';
-                if (t.length > 100) return 'Max 100 characters.';
+                if (t.length > MetadataValidation.attributeValueMax) {
+                  return 'Max ${MetadataValidation.attributeValueMax} characters.';
+                }
                 final lower = t.toLowerCase();
                 final count = allFields.where((f) => f.controller.text.trim().toLowerCase() == lower && f.controller.text.trim().isNotEmpty).length;
                 if (count > 1) return 'Duplicate value.';

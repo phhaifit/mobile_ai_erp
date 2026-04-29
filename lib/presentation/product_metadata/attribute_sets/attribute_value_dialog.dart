@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/attribute.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/constants/metadata_validation.dart';
 
 Future<bool> showAttributeValueDialog(
   BuildContext context, {
@@ -69,7 +70,9 @@ String? _validateValue(
 }) {
   final trimmed = fieldValue?.trim() ?? '';
   if (trimmed.isEmpty) return 'Value is required.';
-  if (trimmed.length > 100) return 'Value must be 100 characters or fewer.';
+  if (trimmed.length > MetadataValidation.attributeValueMax) {
+    return 'Value must be ${MetadataValidation.attributeValueMax} characters or fewer.';
+  }
   final lower = trimmed.toLowerCase();
   final existingValues = attributeSet.values
       .where((v) => editingValue == null || v.id != editingValue.id)

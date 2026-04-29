@@ -9,6 +9,7 @@ import 'package:mobile_ai_erp/domain/usecase/product_metadata/brands/upload_bran
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/brands/delete_brand_image_usecase.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/brands/brand_form_body.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/brands/brand_form_logic.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/constants/metadata_validation.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_route_args.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/utils/metadata_error_formatter.dart';
@@ -153,14 +154,18 @@ class _ProductMetadataBrandFormScreenState extends State<ProductMetadataBrandFor
   String? _validateName(String? v) {
     final t = v?.trim() ?? '';
     if (t.isEmpty) return 'Name is required.';
-    if (t.length > 150) return 'Name must be 150 characters or fewer.';
+    if (t.length > MetadataValidation.brandNameMax) {
+      return 'Name must be ${MetadataValidation.brandNameMax} characters or fewer.';
+    }
     return null;
   }
 
   String? _validateLogoUrl(String? v) {
     final t = v?.trim() ?? '';
     if (t.isEmpty) return null;
-    if (t.length > 500) return 'Logo URL must be 500 characters or fewer.';
+    if (t.length > MetadataValidation.brandLogoUrlMax) {
+      return 'Logo URL must be ${MetadataValidation.brandLogoUrlMax} characters or fewer.';
+    }
     if (t.startsWith('/uploads/')) return null;
     final uri = Uri.tryParse(t);
     if (uri == null || !uri.hasScheme || (uri.scheme != 'http' && uri.scheme != 'https')) {

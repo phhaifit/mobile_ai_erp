@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/product_metadata_validation_exception.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/tag.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/constants/metadata_validation.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_route_args.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_form_decoration.dart';
@@ -91,8 +92,8 @@ class _ProductMetadataTagFormScreenState
                         if (trimmed.isEmpty) {
                           return 'Name is required.';
                         }
-                        if (trimmed.length > 100) {
-                          return 'Name must be 100 characters or fewer.';
+                        if (trimmed.length > MetadataValidation.tagNameMax) {
+                          return 'Name must be ${MetadataValidation.tagNameMax} characters or fewer.';
                         }
                         return null;
                       },
@@ -106,8 +107,8 @@ class _ProductMetadataTagFormScreenState
                       minLines: 2,
                       maxLines: 4,
                       validator: (value) {
-                        if ((value?.trim().length ?? 0) > 1000) {
-                          return 'Description must be 1000 characters or fewer.';
+                        if ((value?.trim().length ?? 0) > MetadataValidation.tagDescriptionMax) {
+                          return 'Description must be ${MetadataValidation.tagDescriptionMax} characters or fewer.';
                         }
                         return null;
                       },
