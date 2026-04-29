@@ -24,6 +24,18 @@ class SharedPreferenceHelper {
     return _sharedPreference.remove(Preferences.auth_token);
   }
 
+  Future<String?> get currentTenantId async {
+    return _sharedPreference.getString(Preferences.current_tenant_id);
+  }
+
+  Future<bool> saveCurrentTenantId(String tenantId) async {
+    return _sharedPreference.setString(Preferences.current_tenant_id, tenantId);
+  }
+
+  Future<bool> removeCurrentTenantId() async {
+    return _sharedPreference.remove(Preferences.current_tenant_id);
+  }
+
   // Login:---------------------------------------------------------------------
   Future<bool> get isLoggedIn async {
     return _sharedPreference.getBool(Preferences.is_logged_in) ?? false;
