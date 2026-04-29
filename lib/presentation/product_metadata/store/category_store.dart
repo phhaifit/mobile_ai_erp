@@ -4,6 +4,7 @@ import 'package:mobile_ai_erp/domain/entity/product_metadata/metadata_page.dart'
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/categories/create_category_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/categories/delete_category_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/categories/get_categories_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/categories/get_category_tree_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/categories/update_category_usecase.dart';
 import 'package:mobx/mobx.dart';
 
@@ -12,13 +13,15 @@ part 'category_store.g.dart';
 class CategoryStore = CategoryStoreBase with _$CategoryStore;
 
 abstract class CategoryStoreBase with Store {
-  CategoryStoreBase({required GetCategoriesUseCase getCategoriesUseCase, required CreateCategoryUseCase createCategoryUseCase, required UpdateCategoryUseCase updateCategoryUseCase, required DeleteCategoryUseCase deleteCategoryUseCase, required this.errorStore})
+  CategoryStoreBase({required GetCategoriesUseCase getCategoriesUseCase, required GetCategoryTreeUseCase getCategoryTreeUseCase, required CreateCategoryUseCase createCategoryUseCase, required UpdateCategoryUseCase updateCategoryUseCase, required DeleteCategoryUseCase deleteCategoryUseCase, required this.errorStore})
       : _getCategoriesUseCase = getCategoriesUseCase,
+        _getCategoryTreeUseCase = getCategoryTreeUseCase,
         _createCategoryUseCase = createCategoryUseCase,
         _updateCategoryUseCase = updateCategoryUseCase,
         _deleteCategoryUseCase = deleteCategoryUseCase;
 
   final GetCategoriesUseCase _getCategoriesUseCase;
+  final GetCategoryTreeUseCase _getCategoryTreeUseCase;
   final CreateCategoryUseCase _createCategoryUseCase;
   final UpdateCategoryUseCase _updateCategoryUseCase;
   final DeleteCategoryUseCase _deleteCategoryUseCase;
@@ -82,12 +85,12 @@ abstract class CategoryStoreBase with Store {
   }
 
   Future<void> loadParentOptions() async {
-    final result = await _getCategoriesUseCase.call(
-      params: GetCategoriesParams(pageSize: 200, rootOnly: false),
+    final items = await _getCategoryTreeUseCase.call(
+      params: const GetCategoryTreeParams(),
     );
     parentOptions
       ..clear()
-      ..addAll(result.items);
+      ..addAll(items);
   }
 
   Future<MetadataPage<Category>> fetchCategoriesPage({int page = 1, int pageSize = 10, String? search, String? sortBy, String? sortOrder, CategoryStatus? status, String? parentId, bool rootOnly = false}) =>

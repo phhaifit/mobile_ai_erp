@@ -77,6 +77,25 @@ class CategoryApi {
     }
   }
 
+  Future<List<Category>> getCategoryTree({CategoryStatus? status}) async {
+    try {
+      final queryParams = <String, dynamic>{};
+      if (status != null) {
+        queryParams['status'] = status.name;
+      }
+      final response = await _dioClient.dio.get<List<dynamic>>(
+        erpMetadataPath('/categories/tree'),
+        queryParameters: queryParams,
+      );
+      final data = response.data ?? const <dynamic>[];
+      return data
+          .expand((item) => _flattenCategoryTree(item as Map<String, dynamic>))
+          .toList(growable: false);
+    } on DioException catch (error) {
+      throw mapMetadataWriteError(error);
+    }
+  }
+
   Future<Category> saveCategory(Category category) async {
     final payload = <String, dynamic>{
       'name': sanitizeMetadataJsonText(category.name),
@@ -109,6 +128,14 @@ class CategoryApi {
       await _dioClient.dio.delete<void>(erpMetadataPath('/categories/$categoryId'));
     } on DioException catch (error) {
       throw mapMetadataWriteError(error);
+    }
+  }
+
+  Iterable<Category> _flattenCategoryTree(Map<String, dynamic> json) sync* {
+    yield _mapCategory(json);
+    final children = json['children'] as List<dynamic>? ?? const <dynamic>[];
+    for (final child in children) {
+      yield* _flattenCategoryTree(child as Map<String, dynamic>);
     }
   }
 

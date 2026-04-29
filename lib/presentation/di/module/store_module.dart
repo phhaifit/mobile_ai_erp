@@ -16,6 +16,7 @@ import 'package:mobile_ai_erp/domain/usecase/product_metadata/tags/create_tag_us
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/tags/update_tag_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/tags/delete_tag_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/categories/get_categories_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/categories/get_category_tree_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/categories/get_category_by_id_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/categories/create_category_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/categories/update_category_usecase.dart';
@@ -162,6 +163,7 @@ class StoreModule {
     getIt.registerSingleton<CategoryStore>(
       CategoryStore(
         getCategoriesUseCase: getIt<GetCategoriesUseCase>(),
+        getCategoryTreeUseCase: getIt<GetCategoryTreeUseCase>(),
         createCategoryUseCase: getIt<CreateCategoryUseCase>(),
         updateCategoryUseCase: getIt<UpdateCategoryUseCase>(),
         deleteCategoryUseCase: getIt<DeleteCategoryUseCase>(),

@@ -1,6 +1,8 @@
 class MetadataValidation {
   const MetadataValidation._();
 
+  static const int backendPageSizeMax = 100;
+
   static const int categoryNameMax = 150;
   static const int categorySlugMax = 150;
   static const int categoryDescriptionMax = 1000;
@@ -8,6 +10,8 @@ class MetadataValidation {
   static const int brandNameMax = 150;
   static const int brandDescriptionMax = 1000;
   static const int brandLogoUrlMax = 500;
+  static const int brandImageMaxMB = 10;
+  static const int brandImageMaxBytes = brandImageMaxMB * 1024 * 1024;
 
   static const int tagNameMax = 100;
   static const int tagDescriptionMax = 1000;

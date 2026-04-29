@@ -35,6 +35,10 @@ class ProductMetadataRepositoryImpl extends ProductMetadataRepository {
       );
 
   @override
+  Future<List<Category>> getCategoryTree({CategoryStatus? status}) =>
+      _apiClient.categories.getCategoryTree(status: status);
+
+  @override
   Future<Category> getCategoryById(String categoryId) =>
       _apiClient.categories.getCategoryById(categoryId);
 

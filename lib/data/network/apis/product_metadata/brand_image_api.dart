@@ -3,13 +3,12 @@ import 'package:file_picker/file_picker.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
 import 'package:mobile_ai_erp/data/repository/product_metadata/product_metadata_network_utils.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/brand_image.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/constants/metadata_validation.dart';
 
-const int _maxBrandImageMB = 10;
-const int _maxBrandImageBytes = _maxBrandImageMB * 1024 * 1024;
 const String _missingBrandImageDataMessage =
     'Unable to access the selected image file. Please try selecting the image again.';
 const String _oversizedBrandImageMessage =
-    'Selected image is too large. Choose an image smaller than $_maxBrandImageMB MB.';
+    'Selected image is too large. Choose an image smaller than ${MetadataValidation.brandImageMaxMB} MB.';
 
 class BrandImageApi {
   BrandImageApi(this._dioClient);
@@ -62,7 +61,7 @@ class BrandImageApi {
   }
 
   Future<MultipartFile> _buildMultipartFile(PlatformFile file) async {
-    if (file.size > _maxBrandImageBytes) {
+    if (file.size > MetadataValidation.brandImageMaxBytes) {
       throw const FormatException(_oversizedBrandImageMessage);
     }
 
