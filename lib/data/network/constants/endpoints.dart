@@ -14,8 +14,8 @@ class Endpoints {
   static const String getPosts = baseUrl + "/posts";
 
   // brand endpoints
-  static const String brandsUrl = '$baseUrl/brands';
+  static const String brandsUrl = 'http://127.0.0.1:12345/erp/brands';//'$baseUrl/erp/brands';
 
   // category endpoints
-  static const String categoriesUrl = '$baseUrl/categories';
+  static const String categoriesUrl = '$baseUrl/erp/categories';
 }

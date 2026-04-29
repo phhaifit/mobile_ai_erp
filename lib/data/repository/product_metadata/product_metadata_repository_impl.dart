@@ -1,11 +1,12 @@
 import 'package:mobile_ai_erp/data/datasources/product_metadata/product_metadata_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/product_metadata/product_metadata_datasource.dart';
-import 'package:mobile_ai_erp/data/network/apis/brands/brand_api.dart';
-import 'package:mobile_ai_erp/data/network/rest_client.dart';
-import 'package:mobile_ai_erp/domain/entity/product/product.dart';
+// import 'package:mobile_ai_erp/data/network/apis/brands/brand_api.dart';
+// import 'package:mobile_ai_erp/data/network/rest_client.dart';
+// import 'package:mobile_ai_erp/domain/entity/product/product.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/attribute.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/attribute_option.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/brand.dart';
+import 'package:mobile_ai_erp/domain/entity/product_metadata/brand_list_response.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/category_attribute.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/tag.dart';
@@ -13,10 +14,12 @@ import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadat
 
 class ProductMetadataRepositoryImpl extends ProductMetadataRepository {
   ProductMetadataRepositoryImpl(this._dataSource);
+  ProductMetadataRepositoryImpl.init() :
+    _dataSource = ProductMetadataDataSource();
 
   final ProductMetadataDataSource _dataSource; // mock source, remove later
 
-  final ProductMetadataDatasource _metadataSource  = ProductMetadataDatasource(); // local source, remove later
+  final ProductMetadataDatasource _metadataSource  = ProductMetadataDatasource(); // network source
 
   @override
   Future<List<Category>> getCategories() => _metadataSource.getCategories();
@@ -71,8 +74,14 @@ class ProductMetadataRepositoryImpl extends ProductMetadataRepository {
       _dataSource.deleteCategoryAttribute(categoryAttributeId);
 
   @override
-  Future<List<Brand>> getBrands() {
-    return _metadataSource.getBrands();
+  Future<BrandListResponse> getBrands({int? page, int? pageSize, String? search, bool? isActive}) {
+    final queryParameters = <String, String>{};
+    if (page != null) queryParameters['page'] = page.toString();
+    if (pageSize != null) queryParameters['pageSize'] = pageSize.toString();
+    if (search != null) queryParameters['search'] = search;
+    if (isActive != null) queryParameters['isActive'] = isActive.toString();
+
+    return _metadataSource.getBrands(queryParameters);
   }
 
   @override

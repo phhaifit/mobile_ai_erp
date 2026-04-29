@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_ai_erp/data/datasources/product_metadata/product_metadata_datasource.dart';
 import 'package:mobile_ai_erp/constants/strings.dart';
+import 'package:mobile_ai_erp/data/repository/product_metadata/product_metadata_repository_impl.dart';
 
 class BrandDropdown extends StatefulWidget {
   final String? selectedBrandId;
@@ -17,12 +17,13 @@ class BrandDropdown extends StatefulWidget {
 }
 
 class _BrandDropdownState extends State<BrandDropdown> {
-  final ProductMetadataDatasource _dataSource = ProductMetadataDatasource();
+  // final ProductMetadataDatasource _dataSource = ProductMetadataDatasource();
+  final ProductMetadataRepositoryImpl _repository = ProductMetadataRepositoryImpl.init();
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-      future: _dataSource.getBrands(),
+      future: _repository.getBrands(page: 1, pageSize: 100),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return LinearProgressIndicator();
@@ -57,7 +58,8 @@ class _BrandDropdownState extends State<BrandDropdown> {
           );
         }
 
-        final brands = snapshot.data ?? [];
+        final response = snapshot.data;
+        final brands = response?.brands ?? [];
 
         return DropdownButtonFormField<String?>(
           initialValue: widget.selectedBrandId,

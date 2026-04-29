@@ -7,9 +7,10 @@ import 'package:flutter/services.dart';
 // import 'package:mobile_ai_erp/data/network/rest_client.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/entity/product/product_status.dart';
+import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadata_repository.dart';
 import 'package:mobile_ai_erp/presentation/product/store/product_form_store.dart';
 import 'package:mobile_ai_erp/presentation/product/store/product_store.dart';
-import 'package:mobile_ai_erp/presentation/product/widgets/brand_dropdown.dart';
+import 'package:mobile_ai_erp/presentation/product/widgets/brand_select_modal.dart';
 import 'package:mobile_ai_erp/presentation/product/widgets/category_dropdown.dart';
 import 'package:mobile_ai_erp/presentation/product/widgets/tag_selector.dart';
 import 'package:mobile_ai_erp/constants/strings.dart';
@@ -35,6 +36,8 @@ class _ProductFormState extends State<ProductForm> {
   late TextEditingController _webDescriptionController;
   late TextEditingController _warranteeMonthsController;
   late TextEditingController _weightController;
+
+  String? _selectedBrandName;
 
   // Mock weight units data
   final List<Map<String, dynamic>> weightUnits = [
@@ -62,6 +65,7 @@ class _ProductFormState extends State<ProductForm> {
     super.initState();
     // fetchBrands();
     _initializeControllers();
+    _loadSelectedBrandName();
     
     // Sync controllers with form store values (especially important for edit mode)
     Future.microtask(() {
@@ -69,6 +73,31 @@ class _ProductFormState extends State<ProductForm> {
         _syncControllers();
       }
     });
+  }
+
+  Future<void> _loadSelectedBrandName() async {
+    if (widget.formStore.brandId == null) {
+      setState(() {
+        _selectedBrandName = null;
+      });
+      return;
+    }
+
+    try {
+      final repository = getIt<ProductMetadataRepository>();
+      final response = await repository.getBrands(page: 1, pageSize: 100);
+      var foundBrand = response.brands
+          .where((b) => b.id == widget.formStore.brandId)
+          .firstOrNull;
+      
+      if (foundBrand != null && mounted) {
+        setState(() {
+          _selectedBrandName = foundBrand.name;
+        });
+      }
+    } catch (e) {
+      // Handle error silently
+    }
   }
 
   void _initializeControllers() {
@@ -96,6 +125,21 @@ class _ProductFormState extends State<ProductForm> {
     _webDescriptionController.text = widget.formStore.webDescription ?? '';
     _warranteeMonthsController.text = widget.formStore.warranteeMonths ?? '';
     _weightController.text = widget.formStore.weight ?? '';
+    _loadSelectedBrandName();
+  }
+
+  void _openBrandModal() {
+    showDialog(
+      context: context,
+      builder: (context) => BrandSelectModal(
+        initialBrandId: widget.formStore.brandId,
+        initialBrandName: _selectedBrandName,
+        onBrandSelected: (brandId) {
+          widget.formStore.setBrandId(brandId);
+          _loadSelectedBrandName();
+        },
+      ),
+    );
   }
 
   @override
@@ -391,9 +435,22 @@ class _ProductFormState extends State<ProductForm> {
               SizedBox(height: 16),
 
               // Brand
-              BrandDropdown(
-                selectedBrandId: widget.formStore.brandId,
-                onBrandChanged: widget.formStore.setBrandId,
+              GestureDetector(
+                onTap: _openBrandModal,
+                child: InputDecorator(
+                  decoration: InputDecoration(
+                    labelText: ProductStrings.brandRequired,
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.business),
+                    suffixIcon: Icon(Icons.open_in_new, size: 18),
+                  ),
+                  child: Text(
+                    _selectedBrandName ?? 'No brand selected',
+                    style: TextStyle(
+                      color: _selectedBrandName != null ? Colors.black87 : Colors.grey,
+                    ),
+                  ),
+                ),
               ),
               SizedBox(height: 16),
 

@@ -30,7 +30,7 @@ class Brand {
   final String? regionOrState; // not in db design, remove from model when refactoring
   final String? city; // not in db design, remove from model when refactoring
   final int sortOrder; //// what is sort order
-  final BrandStatus status; // can be changed to bool, db/API field is named is_active/isActive
+  final BrandStatus status; // can only delete brand, no archive status, remove when refactoring
 
   bool get isActive => status == BrandStatus.active;
 
@@ -92,9 +92,7 @@ class Brand {
       regionOrState: null, // not in db design, remove from model when refactoring
       city: null, // not in db design, remove from model when refactoring
       sortOrder: 0, // default value, remove if unused
-      status: (json['isActive'] as bool)
-          ? BrandStatus.active
-          : BrandStatus.archived,
+      status: BrandStatus.active, // not in response, default to active
     );
   }
 }
