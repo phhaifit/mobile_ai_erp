@@ -61,6 +61,7 @@ import 'package:mobile_ai_erp/domain/usecase/user/save_login_in_status_usecase.d
 import 'package:mobile_ai_erp/domain/usecase/user/update_role_usercase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/apply_web_theme_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/delete_cms_page_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/web_builder/publish_cms_page_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/get_cms_page_by_id_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/get_cms_pages_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/get_store_settings_usecase.dart';
@@ -187,6 +188,9 @@ class UseCaseModule {
     );
     getIt.registerSingleton<DeleteCmsPageUseCase>(
       DeleteCmsPageUseCase(getIt<CmsPageRepository>()),
+    );
+    getIt.registerSingleton<PublishCmsPageUseCase>(
+      PublishCmsPageUseCase(getIt<CmsPageRepository>()),
     );
     getIt.registerSingleton<GetWebThemesUseCase>(
       GetWebThemesUseCase(getIt<WebThemeRepository>()),
