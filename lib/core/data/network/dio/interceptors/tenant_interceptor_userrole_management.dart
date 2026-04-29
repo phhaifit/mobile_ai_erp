@@ -1,10 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
-class TenantInterceptor extends Interceptor {
+class TenantInterceptorUserRoleMananagement extends Interceptor {
   final AsyncValueGetter<String?> tenantId;
 
-  TenantInterceptor({
+  TenantInterceptorUserRoleMananagement({
     required this.tenantId,
   });
 

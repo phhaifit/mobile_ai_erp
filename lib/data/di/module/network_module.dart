@@ -2,7 +2,7 @@ import 'package:mobile_ai_erp/core/data/network/dio/configs/dio_configs.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/auth_interceptor.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/logging_interceptor.dart';
-import 'package:mobile_ai_erp/core/data/network/dio/interceptors/tenant_interceptor.dart';
+import 'package:mobile_ai_erp/core/data/network/dio/interceptors/tenant_interceptor_userrole_management.dart';
 import 'package:mobile_ai_erp/core/services/tenant_service.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
@@ -28,8 +28,8 @@ class NetworkModule {
         accessToken: () async => await getIt<SharedPreferenceHelper>().authToken,
       ),
     );
-    getIt.registerSingleton<TenantInterceptor>(
-      TenantInterceptor(
+    getIt.registerSingleton<TenantInterceptorUserRoleMananagement>(
+      TenantInterceptorUserRoleMananagement(
         tenantId: () async => await getIt<TenantService>().getCurrentTenantId(),
       ),
     );
@@ -50,7 +50,7 @@ class NetworkModule {
         ..addInterceptors(
           [
             getIt<AuthInterceptor>(),
-            getIt<TenantInterceptor>(),
+            getIt<TenantInterceptorUserRoleMananagement>(),
             getIt<ErrorInterceptor>(),
             getIt<LoggingInterceptor>(),
           ],
