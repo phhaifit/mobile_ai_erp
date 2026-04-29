@@ -8,6 +8,7 @@ import 'package:mobile_ai_erp/data/local/datasources/post_purchase/post_purchase
 import 'package:mobile_ai_erp/data/local/datasources/product_metadata/product_metadata_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/user/role_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/user/user_datasource.dart';
+import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
 import 'package:mobile_ai_erp/data/repository/checkout/checkout_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/customer/customer_repository_impl.dart';
@@ -19,7 +20,7 @@ import 'package:mobile_ai_erp/data/repository/post/post_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/post_purchase/post_purchase_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/product_metadata/product_metadata_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/setting/setting_repository_impl.dart';
-import 'package:mobile_ai_erp/data/repository/stock_operations/mock_stock_operations_repository.dart';
+import 'package:mobile_ai_erp/data/repository/stock_operations/stock_operations_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/supplier/supplier_mock_repository.dart';
 import 'package:mobile_ai_erp/data/repository/user/role_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/user/user_repository_impl.dart';
@@ -64,9 +65,7 @@ class RepositoryModule {
       CustomerRepositoryImpl(getIt<CustomerDataSource>()),
     );
 
-    getIt.registerSingleton<DashboardRepository>(
-      MockDashboardRepository(),
-    );
+    getIt.registerSingleton<DashboardRepository>(MockDashboardRepository());
 
     getIt.registerSingleton<SettingRepository>(
       SettingRepositoryImpl(getIt<SharedPreferenceHelper>()),
@@ -77,7 +76,10 @@ class RepositoryModule {
     );
 
     getIt.registerSingleton<StockOperationsRepository>(
-      MockStockOperationsRepository(),
+      StockOperationsRepositoryImpl(
+        getIt<DioClient>(),
+        getIt<SharedPreferenceHelper>(),
+      ),
     );
 
     getIt.registerSingleton<InventoryAuditOutboundRepository>(
@@ -93,20 +95,19 @@ class RepositoryModule {
       ProductMetadataDataSource(),
     );
     getIt.registerSingleton<ProductMetadataRepository>(
-        ProductMetadataRepositoryImpl(
-      getIt<ProductMetadataDataSource>(),
-    ));
-    
+      ProductMetadataRepositoryImpl(getIt<ProductMetadataDataSource>()),
+    );
+
     getIt.registerLazySingleton<AddressRepository>(
-        () => AddressRepositoryImpl(getIt<AddressMockDataSource>()));
-        
+      () => AddressRepositoryImpl(getIt<AddressMockDataSource>()),
+    );
+
     getIt.registerLazySingleton<OrderRepository>(
-        () => OrderRepositoryImpl(getIt<OrderMockDataSource>()));
+      () => OrderRepositoryImpl(getIt<OrderMockDataSource>()),
+    );
 
     // post_purchase:----------------------------------------------------------
-    getIt.registerSingleton<PostPurchaseDataSource>(
-      PostPurchaseDataSource(),
-    );
+    getIt.registerSingleton<PostPurchaseDataSource>(PostPurchaseDataSource());
     getIt.registerSingleton<PostPurchaseRepository>(
       PostPurchaseRepositoryImpl(getIt<PostPurchaseDataSource>()),
     );
@@ -132,7 +133,9 @@ class RepositoryModule {
       () => StoreSettingsRepositoryImpl(),
     );
 
-    getIt.registerLazySingleton<SupplierRepository>(() => SupplierMockRepository());
+    getIt.registerLazySingleton<SupplierRepository>(
+      () => SupplierMockRepository(),
+    );
     getIt.registerSingleton<FulfillmentRepository>(FulfillmentRepositoryImpl());
 
     // checkout:--------------------------------------------------------------
@@ -144,6 +147,5 @@ class RepositoryModule {
     getIt.registerSingleton<ProductManagementRepository>(
       ProductManagementRepositoryImpl(getIt<MockProductDataSource>()),
     );
-
   }
 }
