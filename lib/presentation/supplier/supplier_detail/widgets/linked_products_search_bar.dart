@@ -19,6 +19,7 @@ class LinkedProductsSearchBar extends StatelessWidget {
         onChanged: onChanged,
         decoration: InputDecoration(
           hintText: 'Search by name, SKU, or barcode',
+          hintMaxLines: 2,
           prefixIcon: const Icon(Icons.search_outlined),
           suffixIcon: controller.text.isEmpty
               ? null
