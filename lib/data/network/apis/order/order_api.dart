@@ -77,4 +77,15 @@ class OrderApi {
       rethrow;
     }
   }
+
+  /// Confirm order success
+  Future<void> confirmOrder(String orderId) async {
+    try {
+      // Hits the new NestJS endpoint perfectly
+      await _dioClient.dio.patch('${Endpoints.customerOrders}/$orderId/confirm');
+    } catch (e) {
+      print('❌ [OrderApi.confirmOrder] Error: $e');
+      rethrow;
+    }
+  }
 }

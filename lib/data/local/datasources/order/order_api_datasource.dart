@@ -51,4 +51,9 @@ class OrderApiDataSource implements OrderDataSource {
   Future<void> submitReturnRequest(String orderId, Map<String, dynamic> data) {
     return _orderApi.submitReturnRequest(orderId, data);
   }
+
+  @override
+  Future<void> confirmOrder(String orderId) {
+    return _orderApi.confirmOrder(orderId);
+  }
 }

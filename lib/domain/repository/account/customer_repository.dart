@@ -6,5 +6,4 @@ abstract class AccountCustomerRepository {
   Future<void> forgotPassword(String email);
   Future<Customer> getProfile();
   Future<Customer> updateProfile(Map<String, dynamic> data);
-  Future<Map<String, dynamic>> getLoyaltyPoints();
 }

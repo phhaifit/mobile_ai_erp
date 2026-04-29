@@ -24,6 +24,7 @@ import 'package:mobile_ai_erp/presentation/account/orders/order_history_screen.d
 import 'package:mobile_ai_erp/presentation/account/orders/order_detail_screen.dart';
 import 'package:mobile_ai_erp/presentation/account/orders/return_request_screen.dart';
 import 'package:mobile_ai_erp/presentation/account/orders/cancel_order_screen.dart';
+import 'package:mobile_ai_erp/presentation/account/loyalty_points/loyalty_history_screen.dart';
 import 'package:mobile_ai_erp/presentation/order_fulfillment/fulfillment_detail.dart';
 import 'package:mobile_ai_erp/presentation/order_fulfillment/fulfillment_list.dart';
 import 'package:mobile_ai_erp/presentation/order_fulfillment/order_tracking.dart';
@@ -49,7 +50,7 @@ import 'package:mobile_ai_erp/presentation/product/screens/product_list_page.dar
 
 class Routes {
   Routes._();
-
+  
   // static variables
   static const String splash = '/splash';
   static const String login = '/login';
@@ -88,6 +89,7 @@ class Routes {
   static const String orderDetail = '/order_detail';
   static const String cancelOrder = '/cancel_order';
   static const String returnRequest = '/return_request';
+  static const String loyaltyHistory = '/loyalty_history';
 
   static final routes = <String, WidgetBuilder>{
     login: (BuildContext context) => LoginScreen(),
@@ -122,6 +124,7 @@ class Routes {
     ),
     productList: (BuildContext context) => ProductListPage(),
     productDetail: (BuildContext context) => const ProductDetailScreen(),
+    loyaltyHistory: (BuildContext context) => const LoyaltyHistoryScreen(),
     fulfillment: (BuildContext context) => FulfillmentListScreen(),
     fulfillmentDetail: (BuildContext context) => FulfillmentDetailScreen(),
     fulfillmentTracking: (BuildContext context) => FulfillmentTrackingScreen(),

@@ -6,6 +6,7 @@ import '../../../../domain/usecase/order/get_order_details_usecase.dart';
 import '../../../../domain/usecase/order/cancel_order_usecase.dart';
 import '../../../../domain/usecase/order/submit_return_request_usecase.dart';
 import '../../../../domain/usecase/order/reorder_usecase.dart';
+import '../../../../domain/usecase/order/confirm_order_usecase.dart';
 
 part 'order_store.g.dart';
 
@@ -17,6 +18,7 @@ abstract class _OrderStore with Store {
   final CancelOrderUseCase _cancelOrder;
   final SubmitReturnRequestUseCase _submitReturnRequest;
   final ReorderUseCase _reorder;
+  final ConfirmOrderUsecase _confirmOrder;
 
   _OrderStore(
     this._getOrderHistory,
@@ -24,6 +26,7 @@ abstract class _OrderStore with Store {
     this._cancelOrder,
     this._submitReturnRequest,
     this._reorder,
+    this._confirmOrder,
   );
 
   @observable
@@ -111,6 +114,20 @@ abstract class _OrderStore with Store {
       return result['cartId'] as String?;
     } catch (e) {
       print('❌ [OrderStore.reorder] Error: $e');
+      rethrow;
+    } finally {
+      isLoading = false;
+    }
+  }
+
+  @action
+  Future<void> confirmOrder(String orderId) async {
+    try {
+      isLoading = true;
+      await _confirmOrder.call(params: orderId);
+      return;
+    } catch (e) {
+      print('❌ [OrderStore.confirmOrder] Error: $e');
       rethrow;
     } finally {
       isLoading = false;

@@ -53,8 +53,12 @@ import 'package:mobile_ai_erp/domain/usecase/order/get_order_history_usecase.dar
 import 'package:mobile_ai_erp/domain/usecase/order/reorder_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/order/submit_return_request_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/order/cancel_order_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/order/confirm_order_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/customer/update_profile_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/loyalty_ledgers/get_loyalty_balance_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/loyalty_ledgers/get_loyalty_history_usecase.dart';
 import 'package:mobile_ai_erp/domain/repository/account/order_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/account/loyalty_ledger_repository.dart';
 
 import '../../../di/service_locator.dart';
 
@@ -210,6 +214,17 @@ class UseCaseModule {
     );
     getIt.registerSingleton<ReorderUseCase>(
       ReorderUseCase(getIt<OrderRepository>()),
+    );
+    getIt.registerSingleton<ConfirmOrderUsecase>(
+      ConfirmOrderUsecase(getIt<OrderRepository>()),
+    );
+
+    // loyalty ledger:-------------------------------------------------------
+    getIt.registerSingleton<GetLoyaltyHistoryUseCase>(
+      GetLoyaltyHistoryUseCase(getIt<LoyaltyLedgerRepository>()),
+    );
+    getIt.registerSingleton<GetLoyaltyBalanceUseCase>(
+      GetLoyaltyBalanceUseCase(getIt<LoyaltyLedgerRepository>()),
     );
   }
 }

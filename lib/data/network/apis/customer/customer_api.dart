@@ -70,15 +70,4 @@ class CustomerApi {
       rethrow;
     }
   }
-
-  // Get loyalty points (NOTE: Backend endpoint needed)
-  Future<Map<String, dynamic>> getLoyaltyPoints() async {
-    try {
-      final res = await _dioClient.dio.get(Endpoints.customerLoyalty);
-      return res.data;
-    } catch (e) {
-      print('❌ [CustomerApi.getLoyaltyPoints] Error: $e');
-      rethrow;
-    }
-  }
 }

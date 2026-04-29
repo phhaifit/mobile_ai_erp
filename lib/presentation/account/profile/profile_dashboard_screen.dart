@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import '../../../../utils/routes/routes.dart';
 import '../store/profile_store.dart';
+import '../store/loyalty_store.dart';
 import '../widgets/loyalty_point_card.dart';
 import '../../../../di/service_locator.dart';
 
@@ -15,11 +16,13 @@ class ProfileDashboardScreen extends StatefulWidget {
 class _ProfileDashboardScreenState extends State<ProfileDashboardScreen> {
   // Fetch the store from DI
   final ProfileStore _profileStore = getIt<ProfileStore>();
+  final LoyaltyStore _loyaltyStore = getIt<LoyaltyStore>();
 
   @override
   void initState() {
     super.initState();
     Future.microtask(() => _profileStore.fetchProfile());
+    Future.microtask(() => _loyaltyStore.fetchBalance());
   }
 
   @override
@@ -39,7 +42,11 @@ class _ProfileDashboardScreenState extends State<ProfileDashboardScreen> {
             const SizedBox(height: 24),
             Observer(
               builder: (_) => LoyaltyPointCard(
-                points: _profileStore.loyaltyPoints,
+                points: _loyaltyStore.balance, // 3. Use the LoyaltyStore balance
+                onTap: () {
+                  // 4. Navigate to the history screen when tapped!
+                  Navigator.pushNamed(context, Routes.loyaltyHistory);
+                },
               ),
             ),
             const SizedBox(height: 32),

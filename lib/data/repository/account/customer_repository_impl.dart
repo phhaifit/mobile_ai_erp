@@ -31,9 +31,4 @@ class AccountCustomerRepositoryImpl implements AccountCustomerRepository {
   Future<Customer> updateProfile(Map<String, dynamic> data) {
     return _dataSource.updateProfile(data);
   }
-
-  @override
-  Future<Map<String, dynamic>> getLoyaltyPoints() {
-    return _dataSource.getLoyaltyPoints();
-  }
 }

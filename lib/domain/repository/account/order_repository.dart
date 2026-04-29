@@ -1,5 +1,4 @@
 import '../../entity/order/order.dart';
-import '../../entity/order/return_request.dart';
 
 abstract class OrderRepository {
   Future<List<Order>> getOrderHistory({String? status, int? page, int? pageSize});
@@ -7,4 +6,5 @@ abstract class OrderRepository {
   Future<void> cancelOrder(String orderId);
   Future<void> submitReturnRequest(String orderId, Map<String, dynamic> data);
   Future<Map<String, dynamic>> reorder(String orderId);
+  Future<void> confirmOrder(String orderId);
 }

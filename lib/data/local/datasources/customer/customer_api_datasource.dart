@@ -10,7 +10,6 @@ abstract class AccountCustomerDataSource {
   Future<void> forgotPassword(String email);
   Future<Customer> getProfile();
   Future<Customer> updateProfile(Map<String, dynamic> data);
-  Future<Map<String, dynamic>> getLoyaltyPoints();
 }
 
 class AccountCustomerApiDataSource implements AccountCustomerDataSource {
@@ -60,10 +59,5 @@ class AccountCustomerApiDataSource implements AccountCustomerDataSource {
   @override
   Future<Customer> updateProfile(Map<String, dynamic> data) {
     return _customerApi.updateProfile(data);
-  }
-
-  @override
-  Future<Map<String, dynamic>> getLoyaltyPoints() {
-    return _customerApi.getLoyaltyPoints();
   }
 }

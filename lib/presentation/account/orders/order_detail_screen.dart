@@ -135,13 +135,28 @@ class OrderDetailScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     backgroundColor: Colors.green,
                   ),
-                  onPressed: () {
-                    // TODO: Implement backend endpoint for Confirming Order Success
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Mock: Order Confirmed!')),
-                    );
+                  onPressed: () async {
+                    try {
+                      // 1. Show a loading indicator or just disable the button (optional)
+                      // 2. Call the store
+                      await orderStore.confirmOrder(order.id);
+                      
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Order successfully confirmed! Thank you!')),
+                        );
+                        // Pop back to the Order History screen so it refreshes
+                        Navigator.pop(context);
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to confirm order: $e')),
+                        );
+                      }
+                    }
                   },
-                  child: const Text('Confirm Received', style: TextStyle(color: Colors.white, fontSize: 16)),
+                  child: const Text('Confirm Received', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
               ),
               const SizedBox(height: 12),

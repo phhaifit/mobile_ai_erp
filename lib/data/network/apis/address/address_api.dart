@@ -59,8 +59,8 @@ class AddressApi {
   /// Set default address
   Future<Address> setDefaultAddress(String id) async {
     try {
-      // Our backend is built to recognize is_default in the standard update payload
-      return await updateAddress(id, {'is_default': true});
+      // Our backend is built to recognize isDefault in the standard update payload
+      return await updateAddress(id, {'isDefault': true});
     } catch (e) {
       rethrow;
     }

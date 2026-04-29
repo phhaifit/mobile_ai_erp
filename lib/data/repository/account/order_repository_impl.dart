@@ -24,4 +24,7 @@ class OrderRepositoryImpl implements OrderRepository {
 
   @override
   Future<Map<String, dynamic>> reorder(String orderId) => _dataSource.reorder(orderId);
+
+  @override
+  Future<void> confirmOrder(String orderId) => _dataSource.confirmOrder(orderId);
 }

@@ -24,7 +24,7 @@ class Endpoints {
   static const String customerOrders = "$storefrontAccountUrl/account/orders";
 
   // ─── UNUSED ENDPOINTS ──────────────────────────────────────────────
-  static const String customerLoyalty = "$storefrontAccountUrl/loyalty";
+  static const String customerLoyalty = "$storefrontAccountUrl/account/loyalty-points";
   // Why: We haven't built this in the backend yet.
 
   // booking endpoints

@@ -51,6 +51,9 @@ import 'package:mobile_ai_erp/domain/usecase/order/get_order_details_usecase.dar
 import 'package:mobile_ai_erp/domain/usecase/order/get_order_history_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/order/reorder_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/order/submit_return_request_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/order/confirm_order_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/loyalty_ledgers/get_loyalty_balance_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/loyalty_ledgers/get_loyalty_history_usecase.dart';
 import 'package:mobile_ai_erp/presentation/customer_management/store/customer_store.dart';
 import 'package:mobile_ai_erp/presentation/home/store/language/language_store.dart';
 import 'package:mobile_ai_erp/presentation/home/store/theme/theme_store.dart';
@@ -67,6 +70,7 @@ import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metada
 import 'package:mobile_ai_erp/presentation/account/store/profile_store.dart';
 import 'package:mobile_ai_erp/presentation/account/store/address_store.dart';
 import 'package:mobile_ai_erp/presentation/account/store/order_store.dart';
+import 'package:mobile_ai_erp/presentation/account/store/loyalty_store.dart';
 import 'package:mobile_ai_erp/domain/repository/account/address_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/account/order_repository.dart';
 import 'package:mobile_ai_erp/presentation/stock_operations/store/stock_operations_store.dart';
@@ -103,8 +107,17 @@ class StoreModule {
         getIt<CancelOrderUseCase>(),
         getIt<SubmitReturnRequestUseCase>(),
         getIt<ReorderUseCase>(),
+        getIt<ConfirmOrderUsecase>(),
       ),
     );
+
+    getIt.registerSingleton<LoyaltyStore>(
+      LoyaltyStore(
+        getIt<GetLoyaltyBalanceUseCase>(),
+        getIt<GetLoyaltyHistoryUseCase>(),
+      ),
+    );
+
     getIt.registerLazySingleton(() => ReportsMockRepository());
 
     getIt.registerSingleton<auth.LoginStore>(

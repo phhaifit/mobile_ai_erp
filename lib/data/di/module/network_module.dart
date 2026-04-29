@@ -6,6 +6,7 @@ import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/customer/customer_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/address/address_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/order/order_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/loyalty_ledgers/loyalty_ledger_api.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
 import 'package:mobile_ai_erp/data/network/interceptors/error_interceptor.dart';
 import 'package:mobile_ai_erp/data/network/interceptors/tenant_interceptor.dart';
@@ -82,5 +83,6 @@ class NetworkModule {
     getIt.registerSingleton<CustomerApi>(CustomerApi(getIt<DioClient>(instanceName: 'customer')));
     getIt.registerSingleton<AddressApi>(AddressApi(getIt<DioClient>(instanceName: 'customer')));
     getIt.registerSingleton<OrderApi>(OrderApi(getIt<DioClient>(instanceName: 'customer')));
+    getIt.registerSingleton<LoyaltyLedgerApi>(LoyaltyLedgerApi(getIt<DioClient>(instanceName: 'customer')));
   }
 }
