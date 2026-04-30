@@ -42,6 +42,8 @@ import 'package:mobile_ai_erp/domain/repository/stock_operations/stock_operation
 import 'package:mobile_ai_erp/domain/repository/supplier/supplier_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/role_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/user_repository.dart';
+import 'package:mobile_ai_erp/data/repository/user/auth_repository_impl.dart';
+import 'package:mobile_ai_erp/domain/repository/user/auth_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/account/address_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/account/order_repository.dart';
 import 'package:mobile_ai_erp/data/repository/account/address_repository_impl.dart';
@@ -120,6 +122,9 @@ class RepositoryModule {
     );
     getIt.registerSingleton<RoleRepository>(
       RoleRepositoryImpl(getIt<RoleDataSource>()),
+    );
+    getIt.registerSingleton<AuthRepository>(
+      AuthRepositoryImpl(getIt()),
     );
 
     // web_builder:--------------------------------------------------------------

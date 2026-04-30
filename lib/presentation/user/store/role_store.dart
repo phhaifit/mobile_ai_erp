@@ -71,7 +71,7 @@ abstract class _RoleStore with Store {
   }
 
   @action
-  Future<void> deleteRole(int id) async {
+  Future<void> deleteRole(String id) async {
     await roleRepo.delete(id);
     await loadRoles();
   }
