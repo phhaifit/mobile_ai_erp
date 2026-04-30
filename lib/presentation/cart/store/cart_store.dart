@@ -384,13 +384,13 @@ abstract class CartStoreBase with Store {
     selectedCouponCode = null;
     couponValidationError = null;
     validatedCoupon = null;
+    calculation = null;
 
     if (selectedItemIds.isEmpty) {
-      calculation = null;
       return;
     }
 
-    await calculateSelectedCart();
+    await calculateSelectedCart(couponCode: null);
   }
 
   @action
@@ -409,25 +409,27 @@ abstract class CartStoreBase with Store {
   }
 
   @action
-  void toggleItemSelection(String itemId) {
+  Future<void> toggleItemSelection(String itemId) async {
     if (selectedItemIds.contains(itemId)) {
       selectedItemIds.remove(itemId);
     } else {
       selectedItemIds.add(itemId);
     }
-    calculation = null;
+
     couponValidationError = null;
     validatedCoupon = null;
+    await calculateSelectedCart();
   }
 
   @action
-  void selectAllItems() {
+  Future<void> selectAllItems() async {
     selectedItemIds
       ..clear()
       ..addAll(cart.items.map((item) => item.id));
-    calculation = null;
+
     couponValidationError = null;
     validatedCoupon = null;
+    await calculateSelectedCart();
   }
 
   @action
@@ -455,12 +457,18 @@ abstract class CartStoreBase with Store {
     errorMessage = null;
 
     try {
+      selectedItemIds.remove(item.id);
+      calculation = null;
+      selectedCouponCode = null;
+      couponValidationError = null;
+      validatedCoupon = null;
+
       if (!_wishlistStore.containsItem(item.productId)) {
         await _wishlistStore.addToWishlist(productId: item.productId);
       }
 
-      await removeItemFromCart(item.id);
-      selectedItemIds.remove(item.id);
+      await loadCart();
+      await _wishlistStore.loadWishlist();
     } catch (e) {
       errorMessage = e.toString();
     } finally {

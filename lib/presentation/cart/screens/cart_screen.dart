@@ -129,9 +129,12 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   void _handleContinueShopping() {
-    Navigator.of(
-      context,
-    ).pushNamedAndRemoveUntil('/products', (route) => false);
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+      return;
+    }
+
+    Navigator.of(context).pushReplacementNamed('/');
   }
 
   Future<void> _handleApproveCheckout() async {
@@ -191,11 +194,11 @@ class _CartScreenState extends State<CartScreen> {
       _cartStore.cart.items.isNotEmpty &&
       _cartStore.selectedItemIds.length == _cartStore.cart.items.length;
 
-  void _selectAllItems() {
+  Future<void> _selectAllItems() async {
     if (_allItemsSelected) {
       _cartStore.clearSelection();
     } else {
-      _cartStore.selectAllItems();
+      await _cartStore.selectAllItems();
     }
   }
 
@@ -232,7 +235,10 @@ class _CartScreenState extends State<CartScreen> {
 
     final coupon = _cartStore.calculation?.coupon;
     if (coupon == null) return null;
+
+    if (coupon.isApplied == false) return null;
     if (coupon.isValid) return null;
+
     return coupon.reason ?? 'Coupon is invalid';
   }
 
@@ -266,6 +272,10 @@ class _CartScreenState extends State<CartScreen> {
         return Scaffold(
           key: _scaffoldKey,
           appBar: AppBar(
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: _handleContinueShopping,
+            ),
             title: const Text('Shopping Cart'),
             elevation: 0,
             centerTitle: true,
@@ -512,7 +522,7 @@ class _CartScreenState extends State<CartScreen> {
             if (cartUIModel.cart.totalItems > 0)
               InkWell(
                 borderRadius: BorderRadius.circular(8),
-                onTap: _selectAllItems,
+                onTap: () async => await _selectAllItems(),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 4,
@@ -543,8 +553,8 @@ class _CartScreenState extends State<CartScreen> {
                 key: ValueKey('cart_item_${item.id}'),
                 item: item,
                 isSelected: _cartStore.selectedItemIds.contains(item.id),
-                onSelectChanged: (isSelected) {
-                  _cartStore.toggleItemSelection(item.id);
+                onSelectChanged: (isSelected) async {
+                  await _cartStore.toggleItemSelection(item.id);
                 },
                 onRemove: () => _handleRemoveItem(item.id),
                 onMoveToWishlist: () async {

@@ -4,6 +4,9 @@ import 'package:mobile_ai_erp/core/data/network/dio/interceptors/auth_intercepto
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/logging_interceptor.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/web_builder/web_builder_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/cart/cart_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/wishlist/wishlist_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/coupon/coupon_api.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
 import 'package:mobile_ai_erp/data/network/interceptors/error_interceptor.dart';
 import 'package:mobile_ai_erp/data/network/interceptors/tenant_interceptor.dart';
@@ -83,6 +86,17 @@ class NetworkModule {
     getIt.registerSingleton(PostApi(getIt<DioClient>(), getIt<RestClient>()));
     getIt.registerSingleton<WebBuilderApi>(
       WebBuilderApi(getIt<DioClient>(instanceName: erpDioClientName)),
+    );
+    getIt.registerSingleton<CartApi>(
+      CartApi(getIt<DioClient>(instanceName: erpDioClientName)),
+    );
+
+    getIt.registerSingleton<WishlistApi>(
+      WishlistApi(getIt<DioClient>(instanceName: erpDioClientName)),
+    );
+
+    getIt.registerSingleton<CouponApi>(
+      CouponApi(getIt<DioClient>(instanceName: erpDioClientName)),
     );
   }
 }
