@@ -1,8 +1,10 @@
 class Endpoints {
   Endpoints._();
 
-  // base url (legacy - sample posts API)
-  static const String baseUrl = "http://jsonplaceholder.typicode.com";
+
+  // base url
+  static const String baseUrl = "http://localhost:5000";
+
 
   // ERP backend base url - override at build time:
   //   --dart-define=ERP_BASE_URL=http://10.0.2.2:3000

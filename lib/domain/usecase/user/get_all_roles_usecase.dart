@@ -1,12 +1,12 @@
 import 'package:mobile_ai_erp/domain/entity/user/role.dart';
 import 'package:mobile_ai_erp/domain/repository/user/role_repository.dart';
 
-class UpdateRoleUseCase {
+class GetAllRolesUseCase {
   final RoleRepository roleRepository;
 
-  UpdateRoleUseCase(this.roleRepository);
+  GetAllRolesUseCase(this.roleRepository);
 
-  Future<Role> execute(String id, Role role) async {
-    return await roleRepository.update(id, role);
+  Future<List<Role>> execute() async {
+    return await roleRepository.getAll();
   }
 }

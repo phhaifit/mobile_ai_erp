@@ -5,6 +5,8 @@ import 'package:mobile_ai_erp/core/data/network/dio/interceptors/logging_interce
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/web_builder/web_builder_api.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
+import 'package:mobile_ai_erp/data/network/datasources/role/role_remote_datasource.dart';
+import 'package:mobile_ai_erp/data/network/datasources/user/user_remote_datasource.dart';
 import 'package:mobile_ai_erp/data/network/interceptors/error_interceptor.dart';
 import 'package:mobile_ai_erp/data/network/interceptors/tenant_interceptor.dart';
 import 'package:mobile_ai_erp/data/network/rest_client.dart';
@@ -28,6 +30,7 @@ class NetworkModule {
         accessToken: () async => await getIt<SharedPreferenceHelper>().authToken,
       ),
     );
+
     getIt.registerSingleton<TenantInterceptor>(
       TenantInterceptor(Endpoints.tenantId),
     );
@@ -48,12 +51,23 @@ class NetworkModule {
         ..addInterceptors(
           [
             getIt<AuthInterceptor>(),
+            getIt<TenantInterceptor>(),
             getIt<ErrorInterceptor>(),
             getIt<LoggingInterceptor>(),
           ],
         ),
     );
 
+    // api's:-------------------------------------------------------------------
+    getIt.registerSingleton(PostApi(getIt<DioClient>(), getIt<RestClient>()));
+
+    // datasources:-----------------------------------------------------------
+    getIt.registerSingleton<RoleRemoteDataSource>(
+      RoleRemoteDataSourceImpl(dio: getIt<DioClient>().dio),
+    );
+    getIt.registerSingleton<UserRemoteDataSource>(
+      UserRemoteDataSourceImpl(getIt<DioClient>().dio),
+    );
     // dio (ERP backend - separate base URL + tenant header):-------------------
     final erpDioClient = DioClient(
       dioConfigs: const DioConfigs(
@@ -70,7 +84,6 @@ class NetworkModule {
     getIt.registerSingleton<DioClient>(erpDioClient, instanceName: erpDioClientName);
 
     // api's:-------------------------------------------------------------------
-    getIt.registerSingleton(PostApi(getIt<DioClient>(), getIt<RestClient>()));
     getIt.registerSingleton<WebBuilderApi>(
       WebBuilderApi(getIt<DioClient>(instanceName: erpDioClientName)),
     );

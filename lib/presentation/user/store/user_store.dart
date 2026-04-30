@@ -2,6 +2,11 @@ import 'package:mobile_ai_erp/domain/entity/user/user.dart';
 import 'package:mobile_ai_erp/domain/repository/user/role_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/user_repository.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/assign_role_to_user_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/get_all_users_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/get_user_by_id_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/create_user_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/update_user_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/delete_user_usecase.dart';
 import 'package:mobx/mobx.dart';
 
 part 'user_store.g.dart';
@@ -12,8 +17,22 @@ abstract class _UserStore with Store {
   final UserRepository userRepo;
   final RoleRepository roleRepo;
   final AssignRoleToUserUseCase assignRoleUseCase;
+  final GetAllUsersUseCase getAllUsersUseCase;
+  final GetUserByIdUseCase getUserByIdUseCase;
+  final CreateUserUseCase createUserUseCase;
+  final UpdateUserUseCase updateUserUseCase;
+  final DeleteUserUseCase deleteUserUseCase;
 
-  _UserStore(this.userRepo, this.roleRepo, this.assignRoleUseCase);
+  _UserStore(
+    this.userRepo,
+    this.roleRepo,
+    this.assignRoleUseCase,
+    this.getAllUsersUseCase,
+    this.getUserByIdUseCase,
+    this.createUserUseCase,
+    this.updateUserUseCase,
+    this.deleteUserUseCase,
+  );
 
   @observable
   ObservableList<User> userList = ObservableList();
@@ -29,7 +48,7 @@ abstract class _UserStore with Store {
     loading = true;
     error = null;
     try {
-      final data = await userRepo.getAll();
+      final data = await getAllUsersUseCase.execute();
       userList = ObservableList.of(data);
     } catch (e) {
       error = e.toString();
@@ -40,24 +59,48 @@ abstract class _UserStore with Store {
 
   @action
   Future<void> createUser(User user) async {
-    await userRepo.create(user);
-    await loadUsers();
+    loading = true;
+    error = null;
+    try {
+      await createUserUseCase.execute(user);
+      await loadUsers();
+    } catch (e) {
+      error = e.toString();
+    } finally {
+      loading = false;
+    }
   }
 
   @action
-  Future<void> updateUser(User user) async {
-    await userRepo.update(user);
-    await loadUsers();
+  Future<void> updateUser(String id, User user) async {
+    loading = true;
+    error = null;
+    try {
+      await updateUserUseCase.execute(id, user);
+      await loadUsers();
+    } catch (e) {
+      error = e.toString();
+    } finally {
+      loading = false;
+    }
   }
 
   @action
-  Future<void> deleteUser(int id) async {
-    await userRepo.delete(id);
-    await loadUsers();
+  Future<void> deleteUser(String id) async {
+    loading = true;
+    error = null;
+    try {
+      await deleteUserUseCase.execute(id);
+      await loadUsers();
+    } catch (e) {
+      error = e.toString();
+    } finally {
+      loading = false;
+    }
   }
 
   @action
-  Future<void> assignRole(int userId, int roleId) async {
+  Future<void> assignRole(String userId, String roleId) async {
     final user = userList.firstWhere((u) => u.id == userId);
 
     try {
