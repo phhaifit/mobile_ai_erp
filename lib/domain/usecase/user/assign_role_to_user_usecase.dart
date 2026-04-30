@@ -8,9 +8,9 @@ class AssignRoleToUserUseCase {
 
   Future<void> execute({
     required User user,
-    required int roleId,
+    required String roleId,
   }) async {
-    final updatedUser = user.copyWith(roleId: roleId);
+    final updatedUser = user.copyWith(role: roleId);
     await userRepository.update(updatedUser);
   }
 }

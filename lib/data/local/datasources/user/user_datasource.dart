@@ -4,84 +4,84 @@ import 'package:mobile_ai_erp/domain/entity/user/user_status.dart';
 class UserDataSource {
   final List<User> _users = [
     User(
-      id: 1,
+      id: '1',
       name: 'John Doe',
       email: 'john@example.com',
       phone: '123456789',
       status: UserStatus.active,
-      roleId: 1,
+      role: '1',
     ),
     User(
-      id: 2,
+      id: '2',
       name: 'Jane Smith',
       email: 'jane@example.com',
       phone: '987654321',
       status: UserStatus.active,
-      roleId: 2,
+      role: '2',
     ),
     User(
-      id: 3,
+      id: '3',
       name: 'Alice Johnson',
       email: 'alice@example.com',
       phone: '111222333',
       status: UserStatus.inactive,
-      roleId: 3,
+      role: '3',
     ),
     User(
-      id: 4,
+      id: '4',
       name: 'Bob Brown',
       email: 'bob@example.com',
       phone: '444555666',
       status: UserStatus.active,
-      roleId: 1,
+      role: '1',
     ),
     User(
-      id: 5,
+      id: '5',
       name: 'Charlie Davis',
       email: 'charlie@example.com',
       phone: '777888999',
       status: UserStatus.inactive,
-      roleId: 2,
+      role: '2',
     ),
     User(
-      id: 6,
+      id: '6',
       name: 'Diana Evans',
       email: 'diana@example.com',
       phone: '222333444',
       status: UserStatus.active,
-      roleId: 3,
+      role: '3',
     ),
     User(
-      id: 7,
+      id: '7',
       name: 'Ethan Wilson',
       email: 'ethan@example.com',
       phone: '555666777',
       status: UserStatus.active,
-      roleId: 1,
+      role: '1',
     ),
     User(
-      id: 8,
+      id: '8',
       name: 'Fiona Taylor',
       email: 'fiona@example.com',
       phone: '888999000',
       status: UserStatus.inactive,
-      roleId: 2,
+      role: '2',
     ),
     User(
-      id: 9,
+      id: '9',
       name: 'George Anderson',
       email: 'george@example.com',
       phone: '333444555',
       status: UserStatus.active,
-      roleId: 3,
+      role: '3',
     ),
     User(
-      id: 10,
+      id: '10',
       name: 'Hannah Thomas',
       email: 'hannah@example.com',
       phone: '666777888',
       status: UserStatus.active,
-      roleId: 1,
+      role: '1',
     ),
   ];
 
@@ -101,7 +101,7 @@ class UserDataSource {
     if (index != -1) _users[index] = updated;
   }
 
-  Future<void> deleteUser(int id) async {
+  Future<void> deleteUser(String id) async {
     await Future.delayed(const Duration(milliseconds: 200));
     _users.removeWhere((u) => u.id == id);
   }
