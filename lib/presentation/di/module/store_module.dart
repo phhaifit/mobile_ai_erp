@@ -113,7 +113,6 @@ class StoreModule {
 
     getIt.registerSingleton<auth.LoginStore>(
       auth.LoginStore(
-        getIt<LoginUseCase>(),
         getIt<CreateTenantUseCase>(),
         getIt<AuthRepository>(),
         getIt<SharedPreferenceHelper>(),

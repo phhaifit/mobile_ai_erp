@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/cupertino.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'constants/preferences.dart';
@@ -14,7 +13,14 @@ class SharedPreferenceHelper {
 
   // General Methods: ----------------------------------------------------------
   Future<String?> get accessToken async {
-    return _sharedPreference.getStringList(Preferences.auth_token)?.first;
+    final authTokenValue = _sharedPreference.get(Preferences.auth_token);
+    if (authTokenValue is List<dynamic>) {
+      return authTokenValue.isNotEmpty ? authTokenValue.first : null;
+    }
+    if (authTokenValue is String && authTokenValue.isNotEmpty) {
+      return authTokenValue;
+    }
+    return null;
   }
 
   Future<bool> saveAuthToken({required String accessToken, required String refreshToken}) async {
@@ -26,7 +32,11 @@ class SharedPreferenceHelper {
   }
 
   Future<String?> get refreshToken async {
-    return _sharedPreference.getStringList(Preferences.auth_token)?.last;
+    final authTokenValue = _sharedPreference.get(Preferences.auth_token);
+    if (authTokenValue is List<dynamic> && authTokenValue.length > 1) {
+      return authTokenValue[1].isNotEmpty ? authTokenValue[1] : null;
+    }
+    return null;
   }
 
   Future<String?> get tenantId async {
@@ -43,7 +53,14 @@ class SharedPreferenceHelper {
 
   // Login:---------------------------------------------------------------------
   bool get isLoggedIn {
-    return _sharedPreference.containsKey(Preferences.auth_token);
+    final authTokenValue = _sharedPreference.get(Preferences.auth_token);
+    if (authTokenValue is List<dynamic>) {
+      return authTokenValue.isNotEmpty && authTokenValue.first.isNotEmpty;
+    }
+    if (authTokenValue is String) {
+      return authTokenValue.isNotEmpty;
+    }
+    return false;
   }
 
   // Theme:------------------------------------------------------
