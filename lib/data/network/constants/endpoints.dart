@@ -37,4 +37,23 @@ class Endpoints {
   // web builder - themes
   static const String themes = "/themes";
   static const String activeTheme = "/themes/active";
+
+  // order endpoints
+  static const String orders = "/erp/orders";
+  static String orderDetail(String id) => "/erp/orders/$id";
+  static String orderStatus(String id) => "/erp/orders/$id/status";
+  static String orderShipment(String id) => "/orders/$id/shipment";
+  static String orderShipmentTracking(String id) =>
+      "/orders/$id/shipment/tracking";
+  static String orderShipmentsTracking(String id) =>
+      "/orders/$id/shipments/tracking";
+  static String orderShipmentLabels(String orderId, String shipmentId) =>
+      "/orders/$orderId/shipments/$shipmentId/labels";
+  static String orderShipmentPrintJobs(String orderId, String shipmentId) =>
+      "/orders/$orderId/shipments/$shipmentId/print-jobs";
+  static String orderShipmentPrintAttempts(
+    String orderId,
+    String shipmentId,
+    String printJobId,
+  ) => "/orders/$orderId/shipments/$shipmentId/print-jobs/$printJobId/attempts";
 }

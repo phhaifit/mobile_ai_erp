@@ -2,6 +2,7 @@ import 'package:mobile_ai_erp/core/data/network/dio/configs/dio_configs.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/auth_interceptor.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/logging_interceptor.dart';
+import 'package:mobile_ai_erp/data/network/apis/orders/order_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/web_builder/web_builder_api.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
@@ -73,6 +74,9 @@ class NetworkModule {
     getIt.registerSingleton(PostApi(getIt<DioClient>(), getIt<RestClient>()));
     getIt.registerSingleton<WebBuilderApi>(
       WebBuilderApi(getIt<DioClient>(instanceName: erpDioClientName)),
+    );
+    getIt.registerSingleton(
+      OrderApi(getIt<DioClient>(instanceName: erpDioClientName)),
     );
   }
 }

@@ -8,6 +8,7 @@ import 'package:mobile_ai_erp/data/local/datasources/post_purchase/post_purchase
 import 'package:mobile_ai_erp/data/local/datasources/product_metadata/product_metadata_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/user/role_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/user/user_datasource.dart';
+import 'package:mobile_ai_erp/data/network/apis/orders/order_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/web_builder/web_builder_api.dart';
 import 'package:mobile_ai_erp/data/repository/checkout/checkout_repository_impl.dart';
@@ -134,7 +135,9 @@ class RepositoryModule {
     );
 
     getIt.registerLazySingleton<SupplierRepository>(() => SupplierMockRepository());
-    getIt.registerSingleton<FulfillmentRepository>(FulfillmentRepositoryImpl());
+    getIt.registerSingleton<FulfillmentRepository>(
+      FulfillmentRepositoryImpl(getIt<OrderApi>()),
+    );
 
     // checkout:--------------------------------------------------------------
     getIt.registerSingleton<CheckoutDataSource>(CheckoutLocalDataSourceImpl());
