@@ -136,15 +136,6 @@ class _CouponFormWidgetState extends State<CouponFormWidget> {
                           coupon.code,
                           style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
-                        if ((coupon.name).isNotEmpty)
-                          Text(
-                            coupon.name,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
                       ],
                     ),
                   );
