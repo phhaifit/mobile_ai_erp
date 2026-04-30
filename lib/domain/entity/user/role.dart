@@ -1,5 +1,5 @@
 class Role {
-  final int id;
+  final String id;
   final String name; // Admin, Manager, Staff
   final String description;
 

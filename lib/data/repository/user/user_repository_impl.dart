@@ -20,5 +20,5 @@ class UserRepositoryImpl implements UserRepository {
   Future<void> update(User user) => dataSource.updateUser(user);
 
   @override
-  Future<void> delete(int id) => dataSource.deleteUser(id);
+  Future<void> delete(String id) => dataSource.deleteUser(id);
 }
