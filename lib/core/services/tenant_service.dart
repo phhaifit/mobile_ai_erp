@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 class TenantService {
-  static const String _hardcodedTenantId = '9b4b42fa-25ac-4689-94fa-62a000d4fc8b';
+  static const String _hardcodedTenantId = 'ff830f4e-9d5f-4dd4-a3f5-71c044c50662';
   
   // Hardcoded tenant ID for now until login is implemented
   Future<String?> getCurrentTenantId() async {
