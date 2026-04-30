@@ -75,6 +75,8 @@ class NetworkModule {
     getIt.registerSingleton<WebBuilderApi>(
       WebBuilderApi(getIt<DioClient>(instanceName: erpDioClientName)),
     );
-    getIt.registerSingleton(OrderApi(getIt<DioClient>()));
+    getIt.registerSingleton(
+      OrderApi(getIt<DioClient>(instanceName: erpDioClientName)),
+    );
   }
 }
