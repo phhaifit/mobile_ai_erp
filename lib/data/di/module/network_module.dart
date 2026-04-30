@@ -1,7 +1,10 @@
+import 'package:dio/dio.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/configs/dio_configs.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/auth_interceptor.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/logging_interceptor.dart';
+import 'package:mobile_ai_erp/core/data/network/dio/interceptors/tenant_header_interceptor.dart';
+import 'package:mobile_ai_erp/core/data/network/dio/interceptors/token_refresh_interceptor.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/web_builder/web_builder_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/cart/cart_api.dart';
@@ -13,6 +16,7 @@ import 'package:mobile_ai_erp/data/network/interceptors/tenant_interceptor.dart'
 import 'package:mobile_ai_erp/data/network/rest_client.dart';
 import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
 import 'package:event_bus/event_bus.dart';
+import 'package:mobile_ai_erp/domain/repository/user/auth_repository.dart';
 
 import '../../../di/service_locator.dart';
 
@@ -22,6 +26,15 @@ class NetworkModule {
   static Future<void> configureNetworkModuleInjection() async {
     // event bus:---------------------------------------------------------------
     getIt.registerSingleton<EventBus>(EventBus());
+
+    // dio configs:---------------------------------------------------------------
+    getIt.registerSingleton<DioConfigs>(
+      const DioConfigs(
+        baseUrl: Endpoints.erpBaseUrl,
+        connectionTimeout: Endpoints.connectionTimeout,
+        receiveTimeout: Endpoints.receiveTimeout,
+      ),
+    );
 
     // interceptors:------------------------------------------------------------
     getIt.registerSingleton<LoggingInterceptor>(LoggingInterceptor());
@@ -36,10 +49,64 @@ class NetworkModule {
             return envToken;
           }
 
-          return await getIt<SharedPreferenceHelper>().authToken;
+          return await getIt<SharedPreferenceHelper>().accessToken;
         },
       ),
     );
+    getIt.registerSingleton<TenantHeaderInterceptor>(
+      TenantHeaderInterceptor(
+        tenantId: () async {
+          final storedTenantId = await getIt<SharedPreferenceHelper>().tenantId;
+
+          if (storedTenantId != null && storedTenantId.isNotEmpty) {
+            return storedTenantId;
+          }
+
+          return Endpoints.tenantId;
+        },
+      ),
+    );
+    getIt.registerSingleton<TokenRefreshInterceptor>(
+      TokenRefreshInterceptor(
+        accessToken: () async =>
+            await getIt<SharedPreferenceHelper>().accessToken,
+        getRefreshToken: () async =>
+            await getIt<SharedPreferenceHelper>().refreshToken,
+        saveAuthToken: (tokens) async {
+          if (tokens.$1 != null && tokens.$2 != null) {
+            await getIt<SharedPreferenceHelper>().saveAuthToken(
+              accessToken: tokens.$1!,
+              refreshToken: tokens.$2!,
+            );
+          } else {
+            await getIt<SharedPreferenceHelper>().removeTenantId();
+            await getIt<SharedPreferenceHelper>().removeAuthToken();
+          }
+        },
+        getNewTokens: () async {
+          try {
+            final SharedPreferenceHelper sharedPreferenceHelper =
+                getIt<SharedPreferenceHelper>();
+            final refreshToken = await sharedPreferenceHelper.refreshToken;
+            if (refreshToken == null) {
+              return (null, null);
+            }
+            final AuthRepository authRepository = getIt<AuthRepository>();
+            final (newAccessToken, newRefreshToken) = await authRepository
+                .refreshToken(refreshToken);
+            return (newAccessToken, newRefreshToken ?? refreshToken);
+          } catch (_) {
+            return (null, null);
+          }
+        },
+        tenantId: () async => await getIt<SharedPreferenceHelper>().tenantId,
+        dioClient: DioClient(dioConfigs: getIt())
+          ..addInterceptors([
+            getIt<LoggingInterceptor>(),
+          ]), // Separate Dio with same config
+      ),
+    );
+
     getIt.registerSingleton<TenantInterceptor>(
       TenantInterceptor(Endpoints.tenantId),
     );
@@ -47,40 +114,20 @@ class NetworkModule {
     // rest client:-------------------------------------------------------------
     getIt.registerSingleton(RestClient());
 
-    // dio (legacy posts API):--------------------------------------------------
-    getIt.registerSingleton<DioConfigs>(
-      const DioConfigs(
-        baseUrl: Endpoints.baseUrl,
-        connectionTimeout: Endpoints.connectionTimeout,
-        receiveTimeout: Endpoints.receiveTimeout,
-      ),
-    );
-    getIt.registerSingleton<DioClient>(
-      DioClient(dioConfigs: getIt())..addInterceptors([
+    // dio (ERP backend - separate base URL + tenant header):-------------------
+    final erpDioClient = DioClient(dioConfigs: getIt())
+      ..addInterceptors([
+        getIt<TokenRefreshInterceptor>(),
+        getIt<TenantHeaderInterceptor>(),
         getIt<AuthInterceptor>(),
         getIt<ErrorInterceptor>(),
         getIt<LoggingInterceptor>(),
-      ]),
-    );
-
-    // dio (ERP backend - separate base URL + tenant header):-------------------
-    final erpDioClient =
-        DioClient(
-          dioConfigs: const DioConfigs(
-            baseUrl: Endpoints.erpBaseUrl,
-            connectionTimeout: Endpoints.connectionTimeout,
-            receiveTimeout: Endpoints.receiveTimeout,
-          ),
-        )..addInterceptors([
-          getIt<AuthInterceptor>(),
-          getIt<TenantInterceptor>(),
-          getIt<ErrorInterceptor>(),
-          getIt<LoggingInterceptor>(),
-        ]);
+      ]);
     getIt.registerSingleton<DioClient>(
       erpDioClient,
       instanceName: erpDioClientName,
     );
+    getIt.registerSingleton<DioClient>(erpDioClient);
 
     // api's:-------------------------------------------------------------------
     getIt.registerSingleton(PostApi(getIt<DioClient>(), getIt<RestClient>()));
