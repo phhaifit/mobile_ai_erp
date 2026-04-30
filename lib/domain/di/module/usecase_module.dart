@@ -7,6 +7,7 @@ import 'package:mobile_ai_erp/domain/repository/post_purchase/post_purchase_repo
 import 'package:mobile_ai_erp/domain/repository/user/role_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/order_tracking/order_tracking_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/user_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/user/auth_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/inventory_audit_outbound/inventory_audit_outbound_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/web_builder/cms_page_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/web_builder/store_settings_repository.dart';
@@ -54,12 +55,12 @@ import 'package:mobile_ai_erp/domain/usecase/post_purchase/update_exchange_notes
 import 'package:mobile_ai_erp/domain/usecase/post_purchase/update_refund_notes_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/assign_role_to_user_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/create_role_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/user/is_logged_in_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/login_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/user/save_login_in_status_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/update_role_usercase.dart';
+import 'package:mobile_ai_erp/domain/usecase/auth/create_tenant_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/apply_web_theme_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/delete_cms_page_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/web_builder/publish_cms_page_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/get_cms_page_by_id_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/get_cms_pages_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/get_store_settings_usecase.dart';
@@ -73,12 +74,6 @@ import '../../../di/service_locator.dart';
 class UseCaseModule {
   static Future<void> configureUseCaseModuleInjection() async {
     // user:--------------------------------------------------------------------
-    getIt.registerSingleton<IsLoggedInUseCase>(
-      IsLoggedInUseCase(getIt<UserRepository>()),
-    );
-    getIt.registerSingleton<SaveLoginStatusUseCase>(
-      SaveLoginStatusUseCase(getIt<UserRepository>()),
-    );
     getIt.registerSingleton<LoginUseCase>(
       LoginUseCase(getIt<UserRepository>()),
     );
@@ -93,6 +88,11 @@ class UseCaseModule {
 
     getIt.registerSingleton<UpdateRoleUseCase>(
       UpdateRoleUseCase(getIt<RoleRepository>()),
+    );
+
+    // auth:--------------------------------------------------------------------
+    getIt.registerSingleton<CreateTenantUseCase>(
+      CreateTenantUseCase(getIt<AuthRepository>()),
     );
 
     // post:--------------------------------------------------------------------
@@ -174,6 +174,9 @@ class UseCaseModule {
     );
     getIt.registerSingleton<DeleteCmsPageUseCase>(
       DeleteCmsPageUseCase(getIt<CmsPageRepository>()),
+    );
+    getIt.registerSingleton<PublishCmsPageUseCase>(
+      PublishCmsPageUseCase(getIt<CmsPageRepository>()),
     );
     getIt.registerSingleton<GetWebThemesUseCase>(
       GetWebThemesUseCase(getIt<WebThemeRepository>()),

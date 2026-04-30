@@ -9,6 +9,7 @@ import 'package:mobile_ai_erp/data/local/datasources/product_metadata/product_me
 import 'package:mobile_ai_erp/data/local/datasources/user/role_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/user/user_datasource.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/web_builder/web_builder_api.dart';
 import 'package:mobile_ai_erp/data/repository/checkout/checkout_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/customer/customer_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/dashboard/mock_dashboard_repository.dart';
@@ -42,6 +43,8 @@ import 'package:mobile_ai_erp/domain/repository/stock_operations/stock_operation
 import 'package:mobile_ai_erp/domain/repository/supplier/supplier_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/role_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/user_repository.dart';
+import 'package:mobile_ai_erp/data/repository/user/auth_repository_impl.dart';
+import 'package:mobile_ai_erp/domain/repository/user/auth_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/account/address_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/account/order_repository.dart';
 import 'package:mobile_ai_erp/data/repository/account/address_repository_impl.dart';
@@ -121,16 +124,19 @@ class RepositoryModule {
     getIt.registerSingleton<RoleRepository>(
       RoleRepositoryImpl(getIt<RoleDataSource>()),
     );
+    getIt.registerSingleton<AuthRepository>(
+      AuthRepositoryImpl(getIt()),
+    );
 
     // web_builder:--------------------------------------------------------------
     getIt.registerLazySingleton<CmsPageRepository>(
-      () => CmsPageRepositoryImpl(),
+      () => CmsPageRepositoryImpl(getIt<WebBuilderApi>()),
     );
     getIt.registerLazySingleton<WebThemeRepository>(
-      () => WebThemeRepositoryImpl(),
+      () => WebThemeRepositoryImpl(getIt<WebBuilderApi>()),
     );
     getIt.registerLazySingleton<StoreSettingsRepository>(
-      () => StoreSettingsRepositoryImpl(),
+      () => StoreSettingsRepositoryImpl(getIt<WebBuilderApi>()),
     );
 
     getIt.registerLazySingleton<SupplierRepository>(

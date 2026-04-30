@@ -39,7 +39,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
     _tabController = TabController(length: 2, vsync: this);
   }
 
-  Role? _findRoleById(int id) {
+  Role? _findRoleById(String id) {
     return widget.roleStore.roleList
         .where((r) => r.id == id)
         .cast<Role?>()
@@ -101,7 +101,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
           itemCount: widget.userStore.userList.length,
           itemBuilder: (_, index) {
             final user = widget.userStore.userList[index];
-            final role = _findRoleById(user.roleId);
+            final role = _findRoleById(user.role);
 
             return Card(
               margin: const EdgeInsets.only(bottom: 16),
@@ -153,7 +153,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
   }
 
   void _showGrantRoleDialog(BuildContext context, User user) {
-    int? selectedRoleId = user.roleId;
+    String? selectedRoleId = user.role;
 
     showDialog(
       context: context,
@@ -167,7 +167,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
                   return Column(
                     mainAxisSize: MainAxisSize.min,
                     children: widget.roleStore.roleList.map((role) {
-                      return RadioListTile<int>(
+                      return RadioListTile<String>(
                         title: Text(role.name),
                         value: role.id,
                         groupValue: selectedRoleId,
@@ -208,7 +208,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
     final emailController = TextEditingController();
     final phoneController = TextEditingController();
 
-    int? selectedRoleId;
+    String? selectedRoleId;
 
     showDialog(
       context: context,
@@ -236,7 +236,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
                     const SizedBox(height: 16),
                     Observer(
                       builder: (_) {
-                        return DropdownButtonFormField<int>(
+                        return DropdownButtonFormField<String>(
                           hint: const Text('Select Role'),
                           value: selectedRoleId,
                           items: widget.roleStore.roleList.map((role) {
@@ -266,12 +266,12 @@ class _UserManagementScreenState extends State<UserManagementScreen>
                     if (selectedRoleId == null) return;
 
                     final newUser = User(
-                      id: DateTime.now().millisecondsSinceEpoch,
+                      id: DateTime.now().millisecondsSinceEpoch.toString(),
                       name: nameController.text,
                       email: emailController.text,
                       phone: phoneController.text,
                       status: UserStatus.active,
-                      roleId: selectedRoleId!,
+                      role: selectedRoleId!,
                     );
 
                     widget.userStore.createUser(newUser);
@@ -374,7 +374,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
             ElevatedButton(
               onPressed: () {
                 final newRole = Role(
-                  id: DateTime.now().millisecondsSinceEpoch,
+                  id: DateTime.now().millisecondsSinceEpoch.toString(),
                   name: nameController.text,
                   description: descController.text,
                 );

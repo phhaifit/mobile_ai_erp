@@ -4,6 +4,7 @@ import 'package:mobile_ai_erp/domain/entity/web_builder/cms_page_list.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/delete_cms_page_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/get_cms_page_by_id_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/get_cms_pages_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/web_builder/publish_cms_page_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/save_cms_page_usecase.dart';
 import 'package:mobx/mobx.dart';
 
@@ -18,6 +19,7 @@ abstract class _CmsPageStore with Store {
     this._getCmsPageByIdUseCase,
     this._saveCmsPageUseCase,
     this._deleteCmsPageUseCase,
+    this._publishCmsPageUseCase,
     this.errorStore,
   );
 
@@ -26,6 +28,7 @@ abstract class _CmsPageStore with Store {
   final GetCmsPageByIdUseCase _getCmsPageByIdUseCase;
   final SaveCmsPageUseCase _saveCmsPageUseCase;
   final DeleteCmsPageUseCase _deleteCmsPageUseCase;
+  final PublishCmsPageUseCase _publishCmsPageUseCase;
 
   // stores:--------------------------------------------------------------------
   final ErrorStore errorStore;
@@ -86,6 +89,19 @@ abstract class _CmsPageStore with Store {
   Future deletePage(String id) async {
     try {
       await _deleteCmsPageUseCase.call(params: id);
+      success = true;
+      await getPages();
+    } catch (error) {
+      errorStore.errorMessage = error.toString();
+    }
+  }
+
+  @action
+  Future publishPage(String id, bool published) async {
+    try {
+      await _publishCmsPageUseCase.call(
+        params: PublishCmsPageParams(id: id, published: published),
+      );
       success = true;
       await getPages();
     } catch (error) {

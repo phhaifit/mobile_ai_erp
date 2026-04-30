@@ -9,6 +9,7 @@ import 'package:mobile_ai_erp/presentation/account/orders/order_detail_screen.da
 import 'package:mobile_ai_erp/presentation/account/orders/order_history_screen.dart';
 import 'package:mobile_ai_erp/presentation/account/orders/return_request_screen.dart';
 import 'package:mobile_ai_erp/presentation/account/profile/profile_dashboard_screen.dart';
+import 'package:mobile_ai_erp/presentation/auth/onboarding_screen.dart';
 import 'package:mobile_ai_erp/presentation/checkout/screens/checkout_screen.dart';
 import 'package:mobile_ai_erp/presentation/checkout/screens/checkout_test_screen.dart';
 import 'package:mobile_ai_erp/presentation/dashboard/dashboard_screen.dart';
@@ -58,6 +59,7 @@ class Routes {
   // static variables
   static const String splash = '/splash';
   static const String login = '/login';
+  static const String onboarding = '/onboarding';
   static const String home = '/post';
   static const String dashboard = '/dashboard';
   static const String suppliers = '/suppliers';
@@ -108,6 +110,7 @@ class Routes {
 
   static final routes = <String, WidgetBuilder>{
     login: (BuildContext context) => LoginScreen(),
+    onboarding: (BuildContext context) => OnboardingScreen(),
     home: (BuildContext context) => HomeScreen(),
     dashboard: (BuildContext context) => const DashboardScreen(),
     stockOperations: (BuildContext context) => const StockOperationsScreen(),
