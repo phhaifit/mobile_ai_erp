@@ -130,7 +130,7 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
           'data': {
             'name': user.name,
             'email': user.email,
-            'password': user.password,
+            if (user.password != null) 'password': user.password,
             'role_id': user.roleId,
             'is_active': user.isActive,
           }
