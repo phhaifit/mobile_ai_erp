@@ -42,21 +42,30 @@ class _ProductMetadataHomeScreenState extends State<ProductMetadataHomeScreen> {
                 description: 'Manage how items are organized in the catalog.',
                 countLabel: '${_store.categoryUnfilteredTotal} categories',
                 icon: Icons.account_tree_outlined,
-                onTap: () => ProductMetadataNavigator.openCategories(context),
+                onTap: () async {
+                  await ProductMetadataNavigator.openCategories(context);
+                  await _store.loadDashboard(force: true);
+                },
               ),
               MetadataSectionCard(
                 title: 'Attribute Sets',
                 description: 'Define attributes and values for item data.',
                 countLabel: '${_store.attributeSetUnfilteredTotal} attribute sets',
                 icon: Icons.tune_outlined,
-                onTap: () => ProductMetadataNavigator.openAttributes(context),
+                onTap: () async {
+                  await ProductMetadataNavigator.openAttributes(context);
+                  await _store.loadDashboard(force: true);
+                },
               ),
               MetadataSectionCard(
                 title: 'Brands',
                 description: 'Manage the brands available in your catalog.',
                 countLabel: '${_store.brandUnfilteredTotal} brands',
                 icon: Icons.workspace_premium_outlined,
-                onTap: () => ProductMetadataNavigator.openBrands(context),
+                onTap: () async {
+                  await ProductMetadataNavigator.openBrands(context);
+                  await _store.loadDashboard(force: true);
+                },
               ),
               MetadataSectionCard(
                 title: 'Tags',
@@ -64,7 +73,10 @@ class _ProductMetadataHomeScreenState extends State<ProductMetadataHomeScreen> {
                     'Use tags to group items for campaigns and highlights.',
                 countLabel: '${_store.tagUnfilteredTotal} tags',
                 icon: Icons.sell_outlined,
-                onTap: () => ProductMetadataNavigator.openTags(context),
+                onTap: () async {
+                  await ProductMetadataNavigator.openTags(context);
+                  await _store.loadDashboard(force: true);
+                },
               ),
             ],
           );
