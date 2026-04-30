@@ -10,7 +10,7 @@ import 'package:mobile_ai_erp/core/services/tenant_service.dart';
 class UsersTab extends StatefulWidget {
   final UserStore userStore;
   final RoleStore roleStore;
-  final VoidCallback onGrantRole;
+  final void Function(User) onGrantRole;
 
   const UsersTab({
     super.key,
@@ -133,7 +133,7 @@ class _UsersTabState extends State<UsersTab> {
                           Row(
                             children: [
                               ElevatedButton(
-                                onPressed: () => widget.onGrantRole(),
+                                onPressed: () => widget.onGrantRole(user),
                                 child: const Text('Grant Role'),
                               ),
                               const SizedBox(width: 8),

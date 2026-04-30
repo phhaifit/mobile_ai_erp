@@ -69,7 +69,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
           UsersTab(
             userStore: widget.userStore,
             roleStore: widget.roleStore,
-            onGrantRole: () => _showGrantRoleDialog(context, widget.userStore.userList.first),
+            onGrantRole: (user) => _showGrantRoleDialog(context, user),
           ),
           RolesTab(roleStore: widget.roleStore),
         ],
