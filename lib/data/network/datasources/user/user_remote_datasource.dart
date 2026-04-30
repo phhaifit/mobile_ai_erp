@@ -77,10 +77,7 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
       if (response.statusCode == 200) {
         final data = response.data;
         
-        if (data is Map<String, dynamic>) {
-          // Direct user object response
-          return User.fromJson(data);
-        } else if (data is Map<String, dynamic> && data['data'] != null) {
+        if (data is Map<String, dynamic> && data['data'] != null) {
           // Wrapped response format
           final userData = data['data'];
           if (userData is Map<String, dynamic>) {
@@ -99,6 +96,9 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
               ),
             );
           }
+        } else if (data is Map<String, dynamic>) {
+          // Direct user object response
+          return User.fromJson(data);
         } else {
           throw ApiException(
             ApiErrorResponse(
@@ -140,10 +140,7 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
       if (response.statusCode == 201 || response.statusCode == 200) {
         final data = response.data;
         
-        if (data is Map<String, dynamic>) {
-          // Direct user object response
-          return User.fromJson(data);
-        } else if (data is Map<String, dynamic> && data['data'] != null) {
+        if (data is Map<String, dynamic> && data['data'] != null) {
           // Wrapped response format (backward compatibility)
           final userData = data['data'];
           if (userData is Map<String, dynamic>) {
@@ -162,6 +159,9 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
               ),
             );
           }
+        } else if (data is Map<String, dynamic>) {
+          // Direct user object response
+          return User.fromJson(data);
         } else {
           throw ApiException(
             ApiErrorResponse(
@@ -202,10 +202,7 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
       if (response.statusCode == 200) {
         final data = response.data;
         
-        if (data is Map<String, dynamic>) {
-          // Direct user object response
-          return User.fromJson(data);
-        } else if (data is Map<String, dynamic> && data['data'] != null) {
+        if (data is Map<String, dynamic> && data['data'] != null) {
           // Wrapped response format (backward compatibility)
           final userData = data['data'];
           if (userData is Map<String, dynamic>) {
@@ -224,6 +221,9 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
               ),
             );
           }
+        } else if (data is Map<String, dynamic>) {
+          // Direct user object response
+          return User.fromJson(data);
         } else {
           throw ApiException(
             ApiErrorResponse(
