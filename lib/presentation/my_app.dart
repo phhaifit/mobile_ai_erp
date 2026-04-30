@@ -14,6 +14,8 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import '../di/service_locator.dart';
 
 class MyApp extends StatefulWidget {
+  const MyApp({super.key});
+
   @override
   State<MyApp> createState() => _MyAppState();
 }
@@ -41,6 +43,31 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
+  String _normalizeRouteName(String rawRouteName) {
+    var normalizedRouteName = rawRouteName;
+
+    if (normalizedRouteName.isEmpty) {
+      return '/';
+    }
+
+    if (normalizedRouteName == Routes.storefrontLegacyHome ||
+        normalizedRouteName.startsWith('${Routes.storefrontLegacyHome}/')) {
+      normalizedRouteName = normalizedRouteName.replaceFirst(
+        Routes.storefrontLegacyHome,
+        Routes.storeHome,
+      );
+    }
+
+    if (normalizedRouteName.length > 1 && normalizedRouteName.endsWith('/')) {
+      normalizedRouteName = normalizedRouteName.substring(
+        0,
+        normalizedRouteName.length - 1,
+      );
+    }
+
+    return normalizedRouteName;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!_initialized) {
@@ -64,13 +91,18 @@ class _MyAppState extends State<MyApp> {
               ? AppThemeData.darkThemeData
               : AppThemeData.lightThemeData,
           onGenerateRoute: (settings) {
-            final String routeName = settings.name ?? '/';
+            final String routeName = _normalizeRouteName(settings.name ?? '/');
+            final normalizedSettings = RouteSettings(
+              name: routeName,
+              arguments: settings.arguments,
+            );
 
             // Check if the route is public
             bool isPublic = routeName == '/' ||
                 routeName == Routes.login ||
                 routeName == Routes.onboarding ||
-                routeName.startsWith('/storefront');
+                routeName.startsWith(Routes.storeHome) ||
+                routeName.startsWith(Routes.storefrontLegacyHome);
 
             // If the route is protected and there is no session, force login
             if (!isPublic && !_hasSession) {
@@ -91,12 +123,12 @@ class _MyAppState extends State<MyApp> {
             if (builder != null) {
               return MaterialPageRoute(
                 builder: builder,
-                settings: settings,
+                settings: normalizedSettings,
               );
             }
 
             // Resolve dynamic routes
-            return Routes.onGenerateRoute(settings);
+            return Routes.onGenerateRoute(normalizedSettings);
           },
           locale: Locale(_languageStore.locale),
           supportedLocales: _languageStore.supportedLanguages

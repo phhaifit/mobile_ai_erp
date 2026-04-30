@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:highlight_text/highlight_text.dart';
 import 'package:mobile_ai_erp/presentation/storefront/models/storefront_models.dart';
+import 'package:mobile_ai_erp/presentation/storefront/widgets/storefront_ui.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
 
 /// Widget for a product shown in homepage, product listing page (with or without search/filters), brand and collection landing pages
@@ -18,64 +19,80 @@ class ProductListingItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Map<String, HighlightedWord> highlightedWords = {};
+    var highlightedWords = <String, HighlightedWord>{};
     if (highlightText != null && highlightText!.isNotEmpty) {
       highlightedWords = {
         highlightText!: HighlightedWord(
-          textStyle: TextStyle(
+          textStyle: const TextStyle(
             fontWeight: FontWeight.bold,
-            color: Theme.of(context).colorScheme.onSurface,
+            color: Color(0xFF241E30),
           ),
-          decoration: BoxDecoration(color: Colors.amber[300]),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFD66B),
+            borderRadius: BorderRadius.circular(6),
+          ),
         ),
       };
     }
 
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final imageSize = 120.0;
+    final imageSize = MediaQuery.of(context).size.width >= 960 ? 180.0 : 132.0;
+    final hasDiscount =
+        productListing.originalPrice != null &&
+        productListing.originalPrice! > productListing.price;
 
     return Card(
-      color: colorScheme.surface,
-      margin: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+      color: Colors.white,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8.0),
-        side: BorderSide(color: Colors.black87, width: 1),
+        borderRadius: BorderRadius.circular(28),
+        side: BorderSide(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.24),
+        ),
       ),
       child: InkWell(
+        borderRadius: BorderRadius.circular(28),
         onTap: () {
           Navigator.of(
             context,
           ).pushNamed(Routes.productDetail, arguments: productListing.id);
         },
         child: Padding(
-          padding: EdgeInsets.all(12.0),
+          padding: const EdgeInsets.all(16),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Product Image
-              ClipRRect(
-                borderRadius: BorderRadius.circular(6.0),
-                child: productListing.images.isNotEmpty
-                    ? Image.network(
-                        productListing.images.first,
-                        width: imageSize,
-                        height: imageSize,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, error, stackTrace) =>
-                            _ImagePlaceholder(size: imageSize),
-                      )
-                    : _ImagePlaceholder(size: imageSize),
+              Stack(
+                children: [
+                  StorefrontNetworkImage(
+                    imageUrl: productListing.images.isNotEmpty
+                        ? productListing.images.first
+                        : null,
+                    width: imageSize,
+                    height: imageSize,
+                    borderRadius: BorderRadius.circular(22),
+                    icon: Icons.inventory_2_outlined,
+                  ),
+                  if (productListing.isFlashSale)
+                    const Positioned(
+                      top: 10,
+                      left: 10,
+                      child: StorefrontTag(
+                        label: 'Flash sale',
+                        icon: Icons.bolt,
+                        backgroundColor: Color(0xFFD21E1D),
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                ],
               ),
-              SizedBox(width: 16.0),
-              // Product Details
+              const SizedBox(width: 18),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  spacing: 8.0,
                   children: [
-                    // Product Name
                     TextHighlight(
                       text: productListing.title,
                       words: highlightedWords,
@@ -83,58 +100,48 @@ class ProductListingItem extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       textStyle: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                        fontSize: 17,
+                        height: 1.35,
                         color: colorScheme.onSurface,
                       ),
                     ),
-                    // Category and Brand
-                    Row(
-                      spacing: 8.0,
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
                       children: [
-                        Flexible(
-                          child: TextHighlight(
-                            text:
-                                productListing.category ??
-                                'No category information',
-                            words: highlightedWords,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            textStyle: TextStyle(
-                              fontSize: 13,
-                              color: colorScheme.onSurface.withValues(
-                                alpha: 0.7,
-                              ),
-                            ),
+                        if ((productListing.category ?? '').isNotEmpty)
+                          StorefrontTag(
+                            label: productListing.category!,
+                            icon: Icons.category_outlined,
                           ),
-                        ),
-                        Text(
-                          '•',
-                          style: TextStyle(
-                            color: colorScheme.onSurface.withValues(alpha: 0.5),
+                        if ((productListing.brand ?? '').isNotEmpty)
+                          StorefrontTag(
+                            label: productListing.brand!,
+                            icon: Icons.workspace_premium_outlined,
+                            backgroundColor: const Color(0xFFFCE7DF),
                           ),
-                        ),
-                        Flexible(
-                          child: TextHighlight(
-                            text:
-                                productListing.brand ?? 'No brand information',
-                            words: highlightedWords,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            textStyle: TextStyle(
-                              fontSize: 13,
-                              color: colorScheme.onSurface.withValues(
-                                alpha: 0.7,
-                              ),
-                            ),
-                          ),
+                        StorefrontTag(
+                          label: productListing.inStock
+                              ? 'In stock'
+                              : 'Out of stock',
+                          icon: productListing.inStock
+                              ? Icons.check_circle_outline
+                              : Icons.remove_shopping_cart_outlined,
+                          backgroundColor: productListing.inStock
+                              ? const Color(0xFFE6F6EC)
+                              : const Color(0xFFFFE7E4),
+                          foregroundColor: productListing.inStock
+                              ? const Color(0xFF0B7A44)
+                              : const Color(0xFFD21E1D),
                         ),
                       ],
                     ),
-                    // Rating
+                    const SizedBox(height: 12),
                     Row(
                       children: [
                         Icon(Icons.star, size: 16, color: Colors.amber),
-                        SizedBox(width: 4.0),
+                        const SizedBox(width: 4),
                         Text(
                           productListing.rating.toStringAsFixed(1),
                           style: TextStyle(
@@ -143,39 +150,73 @@ class ProductListingItem extends StatelessWidget {
                             color: colorScheme.onSurface,
                           ),
                         ),
-                      ],
-                    ),
-                    // Product Description
-                    TextHighlight(
-                      text: productListing.description ?? '',
-                      words: highlightedWords,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      textStyle: TextStyle(
-                        fontSize: 13,
-                        color: colorScheme.onSurface.withValues(alpha: 0.6),
-                      ),
-                    ),
-                    // Price Row
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      spacing: 4.0,
-                      children: [
+                        const SizedBox(width: 12),
                         Text(
-                          productListing.price.toStringAsFixed(0),
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                            color: colorScheme.primary,
+                          '${productListing.availableStock} available',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            fontSize: 12,
+                            color: colorScheme.onSurfaceVariant,
                           ),
                         ),
-                        Text(
-                          'VND',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: colorScheme.onSurface.withValues(alpha: 0.7),
+                      ],
+                    ),
+                    if ((productListing.description ?? '').isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      TextHighlight(
+                        text: productListing.description ?? '',
+                        words: highlightedWords,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textStyle: TextStyle(
+                          fontSize: 13,
+                          height: 1.45,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                storefrontCurrency(productListing.price),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 20,
+                                  color: colorScheme.primary,
+                                ),
+                              ),
+                              if (hasDiscount)
+                                Text(
+                                  storefrontCurrency(
+                                    productListing.originalPrice!,
+                                  ),
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    fontSize: 12,
+                                    color: colorScheme.onSurfaceVariant,
+                                    decoration: TextDecoration.lineThrough,
+                                  ),
+                                ),
+                            ],
                           ),
+                        ),
+                        FilledButton.tonal(
+                          onPressed: () {
+                            Navigator.of(context).pushNamed(
+                              Routes.productDetail,
+                              arguments: productListing.id,
+                            );
+                          },
+                          style: FilledButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: const Text('View'),
                         ),
                       ],
                     ),
@@ -186,23 +227,6 @@ class ProductListingItem extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _ImagePlaceholder extends StatelessWidget {
-  const _ImagePlaceholder({required this.size});
-
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      alignment: Alignment.center,
-      child: const Icon(Icons.image_not_supported_outlined),
     );
   }
 }

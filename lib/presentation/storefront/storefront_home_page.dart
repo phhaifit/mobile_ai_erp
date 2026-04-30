@@ -7,6 +7,7 @@ import 'package:mobile_ai_erp/presentation/storefront/store/product_listing_stor
 import 'package:mobile_ai_erp/presentation/storefront/widgets/page_banner.dart';
 import 'package:mobile_ai_erp/presentation/storefront/widgets/product_card_small.dart';
 import 'package:mobile_ai_erp/presentation/storefront/widgets/section_header.dart';
+import 'package:mobile_ai_erp/presentation/storefront/widgets/storefront_ui.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
 
 class StorefrontHomePage extends StatefulWidget {
@@ -29,9 +30,9 @@ class _StorefrontHomePageState extends State<StorefrontHomePage> {
   Future<_StorefrontHomeViewData> _loadHomeViewData() async {
     final home = await _repository.getHome();
 
-    List<StorefrontBrand> brands = home.featuredBrands;
-    List<StorefrontCategorySummary> categories = home.featuredCategories;
-    List<StorefrontCollection> collections = home.collections;
+    var brands = home.featuredBrands;
+    var categories = home.featuredCategories;
+    var collections = home.collections;
 
     if (brands.isEmpty) {
       brands = await _repository.getBrands();
@@ -69,70 +70,89 @@ class _StorefrontHomePageState extends State<StorefrontHomePage> {
         data.collections.isEmpty;
   }
 
-  Widget _buildSectionMessage(String message) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      child: Text(message),
-    );
+  Future<void> _reload() async {
+    setState(() {
+      _homeFuture = _loadHomeViewData();
+    });
+    await _homeFuture;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Storefront Homepage')),
-      body: FutureBuilder<_StorefrontHomeViewData>(
-        future: _homeFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return _AsyncState(
-              icon: Icons.cloud_off,
-              message: snapshot.error.toString(),
-              actionLabel: 'Retry',
-              onPressed: () {
-                setState(() {
-                  _homeFuture = _loadHomeViewData();
-                });
-              },
-            );
-          }
+      appBar: AppBar(
+        title: const Text('Storefront'),
+        actions: [
+          IconButton(
+            tooltip: 'View all products',
+            onPressed: () => Navigator.of(
+              context,
+            ).pushNamed(Routes.storefrontProductListing),
+            icon: const Icon(Icons.grid_view_rounded),
+          ),
+        ],
+      ),
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFF6F1E8), Color(0xFFFBFBFA), Color(0xFFFCEDE8)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: FutureBuilder<_StorefrontHomeViewData>(
+          future: _homeFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState != ConnectionState.done) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) {
+              return StorefrontEmptyState(
+                icon: Icons.cloud_off,
+                title: 'Unable to load storefront',
+                message: snapshot.error.toString(),
+                actionLabel: 'Retry',
+                onPressed: () {
+                  setState(() {
+                    _homeFuture = _loadHomeViewData();
+                  });
+                },
+              );
+            }
 
-          final viewData = snapshot.data!;
-          final home = viewData.home;
-          final banner = home.banners.isNotEmpty ? home.banners.first : null;
-          return RefreshIndicator(
-            onRefresh: () async {
-              setState(() {
-                _homeFuture = _loadHomeViewData();
-              });
-              await _homeFuture;
-            },
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            final viewData = snapshot.data!;
+            final home = viewData.home;
+            final banner = home.banners.isNotEmpty ? home.banners.first : null;
+
+            return RefreshIndicator(
+              onRefresh: _reload,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.only(bottom: 24),
                 children: [
                   PageBanner(
                     imageSource: banner,
                     heading: 'Storefront Product Discovery',
+                    subheading:
+                        'Featured products, collections, categories and search experiences are now connected to the live discovery APIs.',
+                    tags: const [
+                      'Homepage live data',
+                      'Filter-ready listing',
+                      'Search highlights',
+                    ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 6),
+                  _buildQuickLinks(),
                   if (_isFullyEmpty(viewData))
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: Card(
-                        child: Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Text(
-                            'The mobile app is connected to the public storefront runtime, but discovery endpoints are currently returning empty data for this tenant. The UI remains live and will surface data as soon as the backend runtime is healthy.',
-                          ),
-                        ),
+                    const StorefrontSurface(
+                      child: Text(
+                        'The app is connected to the public storefront runtime, but discovery endpoints are returning empty data for this tenant right now. The UI is still live and will surface products as soon as backend data is available.',
                       ),
                     ),
                   _buildProductSection(
-                    heading: 'Featured',
+                    heading: 'Featured Picks',
+                    subheading:
+                        'Handpicked products surfaced directly from the homepage API.',
                     linkText: 'See all products',
                     products: home.featuredProducts,
                     args: const FilterArguments(),
@@ -141,7 +161,9 @@ class _StorefrontHomePageState extends State<StorefrontHomePage> {
                   ),
                   _buildProductSection(
                     heading: 'New Arrivals',
-                    linkText: 'See newest products',
+                    subheading:
+                        'Newest products across the storefront, sorted live from backend.',
+                    linkText: 'See newest',
                     products: home.newArrivals,
                     args: const FilterArguments(
                       sortOption: SortOption.timeDesc,
@@ -149,8 +171,10 @@ class _StorefrontHomePageState extends State<StorefrontHomePage> {
                     emptyMessage: 'No new arrivals are available right now.',
                   ),
                   _buildProductSection(
-                    heading: 'Popular',
-                    linkText: 'See popular products',
+                    heading: 'Popular Right Now',
+                    subheading:
+                        'Products currently trending in the live storefront feed.',
+                    linkText: 'See popular',
                     products: home.popularProducts,
                     args: const FilterArguments(sortOption: SortOption.popular),
                     emptyMessage:
@@ -159,18 +183,81 @@ class _StorefrontHomePageState extends State<StorefrontHomePage> {
                   _buildCategorySection(viewData.categories),
                   _buildBrandSection(viewData.brands),
                   _buildCollectionSection(viewData.collections),
-                  const SizedBox(height: 24),
                 ],
               ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickLinks() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+      child: Row(
+        children: [
+          _buildQuickLink(
+            icon: Icons.search_rounded,
+            label: 'Search',
+            onTap: () => Navigator.of(context).pushNamed(
+              Routes.storefrontProductListing,
+              arguments: const FilterArguments(searchQuery: ''),
             ),
-          );
-        },
+          ),
+          const SizedBox(width: 10),
+          _buildQuickLink(
+            icon: Icons.account_tree_outlined,
+            label: 'Categories',
+            onTap: () =>
+                Navigator.of(context).pushNamed(Routes.categoriesLanding),
+          ),
+          const SizedBox(width: 10),
+          _buildQuickLink(
+            icon: Icons.local_offer_outlined,
+            label: 'Brands',
+            onTap: () => Navigator.of(context).pushNamed(Routes.brandsLanding),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickLink({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Expanded(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(22),
+        onTap: onTap,
+        child: Ink(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: colorScheme.outlineVariant.withValues(alpha: 0.24),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 18, color: colorScheme.primary),
+              const SizedBox(width: 8),
+              Text(label, style: Theme.of(context).textTheme.labelLarge),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildProductSection({
     required String heading,
+    required String subheading,
     required String linkText,
     required List<StorefrontProduct> products,
     required FilterArguments args,
@@ -181,14 +268,38 @@ class _StorefrontHomePageState extends State<StorefrontHomePage> {
       children: [
         SectionHeader(
           headingText: heading,
+          subheadingText: subheading,
           linkText: linkText,
           linkDestination: Routes.storefrontProductListing,
           filterArguments: args,
         ),
         if (products.isEmpty)
-          _buildSectionMessage(emptyMessage)
+          StorefrontSurface(
+            child: Text(
+              emptyMessage,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          )
         else
-          _buildProductWrap(products),
+          SizedBox(
+            height: 290,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: products.length,
+              separatorBuilder: (context, index) => const SizedBox(width: 12),
+              itemBuilder: (context, index) {
+                final product = products[index];
+                return ProductCardSmall(
+                  productId: product.id,
+                  productName: product.title,
+                  imageSource: product.images.isNotEmpty
+                      ? product.images.first
+                      : null,
+                );
+              },
+            ),
+          ),
       ],
     );
   }
@@ -198,23 +309,31 @@ class _StorefrontHomePageState extends State<StorefrontHomePage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionHeader(
-          headingText: 'Categories',
+          headingText: 'Shop by Category',
+          subheadingText:
+              'Browse the category tree loaded directly from the discovery API.',
           linkText: 'See all categories',
           linkDestination: Routes.categoriesLanding,
         ),
         if (categories.isEmpty)
-          _buildSectionMessage(
-            'Category navigation is currently empty on the public runtime.',
+          StorefrontSurface(
+            child: Text(
+              'Category navigation is currently empty on the public runtime.',
+            ),
           )
         else
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+          StorefrontSurface(
             child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: 10,
+              runSpacing: 10,
               children: categories
                   .map(
                     (category) => ActionChip(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 12,
+                      ),
+                      avatar: const Icon(Icons.arrow_outward_rounded, size: 16),
                       label: Text(category.name),
                       onPressed: () => Navigator.of(context).pushNamed(
                         Routes.storefrontProductListing,
@@ -228,7 +347,6 @@ class _StorefrontHomePageState extends State<StorefrontHomePage> {
                   .toList(),
             ),
           ),
-        const SizedBox(height: 20),
       ],
     );
   }
@@ -238,44 +356,41 @@ class _StorefrontHomePageState extends State<StorefrontHomePage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionHeader(
-          headingText: 'Brands',
+          headingText: 'Featured Brands',
+          subheadingText:
+              'Brand landing data is loaded live and can jump directly into filtered product listings.',
           linkText: 'See all brands',
           linkDestination: Routes.brandsLanding,
         ),
         if (brands.isEmpty)
-          _buildSectionMessage(
-            'No brand discovery data is currently available.',
+          StorefrontSurface(
+            child: Text('No brand discovery data is currently available.'),
           )
         else
-          ...brands.map(
-            (brand) => Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(brand.name),
-                    subtitle: brand.description != null
-                        ? Text(brand.description!)
-                        : null,
-                    trailing: Text('${brand.productCount} products'),
-                    onTap: () => Navigator.of(context).pushNamed(
-                      Routes.storefrontProductListing,
-                      arguments: FilterArguments(
-                        selectedBrands: [brand.id],
-                        brandKey: brand.slug,
-                      ),
+          SizedBox(
+            height: 230,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: brands.length,
+              separatorBuilder: (context, index) => const SizedBox(width: 12),
+              itemBuilder: (context, index) {
+                final brand = brands[index];
+                return _DiscoveryEntityCard(
+                  width: 260,
+                  title: brand.name,
+                  subtitle:
+                      brand.description ?? 'Explore products from this brand.',
+                  caption: '${brand.productCount} products',
+                  onTap: () => Navigator.of(context).pushNamed(
+                    Routes.storefrontProductListing,
+                    arguments: FilterArguments(
+                      selectedBrands: [brand.id],
+                      brandKey: brand.slug,
                     ),
                   ),
-                ),
-                if (brand.featuredProducts.isEmpty)
-                  _buildSectionMessage(
-                    'No featured products returned for this brand.',
-                  )
-                else
-                  _buildProductWrap(brand.featuredProducts),
-              ],
+                );
+              },
             ),
           ),
       ],
@@ -288,66 +403,117 @@ class _StorefrontHomePageState extends State<StorefrontHomePage> {
       children: [
         SectionHeader(
           headingText: 'Collections',
+          subheadingText:
+              'Collections surface curated sets of products from the live catalog.',
           linkText: 'Browse collections',
           linkDestination: Routes.collectionsLanding,
         ),
         if (collections.isEmpty)
-          _buildSectionMessage(
-            'No collection discovery data is currently available.',
+          StorefrontSurface(
+            child: Text('No collection discovery data is currently available.'),
           )
         else
-          ...collections.map(
-            (collection) => Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(collection.name),
-                    subtitle: collection.description != null
-                        ? Text(collection.description!)
-                        : null,
-                    trailing: Text('${collection.productCount} items'),
-                    onTap: () => Navigator.of(context).pushNamed(
-                      Routes.storefrontProductListing,
-                      arguments: FilterArguments(
-                        collectionSlug: collection.slug,
-                      ),
-                    ),
+          SizedBox(
+            height: 230,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: collections.length,
+              separatorBuilder: (context, index) => const SizedBox(width: 12),
+              itemBuilder: (context, index) {
+                final collection = collections[index];
+                return _DiscoveryEntityCard(
+                  width: 280,
+                  title: collection.name,
+                  subtitle:
+                      collection.description ??
+                      'Open the live collection landing and browse products.',
+                  caption: '${collection.productCount} items',
+                  onTap: () => Navigator.of(context).pushNamed(
+                    Routes.storefrontProductListing,
+                    arguments: FilterArguments(collectionSlug: collection.slug),
                   ),
-                ),
-                if (collection.featuredProducts.isEmpty)
-                  _buildSectionMessage(
-                    'No featured products returned for this collection.',
-                  )
-                else
-                  _buildProductWrap(collection.featuredProducts),
-              ],
+                );
+              },
             ),
           ),
-        const SizedBox(height: 20),
       ],
     );
   }
+}
 
-  Widget _buildProductWrap(List<StorefrontProduct> products) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: products
-            .map(
-              (product) => ProductCardSmall(
-                productId: product.id,
-                productName: product.title,
-                imageSource: product.images.isNotEmpty
-                    ? product.images.first
-                    : null,
+class _DiscoveryEntityCard extends StatelessWidget {
+  const _DiscoveryEntityCard({
+    required this.width,
+    required this.title,
+    required this.subtitle,
+    required this.caption,
+    required this.onTap,
+  });
+
+  final double width;
+  final String title;
+  final String subtitle;
+  final String caption;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return SizedBox(
+      width: width,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(28),
+        onTap: onTap,
+        child: Ink(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Colors.white, Color(0xFFF8ECE7)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(
+              color: colorScheme.outlineVariant.withValues(alpha: 0.22),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const StorefrontTag(
+                label: 'Discovery landing',
+                icon: Icons.auto_graph,
               ),
-            )
-            .toList(),
+              const Spacer(),
+              Text(
+                title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(
+                  context,
+                ).textTheme.headlineMedium?.copyWith(fontSize: 22),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                subtitle,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                caption,
+                style: Theme.of(
+                  context,
+                ).textTheme.labelLarge?.copyWith(color: colorScheme.primary),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -365,37 +531,4 @@ class _StorefrontHomeViewData {
   final List<StorefrontBrand> brands;
   final List<StorefrontCategorySummary> categories;
   final List<StorefrontCollection> collections;
-}
-
-class _AsyncState extends StatelessWidget {
-  const _AsyncState({
-    required this.icon,
-    required this.message,
-    required this.actionLabel,
-    required this.onPressed,
-  });
-
-  final IconData icon;
-  final String message;
-  final String actionLabel;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 40),
-            const SizedBox(height: 12),
-            Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            FilledButton(onPressed: onPressed, child: Text(actionLabel)),
-          ],
-        ),
-      ),
-    );
-  }
 }

@@ -399,6 +399,8 @@ class StorefrontFacetOption {
   final int count;
   final String? slug;
 
+  String get discoveryKey => slug?.trim().isNotEmpty == true ? slug! : id;
+
   factory StorefrontFacetOption.fromJson(Map<String, dynamic> json) {
     return StorefrontFacetOption(
       id: _stringValue(json, const ['id', 'value', 'slug', 'name']),
