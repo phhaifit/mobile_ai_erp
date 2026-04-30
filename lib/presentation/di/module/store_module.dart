@@ -3,12 +3,14 @@ import 'dart:async';
 import 'package:mobile_ai_erp/core/stores/error/error_store.dart';
 import 'package:mobile_ai_erp/core/stores/form/form_store.dart';
 import 'package:mobile_ai_erp/core/stores/supplier/supplier_store.dart';
+import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
 import 'package:mobile_ai_erp/domain/repository/customer/customer_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/dashboard/dashboard_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadata_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/setting/setting_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/stock_operations/stock_operations_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/supplier/supplier_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/user/auth_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/role_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/user_repository.dart';
 import 'package:mobile_ai_erp/domain/usecase/checkout/checkout_usecases.dart';
@@ -49,10 +51,9 @@ import 'package:mobile_ai_erp/domain/usecase/order_tracking/get_order_tracking_s
 import 'package:mobile_ai_erp/domain/usecase/post/get_post_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/assign_role_to_user_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/create_role_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/user/is_logged_in_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/login_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/user/save_login_in_status_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/update_role_usercase.dart';
+import 'package:mobile_ai_erp/domain/usecase/auth/create_tenant_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/apply_web_theme_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/delete_cms_page_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/get_cms_page_by_id_usecase.dart';
@@ -110,11 +111,11 @@ class StoreModule {
     getIt.registerLazySingleton<OrderStore>(() => OrderStore(getIt<OrderRepository>()));
     getIt.registerLazySingleton(() => ReportsMockRepository());
 
-    getIt.registerSingleton<auth.UserStore>(
-      auth.UserStore(
-        getIt<IsLoggedInUseCase>(),
-        getIt<SaveLoginStatusUseCase>(),
-        getIt<LoginUseCase>(),
+    getIt.registerSingleton<auth.LoginStore>(
+      auth.LoginStore(
+        getIt<CreateTenantUseCase>(),
+        getIt<AuthRepository>(),
+        getIt<SharedPreferenceHelper>(),
         getIt<FormErrorStore>(),
         getIt<ErrorStore>(),
       ),
