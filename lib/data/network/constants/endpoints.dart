@@ -1,10 +1,11 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
-
 class Endpoints {
   Endpoints._();
 
-  static const String _host = kIsWeb ? 'localhost' : '10.0.2.2';
-  static const String baseUrl = 'http://$_host:5000';
+  // base url
+  static const String baseUrl = String.fromEnvironment(
+    'BASE_URL',
+    defaultValue: "http://jsonplaceholder.typicode.com",
+  );
 
   // receiveTimeout
   static const int receiveTimeout = 15000;
