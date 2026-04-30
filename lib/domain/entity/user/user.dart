@@ -6,7 +6,7 @@ class User {
   final String? ssoId;
   final String name;
   final String email;
-  final String password;
+  final String? password;
   final String roleId;
   final bool isActive;
   final DateTime? createdAt;
@@ -18,7 +18,7 @@ class User {
     this.ssoId,
     required this.name,
     required this.email,
-    required this.password,
+    this.password,
     required this.roleId,
     required this.isActive,
     this.createdAt,
@@ -28,19 +28,19 @@ class User {
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
       id: json['id'] as String,
-      tenantId: json['tenant_id'] as String,
-      ssoId: json['sso_id'] as String?,
+      tenantId: json['tenant_id'] as String? ?? json['tenantId'] as String,
+      ssoId: json['sso_id'] as String? ?? json['ssoId'] as String?,
       name: json['name'] as String,
       email: json['email'] as String,
-      password: json['password'] as String,
-      roleId: json['role_id'] as String,
-      isActive: json['is_active'] as bool,
+      password: json['password'] as String?,
+      roleId: json['role_id'] as String? ?? json['roleId'] as String,
+      isActive: json['is_active'] as bool? ?? json['isActive'] as bool,
       createdAt: json['created_at'] != null 
           ? DateTime.parse(json['created_at'] as String)
-          : null,
+          : (json['createdAt'] != null ? DateTime.parse(json['createdAt'] as String) : null),
       deletedAt: json['deleted_at'] != null 
           ? DateTime.parse(json['deleted_at'] as String)
-          : null,
+          : (json['deletedAt'] != null ? DateTime.parse(json['deletedAt'] as String) : null),
     );
   }
 

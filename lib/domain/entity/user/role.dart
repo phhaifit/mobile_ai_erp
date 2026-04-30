@@ -16,12 +16,12 @@ class Role {
   factory Role.fromJson(Map<String, dynamic> json) {
     return Role(
       id: json['id'] as String,
-      tenantId: json['tenant_id'] as String,
+      tenantId: json['tenant_id'] as String? ?? json['tenantId'] as String,
       name: json['name'] as String,
       description: json['description'] as String,
       createdAt: json['created_at'] != null 
           ? DateTime.parse(json['created_at'] as String)
-          : null,
+          : (json['createdAt'] != null ? DateTime.parse(json['createdAt'] as String) : null),
     );
   }
 
