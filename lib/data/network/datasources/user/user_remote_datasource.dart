@@ -127,11 +127,13 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
       final response = await _dio.post(
         '/users',
         data: {
-          'name': user.name,
-          'email': user.email,
-          if (user.password != null) 'password': user.password,
-          'role_id': user.roleId,
-          'is_active': user.isActive,
+          'data': {
+            'name': user.name,
+            'email': user.email,
+            if (user.password != null) 'password': user.password,
+            'role_id': user.roleId,
+            'is_active': user.isActive,
+          }
         },
       );
       
@@ -188,10 +190,12 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
       final response = await _dio.patch(
         '/users/$id',
         data: {
-          'name': user.name,
-          'email': user.email,
-          'role_id': user.roleId,
-          'is_active': user.isActive,
+          'data': {
+            'name': user.name,
+            'email': user.email,
+            'role_id': user.roleId,
+            'is_active': user.isActive,
+          }
         },
       );
       
