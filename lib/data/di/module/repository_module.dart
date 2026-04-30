@@ -21,7 +21,8 @@ import 'package:mobile_ai_erp/data/repository/post_purchase/post_purchase_reposi
 import 'package:mobile_ai_erp/data/repository/product_metadata/product_metadata_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/setting/setting_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/stock_operations/mock_stock_operations_repository.dart';
-import 'package:mobile_ai_erp/data/repository/supplier/supplier_mock_repository.dart';
+import 'package:mobile_ai_erp/data/repository/supplier/supplier_repository_impl.dart';
+import 'package:mobile_ai_erp/data/network/apis/suppliers/supplier_api.dart';
 import 'package:mobile_ai_erp/data/repository/user/role_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/user/user_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/web_builder/cms_page_repository_impl.dart';
@@ -138,7 +139,9 @@ class RepositoryModule {
       () => StoreSettingsRepositoryImpl(getIt<WebBuilderApi>()),
     );
 
-    getIt.registerLazySingleton<SupplierRepository>(() => SupplierMockRepository());
+    getIt.registerLazySingleton<SupplierRepository>(
+      () => SupplierRepositoryImpl(getIt<SupplierApi>()),
+    );
     getIt.registerSingleton<FulfillmentRepository>(FulfillmentRepositoryImpl());
 
     // checkout:--------------------------------------------------------------

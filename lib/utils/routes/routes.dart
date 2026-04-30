@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_ai_erp/core/stores/supplier/supplier_store.dart';
+import 'package:mobile_ai_erp/presentation/supplier/store/supplier_store.dart';
+import 'package:mobile_ai_erp/presentation/supplier/store/supplier_products_store.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/entity/product/product.dart';
 import 'package:mobile_ai_erp/presentation/account/address/address_book_screen.dart';
@@ -62,6 +63,7 @@ class Routes {
   static const String home = '/post';
   static const String dashboard = '/dashboard';
   static const String suppliers = '/suppliers';
+  static const String supplierDetail = '/supplier-detail';
   static const String stockOperations = '/stock-operations';
   static const String inventoryAudit = '/inventory-audit';
   static const String inventoryAuditSummary = '/inventory-audit-summary';
@@ -129,7 +131,10 @@ class Routes {
     ...CartRoutes.getRoutes(),
     reports: (BuildContext context) => ReportsAnalyticsScreen(),
     suppliers: (BuildContext context) =>
-      SupplierListScreen(store: getIt<SupplierStore>()),
+      SupplierListScreen(
+        store: getIt<SupplierStore>(),
+        productsStore: getIt<SupplierProductsStore>(),
+      ),
     profileDashboard: (BuildContext context) => ProfileDashboardScreen(),
     addressBook: (BuildContext context) => const AddressBookScreen(),
     addressForm: (BuildContext context) => const AddressFormScreen(),
