@@ -40,7 +40,7 @@ class SupplierResponseDto {
       bankName: json['bankName'] as String?,
       bankAccount: json['bankAccount'] as String?,
       bankNote: json['bankNote'] as String?,
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime(0),
     );
   }
 }

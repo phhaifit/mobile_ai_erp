@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:mobile_ai_erp/utils/locale/app_localization.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
 
 import '../store/supplier_store.dart';
@@ -43,6 +44,7 @@ class _SupplierListScreenState extends State<SupplierListScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    widget.store.dispose();
     super.dispose();
   }
 
@@ -88,16 +90,17 @@ class _SupplierListScreenState extends State<SupplierListScreen> {
     if (confirmed && mounted) {
       final success = await widget.store.deleteSupplier(supplierId);
       if (mounted) {
+        final t = AppLocalizations.of(context);
         if (success) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Deleted supplier "$name"'),
+              content: Text('${t.translate('supplier_delete_success')} "$name"'),
             ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(widget.store.errorMessage ?? 'Failed to delete supplier'),
+              content: Text(widget.store.errorMessage ?? t.translate('supplier_delete_error')),
             ),
           );
           widget.store.errorMessage = null;
@@ -128,9 +131,10 @@ class _SupplierListScreenState extends State<SupplierListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Suppliers'),
+        title: Text(t.translate('supplier_screen_title')),
         centerTitle: false,
       ),
       body: Column(
@@ -169,11 +173,11 @@ class _SupplierListScreenState extends State<SupplierListScreen> {
                         return EmptyState(
                           icon: Icons.business_outlined,
                           title: widget.store.searchQuery.isEmpty
-                              ? 'No suppliers yet'
-                              : 'No matching suppliers',
+                              ? t.translate('supplier_empty_title')
+                              : t.translate('supplier_empty_no_match_title'),
                           subtitle: widget.store.searchQuery.isEmpty && !_hasActiveFilter
-                              ? 'Tap + to add your first supplier'
-                              : 'Try changing your search or filter.',
+                              ? t.translate('supplier_empty_subtitle')
+                              : t.translate('supplier_empty_no_match_subtitle'),
                         );
                       }
 
@@ -206,7 +210,7 @@ class _SupplierListScreenState extends State<SupplierListScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _openCreate,
-        tooltip: 'Add Supplier',
+        tooltip: t.translate('supplier_fab_tooltip'),
         child: const Icon(Icons.add),
       ),
     );

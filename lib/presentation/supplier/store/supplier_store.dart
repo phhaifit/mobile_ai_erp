@@ -226,6 +226,8 @@ abstract class SupplierStoreBase with Store {
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
+  void dispose() => _searchDebounce?.cancel();
+
   void clearError() => errorMessage = null;
 
   String _parseError(dynamic error) {
