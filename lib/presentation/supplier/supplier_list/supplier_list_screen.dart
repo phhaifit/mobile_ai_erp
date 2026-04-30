@@ -36,6 +36,7 @@ class _SupplierListScreenState extends State<SupplierListScreen> {
   @override
   void initState() {
     super.initState();
+    widget.store.resetFilters();
     widget.store.setSort(sortBy: 'name', sortOrder: 'asc');
   }
 
