@@ -12,22 +12,55 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 
 import '../di/service_locator.dart';
 
-class AuthWrapper extends StatelessWidget {
+class AuthWrapper extends StatefulWidget {
+  const AuthWrapper({super.key}) : super();
+
+  @override
+  State<AuthWrapper> createState() => _AuthWrapperState();
+}
+
+class _AuthWrapperState extends State<AuthWrapper> {
+  bool _initialized = false;
+  bool _hasValidSession = false;
+  bool _redirectScheduled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _validateStoredSession();
+  }
+
+  Future<void> _validateStoredSession() async {
+    final loginStore = getIt<LoginStore>();
+    final validSession = await loginStore.validateStoredSession();
+    if (!mounted) return;
+    setState(() {
+      _initialized = true;
+      _hasValidSession = validSession;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Observer(
-      builder: (context) {
-        final loginStore = getIt<LoginStore>();
-        if (loginStore.isLoggedIn) {
-          return HomeScreen();
-        } else {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            Navigator.of(context).pushReplacementNamed(Routes.login);
-          });
-          return const SizedBox();
-        }
-      },
-    );
+    if (!_initialized) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_hasValidSession) {
+      return HomeScreen();
+    }
+
+    if (!_redirectScheduled) {
+      _redirectScheduled = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Navigator.of(context).pushReplacementNamed(Routes.login);
+      });
+    }
+
+    return const SizedBox();
   }
 }
 

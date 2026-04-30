@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
-import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
 
 class TokenRefreshInterceptor extends Interceptor {
   final AsyncValueGetter<String?> accessToken;

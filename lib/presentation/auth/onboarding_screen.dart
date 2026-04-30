@@ -12,14 +12,16 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import '../../di/service_locator.dart';
 
 class OnboardingScreen extends StatefulWidget {
+  const OnboardingScreen({super.key}) : super();
+
   @override
-  _OnboardingScreenState createState() => _OnboardingScreenState();
+  State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
   //text controllers:-----------------------------------------------------------
-  TextEditingController _tenantNameController = TextEditingController();
-  TextEditingController _subdomainController = TextEditingController();
+  final TextEditingController _tenantNameController = TextEditingController();
+  final TextEditingController _subdomainController = TextEditingController();
 
   // error messages:------------------------------------------------------------
   String? _tenantNameError;
@@ -161,8 +163,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return TextButton(
       onPressed: () async {
         await _loginStore.logout();
-        Navigator.of(context).pushNamedAndRemoveUntil(
-            Routes.login, (Route<dynamic> route) => false);
+        if (mounted) {
+          Navigator.of(context).pushNamedAndRemoveUntil(
+              Routes.login, (Route<dynamic> route) => false);
+        }
       },
       child: Text(
         'Cancel',
@@ -218,7 +222,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _navigateToHome(BuildContext context) {
-    Future.delayed(Duration(milliseconds: 0), () {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       Navigator.of(context).pushNamedAndRemoveUntil(
           Routes.home, (Route<dynamic> route) => false);
     });
@@ -226,16 +231,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   // General Methods:-----------------------------------------------------------
-  _showErrorMessage(String message) {
+  Widget _showErrorMessage(String message) {
     if (message.isNotEmpty) {
-      Future.delayed(Duration(milliseconds: 0), () {
-        if (message.isNotEmpty) {
-          FlushbarHelper.createError(
-            message: message,
-            title: AppLocalizations.of(context).translate('Error'),
-            duration: Duration(seconds: 3),
-          )..show(context);
-        }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final flushbar = FlushbarHelper.createError(
+          message: message,
+          title: AppLocalizations.of(context).translate('Error'),
+          duration: Duration(seconds: 3),
+        );
+        flushbar.show(context);
       });
     }
     return SizedBox.shrink();

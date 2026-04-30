@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:dio/dio.dart';
 import 'package:mobile_ai_erp/constants/env.dart';
@@ -69,7 +70,7 @@ class AuthRepositoryImpl implements AuthRepository {
       );
     } catch (e) {
       // Sign out should not fail the operation, just log
-      print('Sign out request failed: $e');
+      log('Sign out request failed: $e');
     }
   }
 

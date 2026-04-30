@@ -3,9 +3,9 @@ import 'package:mobile_ai_erp/core/stores/error/error_store.dart';
 import 'package:mobile_ai_erp/core/stores/form/form_store.dart';
 import 'package:mobile_ai_erp/domain/usecase/auth/create_tenant_usecase.dart';
 import 'package:mobx/mobx.dart';
+import 'dart:developer' as developer;
 
 import '../../../domain/entity/user/user.dart';
-import '../../../domain/usecase/user/login_usecase.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
 import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
 import 'package:mobile_ai_erp/domain/repository/user/auth_repository.dart';
@@ -20,12 +20,12 @@ enum OAuthProvider {
   github,
 }
 
+// ignore: library_private_types_in_public_api
 class LoginStore = _LoginStore with _$LoginStore;
 
 abstract class _LoginStore with Store {
   // constructor:---------------------------------------------------------------
   _LoginStore(
-    this._loginUseCase,
     this._createTenantUseCase,
     this._authRepository,
     this._sharedPreferenceHelper,
@@ -38,7 +38,6 @@ abstract class _LoginStore with Store {
   }
 
   // use cases:-----------------------------------------------------------------
-  final LoginUseCase _loginUseCase;
   final CreateTenantUseCase _createTenantUseCase;
 
   // repositories:---------------------------------------------------------------
@@ -115,19 +114,55 @@ abstract class _LoginStore with Store {
       }
     } catch (e) {
       // Sign out should not fail the operation
-      debugPrint('Sign out error: $e');
+      developer.log('Sign out error: $e');
     } finally {
       // Clear local state
-      currentUser = null;
-      currentTenantId = null;
-      currentTenantName = null;
-      needsOnboarding = false;
-      success = false;
-      errorMessage = null;
-      await _sharedPreferenceHelper.removeTenantId();
-      await _sharedPreferenceHelper.removeAuthToken();
-      isLoggedIn = false;
+      await _clearSession();
     }
+  }
+
+  @action
+  Future<bool> validateStoredSession() async {
+    final accessToken = await _sharedPreferenceHelper.accessToken;
+    if (accessToken == null || accessToken.isEmpty) {
+      await _clearSession();
+      return false;
+    }
+
+    try {
+      final authStatusResponse = await _authRepository.getAuthStatus(accessToken);
+      if (!authStatusResponse.hasTenant || authStatusResponse.user?.tenantId == null) {
+        await _clearSession();
+        return false;
+      }
+
+      currentUser = authStatusResponse.user;
+      currentTenantId = authStatusResponse.user!.tenantId;
+      currentTenantName = authStatusResponse.user?.tenantName;
+      needsOnboarding = false;
+      isLoggedIn = true;
+
+      if (currentTenantId != null) {
+        await _sharedPreferenceHelper.saveTenantId(currentTenantId!);
+      }
+
+      return true;
+    } catch (e) {
+      await _clearSession();
+      return false;
+    }
+  }
+
+  Future<void> _clearSession() async {
+    currentUser = null;
+    currentTenantId = null;
+    currentTenantName = null;
+    needsOnboarding = false;
+    success = false;
+    errorMessage = null;
+    isLoggedIn = false;
+    await _sharedPreferenceHelper.removeTenantId();
+    await _sharedPreferenceHelper.removeAuthToken();
   }
 
   @action
@@ -155,11 +190,8 @@ abstract class _LoginStore with Store {
     }
     final authorizationCode = resultUri.queryParameters['code'] ?? '';
     final tokens = await _authRepository.getAccessToken(authorizationCode, codeVerifier, redirectUri);
-    debugPrint("Access token: ${tokens.accessToken}");
-    debugPrint("Refresh token: ${tokens.refreshToken}");
 
     final authStatusResponse = await _authRepository.getAuthStatus(tokens.accessToken);
-    debugPrint(authStatusResponse.toJson().toString());
     bool needsOnboarding = false;
     if (!authStatusResponse.hasTenant) {
       needsOnboarding = true;
