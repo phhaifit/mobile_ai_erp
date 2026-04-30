@@ -149,6 +149,12 @@ abstract class SupplierStoreBase with Store {
     sortOrder = null;
   }
 
+  @action
+  void resetFilters() {
+    hasProducts = null;
+    searchQuery = '';
+  }
+
   // ── Supplier detail ────────────────────────────────────────────────────────
 
   @action
