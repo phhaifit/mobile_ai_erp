@@ -146,6 +146,6 @@ class NetworkModule {
     );
 
     getIt.registerSingleton(SupplierApi(getIt<DioClient>(instanceName: erpDioClientName)));
-    getIt.registerSingleton(OrderApi(getIt<DioClient>()));
+    getIt.registerSingleton(OrderApi(getIt<DioClient>(instanceName: erpDioClientName)));
   }
 }
