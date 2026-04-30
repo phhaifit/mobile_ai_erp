@@ -52,11 +52,8 @@ class RoleRemoteDataSourceImpl implements RoleRemoteDataSource {
       final response = await _dio.post(
         '/roles',
         data: {
-          'data': {
-            'name': role.name,
-            'description': role.description,
-            'tenant_id': role.tenantId,
-          }
+          'name': role.name,
+          'description': role.description,
         },
       );
       
@@ -76,10 +73,8 @@ class RoleRemoteDataSourceImpl implements RoleRemoteDataSource {
       final response = await _dio.patch(
         '/roles/$id',
         data: {
-          'data': {
-            'name': role.name,
-            'description': role.description,
-          }
+          'name': role.name,
+          'description': role.description,
         },
       );
       
