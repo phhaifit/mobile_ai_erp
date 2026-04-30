@@ -43,9 +43,29 @@ class _BrandsLandingPageState extends State<BrandsLandingPage> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text(snapshot.error.toString()));
+            return _LandingState(
+              message: snapshot.error.toString(),
+              actionLabel: 'Retry',
+              onPressed: () {
+                setState(() {
+                  _brandsFuture = _repository.getBrands();
+                });
+              },
+            );
           }
           final brands = snapshot.data ?? const [];
+          if (brands.isEmpty) {
+            return _LandingState(
+              message:
+                  'No storefront brands are currently available from the public runtime.',
+              actionLabel: 'Refresh',
+              onPressed: () {
+                setState(() {
+                  _brandsFuture = _repository.getBrands();
+                });
+              },
+            );
+          }
           return ListView(
             children: [
               const SizedBox(height: 20),
@@ -89,7 +109,9 @@ class _BrandsLandingPageState extends State<BrandsLandingPage> {
                   (product) => ProductCardSmall(
                     productId: product.id,
                     productName: product.title,
-                    imageSource: product.images.isNotEmpty ? product.images.first : null,
+                    imageSource: product.images.isNotEmpty
+                        ? product.images.first
+                        : null,
                   ),
                 )
                 .toList(),
@@ -97,6 +119,37 @@ class _BrandsLandingPageState extends State<BrandsLandingPage> {
         ),
         const SizedBox(height: 16),
       ],
+    );
+  }
+}
+
+class _LandingState extends StatelessWidget {
+  const _LandingState({
+    required this.message,
+    required this.actionLabel,
+    required this.onPressed,
+  });
+
+  final String message;
+  final String actionLabel;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.storefront_outlined, size: 40),
+            const SizedBox(height: 12),
+            Text(message, textAlign: TextAlign.center),
+            const SizedBox(height: 16),
+            FilledButton(onPressed: onPressed, child: Text(actionLabel)),
+          ],
+        ),
+      ),
     );
   }
 }

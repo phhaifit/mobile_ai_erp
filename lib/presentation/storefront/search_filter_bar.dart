@@ -5,10 +5,6 @@ import 'package:mobile_ai_erp/presentation/storefront/models/storefront_models.d
 import 'package:mobile_ai_erp/presentation/storefront/store/product_listing_store.dart';
 
 class SearchFilterBar extends StatefulWidget {
-  final List<StorefrontFacetOption> categories;
-  final List<StorefrontFacetOption> brands;
-  final List<StorefrontAttributeFacet> attributes;
-
   const SearchFilterBar({
     super.key,
     required this.categories,
@@ -16,267 +12,354 @@ class SearchFilterBar extends StatefulWidget {
     required this.attributes,
   });
 
+  final List<StorefrontFacetOption> categories;
+  final List<StorefrontFacetOption> brands;
+  final List<StorefrontAttributeFacet> attributes;
+
   @override
   State<SearchFilterBar> createState() => _SearchFilterBarState();
 }
 
 class _SearchFilterBarState extends State<SearchFilterBar> {
-  bool _searchOpen = false; // expands search bar
-  bool _filterOpen = false; // expands filter options
-  bool _sortOpen = false; // expands sorting options
-  bool _chatOpen = false; // expands chat options
   final _listingFilters = getIt<ListingFilters>();
-  late TextEditingController _chatInputController;
+  final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _minPriceController = TextEditingController();
+  final TextEditingController _maxPriceController = TextEditingController();
+
+  bool _searchOpen = false;
+  bool _filterOpen = false;
+  bool _sortOpen = false;
 
   @override
   void initState() {
     super.initState();
-    _chatInputController = TextEditingController();
+    _syncControllersFromStore();
   }
 
   @override
   void dispose() {
-    _chatInputController.dispose();
+    _searchController.dispose();
+    _minPriceController.dispose();
+    _maxPriceController.dispose();
     super.dispose();
   }
 
-  bool get isExpanded => _searchOpen || _filterOpen || _sortOpen || _chatOpen;
+  bool get isExpanded => _searchOpen || _filterOpen || _sortOpen;
 
-
-  Widget _buildExpandedContent() {
-    if (_searchOpen) {
-      return _buildSearchContent();
-    } else if (_filterOpen) {
-      return _buildFilterContent();
-    } else if (_sortOpen) {
-      return _buildSortContent();
-    } else if (_chatOpen) {
-      return _buildChatContent();
-    }
-    return const SizedBox.shrink();
+  void _syncControllersFromStore() {
+    _searchController.text = _listingFilters.searchQuery;
+    _minPriceController.text =
+        _listingFilters.minPriceFilter?.toStringAsFixed(0) ?? '';
+    _maxPriceController.text =
+        _listingFilters.maxPriceFilter?.toStringAsFixed(0) ?? '';
   }
 
-  Widget _expandedContainer({required List<Widget> contents})
-  {
-    final contentsWithBlankBox = [
-      ...contents,
-      SizedBox(height: 16), // blank box for scrollability and clickability
-    ];
-    
-    return Container(
-      color: Colors.blue[100],
-      constraints: BoxConstraints(maxHeight: 350),
-      padding: EdgeInsets.all(10.0),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: contentsWithBlankBox,
+  Widget _expandedContainer({required List<Widget> children}) {
+    return Material(
+      elevation: 8,
+      color: Colors.white,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 360),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: children,
+          ),
         ),
       ),
     );
   }
 
+  Future<void> _applySearch() async {
+    _listingFilters.setSearchQuery(_searchController.text.trim());
+    await _listingFilters.updateProducts();
+  }
+
+  Future<void> _applyAdvancedFilters() async {
+    final minPrice = double.tryParse(_minPriceController.text.trim());
+    final maxPrice = double.tryParse(_maxPriceController.text.trim());
+    _listingFilters.setPriceRange(min: minPrice, max: maxPrice);
+    await _listingFilters.updateProducts();
+  }
+
+  Future<void> _resetAllFilters() async {
+    _listingFilters.resetFilters();
+    _syncControllersFromStore();
+    await _listingFilters.updateProducts();
+  }
+
   Widget _buildSearchContent() {
     return _expandedContainer(
-      contents: [
-        TextField(
-          controller: TextEditingController(text: _listingFilters.searchQuery),
-          decoration: InputDecoration(
-            hintText: 'Search products...',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            prefixIcon: const Icon(Icons.search),
-          ),
-          onChanged: (value) {
-            _listingFilters.setSearchQuery(value);
-          },
+      children: [
+        Text(
+          'Search storefront',
+          style: Theme.of(context).textTheme.titleMedium,
         ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _searchController,
+          decoration: InputDecoration(
+            hintText: 'Search by product name, brand or category',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            prefixIcon: const Icon(Icons.search),
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.send),
+              onPressed: _applySearch,
+            ),
+          ),
+          onSubmitted: (_) => _applySearch(),
+          onChanged: _listingFilters.setSearchQuery,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFilterChipGroup({
+    required String title,
+    required List<Widget> children,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: Theme.of(context).textTheme.titleSmall),
+        const SizedBox(height: 8),
+        Wrap(spacing: 8, runSpacing: 8, children: children),
+        const SizedBox(height: 16),
       ],
     );
   }
 
   Widget _buildFilterContent() {
     return _expandedContainer(
-      contents: [
-        Text(
-          'Filters',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 12),
-        Text(
-          'Categories',
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 3.0,
-          runSpacing: 3.0,
+      children: [
+        Row(
           children: [
-            for (var category in widget.categories)
-              Observer(builder: (_) => FilterChip(
-                  label: Text(category.name),
-                  selected: _listingFilters.categoryFilter.contains(category.id),
-                  onSelected: (selected) {
-                      _listingFilters.toggleCategoryFilter(category.id);
-                      _listingFilters.updateProducts();
-                  },
-                )
+            Expanded(
+              child: Text(
+                'Filters',
+                style: Theme.of(context).textTheme.titleMedium,
               ),
+            ),
+            TextButton(
+              onPressed: _resetAllFilters,
+              child: const Text('Clear all'),
+            ),
           ],
         ),
         const SizedBox(height: 12),
-        Text(
-          'Brands',
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 3.0,
-          runSpacing: 3.0,
+        _buildFilterChipGroup(
+          title: 'Categories',
           children: [
-            for (var brand in widget.brands)             
-              Observer(builder: (_) => FilterChip(
-                label: Text(brand.name),
-                selected: _listingFilters.brandFilter.contains(brand.id),
-                onSelected: (selected) {
-                  _listingFilters.toggleBrandFilter(brand.id);
-                  _listingFilters.updateProducts();
-                },
-            )
-            )
-          ]
+            for (final category in widget.categories)
+              Observer(
+                builder: (_) => FilterChip(
+                  label: Text(category.name),
+                  selected: _listingFilters.categoryFilter.contains(
+                    category.id,
+                  ),
+                  onSelected: (_) =>
+                      _listingFilters.toggleCategoryFilter(category.id),
+                ),
+              ),
+          ],
         ),
-        const SizedBox(height: 12),
+        _buildFilterChipGroup(
+          title: 'Brands',
+          children: [
+            for (final brand in widget.brands)
+              Observer(
+                builder: (_) => FilterChip(
+                  label: Text(brand.name),
+                  selected: _listingFilters.brandFilter.contains(brand.id),
+                  onSelected: (_) =>
+                      _listingFilters.toggleBrandFilter(brand.id),
+                ),
+              ),
+          ],
+        ),
+        _buildFilterChipGroup(
+          title: 'Availability',
+          children: [
+            Observer(
+              builder: (_) => FilterChip(
+                label: Text('In stock (${_listingFilters.inStockCount})'),
+                selected: _listingFilters.availabilityFilter == 'in_stock',
+                onSelected: (_) => _listingFilters.setAvailabilityFilter(
+                  _listingFilters.availabilityFilter == 'in_stock'
+                      ? null
+                      : 'in_stock',
+                ),
+              ),
+            ),
+            Observer(
+              builder: (_) => FilterChip(
+                label: Text(
+                  'Out of stock (${_listingFilters.outOfStockCount})',
+                ),
+                selected: _listingFilters.availabilityFilter == 'out_of_stock',
+                onSelected: (_) => _listingFilters.setAvailabilityFilter(
+                  _listingFilters.availabilityFilter == 'out_of_stock'
+                      ? null
+                      : 'out_of_stock',
+                ),
+              ),
+            ),
+          ],
+        ),
+        _buildFilterChipGroup(
+          title: 'Rating',
+          children: [
+            for (final rating
+                in _listingFilters.availableRatings.isNotEmpty
+                    ? _listingFilters.availableRatings
+                    : [5, 4, 3, 2, 1])
+              Observer(
+                builder: (_) => FilterChip(
+                  label: Text('$rating★ & up'),
+                  selected: _listingFilters.ratingFilter == rating.toDouble(),
+                  onSelected: (_) => _listingFilters.setRatingFilter(
+                    _listingFilters.ratingFilter == rating.toDouble()
+                        ? null
+                        : rating.toDouble(),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        Text('Price range', style: Theme.of(context).textTheme.titleSmall),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _minPriceController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'Min',
+                  helperText: _listingFilters.availableMinPrice > 0
+                      ? 'From ${_listingFilters.availableMinPrice.toStringAsFixed(0)}'
+                      : null,
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextField(
+                controller: _maxPriceController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'Max',
+                  helperText: _listingFilters.availableMaxPrice > 0
+                      ? 'To ${_listingFilters.availableMaxPrice.toStringAsFixed(0)}'
+                      : null,
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
         for (final attribute in widget.attributes) ...[
-          Text(attribute.attributeSetName),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 3.0,
-            runSpacing: 3.0,
+          _buildFilterChipGroup(
+            title: attribute.attributeSetName,
             children: [
               for (final value in attribute.values)
                 Observer(
                   builder: (_) => FilterChip(
                     label: Text(value.name),
-                    selected: _listingFilters.attributeValueFilter
-                        .contains(value.id),
-                    onSelected: (selected) {
-                      _listingFilters.toggleAttributeFilter(value.id);
-                      _listingFilters.updateProducts();
-                    },
+                    selected: _listingFilters.attributeValueFilter.contains(
+                      value.id,
+                    ),
+                    onSelected: (_) =>
+                        _listingFilters.toggleAttributeFilter(value.id),
                   ),
                 ),
             ],
           ),
-          const SizedBox(height: 12),
         ],
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            onPressed: _applyAdvancedFilters,
+            child: const Text('Apply filters'),
+          ),
+        ),
       ],
+    );
+  }
+
+  Widget _buildSortTile(String label, SortOption value) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      title: Text(label),
+      leading: Radio<SortOption>(value: value),
+      onTap: () async {
+        _listingFilters.setSortOption(value);
+        await _listingFilters.updateProducts();
+      },
     );
   }
 
   Widget _buildSortContent() {
     return _expandedContainer(
-      contents: [
-        Text(
-          'Sort by',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
+      children: [
+        Text('Sort products', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 12),
-        Observer(builder: (_) => RadioGroup<SortOption>(
-          groupValue: _listingFilters.sortOption,
-          onChanged: (value) {
-            _listingFilters.setSortOption(value);
-            _listingFilters.updateProducts();
-          },
-          child: Column(
-            children: [
-              ListTile(title: Text('Recommended'), leading: Radio<SortOption>(value: SortOption.relevance)),
-              ListTile(title: Text('Most Popular'), leading: Radio<SortOption>(value: SortOption.popular)),
-              ListTile(title: Text('Newest Arrivals'), leading: Radio<SortOption>(value: SortOption.timeDesc)),
-              ListTile(title: Text('Oldest Arrivals'), leading: Radio<SortOption>(value: SortOption.timeAsc)),
-              ListTile(title: Text('Price: Low to High'), leading: Radio<SortOption>(value: SortOption.priceAsc)),
-              ListTile(title: Text('Price: High to Low'), leading: Radio<SortOption>(value: SortOption.priceDesc)),
-              ListTile(title: Text('Rating'), leading: Radio<SortOption>(value: SortOption.rating)),
+        Observer(
+          builder: (_) => RadioGroup<SortOption>(
+            groupValue: _listingFilters.sortOption,
+            onChanged: (selected) async {
+              _listingFilters.setSortOption(selected);
+              await _listingFilters.updateProducts();
+            },
+            child: Column(
+              children: [
+                _buildSortTile('Relevance', SortOption.relevance),
+                _buildSortTile('Most popular', SortOption.popular),
+                _buildSortTile('Newest first', SortOption.timeDesc),
+                _buildSortTile('Oldest first', SortOption.timeAsc),
+                _buildSortTile('Name A-Z', SortOption.nameAsc),
+                _buildSortTile('Name Z-A', SortOption.nameDesc),
+                _buildSortTile('Price low to high', SortOption.priceAsc),
+                _buildSortTile('Price high to low', SortOption.priceDesc),
+                _buildSortTile('Highest rated', SortOption.rating),
               ],
-            )
-          ),
-        )
-      ],
-    );
-  }
-
-  Widget _buildChatContent() {
-    return _expandedContainer(
-      contents: [
-        Text(
-          'AI Assistant',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 12),
-        Text(
-          'Describe what you\'re looking for and let AI help you find it.',
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-        const SizedBox(height: 16),
-        TextField(
-          controller: _chatInputController,
-          decoration: InputDecoration(
-            hintText: 'Tell AI what product you want...',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            suffixIcon: IconButton(
-              icon: Icon(Icons.send),
-              onPressed: _handleAIChatMock,
             ),
           ),
-          onSubmitted: (_) => _handleAIChatMock(),
-          maxLines: 3,
-          minLines: 1,
         ),
       ],
     );
   }
 
-  void _handleAIChatMock() {
-    final prompt = _chatInputController.text.trim();
-    if (prompt.isEmpty) return;
-
-    // Mock AI results
-    if (widget.categories.isNotEmpty) {
-      _listingFilters.toggleCategoryFilter(widget.categories.first.id);
+  Widget _buildExpandedContent() {
+    if (_searchOpen) {
+      return _buildSearchContent();
     }
-    _listingFilters.setSortOption(SortOption.popular);
-    _listingFilters.setSearchQuery('Product');
-    _listingFilters.updateProducts();
-
-    // Clear input and close the chat panel
-    _chatInputController.clear();
-    setState(() {
-      _chatOpen = false;
-    });
-
-    // Show success toast
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('AI has set search filters for you'),
-        behavior: SnackBarBehavior.floating,
-        duration: Duration(seconds: 3),
-      ),
-    );
+    if (_filterOpen) {
+      return _buildFilterContent();
+    }
+    if (_sortOpen) {
+      return _buildSortContent();
+    }
+    return const SizedBox.shrink();
   }
 
-  // options in the bottom bar
-  Widget bottomBarButton (void Function() onPressed, bool isVisible, Icon icon) {
+  Widget _bottomBarButton({
+    required VoidCallback onPressed,
+    required bool isVisible,
+    required IconData icon,
+    required String tooltip,
+  }) {
     return IconButton(
       onPressed: onPressed,
-      icon: Badge( // shows red badge if there are active filters/search query
+      tooltip: tooltip,
+      icon: Badge(
         isLabelVisible: isVisible,
-        label: Text('!', style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.red,
-        child: icon
-      )
+        label: const Text('!'),
+        child: Icon(icon),
+      ),
     );
   }
 
@@ -286,78 +369,67 @@ class _SearchFilterBarState extends State<SearchFilterBar> {
       clipBehavior: Clip.none,
       alignment: Alignment.bottomCenter,
       children: [
-          // if (isExpanded) SizedBox(height: 350), // reserve space for expanded content
-          Container(
+        Container(
           height: kBottomNavigationBarHeight,
-          color: Colors.red[100],//colorScheme.surface,
-          // elevation: 8,
+          color: Theme.of(context).colorScheme.surface,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Row(
               children: [
-                Observer(builder: (_) => bottomBarButton(() {
-                    setState(() {
+                Observer(
+                  builder: (_) => _bottomBarButton(
+                    onPressed: () {
+                      _syncControllersFromStore();
+                      setState(() {
                         _filterOpen = !_filterOpen;
                         _searchOpen = false;
                         _sortOpen = false;
-                        _chatOpen = false;
                       });
-                    }, 
-                    _listingFilters.categoryFilter.isNotEmpty ||
-                        _listingFilters.brandFilter.isNotEmpty ||
-                        _listingFilters.attributeValueFilter.isNotEmpty,
-                    Icon(Icons.filter_list_alt)
-                  )
+                    },
+                    isVisible: _listingFilters.hasAnyFilters,
+                    icon: Icons.filter_list_alt,
+                    tooltip: 'Filters',
+                  ),
                 ),
-                Observer(builder: (_) => bottomBarButton(() {
-                    setState(() {
-                      _searchOpen = !_searchOpen;
-                      _filterOpen = false;
-                      _sortOpen = false;
-                      _chatOpen = false;
-                    });
-                  }, 
-                  _listingFilters.searchQuery.isNotEmpty, 
-                  Icon(Icons.search)
-                )
+                Observer(
+                  builder: (_) => _bottomBarButton(
+                    onPressed: () {
+                      _syncControllersFromStore();
+                      setState(() {
+                        _searchOpen = !_searchOpen;
+                        _filterOpen = false;
+                        _sortOpen = false;
+                      });
+                    },
+                    isVisible: _listingFilters.hasSearchText,
+                    icon: Icons.search,
+                    tooltip: 'Search',
+                  ),
                 ),
-                bottomBarButton(() {
+                _bottomBarButton(
+                  onPressed: () {
                     setState(() {
                       _sortOpen = !_sortOpen;
                       _searchOpen = false;
                       _filterOpen = false;
-                      _chatOpen = false;
                     });
-                  }, 
-                  false, // no badge for sort
-                  Icon(Icons.sort)
-                ),
-                bottomBarButton(() {
-                    setState(() {
-                      _chatOpen = !_chatOpen;
-                      _searchOpen = false;
-                      _filterOpen = false;
-                      _sortOpen = false;
-                    });
-                  }, 
-                  false, // no badge for AI chat
-                  Icon(Icons.smart_toy)
+                  },
+                  isVisible: false,
+                  icon: Icons.sort,
+                  tooltip: 'Sort',
                 ),
               ],
             ),
           ),
         ),
-        if (isExpanded) SizedBox(height: 500),
+        if (isExpanded) const SizedBox(height: 420),
         Positioned(
           left: 0,
           right: 0,
           bottom: kBottomNavigationBarHeight,
-          child: Padding(
-              padding: const EdgeInsets.only(), // add if needed
-              child: SingleChildScrollView(child: _buildExpandedContent()),
-            ),
-        )
-      ]
+          child: _buildExpandedContent(),
+        ),
+      ],
     );
   }
 }

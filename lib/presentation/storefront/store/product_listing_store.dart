@@ -42,13 +42,28 @@ abstract class _ListingFiltersStore with Store {
   SortOption? sortOption = SortOption.timeDesc;
 
   @observable
-  ObservableList<StorefrontProduct> products = ObservableList<StorefrontProduct>();
+  double? minPriceFilter;
 
   @observable
-  ObservableList<StorefrontFacetOption> categories = ObservableList<StorefrontFacetOption>();
+  double? maxPriceFilter;
 
   @observable
-  ObservableList<StorefrontFacetOption> brands = ObservableList<StorefrontFacetOption>();
+  double? ratingFilter;
+
+  @observable
+  String? availabilityFilter;
+
+  @observable
+  ObservableList<StorefrontProduct> products =
+      ObservableList<StorefrontProduct>();
+
+  @observable
+  ObservableList<StorefrontFacetOption> categories =
+      ObservableList<StorefrontFacetOption>();
+
+  @observable
+  ObservableList<StorefrontFacetOption> brands =
+      ObservableList<StorefrontFacetOption>();
 
   @observable
   ObservableList<StorefrontAttributeFacet> attributeFacets =
@@ -82,6 +97,34 @@ abstract class _ListingFiltersStore with Store {
   @observable
   String? activeCollectionSlug;
 
+  @observable
+  double availableMinPrice = 0;
+
+  @observable
+  double availableMaxPrice = 0;
+
+  @observable
+  int inStockCount = 0;
+
+  @observable
+  int outOfStockCount = 0;
+
+  @observable
+  ObservableList<int> availableRatings = ObservableList<int>();
+
+  @computed
+  bool get hasAnyFilters =>
+      categoryFilter.isNotEmpty ||
+      brandFilter.isNotEmpty ||
+      attributeValueFilter.isNotEmpty ||
+      minPriceFilter != null ||
+      maxPriceFilter != null ||
+      ratingFilter != null ||
+      availabilityFilter != null;
+
+  @computed
+  bool get hasSearchText => searchQuery.trim().isNotEmpty;
+
   @action
   void setSearchQuery(String value) {
     searchQuery = value;
@@ -101,16 +144,21 @@ abstract class _ListingFiltersStore with Store {
   void toggleCategoryFilter(String categoryId) {
     if (categoryFilter.contains(categoryId)) {
       categoryFilter.remove(categoryId);
+      if (activeCategoryKey == categoryId) {
+        activeCategoryKey = null;
+      }
     } else {
       categoryFilter
         ..clear()
         ..add(categoryId);
+      activeCategoryKey = null;
     }
   }
 
   @action
   void clearCategoryFilters() {
     categoryFilter.clear();
+    activeCategoryKey = null;
   }
 
   @action
@@ -122,16 +170,26 @@ abstract class _ListingFiltersStore with Store {
   void toggleBrandFilter(String brandId) {
     if (brandFilter.contains(brandId)) {
       brandFilter.remove(brandId);
+      if (activeBrandKey == brandId) {
+        activeBrandKey = null;
+      }
     } else {
       brandFilter
         ..clear()
         ..add(brandId);
+      activeBrandKey = null;
     }
   }
 
   @action
   void clearBrandFilters() {
     brandFilter.clear();
+    activeBrandKey = null;
+  }
+
+  @action
+  void setAttributeFilters(List<String> attributeValueIds) {
+    attributeValueFilter = ObservableList.of(attributeValueIds);
   }
 
   @action
@@ -154,16 +212,47 @@ abstract class _ListingFiltersStore with Store {
   }
 
   @action
+  void setPriceRange({double? min, double? max}) {
+    minPriceFilter = min;
+    maxPriceFilter = max;
+  }
+
+  @action
+  void setRatingFilter(double? value) {
+    ratingFilter = value;
+  }
+
+  @action
+  void setAvailabilityFilter(String? value) {
+    availabilityFilter = value;
+  }
+
+  @action
+  void clearAdvancedFilters() {
+    minPriceFilter = null;
+    maxPriceFilter = null;
+    ratingFilter = null;
+    availabilityFilter = null;
+    attributeValueFilter.clear();
+  }
+
+  @action
   void resetFilters() {
+    _searchDebounce?.cancel();
     searchQuery = '';
     categoryFilter.clear();
     brandFilter.clear();
     attributeValueFilter.clear();
     sortOption = SortOption.timeDesc;
+    minPriceFilter = null;
+    maxPriceFilter = null;
+    ratingFilter = null;
+    availabilityFilter = null;
     activeCategoryKey = null;
     activeBrandKey = null;
     activeCollectionSlug = null;
     breadcrumb.clear();
+    errorMessage = null;
   }
 
   @action
@@ -171,11 +260,17 @@ abstract class _ListingFiltersStore with Store {
     String? search,
     List<String>? categories,
     List<String>? brands,
+    List<String>? attributeValueIds,
     SortOption? sort,
     String? categoryKey,
     String? brandKey,
     String? collectionSlug,
+    double? minPrice,
+    double? maxPrice,
+    double? rating,
+    String? availability,
   }) async {
+    resetFilters();
     if (search != null) {
       searchQuery = search;
     }
@@ -185,9 +280,16 @@ abstract class _ListingFiltersStore with Store {
     if (brands != null) {
       setBrandFilter(brands);
     }
+    if (attributeValueIds != null) {
+      setAttributeFilters(attributeValueIds);
+    }
     if (sort != null) {
       sortOption = sort;
     }
+    minPriceFilter = minPrice;
+    maxPriceFilter = maxPrice;
+    ratingFilter = rating;
+    availabilityFilter = availability;
     activeCategoryKey = categoryKey;
     activeBrandKey = brandKey;
     activeCollectionSlug = collectionSlug;
@@ -202,26 +304,13 @@ abstract class _ListingFiltersStore with Store {
     try {
       final query = _buildQuery(page: 1);
       final productResponse = await _loadProducts(query);
-      final facets = await _repository.getFacets(query);
       products = ObservableList.of(productResponse.data);
       hasMore = productResponse.hasMore;
       currentPage = productResponse.page;
-      categories = ObservableList.of(facets.categories);
-      brands = ObservableList.of(facets.brands);
-      attributeFacets = ObservableList.of(facets.attributes);
-
-      if (activeCategoryKey != null && activeCategoryKey!.isNotEmpty) {
-        final categoryDetail =
-            await _repository.getCategoryDetail(activeCategoryKey!);
-        breadcrumb = ObservableList.of(categoryDetail.breadcrumb);
-      } else if (categoryFilter.isNotEmpty) {
-        final categoryDetail =
-            await _repository.getCategoryDetail(categoryFilter.first);
-        breadcrumb = ObservableList.of(categoryDetail.breadcrumb);
-      } else {
-        breadcrumb.clear();
-      }
+      await _loadDiscoveryMetadata(query);
     } catch (error) {
+      products.clear();
+      hasMore = false;
       errorMessage = error.toString();
     } finally {
       isLoading = false;
@@ -259,40 +348,101 @@ abstract class _ListingFiltersStore with Store {
     return _repository.getProducts(query);
   }
 
+  Future<void> _loadDiscoveryMetadata(StorefrontProductQuery query) async {
+    try {
+      final facets = await _repository.getFacets(query);
+      categories = ObservableList.of(facets.categories);
+      brands = ObservableList.of(facets.brands);
+      attributeFacets = ObservableList.of(facets.attributes);
+      availableMinPrice = facets.minPrice;
+      availableMaxPrice = facets.maxPrice;
+      inStockCount = facets.inStockCount;
+      outOfStockCount = facets.outOfStockCount;
+      availableRatings = ObservableList.of(facets.ratings);
+    } catch (_) {
+      categories.clear();
+      brands.clear();
+      attributeFacets.clear();
+      availableMinPrice = 0;
+      availableMaxPrice = 0;
+      inStockCount = 0;
+      outOfStockCount = 0;
+      availableRatings.clear();
+    }
+
+    try {
+      if (activeCategoryKey != null && activeCategoryKey!.isNotEmpty) {
+        final categoryDetail = await _repository.getCategoryDetail(
+          activeCategoryKey!,
+        );
+        breadcrumb = ObservableList.of(categoryDetail.breadcrumb);
+        return;
+      }
+      if (categoryFilter.isNotEmpty) {
+        final selectedCategoryId = categoryFilter.first;
+        final matchedCategory = categories.firstWhere(
+          (category) => category.id == selectedCategoryId,
+          orElse: () => StorefrontFacetOption(
+            id: selectedCategoryId,
+            name: selectedCategoryId,
+            count: 0,
+          ),
+        );
+        breadcrumb = ObservableList.of([
+          StorefrontCategorySummary(
+            id: matchedCategory.id,
+            name: matchedCategory.name,
+            slug: matchedCategory.slug ?? matchedCategory.id,
+          ),
+        ]);
+        return;
+      }
+      breadcrumb.clear();
+    } catch (_) {
+      breadcrumb.clear();
+    }
+  }
+
   StorefrontProductQuery _buildQuery({required int page}) {
     return StorefrontProductQuery(
       page: page,
       pageSize: 12,
       search: searchQuery,
       sortBy: _sortValue(sortOption),
-      categoryId: categoryFilter.isNotEmpty
-          ? categoryFilter.first
-          : activeCategoryKey,
+      categoryId: categoryFilter.isNotEmpty ? categoryFilter.first : null,
       brandId: brandFilter.isNotEmpty ? brandFilter.first : null,
+      minPrice: minPriceFilter,
+      maxPrice: maxPriceFilter,
+      rating: ratingFilter,
+      availability: availabilityFilter,
       attributeValueIds: attributeValueFilter.toList(),
       collection: activeCollectionSlug,
       includeHighlights: true,
     );
   }
 
-  String _sortValue(SortOption? option) {
+  String? _sortValue(SortOption? option) {
     switch (option) {
+      case SortOption.relevance:
+        return searchQuery.trim().isNotEmpty ? 'relevance' : 'popular';
+      case SortOption.popular:
+        return 'popular';
+      case SortOption.timeAsc:
+        return 'oldest';
+      case SortOption.timeDesc:
+        return 'newest';
+      case SortOption.nameAsc:
+        return 'name_asc';
+      case SortOption.nameDesc:
+        return 'name_desc';
       case SortOption.priceAsc:
         return 'price_asc';
       case SortOption.priceDesc:
         return 'price_desc';
       case SortOption.rating:
         return 'rating_desc';
-      case SortOption.popular:
-      case SortOption.relevance:
-        return 'popular';
-      case SortOption.timeAsc:
-        return 'newest';
-      case SortOption.nameAsc:
-      case SortOption.nameDesc:
-      case SortOption.timeDesc:
       case null:
-        return 'newest';
+        return searchQuery.trim().isNotEmpty ? 'relevance' : 'newest';
     }
   }
 }
