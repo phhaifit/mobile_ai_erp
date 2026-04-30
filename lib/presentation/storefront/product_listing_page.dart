@@ -5,6 +5,8 @@ import 'package:mobile_ai_erp/presentation/storefront/classes/filter_arguments.d
 import 'package:mobile_ai_erp/presentation/storefront/search_filter_bar.dart';
 import 'package:mobile_ai_erp/presentation/storefront/store/product_listing_store.dart';
 import 'package:mobile_ai_erp/presentation/storefront/widgets/product_listing_item.dart';
+import 'package:mobile_ai_erp/presentation/storefront/widgets/section_header.dart';
+import 'package:mobile_ai_erp/presentation/storefront/widgets/storefront_ui.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
 
 class ProductListingScreen extends StatefulWidget {
@@ -33,7 +35,7 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
 
   void _onScroll() {
     if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
+        _scrollController.position.maxScrollExtent - 240) {
       _listingFilters.loadMore();
     }
   }
@@ -55,68 +57,119 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
     );
   }
 
-  Widget _buildHeadline(BuildContext context) {
-    final theme = Theme.of(context);
-    final title = _listingFilters.searchQuery.isNotEmpty
-        ? 'Results for "${_listingFilters.searchQuery}"'
-        : _listingFilters.activeCollectionSlug != null
-        ? 'Collection'
-        : _listingFilters.activeBrandKey != null
-        ? 'Brand products'
-        : 'Products';
-    return Text(title, style: theme.textTheme.headlineMedium);
+  String _headline() {
+    if (_listingFilters.searchQuery.isNotEmpty) {
+      return 'Results for "${_listingFilters.searchQuery}"';
+    }
+    if (_listingFilters.activeCollectionSlug != null) {
+      return 'Collection discovery';
+    }
+    if (_listingFilters.activeBrandKey != null) {
+      return 'Brand discovery';
+    }
+    if (_listingFilters.activeCategoryKey != null ||
+        _listingFilters.categoryFilter.isNotEmpty) {
+      return 'Category discovery';
+    }
+    return 'All products';
   }
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
+  String _subheadline() {
+    if (_listingFilters.hasSearchText) {
+      return 'Search results are coming from the live storefront API with keyword highlight support.';
+    }
+    return 'Browse real storefront results with pagination, sorting and multi-faceted filtering.';
+  }
+
+  Widget _buildSummaryCard() {
+    return Observer(
+      builder: (_) => StorefrontSurface(
+        margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.inventory_2_outlined, size: 48),
-            const SizedBox(height: 12),
-            const Text(
-              'No products are available for the current discovery query.',
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'The mobile app is connected to the public storefront runtime. This environment may currently return empty discovery data even when the backend contract is reachable.',
-              textAlign: TextAlign.center,
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                StorefrontTag(
+                  label: _listingFilters.totalItems > 0
+                      ? '${_listingFilters.totalItems} live results'
+                      : 'Live discovery',
+                  icon: Icons.travel_explore,
+                ),
+                StorefrontTag(
+                  label: _listingFilters.hasMore
+                      ? 'Infinite scroll enabled'
+                      : 'End of result set',
+                  icon: Icons.swap_vert_circle_outlined,
+                  backgroundColor: const Color(0xFFFCE7DF),
+                ),
+                if (_listingFilters.activeFilterCount > 0)
+                  StorefrontTag(
+                    label:
+                        '${_listingFilters.activeFilterCount} filters applied',
+                    icon: Icons.tune,
+                    backgroundColor: const Color(0xFFE8F0FF),
+                  ),
+              ],
             ),
             const SizedBox(height: 16),
-            FilledButton(
-              onPressed: _listingFilters.updateProducts,
-              child: const Text('Retry'),
+            Text(
+              _headline(),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineMedium?.copyWith(fontSize: 28),
             ),
+            const SizedBox(height: 8),
+            Text(
+              _subheadline(),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5,
+              ),
+            ),
+            if (_listingFilters.breadcrumb.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _listingFilters.breadcrumb
+                    .map(
+                      (item) => StorefrontTag(
+                        label: item.name,
+                        icon: Icons.chevron_right_rounded,
+                        backgroundColor: const Color(0xFFF6F1E8),
+                      ),
+                    )
+                    .toList(),
+              ),
+            ],
           ],
         ),
       ),
     );
   }
 
+  Widget _buildEmptyState() {
+    return StorefrontEmptyState(
+      icon: Icons.inventory_2_outlined,
+      title: 'No products found',
+      message:
+          'The current discovery query did not return products. Try broadening search terms, clearing filters or checking if this tenant has published catalog data.',
+      actionLabel: 'Retry',
+      onPressed: _listingFilters.updateProducts,
+    );
+  }
+
   Widget _buildErrorState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.cloud_off, size: 48),
-            const SizedBox(height: 12),
-            Text(
-              _listingFilters.errorMessage ?? 'Unable to load storefront data.',
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            FilledButton(
-              onPressed: _listingFilters.updateProducts,
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
-      ),
+    return StorefrontEmptyState(
+      icon: Icons.cloud_off,
+      title: 'Unable to load products',
+      message:
+          _listingFilters.errorMessage ?? 'Unable to load storefront data.',
+      actionLabel: 'Retry',
+      onPressed: _listingFilters.updateProducts,
     );
   }
 
@@ -132,92 +185,93 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Observer(builder: (_) => _buildHeadline(context)),
+        title: const Text('Product Discovery'),
         actions: [
           IconButton(
             onPressed: () => Navigator.of(context).pushNamed(Routes.storeHome),
-            icon: const Icon(Icons.home),
+            icon: const Icon(Icons.home_outlined),
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          Observer(
-            builder: (_) {
-              if (_listingFilters.isLoading &&
-                  _listingFilters.products.isEmpty) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (_listingFilters.errorMessage != null &&
-                  _listingFilters.products.isEmpty) {
-                return _buildErrorState();
-              }
-              if (_listingFilters.products.isEmpty) {
-                return _buildEmptyState();
-              }
-
-              return RefreshIndicator(
-                onRefresh: _listingFilters.updateProducts,
-                child: ListView.builder(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.only(
-                    bottom: kBottomNavigationBarHeight + 32,
-                    top: 8,
-                  ),
-                  itemCount:
-                      (_listingFilters.breadcrumb.isNotEmpty ? 1 : 0) +
-                      _listingFilters.products.length +
-                      (_listingFilters.isLoadingMore ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    if (_listingFilters.breadcrumb.isNotEmpty && index == 0) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        child: Text(
-                          _listingFilters.breadcrumb
-                              .map((item) => item.name)
-                              .join(' / '),
-                        ),
-                      );
-                    }
-
-                    final productIndex =
-                        index - (_listingFilters.breadcrumb.isNotEmpty ? 1 : 0);
-                    if (productIndex >= _listingFilters.products.length) {
-                      return const Padding(
-                        padding: EdgeInsets.all(16),
-                        child: Center(child: CircularProgressIndicator()),
-                      );
-                    }
-
-                    return ProductListingItem(
-                      productListing: _listingFilters.products[productIndex],
-                      highlightText: _listingFilters.searchQuery,
-                    );
-                  },
-                ),
-              );
-            },
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFF7F4EF), Color(0xFFFBFBFA)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Observer(
-              builder: (_) => SearchFilterBar(
-                brands: _listingFilters.brands.toList(),
-                categories: _listingFilters.categories.toList(),
-                attributes: _listingFilters.attributeFacets.toList(),
+        ),
+        child: Stack(
+          children: [
+            Observer(
+              builder: (_) {
+                if (_listingFilters.isLoading &&
+                    _listingFilters.products.isEmpty) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (_listingFilters.errorMessage != null &&
+                    _listingFilters.products.isEmpty) {
+                  return _buildErrorState();
+                }
+
+                return RefreshIndicator(
+                  onRefresh: _listingFilters.updateProducts,
+                  child: ListView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.only(bottom: 150),
+                    itemCount:
+                        2 +
+                        (_listingFilters.products.isEmpty
+                            ? 1
+                            : _listingFilters.products.length) +
+                        (_listingFilters.isLoadingMore ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index == 0) {
+                        return _buildSummaryCard();
+                      }
+                      if (index == 1) {
+                        return SectionHeader(
+                          headingText: 'Product results',
+                          subheadingText:
+                              'Results below are paginated from the backend storefront APIs.',
+                        );
+                      }
+
+                      if (_listingFilters.products.isEmpty) {
+                        return _buildEmptyState();
+                      }
+
+                      final productIndex = index - 2;
+                      if (productIndex >= _listingFilters.products.length) {
+                        return const Padding(
+                          padding: EdgeInsets.all(20),
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
+
+                      return ProductListingItem(
+                        productListing: _listingFilters.products[productIndex],
+                        highlightText: _listingFilters.searchQuery,
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Observer(
+                builder: (_) => SearchFilterBar(
+                  brands: _listingFilters.brands.toList(),
+                  categories: _listingFilters.categories.toList(),
+                  attributes: _listingFilters.attributeFacets.toList(),
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

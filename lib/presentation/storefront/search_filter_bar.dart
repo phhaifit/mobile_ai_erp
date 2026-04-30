@@ -3,6 +3,7 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/presentation/storefront/models/storefront_models.dart';
 import 'package:mobile_ai_erp/presentation/storefront/store/product_listing_store.dart';
+import 'package:mobile_ai_erp/presentation/storefront/widgets/storefront_ui.dart';
 
 class SearchFilterBar extends StatefulWidget {
   const SearchFilterBar({
@@ -26,10 +27,6 @@ class _SearchFilterBarState extends State<SearchFilterBar> {
   final TextEditingController _minPriceController = TextEditingController();
   final TextEditingController _maxPriceController = TextEditingController();
 
-  bool _searchOpen = false;
-  bool _filterOpen = false;
-  bool _sortOpen = false;
-
   @override
   void initState() {
     super.initState();
@@ -44,8 +41,6 @@ class _SearchFilterBarState extends State<SearchFilterBar> {
     super.dispose();
   }
 
-  bool get isExpanded => _searchOpen || _filterOpen || _sortOpen;
-
   void _syncControllersFromStore() {
     _searchController.text = _listingFilters.searchQuery;
     _minPriceController.text =
@@ -54,25 +49,8 @@ class _SearchFilterBarState extends State<SearchFilterBar> {
         _listingFilters.maxPriceFilter?.toStringAsFixed(0) ?? '';
   }
 
-  Widget _expandedContainer({required List<Widget> children}) {
-    return Material(
-      elevation: 8,
-      color: Colors.white,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxHeight: 360),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: children,
-          ),
-        ),
-      ),
-    );
-  }
-
   Future<void> _applySearch() async {
-    _listingFilters.setSearchQuery(_searchController.text.trim());
+    _listingFilters.commitSearchQuery(_searchController.text.trim());
     await _listingFilters.updateProducts();
   }
 
@@ -89,29 +67,120 @@ class _SearchFilterBarState extends State<SearchFilterBar> {
     await _listingFilters.updateProducts();
   }
 
-  Widget _buildSearchContent() {
-    return _expandedContainer(
-      children: [
-        Text(
-          'Search storefront',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _searchController,
-          decoration: InputDecoration(
-            hintText: 'Search by product name, brand or category',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            prefixIcon: const Icon(Icons.search),
-            suffixIcon: IconButton(
-              icon: const Icon(Icons.send),
-              onPressed: _applySearch,
+  Future<void> _showStorefrontSheet({
+    required String title,
+    required Widget child,
+  }) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+        return Padding(
+          padding: EdgeInsets.only(bottom: bottomInset),
+          child: Container(
+            decoration: const BoxDecoration(
+              color: Color(0xFFF7F4EF),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 44,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.black12,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    title,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.headlineMedium?.copyWith(fontSize: 24),
+                  ),
+                  const SizedBox(height: 16),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: child,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          onSubmitted: (_) => _applySearch(),
-          onChanged: _listingFilters.setSearchQuery,
+        );
+      },
+    );
+  }
+
+  Widget _buildQuickAction({
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+    String? badge,
+  }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return Expanded(
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          backgroundColor: Colors.white,
+          side: BorderSide(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.35),
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
         ),
-      ],
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 18, color: colorScheme.primary),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: colorScheme.onSurface,
+                ),
+              ),
+            ),
+            if (badge != null) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  badge,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: Colors.white,
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 
@@ -119,317 +188,372 @@ class _SearchFilterBarState extends State<SearchFilterBar> {
     required String title,
     required List<Widget> children,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: Theme.of(context).textTheme.titleSmall),
-        const SizedBox(height: 8),
-        Wrap(spacing: 8, runSpacing: 8, children: children),
-        const SizedBox(height: 16),
-      ],
+    if (children.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 10),
+          Wrap(spacing: 10, runSpacing: 10, children: children),
+        ],
+      ),
     );
   }
 
-  Widget _buildFilterContent() {
-    return _expandedContainer(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                'Filters',
-                style: Theme.of(context).textTheme.titleMedium,
+  Widget _buildSheetTextField({
+    required TextEditingController controller,
+    required String label,
+    String? helperText,
+  }) {
+    return TextField(
+      controller: controller,
+      keyboardType: TextInputType.number,
+      decoration: InputDecoration(
+        labelText: label,
+        helperText: helperText,
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+    );
+  }
+
+  Future<void> _openSearchSheet() async {
+    _syncControllersFromStore();
+    await _showStorefrontSheet(
+      title: 'Search products',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Search by product name, brand or category.',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText: 'Search the storefront',
+              prefixIcon: const Icon(Icons.search),
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(18),
               ),
             ),
-            TextButton(
-              onPressed: _resetAllFilters,
-              child: const Text('Clear all'),
+            textInputAction: TextInputAction.search,
+            onSubmitted: (_) async {
+              await _applySearch();
+              if (mounted) {
+                Navigator.of(context).pop();
+              }
+            },
+          ),
+          const SizedBox(height: 18),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: () async {
+                await _applySearch();
+                if (mounted) {
+                  Navigator.of(context).pop();
+                }
+              },
+              icon: const Icon(Icons.travel_explore),
+              label: const Text('Search now'),
             ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        _buildFilterChipGroup(
-          title: 'Categories',
-          children: [
-            for (final category in widget.categories)
-              Observer(
-                builder: (_) => FilterChip(
-                  label: Text(category.name),
-                  selected: _listingFilters.categoryFilter.contains(
-                    category.id,
-                  ),
-                  onSelected: (_) =>
-                      _listingFilters.toggleCategoryFilter(category.id),
-                ),
-              ),
-          ],
-        ),
-        _buildFilterChipGroup(
-          title: 'Brands',
-          children: [
-            for (final brand in widget.brands)
-              Observer(
-                builder: (_) => FilterChip(
-                  label: Text(brand.name),
-                  selected: _listingFilters.brandFilter.contains(brand.id),
-                  onSelected: (_) =>
-                      _listingFilters.toggleBrandFilter(brand.id),
-                ),
-              ),
-          ],
-        ),
-        _buildFilterChipGroup(
-          title: 'Availability',
-          children: [
-            Observer(
-              builder: (_) => FilterChip(
-                label: Text('In stock (${_listingFilters.inStockCount})'),
-                selected: _listingFilters.availabilityFilter == 'in_stock',
-                onSelected: (_) => _listingFilters.setAvailabilityFilter(
-                  _listingFilters.availabilityFilter == 'in_stock'
-                      ? null
-                      : 'in_stock',
-                ),
-              ),
-            ),
-            Observer(
-              builder: (_) => FilterChip(
-                label: Text(
-                  'Out of stock (${_listingFilters.outOfStockCount})',
-                ),
-                selected: _listingFilters.availabilityFilter == 'out_of_stock',
-                onSelected: (_) => _listingFilters.setAvailabilityFilter(
-                  _listingFilters.availabilityFilter == 'out_of_stock'
-                      ? null
-                      : 'out_of_stock',
-                ),
-              ),
-            ),
-          ],
-        ),
-        _buildFilterChipGroup(
-          title: 'Rating',
-          children: [
-            for (final rating
-                in _listingFilters.availableRatings.isNotEmpty
-                    ? _listingFilters.availableRatings
-                    : [5, 4, 3, 2, 1])
-              Observer(
-                builder: (_) => FilterChip(
-                  label: Text('$rating★ & up'),
-                  selected: _listingFilters.ratingFilter == rating.toDouble(),
-                  onSelected: (_) => _listingFilters.setRatingFilter(
-                    _listingFilters.ratingFilter == rating.toDouble()
-                        ? null
-                        : rating.toDouble(),
-                  ),
-                ),
-              ),
-          ],
-        ),
-        Text('Price range', style: Theme.of(context).textTheme.titleSmall),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _minPriceController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'Min',
-                  helperText: _listingFilters.availableMinPrice > 0
-                      ? 'From ${_listingFilters.availableMinPrice.toStringAsFixed(0)}'
-                      : null,
-                  border: const OutlineInputBorder(),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: TextField(
-                controller: _maxPriceController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'Max',
-                  helperText: _listingFilters.availableMaxPrice > 0
-                      ? 'To ${_listingFilters.availableMaxPrice.toStringAsFixed(0)}'
-                      : null,
-                  border: const OutlineInputBorder(),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        for (final attribute in widget.attributes) ...[
-          _buildFilterChipGroup(
-            title: attribute.attributeSetName,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openFilterSheet() async {
+    _syncControllersFromStore();
+    await _showStorefrontSheet(
+      title: 'Filter results',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              for (final value in attribute.values)
+              Expanded(
+                child: Text(
+                  'Refine by category, brand, attributes, stock and price.',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ),
+              TextButton(
+                onPressed: () async {
+                  await _resetAllFilters();
+                  if (mounted) {
+                    Navigator.of(context).pop();
+                  }
+                },
+                child: const Text('Clear all'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _buildFilterChipGroup(
+            title: 'Categories',
+            children: [
+              for (final category in widget.categories)
                 Observer(
                   builder: (_) => FilterChip(
-                    label: Text(value.name),
-                    selected: _listingFilters.attributeValueFilter.contains(
-                      value.id,
+                    label: Text('${category.name} (${category.count})'),
+                    selected: _listingFilters.categoryFilter.contains(
+                      category.discoveryKey,
                     ),
                     onSelected: (_) =>
-                        _listingFilters.toggleAttributeFilter(value.id),
+                        _listingFilters.toggleCategoryFilter(
+                          category.discoveryKey,
+                        ),
                   ),
                 ),
             ],
           ),
-        ],
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton(
-            onPressed: _applyAdvancedFilters,
-            child: const Text('Apply filters'),
+          _buildFilterChipGroup(
+            title: 'Brands',
+            children: [
+              for (final brand in widget.brands)
+                Observer(
+                  builder: (_) => FilterChip(
+                    label: Text('${brand.name} (${brand.count})'),
+                    selected: _listingFilters.brandFilter.contains(
+                      brand.discoveryKey,
+                    ),
+                    onSelected: (_) =>
+                        _listingFilters.toggleBrandFilter(brand.discoveryKey),
+                  ),
+                ),
+            ],
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSortTile(String label, SortOption value) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      title: Text(label),
-      leading: Radio<SortOption>(value: value),
-      onTap: () async {
-        _listingFilters.setSortOption(value);
-        await _listingFilters.updateProducts();
-      },
-    );
-  }
-
-  Widget _buildSortContent() {
-    return _expandedContainer(
-      children: [
-        Text('Sort products', style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 12),
-        Observer(
-          builder: (_) => RadioGroup<SortOption>(
-            groupValue: _listingFilters.sortOption,
-            onChanged: (selected) async {
-              _listingFilters.setSortOption(selected);
-              await _listingFilters.updateProducts();
-            },
-            child: Column(
-              children: [
-                _buildSortTile('Relevance', SortOption.relevance),
-                _buildSortTile('Most popular', SortOption.popular),
-                _buildSortTile('Newest first', SortOption.timeDesc),
-                _buildSortTile('Oldest first', SortOption.timeAsc),
-                _buildSortTile('Name A-Z', SortOption.nameAsc),
-                _buildSortTile('Name Z-A', SortOption.nameDesc),
-                _buildSortTile('Price low to high', SortOption.priceAsc),
-                _buildSortTile('Price high to low', SortOption.priceDesc),
-                _buildSortTile('Highest rated', SortOption.rating),
-              ],
+          _buildFilterChipGroup(
+            title: 'Availability',
+            children: [
+              Observer(
+                builder: (_) => FilterChip(
+                  label: Text('In stock (${_listingFilters.inStockCount})'),
+                  selected: _listingFilters.availabilityFilter == 'in_stock',
+                  onSelected: (_) => _listingFilters.setAvailabilityFilter(
+                    _listingFilters.availabilityFilter == 'in_stock'
+                        ? null
+                        : 'in_stock',
+                  ),
+                ),
+              ),
+              Observer(
+                builder: (_) => FilterChip(
+                  label: Text(
+                    'Out of stock (${_listingFilters.outOfStockCount})',
+                  ),
+                  selected:
+                      _listingFilters.availabilityFilter == 'out_of_stock',
+                  onSelected: (_) => _listingFilters.setAvailabilityFilter(
+                    _listingFilters.availabilityFilter == 'out_of_stock'
+                        ? null
+                        : 'out_of_stock',
+                  ),
+                ),
+              ),
+            ],
+          ),
+          _buildFilterChipGroup(
+            title: 'Rating',
+            children: [
+              for (final rating
+                  in _listingFilters.availableRatings.isNotEmpty
+                      ? _listingFilters.availableRatings
+                      : [5, 4, 3, 2, 1])
+                Observer(
+                  builder: (_) => FilterChip(
+                    label: Text('$rating★ & up'),
+                    selected: _listingFilters.ratingFilter == rating.toDouble(),
+                    onSelected: (_) => _listingFilters.setRatingFilter(
+                      _listingFilters.ratingFilter == rating.toDouble()
+                          ? null
+                          : rating.toDouble(),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          if (widget.attributes.isNotEmpty)
+            for (final attribute in widget.attributes)
+              _buildFilterChipGroup(
+                title: attribute.attributeSetName,
+                children: [
+                  for (final value in attribute.values)
+                    Observer(
+                      builder: (_) => FilterChip(
+                        label: Text(value.name),
+                        selected: _listingFilters.attributeValueFilter.contains(
+                          value.id,
+                        ),
+                        onSelected: (_) =>
+                            _listingFilters.toggleAttributeFilter(value.id),
+                      ),
+                    ),
+                ],
+              ),
+          Text('Price range', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _buildSheetTextField(
+                  controller: _minPriceController,
+                  label: 'Min price',
+                  helperText: _listingFilters.availableMinPrice > 0
+                      ? storefrontCurrency(_listingFilters.availableMinPrice)
+                      : null,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildSheetTextField(
+                  controller: _maxPriceController,
+                  label: 'Max price',
+                  helperText: _listingFilters.availableMaxPrice > 0
+                      ? storefrontCurrency(_listingFilters.availableMaxPrice)
+                      : null,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: () async {
+                await _applyAdvancedFilters();
+                if (mounted) {
+                  Navigator.of(context).pop();
+                }
+              },
+              icon: const Icon(Icons.tune),
+              label: const Text('Apply filters'),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _buildExpandedContent() {
-    if (_searchOpen) {
-      return _buildSearchContent();
-    }
-    if (_filterOpen) {
-      return _buildFilterContent();
-    }
-    if (_sortOpen) {
-      return _buildSortContent();
-    }
-    return const SizedBox.shrink();
-  }
-
-  Widget _bottomBarButton({
-    required VoidCallback onPressed,
-    required bool isVisible,
-    required IconData icon,
-    required String tooltip,
-  }) {
-    return IconButton(
-      onPressed: onPressed,
-      tooltip: tooltip,
-      icon: Badge(
-        isLabelVisible: isVisible,
-        label: const Text('!'),
-        child: Icon(icon),
+  Future<void> _openSortSheet() async {
+    await _showStorefrontSheet(
+      title: 'Sort products',
+      child: Observer(
+        builder: (_) => RadioGroup<SortOption>(
+          groupValue: _listingFilters.sortOption,
+          onChanged: (selected) async {
+            _listingFilters.setSortOption(selected);
+            await _listingFilters.updateProducts();
+            if (mounted) {
+              Navigator.of(context).pop();
+            }
+          },
+          child: Column(
+            children: [
+              for (final option in const <(String, SortOption)>[
+                ('Relevance', SortOption.relevance),
+                ('Most popular', SortOption.popular),
+                ('Newest first', SortOption.timeDesc),
+                ('Oldest first', SortOption.timeAsc),
+                ('Name A-Z', SortOption.nameAsc),
+                ('Name Z-A', SortOption.nameDesc),
+                ('Price low to high', SortOption.priceAsc),
+                ('Price high to low', SortOption.priceDesc),
+                ('Highest rated', SortOption.rating),
+              ])
+                RadioListTile<SortOption>(
+                  value: option.$2,
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(option.$1),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      alignment: Alignment.bottomCenter,
-      children: [
-        Container(
-          height: kBottomNavigationBarHeight,
-          color: Theme.of(context).colorScheme.surface,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: Row(
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        child: Observer(
+          builder: (_) => StorefrontSurface(
+            margin: EdgeInsets.zero,
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Observer(
-                  builder: (_) => _bottomBarButton(
-                    onPressed: () {
-                      _syncControllersFromStore();
-                      setState(() {
-                        _filterOpen = !_filterOpen;
-                        _searchOpen = false;
-                        _sortOpen = false;
-                      });
-                    },
-                    isVisible: _listingFilters.hasAnyFilters,
-                    icon: Icons.filter_list_alt,
-                    tooltip: 'Filters',
+                Row(
+                  children: [
+                    _buildQuickAction(
+                      icon: Icons.search,
+                      label: _listingFilters.hasSearchText
+                          ? 'Search active'
+                          : 'Search',
+                      onPressed: _openSearchSheet,
+                      badge: _listingFilters.hasSearchText ? '1' : null,
+                    ),
+                    const SizedBox(width: 10),
+                    _buildQuickAction(
+                      icon: Icons.tune,
+                      label: 'Filters',
+                      onPressed: _openFilterSheet,
+                      badge: _listingFilters.activeFilterCount > 0
+                          ? _listingFilters.activeFilterCount.toString()
+                          : null,
+                    ),
+                    const SizedBox(width: 10),
+                    _buildQuickAction(
+                      icon: Icons.swap_vert,
+                      label: 'Sort',
+                      onPressed: _openSortSheet,
+                    ),
+                  ],
+                ),
+                if (_listingFilters.hasSearchText ||
+                    _listingFilters.activeFilterCount > 0) ...[
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        if (_listingFilters.hasSearchText)
+                          StorefrontTag(
+                            label: 'Query: ${_listingFilters.searchQuery}',
+                            icon: Icons.search,
+                          ),
+                        if (_listingFilters.activeFilterCount > 0)
+                          StorefrontTag(
+                            label:
+                                '${_listingFilters.activeFilterCount} filters applied',
+                            icon: Icons.filter_alt_outlined,
+                            backgroundColor: const Color(0xFFFCE7DF),
+                          ),
+                      ],
+                    ),
                   ),
-                ),
-                Observer(
-                  builder: (_) => _bottomBarButton(
-                    onPressed: () {
-                      _syncControllersFromStore();
-                      setState(() {
-                        _searchOpen = !_searchOpen;
-                        _filterOpen = false;
-                        _sortOpen = false;
-                      });
-                    },
-                    isVisible: _listingFilters.hasSearchText,
-                    icon: Icons.search,
-                    tooltip: 'Search',
-                  ),
-                ),
-                _bottomBarButton(
-                  onPressed: () {
-                    setState(() {
-                      _sortOpen = !_sortOpen;
-                      _searchOpen = false;
-                      _filterOpen = false;
-                    });
-                  },
-                  isVisible: false,
-                  icon: Icons.sort,
-                  tooltip: 'Sort',
-                ),
+                ],
               ],
             ),
           ),
         ),
-        if (isExpanded) const SizedBox(height: 420),
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: kBottomNavigationBarHeight,
-          child: _buildExpandedContent(),
-        ),
-      ],
+      ),
     );
   }
 }

@@ -3,8 +3,10 @@ import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/repository/storefront/storefront_repository.dart';
 import 'package:mobile_ai_erp/presentation/storefront/classes/filter_arguments.dart';
 import 'package:mobile_ai_erp/presentation/storefront/models/storefront_models.dart';
+import 'package:mobile_ai_erp/presentation/storefront/widgets/page_banner.dart';
 import 'package:mobile_ai_erp/presentation/storefront/widgets/product_card_small.dart';
 import 'package:mobile_ai_erp/presentation/storefront/widgets/section_header.dart';
+import 'package:mobile_ai_erp/presentation/storefront/widgets/storefront_ui.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
 
 class BrandsLandingPage extends StatefulWidget {
@@ -24,6 +26,13 @@ class _BrandsLandingPageState extends State<BrandsLandingPage> {
     _brandsFuture = _repository.getBrands();
   }
 
+  Future<void> _reload() async {
+    setState(() {
+      _brandsFuture = _repository.getBrands();
+    });
+    await _brandsFuture;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -32,123 +41,126 @@ class _BrandsLandingPageState extends State<BrandsLandingPage> {
         actions: [
           IconButton(
             onPressed: () => Navigator.of(context).pushNamed(Routes.storeHome),
-            icon: const Icon(Icons.home),
+            icon: const Icon(Icons.home_outlined),
           ),
         ],
       ),
-      body: FutureBuilder<List<StorefrontBrand>>(
-        future: _brandsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return _LandingState(
-              message: snapshot.error.toString(),
-              actionLabel: 'Retry',
-              onPressed: () {
-                setState(() {
-                  _brandsFuture = _repository.getBrands();
-                });
-              },
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFF7F4EF), Color(0xFFFBFBFA)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: FutureBuilder<List<StorefrontBrand>>(
+          future: _brandsFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState != ConnectionState.done) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) {
+              return StorefrontEmptyState(
+                icon: Icons.storefront_outlined,
+                title: 'Unable to load brands',
+                message: snapshot.error.toString(),
+                actionLabel: 'Retry',
+                onPressed: _reload,
+              );
+            }
+
+            final brands = snapshot.data ?? const [];
+            if (brands.isEmpty) {
+              return StorefrontEmptyState(
+                icon: Icons.storefront_outlined,
+                title: 'No brands available',
+                message:
+                    'The public storefront runtime did not return brand landing data for this tenant.',
+                actionLabel: 'Refresh',
+                onPressed: _reload,
+              );
+            }
+
+            return RefreshIndicator(
+              onRefresh: _reload,
+              child: ListView(
+                padding: const EdgeInsets.only(bottom: 28),
+                children: [
+                  const PageBanner(
+                    imageSource: null,
+                    heading: 'Brand Landings',
+                    subheading:
+                        'Browse brands connected to live discovery APIs and jump into filtered product listings.',
+                    tags: ['Live brand data', 'Filtered PLP'],
+                  ),
+                  for (final brand in brands)
+                    _buildBrandSection(context, brand),
+                ],
+              ),
             );
-          }
-          final brands = snapshot.data ?? const [];
-          if (brands.isEmpty) {
-            return _LandingState(
-              message:
-                  'No storefront brands are currently available from the public runtime.',
-              actionLabel: 'Refresh',
-              onPressed: () {
-                setState(() {
-                  _brandsFuture = _repository.getBrands();
-                });
-              },
-            );
-          }
-          return ListView(
-            children: [
-              const SizedBox(height: 20),
-              for (final brand in brands) _buildBrandSection(context, brand),
-            ],
-          );
-        },
+          },
+        ),
       ),
     );
   }
 
   Widget _buildBrandSection(BuildContext context, StorefrontBrand brand) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SectionHeader(
-          headingText: brand.name,
-          linkText: 'See all products from ${brand.name}',
-          linkDestination: Routes.storefrontProductListing,
-          filterArguments: FilterArguments(
-            selectedBrands: [brand.id],
-            brandKey: brand.slug,
+    return StorefrontSurface(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionHeader(
+            headingText: brand.name,
+            subheadingText:
+                brand.description ?? 'Explore this brand in the storefront.',
+            linkText: 'View all products',
+            linkDestination: Routes.storefrontProductListing,
+            filterArguments: FilterArguments(
+              selectedBrands: [brand.slug],
+              brandKey: brand.slug,
+            ),
           ),
-        ),
-        if (brand.description != null)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Text(brand.description!),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                StorefrontTag(
+                  label: '${brand.productCount} products',
+                  icon: Icons.inventory_2_outlined,
+                ),
+                StorefrontTag(
+                  label: 'Brand slug: ${brand.slug}',
+                  icon: Icons.sell_outlined,
+                  backgroundColor: const Color(0xFFFCE7DF),
+                ),
+              ],
+            ),
           ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Text('${brand.productCount} products available'),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: brand.featuredProducts
-                .map(
-                  (product) => ProductCardSmall(
+          if (brand.featuredProducts.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 290,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: brand.featuredProducts.length,
+                separatorBuilder: (context, index) => const SizedBox(width: 12),
+                itemBuilder: (context, index) {
+                  final product = brand.featuredProducts[index];
+                  return ProductCardSmall(
                     productId: product.id,
                     productName: product.title,
                     imageSource: product.images.isNotEmpty
                         ? product.images.first
                         : null,
-                  ),
-                )
-                .toList(),
-          ),
-        ),
-        const SizedBox(height: 16),
-      ],
-    );
-  }
-}
-
-class _LandingState extends StatelessWidget {
-  const _LandingState({
-    required this.message,
-    required this.actionLabel,
-    required this.onPressed,
-  });
-
-  final String message;
-  final String actionLabel;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.storefront_outlined, size: 40),
-            const SizedBox(height: 12),
-            Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            FilledButton(onPressed: onPressed, child: Text(actionLabel)),
+                  );
+                },
+              ),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }

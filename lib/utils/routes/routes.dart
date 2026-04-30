@@ -89,6 +89,7 @@ class Routes {
   static const String postPurchaseExchangeDetail = '/post-purchase/exchange';
   static const String postPurchaseRefundDetail = '/post-purchase/refund';
   static const String storeHome = '/storefront';
+  static const String storefrontLegacyHome = '/stockfront';
   static const String storefrontProductListing = '/storefront/product-listing';
   static const String categoriesLanding = '/storefront/categories';
   static const String brandsLanding = '/storefront/brands';
@@ -157,6 +158,7 @@ class Routes {
     postPurchaseRefundDetail: (BuildContext context) =>
         const RefundDetailScreen(),
     storeHome: (BuildContext context) => StorefrontHomePage(),
+    storefrontLegacyHome: (BuildContext context) => StorefrontHomePage(),
     storefrontProductListing: (BuildContext context) => ProductListingScreen(),
     categoriesLanding: (BuildContext context) => const CategoriesLandingPage(),
     brandsLanding: (BuildContext context) => const BrandsLandingPage(),

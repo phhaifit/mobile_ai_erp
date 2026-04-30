@@ -18,6 +18,7 @@ enum SortOption {
   rating,
 }
 
+// ignore: library_private_types_in_public_api
 class ListingFilters = _ListingFiltersStore with _$ListingFilters;
 
 abstract class _ListingFiltersStore with Store {
@@ -89,6 +90,9 @@ abstract class _ListingFiltersStore with Store {
   int currentPage = 1;
 
   @observable
+  int totalItems = 0;
+
+  @observable
   String? activeCategoryKey;
 
   @observable
@@ -125,10 +129,28 @@ abstract class _ListingFiltersStore with Store {
   @computed
   bool get hasSearchText => searchQuery.trim().isNotEmpty;
 
+  @computed
+  int get activeFilterCount {
+    var count = 0;
+    count += categoryFilter.length;
+    count += brandFilter.length;
+    count += attributeValueFilter.length;
+    if (minPriceFilter != null || maxPriceFilter != null) {
+      count += 1;
+    }
+    if (ratingFilter != null) {
+      count += 1;
+    }
+    if (availabilityFilter != null) {
+      count += 1;
+    }
+    return count;
+  }
+
   @action
   void setSearchQuery(String value) {
-    searchQuery = value;
     _searchDebounce?.cancel();
+    searchQuery = value;
     _searchDebounce = Timer(
       const Duration(milliseconds: 400),
       () => updateProducts(),
@@ -253,6 +275,13 @@ abstract class _ListingFiltersStore with Store {
     activeCollectionSlug = null;
     breadcrumb.clear();
     errorMessage = null;
+    totalItems = 0;
+  }
+
+  @action
+  void commitSearchQuery(String value) {
+    _searchDebounce?.cancel();
+    searchQuery = value;
   }
 
   @action
@@ -307,11 +336,13 @@ abstract class _ListingFiltersStore with Store {
       products = ObservableList.of(productResponse.data);
       hasMore = productResponse.hasMore;
       currentPage = productResponse.page;
+      totalItems = productResponse.totalItems;
       await _loadDiscoveryMetadata(query);
     } catch (error) {
       products.clear();
       hasMore = false;
       errorMessage = error.toString();
+      totalItems = 0;
     } finally {
       isLoading = false;
     }
@@ -329,6 +360,7 @@ abstract class _ListingFiltersStore with Store {
       products.addAll(response.data);
       currentPage = response.page;
       hasMore = response.hasMore;
+      totalItems = response.totalItems;
     } catch (error) {
       errorMessage = error.toString();
     } finally {
@@ -381,7 +413,7 @@ abstract class _ListingFiltersStore with Store {
       if (categoryFilter.isNotEmpty) {
         final selectedCategoryId = categoryFilter.first;
         final matchedCategory = categories.firstWhere(
-          (category) => category.id == selectedCategoryId,
+          (category) => category.discoveryKey == selectedCategoryId,
           orElse: () => StorefrontFacetOption(
             id: selectedCategoryId,
             name: selectedCategoryId,

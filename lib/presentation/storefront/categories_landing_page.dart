@@ -3,7 +3,9 @@ import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/repository/storefront/storefront_repository.dart';
 import 'package:mobile_ai_erp/presentation/storefront/classes/filter_arguments.dart';
 import 'package:mobile_ai_erp/presentation/storefront/models/storefront_models.dart';
+import 'package:mobile_ai_erp/presentation/storefront/widgets/page_banner.dart';
 import 'package:mobile_ai_erp/presentation/storefront/widgets/section_header.dart';
+import 'package:mobile_ai_erp/presentation/storefront/widgets/storefront_ui.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
 
 class CategoriesLandingPage extends StatefulWidget {
@@ -23,6 +25,13 @@ class _CategoriesLandingPageState extends State<CategoriesLandingPage> {
     _categoriesFuture = _repository.getCategories();
   }
 
+  Future<void> _reload() async {
+    setState(() {
+      _categoriesFuture = _repository.getCategories();
+    });
+    await _categoriesFuture;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -31,124 +40,141 @@ class _CategoriesLandingPageState extends State<CategoriesLandingPage> {
         actions: [
           IconButton(
             onPressed: () => Navigator.of(context).pushNamed(Routes.storeHome),
-            icon: const Icon(Icons.home),
+            icon: const Icon(Icons.home_outlined),
           ),
         ],
       ),
-      body: FutureBuilder<List<StorefrontCategoryTreeNode>>(
-        future: _categoriesFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return _LandingState(
-              message: snapshot.error.toString(),
-              actionLabel: 'Retry',
-              onPressed: () {
-                setState(() {
-                  _categoriesFuture = _repository.getCategories();
-                });
-              },
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFF7F4EF), Color(0xFFFBFBFA)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: FutureBuilder<List<StorefrontCategoryTreeNode>>(
+          future: _categoriesFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState != ConnectionState.done) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) {
+              return StorefrontEmptyState(
+                icon: Icons.category_outlined,
+                title: 'Unable to load categories',
+                message: snapshot.error.toString(),
+                actionLabel: 'Retry',
+                onPressed: _reload,
+              );
+            }
+
+            final categories = snapshot.data ?? const [];
+            if (categories.isEmpty) {
+              return StorefrontEmptyState(
+                icon: Icons.category_outlined,
+                title: 'No categories available',
+                message:
+                    'The public storefront runtime did not return category navigation for this tenant.',
+                actionLabel: 'Refresh',
+                onPressed: _reload,
+              );
+            }
+
+            return RefreshIndicator(
+              onRefresh: _reload,
+              child: ListView(
+                padding: const EdgeInsets.only(bottom: 28),
+                children: [
+                  const PageBanner(
+                    imageSource: null,
+                    heading: 'Category Navigation',
+                    subheading:
+                        'Browse the live category tree and jump into category-aware product discovery with breadcrumb support.',
+                    tags: ['API breadcrumbs', 'Category tree'],
+                  ),
+                  for (final category in categories)
+                    _buildCategorySection(context, category),
+                ],
+              ),
             );
-          }
-          final categories = snapshot.data ?? const [];
-          if (categories.isEmpty) {
-            return _LandingState(
-              message:
-                  'No storefront categories are currently available from the public runtime.',
-              actionLabel: 'Refresh',
-              onPressed: () {
-                setState(() {
-                  _categoriesFuture = _repository.getCategories();
-                });
-              },
-            );
-          }
-          return ListView(
-            children: [
-              const SizedBox(height: 20),
-              for (final category in categories)
-                _buildCategorySection(category),
-            ],
-          );
-        },
+          },
+        ),
       ),
     );
   }
 
-  Widget _buildCategorySection(StorefrontCategoryTreeNode category) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SectionHeader(
-          headingText: category.name,
-          linkText: 'See all ${category.name}',
-          linkDestination: Routes.storefrontProductListing,
-          filterArguments: FilterArguments(
-            selectedCategories: [category.id],
-            categoryKey: category.slug,
-          ),
-        ),
-        if (category.description != null)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Text(category.description!),
-          ),
-        if (category.children.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: category.children
-                  .map(
-                    (child) => ActionChip(
-                      label: Text(child.name),
-                      onPressed: () => Navigator.of(context).pushNamed(
-                        Routes.storefrontProductListing,
-                        arguments: FilterArguments(
-                          selectedCategories: [child.id],
-                          categoryKey: child.slug,
-                        ),
-                      ),
-                    ),
-                  )
-                  .toList(),
+  Widget _buildCategorySection(
+    BuildContext context,
+    StorefrontCategoryTreeNode category,
+  ) {
+    return StorefrontSurface(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionHeader(
+            headingText: category.name,
+            subheadingText:
+                category.description ??
+                'Browse products from this category and its children.',
+            linkText: 'View products',
+            linkDestination: Routes.storefrontProductListing,
+            filterArguments: FilterArguments(
+              selectedCategories: [category.slug],
+              categoryKey: category.slug,
             ),
           ),
-        const SizedBox(height: 12),
-      ],
-    );
-  }
-}
-
-class _LandingState extends StatelessWidget {
-  const _LandingState({
-    required this.message,
-    required this.actionLabel,
-    required this.onPressed,
-  });
-
-  final String message;
-  final String actionLabel;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.category_outlined, size: 40),
-            const SizedBox(height: 12),
-            Text(message, textAlign: TextAlign.center),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                StorefrontTag(
+                  label: 'Category slug: ${category.slug}',
+                  icon: Icons.route_outlined,
+                ),
+                if (category.children.isNotEmpty)
+                  StorefrontTag(
+                    label: '${category.children.length} subcategories',
+                    icon: Icons.account_tree_outlined,
+                    backgroundColor: const Color(0xFFFCE7DF),
+                  ),
+              ],
+            ),
+          ),
+          if (category.children.isNotEmpty) ...[
             const SizedBox(height: 16),
-            FilledButton(onPressed: onPressed, child: Text(actionLabel)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: category.children
+                    .map(
+                      (child) => ActionChip(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        label: Text(child.name),
+                        avatar: const Icon(
+                          Icons.arrow_outward_rounded,
+                          size: 16,
+                        ),
+                        onPressed: () => Navigator.of(context).pushNamed(
+                          Routes.storefrontProductListing,
+                          arguments: FilterArguments(
+                            selectedCategories: [child.slug],
+                            categoryKey: child.slug,
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
