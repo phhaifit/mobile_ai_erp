@@ -51,13 +51,13 @@ abstract class _UserStore with Store {
   }
 
   @action
-  Future<void> deleteUser(int id) async {
+  Future<void> deleteUser(String id) async {
     await userRepo.delete(id);
     await loadUsers();
   }
 
   @action
-  Future<void> assignRole(int userId, int roleId) async {
+  Future<void> assignRole(String userId, String roleId) async {
     final user = userList.firstWhere((u) => u.id == userId);
 
     try {
