@@ -108,10 +108,10 @@ class NetworkModule {
 
     // datasources:-----------------------------------------------------------
     getIt.registerSingleton<RoleRemoteDataSource>(
-      RoleRemoteDataSourceImpl(dio: getIt<DioClient>().dio),
+      RoleRemoteDataSourceImpl(dio: erpDioClient.dio),
     );
     getIt.registerSingleton<UserRemoteDataSource>(
-      UserRemoteDataSourceImpl(getIt<DioClient>().dio),
+      UserRemoteDataSourceImpl(erpDioClient.dio),
     );
 
   }
