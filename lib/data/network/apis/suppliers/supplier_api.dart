@@ -1,7 +1,5 @@
 import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
-import 'package:mobile_ai_erp/domain/entity/shared/paginated_result.dart';
-import 'package:mobile_ai_erp/domain/entity/supplier/product_summary.dart';
-import 'package:mobile_ai_erp/data/network/mappers/suppliers/product_summary_mapper.dart';
+import 'package:mobile_ai_erp/data/network/dto/shared/paginated_response.dto.dart';
 
 class SupplierApi {
   static const String _erpPath = '/erp';
@@ -17,7 +15,7 @@ class SupplierApi {
   })  : _suppliersPath = suppliersPath,
         _productsPath = productsPath;
 
-  Future<Map<String, dynamic>> getSuppliers({
+  Future<PaginatedResponseDto> getSuppliers({
     String search = '',
     int page = 1,
     int pageSize = 10,
@@ -38,7 +36,11 @@ class SupplierApi {
       _suppliersPath,
       queryParameters: queryParameters,
     );
-    return response.data as Map<String, dynamic>;
+    return PaginatedResponseDto.fromJson(
+      response.data as Map<String, dynamic>,
+      pageFallback: page,
+      pageSizeFallback: pageSize,
+    );
   }
 
   Future<Map<String, dynamic>> getSupplierById(String id) async {
@@ -48,7 +50,7 @@ class SupplierApi {
     return response.data as Map<String, dynamic>;
   }
 
-  Future<Map<String, dynamic>> getSupplierProducts(
+  Future<PaginatedResponseDto> getSupplierProducts(
     String supplierId, {
     int page = 1,
     int pageSize = 10,
@@ -62,7 +64,11 @@ class SupplierApi {
         if (search.isNotEmpty) 'search': search,
       },
     );
-    return response.data as Map<String, dynamic>;
+    return PaginatedResponseDto.fromJson(
+      response.data as Map<String, dynamic>,
+      pageFallback: page,
+      pageSizeFallback: pageSize,
+    );
   }
 
   Future<Map<String, dynamic>> createSupplier(Map<String, dynamic> payload) async {
@@ -120,7 +126,7 @@ class SupplierApi {
     );
   }
 
-  Future<PaginatedResult<ProductSummary>> searchProducts({
+  Future<PaginatedResponseDto> searchProducts({
     String search = '',
     int page = 1,
     int pageSize = 10,
@@ -135,19 +141,10 @@ class SupplierApi {
       _productsPath,
       queryParameters: queryParameters,
     );
-
-    final data = response.data as Map<String, dynamic>;
-    final products = (data['data'] as List<dynamic>?)
-        ?.map((item) => ProductSummaryMapper.fromJson(item as Map<String, dynamic>))
-        .toList() ?? [];
-
-    final meta = data['meta'] as Map<String, dynamic>?;
-    return PaginatedResult(
-      data: products,
-      page: meta?['page'] as int? ?? page,
-      pageSize: meta?['pageSize'] as int? ?? pageSize,
-      totalItems: meta?['totalItems'] as int? ?? products.length,
-      totalPages: meta?['totalPages'] as int? ?? 1,
+    return PaginatedResponseDto.fromJson(
+      response.data as Map<String, dynamic>,
+      pageFallback: page,
+      pageSizeFallback: pageSize,
     );
   }
 }

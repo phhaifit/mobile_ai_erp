@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:mobile_ai_erp/data/network/apis/suppliers/supplier_api.dart';
 import 'package:mobile_ai_erp/data/network/dto/suppliers/product_supplier_link.dto.dart';
+import 'package:mobile_ai_erp/data/network/mappers/suppliers/product_summary_mapper.dart';
 import 'package:mobile_ai_erp/data/network/mappers/suppliers/product_supplier_mapper.dart';
 import 'package:mobile_ai_erp/data/network/mappers/suppliers/supplier_mapper.dart';
 import 'package:mobile_ai_erp/domain/entity/shared/paginated_result.dart';
@@ -24,7 +25,7 @@ class SupplierRepositoryImpl implements SupplierRepository {
     String? sortBy,
     String? sortOrder,
   }) async {
-    final response = await _api.getSuppliers(
+    final dto = await _api.getSuppliers(
       search: search,
       page: page,
       pageSize: pageSize,
@@ -32,14 +33,12 @@ class SupplierRepositoryImpl implements SupplierRepository {
       sortBy: sortBy,
       sortOrder: sortOrder,
     );
-    final data = response['data'] as List<dynamic>;
-    final meta = response['meta'] as Map<String, dynamic>;
     return PaginatedResult(
-      data: SupplierMapper.fromJsonList(data),
-      page: meta['page'] as int,
-      pageSize: meta['pageSize'] as int,
-      totalItems: meta['totalItems'] as int,
-      totalPages: meta['totalPages'] as int,
+      data: SupplierMapper.fromJsonList(dto.data),
+      page: dto.page,
+      pageSize: dto.pageSize,
+      totalItems: dto.totalItems,
+      totalPages: dto.totalPages,
     );
   }
 
@@ -78,20 +77,18 @@ class SupplierRepositoryImpl implements SupplierRepository {
     int pageSize = 10,
     String search = '',
   }) async {
-    final response = await _api.getSupplierProducts(
+    final dto = await _api.getSupplierProducts(
       supplierId,
       page: page,
       pageSize: pageSize,
       search: search,
     );
-    final data = response['data'] as List<dynamic>;
-    final meta = response['meta'] as Map<String, dynamic>?;
     return PaginatedResult(
-      data: ProductSupplierMapper.fromJsonList(data),
-      page: meta?['page'] as int? ?? page,
-      pageSize: meta?['pageSize'] as int? ?? pageSize,
-      totalItems: meta?['totalItems'] as int? ?? data.length,
-      totalPages: meta?['totalPages'] as int? ?? 1,
+      data: ProductSupplierMapper.fromJsonList(dto.data),
+      page: dto.page,
+      pageSize: dto.pageSize,
+      totalItems: dto.totalItems,
+      totalPages: dto.totalPages,
     );
   }
 
@@ -142,10 +139,17 @@ class SupplierRepositoryImpl implements SupplierRepository {
     int page = 1,
     int pageSize = 10,
   }) async {
-    return await _api.searchProducts(
+    final dto = await _api.searchProducts(
       search: search,
       page: page,
       pageSize: pageSize,
+    );
+    return PaginatedResult(
+      data: ProductSummaryMapper.fromJsonList(dto.data),
+      page: dto.page,
+      pageSize: dto.pageSize,
+      totalItems: dto.totalItems,
+      totalPages: dto.totalPages,
     );
   }
 }
