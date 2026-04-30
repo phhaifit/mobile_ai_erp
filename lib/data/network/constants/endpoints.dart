@@ -1,11 +1,6 @@
 class Endpoints {
   Endpoints._();
 
-
-  // base url
-  static const String baseUrl = "http://localhost:5000";
-
-
   // ERP backend base url - override at build time:
   //   --dart-define=ERP_BASE_URL=http://10.0.2.2:3000
   static const String erpBaseUrl = String.fromEnvironment(
@@ -25,8 +20,17 @@ class Endpoints {
   static const int receiveTimeout = 15000;
   static const int connectionTimeout = 30000;
 
-  // legacy posts endpoint
-  static const String getPosts = baseUrl + "/posts";
+  static const String getPosts = "/posts";
+
+  // auth endpoints
+  static const String authStatus = "/auth/status";
+  static const String authRefresh = "/auth/refresh";
+  static const String authSignOut = "/auth/sign-out";
+  static const String tenantsCreate = "/tenants";
+
+  static const String stackAuthHost = 'api.stack-auth.com';
+  static const String stackAuthAuthenticate = '/api/v1/auth/oauth/authorize/';
+  static const String stackAuthToken = 'https://$stackAuthHost/api/v1/auth/oauth/token';
 
   // web builder - store settings
   static const String storeSettings = "/store-settings";
