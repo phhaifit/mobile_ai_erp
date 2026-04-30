@@ -4,7 +4,7 @@ import 'package:mobile_ai_erp/presentation/storefront/models/storefront_models.d
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
 
 /// Widget for a product shown in homepage, product listing page (with or without search/filters), brand and collection landing pages
-/// 
+///
 /// Product information provided by parent widget
 class ProductListingItem extends StatelessWidget {
   const ProductListingItem({
@@ -25,10 +25,8 @@ class ProductListingItem extends StatelessWidget {
           textStyle: TextStyle(
             fontWeight: FontWeight.bold,
             color: Theme.of(context).colorScheme.onSurface,
-            ),
-          decoration: BoxDecoration(
-            color: Colors.amber[300]
           ),
+          decoration: BoxDecoration(color: Colors.amber[300]),
         ),
       };
     }
@@ -46,7 +44,9 @@ class ProductListingItem extends StatelessWidget {
       ),
       child: InkWell(
         onTap: () {
-          Navigator.of(context).pushNamed(Routes.productDetail, arguments: productListing.id);
+          Navigator.of(
+            context,
+          ).pushNamed(Routes.productDetail, arguments: productListing.id);
         },
         child: Padding(
           padding: EdgeInsets.all(12.0),
@@ -57,18 +57,15 @@ class ProductListingItem extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(6.0),
                 child: productListing.images.isNotEmpty
-                  ? Image.network(
-                      productListing.images.first,
-                      width: imageSize,
-                      height: imageSize,
-                      fit: BoxFit.cover,
-                    )
-                  : Image.network(
-                      'https://picsum.photos/250?image=9',
-                      width: imageSize,
-                      height: imageSize,
-                      fit: BoxFit.cover,
-                    ),
+                    ? Image.network(
+                        productListing.images.first,
+                        width: imageSize,
+                        height: imageSize,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, error, stackTrace) =>
+                            _ImagePlaceholder(size: imageSize),
+                      )
+                    : _ImagePlaceholder(size: imageSize),
               ),
               SizedBox(width: 16.0),
               // Product Details
@@ -96,26 +93,38 @@ class ProductListingItem extends StatelessWidget {
                       children: [
                         Flexible(
                           child: TextHighlight(
-                            text: productListing.category ?? 'No category information',
+                            text:
+                                productListing.category ??
+                                'No category information',
                             words: highlightedWords,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             textStyle: TextStyle(
                               fontSize: 13,
-                              color: colorScheme.onSurface.withValues(alpha: 0.7),
+                              color: colorScheme.onSurface.withValues(
+                                alpha: 0.7,
+                              ),
                             ),
                           ),
                         ),
-                        Text('•', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5))),
+                        Text(
+                          '•',
+                          style: TextStyle(
+                            color: colorScheme.onSurface.withValues(alpha: 0.5),
+                          ),
+                        ),
                         Flexible(
                           child: TextHighlight(
-                            text: productListing.brand ?? 'No brand information',
+                            text:
+                                productListing.brand ?? 'No brand information',
                             words: highlightedWords,
-                            maxLines: 1,    
+                            maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             textStyle: TextStyle(
                               fontSize: 13,
-                              color: colorScheme.onSurface.withValues(alpha: 0.7),
+                              color: colorScheme.onSurface.withValues(
+                                alpha: 0.7,
+                              ),
                             ),
                           ),
                         ),
@@ -165,7 +174,7 @@ class ProductListingItem extends StatelessWidget {
                           'VND',
                           style: TextStyle(
                             fontSize: 12,
-                            color: colorScheme.onSurface.withOpacity(0.7),
+                            color: colorScheme.onSurface.withValues(alpha: 0.7),
                           ),
                         ),
                       ],
@@ -179,5 +188,21 @@ class ProductListingItem extends StatelessWidget {
       ),
     );
   }
+}
 
+class _ImagePlaceholder extends StatelessWidget {
+  const _ImagePlaceholder({required this.size});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      alignment: Alignment.center,
+      child: const Icon(Icons.image_not_supported_outlined),
+    );
+  }
 }

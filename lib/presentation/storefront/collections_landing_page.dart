@@ -3,31 +3,32 @@ import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/repository/storefront/storefront_repository.dart';
 import 'package:mobile_ai_erp/presentation/storefront/classes/filter_arguments.dart';
 import 'package:mobile_ai_erp/presentation/storefront/models/storefront_models.dart';
+import 'package:mobile_ai_erp/presentation/storefront/widgets/product_card_small.dart';
 import 'package:mobile_ai_erp/presentation/storefront/widgets/section_header.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
 
-class CategoriesLandingPage extends StatefulWidget {
-  const CategoriesLandingPage({super.key});
+class CollectionsLandingPage extends StatefulWidget {
+  const CollectionsLandingPage({super.key});
 
   @override
-  State<CategoriesLandingPage> createState() => _CategoriesLandingPageState();
+  State<CollectionsLandingPage> createState() => _CollectionsLandingPageState();
 }
 
-class _CategoriesLandingPageState extends State<CategoriesLandingPage> {
+class _CollectionsLandingPageState extends State<CollectionsLandingPage> {
   final StorefrontRepository _repository = getIt<StorefrontRepository>();
-  late Future<List<StorefrontCategoryTreeNode>> _categoriesFuture;
+  late Future<List<StorefrontCollection>> _collectionsFuture;
 
   @override
   void initState() {
     super.initState();
-    _categoriesFuture = _repository.getCategories();
+    _collectionsFuture = _repository.getCollections();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Categories'),
+        title: const Text('Collections'),
         actions: [
           IconButton(
             onPressed: () => Navigator.of(context).pushNamed(Routes.storeHome),
@@ -35,32 +36,32 @@ class _CategoriesLandingPageState extends State<CategoriesLandingPage> {
           ),
         ],
       ),
-      body: FutureBuilder<List<StorefrontCategoryTreeNode>>(
-        future: _categoriesFuture,
+      body: FutureBuilder<List<StorefrontCollection>>(
+        future: _collectionsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return _LandingState(
+            return _StorefrontAsyncState(
               message: snapshot.error.toString(),
               actionLabel: 'Retry',
               onPressed: () {
                 setState(() {
-                  _categoriesFuture = _repository.getCategories();
+                  _collectionsFuture = _repository.getCollections();
                 });
               },
             );
           }
-          final categories = snapshot.data ?? const [];
-          if (categories.isEmpty) {
-            return _LandingState(
+          final collections = snapshot.data ?? const [];
+          if (collections.isEmpty) {
+            return _StorefrontAsyncState(
               message:
-                  'No storefront categories are currently available from the public runtime.',
+                  'No storefront collections are currently available from the public runtime.',
               actionLabel: 'Refresh',
               onPressed: () {
                 setState(() {
-                  _categoriesFuture = _repository.getCategories();
+                  _collectionsFuture = _repository.getCollections();
                 });
               },
             );
@@ -68,8 +69,8 @@ class _CategoriesLandingPageState extends State<CategoriesLandingPage> {
           return ListView(
             children: [
               const SizedBox(height: 20),
-              for (final category in categories)
-                _buildCategorySection(category),
+              for (final collection in collections)
+                _buildCollectionSection(context, collection),
             ],
           );
         },
@@ -77,54 +78,54 @@ class _CategoriesLandingPageState extends State<CategoriesLandingPage> {
     );
   }
 
-  Widget _buildCategorySection(StorefrontCategoryTreeNode category) {
+  Widget _buildCollectionSection(
+    BuildContext context,
+    StorefrontCollection collection,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionHeader(
-          headingText: category.name,
-          linkText: 'See all ${category.name}',
+          headingText: collection.name,
+          linkText: 'See all in ${collection.name}',
           linkDestination: Routes.storefrontProductListing,
-          filterArguments: FilterArguments(
-            selectedCategories: [category.id],
-            categoryKey: category.slug,
-          ),
+          filterArguments: FilterArguments(collectionSlug: collection.slug),
         ),
-        if (category.description != null)
+        if (collection.description != null)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Text(category.description!),
+            child: Text(collection.description!),
           ),
-        if (category.children.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: category.children
-                  .map(
-                    (child) => ActionChip(
-                      label: Text(child.name),
-                      onPressed: () => Navigator.of(context).pushNamed(
-                        Routes.storefrontProductListing,
-                        arguments: FilterArguments(
-                          selectedCategories: [child.id],
-                          categoryKey: child.slug,
-                        ),
-                      ),
-                    ),
-                  )
-                  .toList(),
-            ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Text('${collection.productCount} products available'),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: collection.featuredProducts
+                .map(
+                  (product) => ProductCardSmall(
+                    productId: product.id,
+                    productName: product.title,
+                    imageSource: product.images.isNotEmpty
+                        ? product.images.first
+                        : null,
+                  ),
+                )
+                .toList(),
           ),
-        const SizedBox(height: 12),
+        ),
+        const SizedBox(height: 16),
       ],
     );
   }
 }
 
-class _LandingState extends StatelessWidget {
-  const _LandingState({
+class _StorefrontAsyncState extends StatelessWidget {
+  const _StorefrontAsyncState({
     required this.message,
     required this.actionLabel,
     required this.onPressed,
@@ -142,7 +143,7 @@ class _LandingState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.category_outlined, size: 40),
+            const Icon(Icons.layers_outlined, size: 40),
             const SizedBox(height: 12),
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: 16),

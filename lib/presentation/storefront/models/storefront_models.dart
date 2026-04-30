@@ -1,3 +1,180 @@
+String _stringValue(
+  Map<String, dynamic> json,
+  List<String> keys, {
+  String fallback = '',
+}) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value is String && value.trim().isNotEmpty) {
+      return value.trim();
+    }
+  }
+  return fallback;
+}
+
+String? _nullableStringValue(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value is String && value.trim().isNotEmpty) {
+      return value.trim();
+    }
+  }
+  return null;
+}
+
+double _doubleValue(
+  Map<String, dynamic> json,
+  List<String> keys, {
+  double fallback = 0,
+}) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value is num) {
+      return value.toDouble();
+    }
+    if (value is String) {
+      final parsed = double.tryParse(value);
+      if (parsed != null) {
+        return parsed;
+      }
+    }
+  }
+  return fallback;
+}
+
+double? _nullableDoubleValue(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value is num) {
+      return value.toDouble();
+    }
+    if (value is String) {
+      final parsed = double.tryParse(value);
+      if (parsed != null) {
+        return parsed;
+      }
+    }
+  }
+  return null;
+}
+
+int _intValue(
+  Map<String, dynamic> json,
+  List<String> keys, {
+  int fallback = 0,
+}) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value is num) {
+      return value.toInt();
+    }
+    if (value is String) {
+      final parsed = int.tryParse(value);
+      if (parsed != null) {
+        return parsed;
+      }
+    }
+  }
+  return fallback;
+}
+
+bool _boolValue(
+  Map<String, dynamic> json,
+  List<String> keys, {
+  bool fallback = false,
+}) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value is bool) {
+      return value;
+    }
+    if (value is num) {
+      return value != 0;
+    }
+    if (value is String) {
+      final normalized = value.trim().toLowerCase();
+      if (normalized == 'true' ||
+          normalized == '1' ||
+          normalized == 'in_stock') {
+        return true;
+      }
+      if (normalized == 'false' ||
+          normalized == '0' ||
+          normalized == 'out_of_stock') {
+        return false;
+      }
+    }
+  }
+  return fallback;
+}
+
+List<String> _stringList(dynamic value) {
+  if (value is! List) {
+    return const [];
+  }
+  return value
+      .map((item) {
+        if (item is String) {
+          return item;
+        }
+        if (item is Map<String, dynamic>) {
+          return _stringValue(item, const ['name', 'title', 'slug', 'value']);
+        }
+        return item.toString();
+      })
+      .where((item) => item.isNotEmpty)
+      .toList();
+}
+
+List<String> _imageList(dynamic value) {
+  if (value is! List) {
+    return const [];
+  }
+  return value
+      .map((item) {
+        if (item is String) {
+          return item;
+        }
+        if (item is Map<String, dynamic>) {
+          return _stringValue(item, const ['url', 'imageUrl', 'src', 'path']);
+        }
+        return '';
+      })
+      .where((item) => item.isNotEmpty)
+      .toList();
+}
+
+List<String> _attributeList(dynamic value) {
+  if (value is! List) {
+    return const [];
+  }
+  return value
+      .map((item) {
+        if (item is String) {
+          return item;
+        }
+        if (item is Map<String, dynamic>) {
+          final name = _stringValue(item, const ['name', 'attribute', 'label']);
+          final option = _stringValue(item, const [
+            'value',
+            'option',
+            'optionName',
+          ]);
+          return option.isEmpty ? name : '$name:$option';
+        }
+        return item.toString();
+      })
+      .where((item) => item.isNotEmpty)
+      .toList();
+}
+
+Map<String, String?> _highlightMap(dynamic value) {
+  if (value is Map<String, dynamic>) {
+    return value.map((key, item) => MapEntry(key, item?.toString()));
+  }
+  return const {};
+}
+
 class StorefrontPaginatedResponse<T> {
   const StorefrontPaginatedResponse({
     required this.data,
@@ -58,30 +235,67 @@ class StorefrontProduct {
   final Map<String, String?> highlights;
 
   factory StorefrontProduct.fromJson(Map<String, dynamic> json) {
+    final brandData = json['brand'];
+    final categoryData = json['category'];
+    final brandMap = brandData is Map<String, dynamic> ? brandData : null;
+    final categoryMap = categoryData is Map<String, dynamic>
+        ? categoryData
+        : null;
+    final availableStock = _intValue(json, const [
+      'availableStock',
+      'stockQuantity',
+      'stock',
+    ]);
     return StorefrontProduct(
-      id: json['id'] as String? ?? '',
-      title: json['title'] as String? ?? '',
-      description: json['description'] as String?,
-      price: (json['price'] as num?)?.toDouble() ?? 0,
-      originalPrice: (json['originalPrice'] as num?)?.toDouble(),
-      images: (json['images'] as List<dynamic>? ?? const [])
-          .map((item) => item.toString())
-          .toList(),
-      tags: (json['tags'] as List<dynamic>? ?? const [])
-          .map((item) => item.toString())
-          .toList(),
-      rating: (json['rating'] as num?)?.toDouble() ?? 0,
-      brand: json['brand'] as String?,
-      brandId: json['brandId'] as String?,
-      category: json['category'] as String?,
-      categoryId: json['categoryId'] as String?,
-      isFlashSale: json['isFlashSale'] == true,
-      flashSaleFrom: json['flashSaleFrom'] as String?,
-      flashSaleEndTime: json['flashSaleEndTime'] as String?,
-      inStock: json['inStock'] == true,
-      availableStock: (json['availableStock'] as num?)?.toInt() ?? 0,
-      highlights: ((json['highlights'] as Map<String, dynamic>?) ?? const {})
-          .map((key, value) => MapEntry(key, value?.toString())),
+      id: _stringValue(json, const ['id', 'productId', 'slug']),
+      title: _stringValue(json, const ['title', 'name', 'productName']),
+      description: _nullableStringValue(json, const [
+        'description',
+        'shortDescription',
+      ]),
+      price: _doubleValue(json, const [
+        'price',
+        'sellingPrice',
+        'currentPrice',
+      ]),
+      originalPrice: _nullableDoubleValue(json, const [
+        'originalPrice',
+        'basePrice',
+        'listPrice',
+      ]),
+      images: _imageList(json['images'] ?? json['imageUrls'] ?? json['media']),
+      tags: _stringList(json['tags']),
+      rating: _doubleValue(json, const ['rating', 'averageRating']),
+      brand: brandMap != null
+          ? _nullableStringValue(brandMap, const ['name', 'title'])
+          : _nullableStringValue(json, const ['brand', 'brandName']),
+      brandId:
+          _nullableStringValue(json, const ['brandId']) ??
+          (brandMap != null
+              ? _nullableStringValue(brandMap, const ['id'])
+              : null),
+      category: categoryMap != null
+          ? _nullableStringValue(categoryMap, const ['name', 'title'])
+          : _nullableStringValue(json, const ['category', 'categoryName']),
+      categoryId:
+          _nullableStringValue(json, const ['categoryId']) ??
+          (categoryMap != null
+              ? _nullableStringValue(categoryMap, const ['id'])
+              : null),
+      isFlashSale: _boolValue(json, const ['isFlashSale']),
+      flashSaleFrom: _nullableStringValue(json, const [
+        'flashSaleFrom',
+        'flashSaleStartTime',
+      ]),
+      flashSaleEndTime: _nullableStringValue(json, const [
+        'flashSaleEndTime',
+        'flashSaleTo',
+      ]),
+      inStock: _boolValue(json, const [
+        'inStock',
+      ], fallback: availableStock > 0),
+      availableStock: availableStock,
+      highlights: _highlightMap(json['highlights']),
     );
   }
 }
@@ -105,14 +319,15 @@ class StorefrontVariant {
 
   factory StorefrontVariant.fromJson(Map<String, dynamic> json) {
     return StorefrontVariant(
-      id: json['id'] as String? ?? '',
-      sku: json['sku'] as String? ?? '',
-      sellingPrice: (json['sellingPrice'] as num?)?.toDouble(),
-      basePrice: (json['basePrice'] as num?)?.toDouble(),
-      weight: (json['weight'] as num?)?.toDouble(),
-      attributes: (json['attributes'] as List<dynamic>? ?? const [])
-          .map((item) => item.toString())
-          .toList(),
+      id: _stringValue(json, const ['id', 'variantId', 'sku']),
+      sku: _stringValue(json, const ['sku', 'code']),
+      sellingPrice: _nullableDoubleValue(json, const ['sellingPrice', 'price']),
+      basePrice: _nullableDoubleValue(json, const [
+        'basePrice',
+        'originalPrice',
+      ]),
+      weight: _nullableDoubleValue(json, const ['weight']),
+      attributes: _attributeList(json['attributes']),
     );
   }
 }
@@ -186,10 +401,10 @@ class StorefrontFacetOption {
 
   factory StorefrontFacetOption.fromJson(Map<String, dynamic> json) {
     return StorefrontFacetOption(
-      id: json['id'] as String? ?? '',
-      name: json['name'] as String? ?? '',
-      count: (json['count'] as num?)?.toInt() ?? 0,
-      slug: json['slug'] as String?,
+      id: _stringValue(json, const ['id', 'value', 'slug', 'name']),
+      name: _stringValue(json, const ['name', 'label', 'title', 'value']),
+      count: _intValue(json, const ['count', 'productCount']),
+      slug: _nullableStringValue(json, const ['slug']),
     );
   }
 }
@@ -207,12 +422,23 @@ class StorefrontAttributeFacet {
 
   factory StorefrontAttributeFacet.fromJson(Map<String, dynamic> json) {
     return StorefrontAttributeFacet(
-      attributeSetId: json['attributeSetId'] as String? ?? '',
-      attributeSetName: json['attributeSetName'] as String? ?? '',
-      values: (json['values'] as List<dynamic>? ?? const [])
-          .whereType<Map<String, dynamic>>()
-          .map(StorefrontFacetOption.fromJson)
-          .toList(),
+      attributeSetId: _stringValue(json, const [
+        'attributeSetId',
+        'id',
+        'attributeId',
+      ]),
+      attributeSetName: _stringValue(json, const [
+        'attributeSetName',
+        'name',
+        'title',
+      ]),
+      values:
+          (json['values'] as List<dynamic>? ??
+                  json['options'] as List<dynamic>? ??
+                  const [])
+              .whereType<Map<String, dynamic>>()
+              .map(StorefrontFacetOption.fromJson)
+              .toList(),
     );
   }
 }
@@ -238,6 +464,16 @@ class StorefrontFacets {
   final List<int> ratings;
   final List<StorefrontAttributeFacet> attributes;
 
+  const StorefrontFacets.empty()
+    : brands = const [],
+      categories = const [],
+      minPrice = 0,
+      maxPrice = 0,
+      inStockCount = 0,
+      outOfStockCount = 0,
+      ratings = const [],
+      attributes = const [];
+
   factory StorefrontFacets.fromJson(Map<String, dynamic> json) {
     final priceRange = json['priceRange'] as Map<String, dynamic>? ?? const {};
     final availability =
@@ -256,7 +492,16 @@ class StorefrontFacets {
       inStockCount: (availability['inStock'] as num?)?.toInt() ?? 0,
       outOfStockCount: (availability['outOfStock'] as num?)?.toInt() ?? 0,
       ratings: (json['ratings'] as List<dynamic>? ?? const [])
-          .map((item) => (item as num).toInt())
+          .map((item) {
+            if (item is num) {
+              return item.toInt();
+            }
+            if (item is Map<String, dynamic>) {
+              return _intValue(item, const ['value', 'rating']);
+            }
+            return int.tryParse(item.toString()) ?? 0;
+          })
+          .where((value) => value > 0)
           .toList(),
       attributes: (json['attributes'] as List<dynamic>? ?? const [])
           .whereType<Map<String, dynamic>>()
@@ -279,9 +524,9 @@ class StorefrontCategorySummary {
 
   factory StorefrontCategorySummary.fromJson(Map<String, dynamic> json) {
     return StorefrontCategorySummary(
-      id: json['id'] as String? ?? '',
-      name: json['name'] as String? ?? '',
-      slug: json['slug'] as String? ?? '',
+      id: _stringValue(json, const ['id', 'categoryId', 'slug']),
+      name: _stringValue(json, const ['name', 'title', 'slug']),
+      slug: _stringValue(json, const ['slug', 'id', 'categoryId']),
     );
   }
 }
@@ -300,10 +545,10 @@ class StorefrontCategoryTreeNode extends StorefrontCategorySummary {
 
   factory StorefrontCategoryTreeNode.fromJson(Map<String, dynamic> json) {
     return StorefrontCategoryTreeNode(
-      id: json['id'] as String? ?? '',
-      name: json['name'] as String? ?? '',
-      slug: json['slug'] as String? ?? '',
-      description: json['description'] as String?,
+      id: _stringValue(json, const ['id', 'categoryId', 'slug']),
+      name: _stringValue(json, const ['name', 'title', 'slug']),
+      slug: _stringValue(json, const ['slug', 'id', 'categoryId']),
+      description: _nullableStringValue(json, const ['description']),
       children: (json['children'] as List<dynamic>? ?? const [])
           .whereType<Map<String, dynamic>>()
           .map(StorefrontCategoryTreeNode.fromJson)
@@ -328,13 +573,25 @@ class StorefrontCategoryDetail extends StorefrontCategorySummary {
   final List<StorefrontCategorySummary> breadcrumb;
   final List<StorefrontCategorySummary> children;
 
+  factory StorefrontCategoryDetail.fallback(String categoryKey) {
+    return StorefrontCategoryDetail(
+      id: categoryKey,
+      name: categoryKey,
+      slug: categoryKey,
+      description: null,
+      parentId: null,
+      breadcrumb: const [],
+      children: const [],
+    );
+  }
+
   factory StorefrontCategoryDetail.fromJson(Map<String, dynamic> json) {
     return StorefrontCategoryDetail(
-      id: json['id'] as String? ?? '',
-      name: json['name'] as String? ?? '',
-      slug: json['slug'] as String? ?? '',
-      description: json['description'] as String?,
-      parentId: json['parentId'] as String?,
+      id: _stringValue(json, const ['id', 'categoryId', 'slug']),
+      name: _stringValue(json, const ['name', 'title', 'slug']),
+      slug: _stringValue(json, const ['slug', 'id', 'categoryId']),
+      description: _nullableStringValue(json, const ['description']),
+      parentId: _nullableStringValue(json, const ['parentId']),
       breadcrumb: (json['breadcrumb'] as List<dynamic>? ?? const [])
           .whereType<Map<String, dynamic>>()
           .map(StorefrontCategorySummary.fromJson)
@@ -368,12 +625,12 @@ class StorefrontBrand {
 
   factory StorefrontBrand.fromJson(Map<String, dynamic> json) {
     return StorefrontBrand(
-      id: json['id'] as String? ?? '',
-      name: json['name'] as String? ?? '',
-      description: json['description'] as String?,
-      logoUrl: json['logoUrl'] as String?,
-      slug: json['slug'] as String? ?? '',
-      productCount: (json['productCount'] as num?)?.toInt() ?? 0,
+      id: _stringValue(json, const ['id', 'brandId', 'slug']),
+      name: _stringValue(json, const ['name', 'title', 'slug']),
+      description: _nullableStringValue(json, const ['description']),
+      logoUrl: _nullableStringValue(json, const ['logoUrl', 'imageUrl']),
+      slug: _stringValue(json, const ['slug', 'id', 'brandId']),
+      productCount: _intValue(json, const ['productCount', 'count']),
       featuredProducts: (json['featuredProducts'] as List<dynamic>? ?? const [])
           .whereType<Map<String, dynamic>>()
           .map(StorefrontProduct.fromJson)
@@ -401,11 +658,11 @@ class StorefrontCollection {
 
   factory StorefrontCollection.fromJson(Map<String, dynamic> json) {
     return StorefrontCollection(
-      id: json['id'] as String? ?? '',
-      name: json['name'] as String? ?? '',
-      slug: json['slug'] as String? ?? '',
-      description: json['description'] as String?,
-      productCount: (json['productCount'] as num?)?.toInt() ?? 0,
+      id: _stringValue(json, const ['id', 'slug', 'tagId', 'value']),
+      name: _stringValue(json, const ['name', 'title', 'slug', 'value']),
+      slug: _stringValue(json, const ['slug', 'value', 'id']),
+      description: _nullableStringValue(json, const ['description']),
+      productCount: _intValue(json, const ['productCount', 'count']),
       featuredProducts: (json['featuredProducts'] as List<dynamic>? ?? const [])
           .whereType<Map<String, dynamic>>()
           .map(StorefrontProduct.fromJson)
@@ -433,11 +690,18 @@ class StorefrontHomeData {
   final List<StorefrontCategorySummary> featuredCategories;
   final List<StorefrontCollection> collections;
 
+  const StorefrontHomeData.empty()
+    : banners = const [],
+      featuredProducts = const [],
+      newArrivals = const [],
+      popularProducts = const [],
+      featuredBrands = const [],
+      featuredCategories = const [],
+      collections = const [];
+
   factory StorefrontHomeData.fromJson(Map<String, dynamic> json) {
     return StorefrontHomeData(
-      banners: (json['banners'] as List<dynamic>? ?? const [])
-          .map((item) => item.toString())
-          .toList(),
+      banners: _imageList(json['banners']),
       featuredProducts: (json['featuredProducts'] as List<dynamic>? ?? const [])
           .whereType<Map<String, dynamic>>()
           .map(StorefrontProduct.fromJson)
@@ -540,7 +804,8 @@ class StorefrontProductQuery {
       'pageSize': pageSize,
       if (search != null && search!.trim().isNotEmpty) 'search': search!.trim(),
       if (sortBy != null && sortBy!.isNotEmpty) 'sortBy': sortBy,
-      if (categoryId != null && categoryId!.isNotEmpty) 'categoryId': categoryId,
+      if (categoryId != null && categoryId!.isNotEmpty)
+        'categoryId': categoryId,
       if (brandId != null && brandId!.isNotEmpty) 'brandId': brandId,
       if (minPrice != null) 'minPrice': minPrice,
       if (maxPrice != null) 'maxPrice': maxPrice,
@@ -548,7 +813,8 @@ class StorefrontProductQuery {
       if (availability != null && availability!.isNotEmpty)
         'availability': availability,
       if (attributeValueIds.isNotEmpty) 'attributeValueIds': attributeValueIds,
-      if (collection != null && collection!.isNotEmpty) 'collection': collection,
+      if (collection != null && collection!.isNotEmpty)
+        'collection': collection,
       if (featured != null) 'featured': featured,
       'includeHighlights': includeHighlights,
     };

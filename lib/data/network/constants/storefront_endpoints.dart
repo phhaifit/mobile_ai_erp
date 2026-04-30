@@ -3,12 +3,12 @@ class StorefrontEndpoints {
 
   static const String baseUrl = String.fromEnvironment(
     'STOREFRONT_API_BASE_URL',
-    defaultValue: 'http://127.0.0.1:5000',
+    defaultValue: 'https://erp-api.jarvis.cx',
   );
 
   static const String tenantId = String.fromEnvironment(
     'STOREFRONT_TENANT_ID',
-    defaultValue: 'e02556be-d5f8-42ef-a40d-0924151881d5',
+    defaultValue: 'a679f223-ea7a-4a97-8102-311ca2cac533',
   );
 
   static const int receiveTimeout = 15000;

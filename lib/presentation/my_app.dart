@@ -4,6 +4,7 @@ import 'package:mobile_ai_erp/presentation/home/home.dart';
 import 'package:mobile_ai_erp/presentation/home/store/language/language_store.dart';
 import 'package:mobile_ai_erp/presentation/home/store/theme/theme_store.dart';
 import 'package:mobile_ai_erp/presentation/login/store/login_store.dart';
+import 'package:mobile_ai_erp/presentation/login/login.dart';
 import 'package:mobile_ai_erp/utils/locale/app_localization.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
 import 'package:flutter/material.dart';
@@ -12,17 +13,17 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 
 import '../di/service_locator.dart';
 
-class AuthWrapper extends StatefulWidget {
-  const AuthWrapper({super.key}) : super();
-
+class MyApp extends StatefulWidget {
   @override
-  State<AuthWrapper> createState() => _AuthWrapperState();
+  State<MyApp> createState() => _MyAppState();
 }
 
-class _AuthWrapperState extends State<AuthWrapper> {
+class _MyAppState extends State<MyApp> {
+  final ThemeStore _themeStore = getIt<ThemeStore>();
+  final LanguageStore _languageStore = getIt<LanguageStore>();
+  
   bool _initialized = false;
-  bool _hasValidSession = false;
-  bool _redirectScheduled = false;
+  bool _hasSession = false;
 
   @override
   void initState() {
@@ -36,43 +37,24 @@ class _AuthWrapperState extends State<AuthWrapper> {
     if (!mounted) return;
     setState(() {
       _initialized = true;
-      _hasValidSession = validSession;
+      _hasSession = validSession;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     if (!_initialized) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      return const Directionality(
+        textDirection: TextDirection.ltr,
+        child: ColoredBox(
+          color: Colors.white,
+          child: Center(
+            child: CircularProgressIndicator(),
+          ),
+        ),
       );
     }
 
-    if (_hasValidSession) {
-      return HomeScreen();
-    }
-
-    if (!_redirectScheduled) {
-      _redirectScheduled = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        Navigator.of(context).pushReplacementNamed(Routes.login);
-      });
-    }
-
-    return const SizedBox();
-  }
-}
-
-class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
-  // Create your store as a final variable in a base Widget. This works better
-  // with Hot Reload than creating it directly in the `build` function.
-  final ThemeStore _themeStore = getIt<ThemeStore>();
-  final LanguageStore _languageStore = getIt<LanguageStore>();
-
-  @override
-  Widget build(BuildContext context) {
     return Observer(
       builder: (context) {
         return MaterialApp(
@@ -81,13 +63,46 @@ class MyApp extends StatelessWidget {
           theme: _themeStore.darkMode
               ? AppThemeData.darkThemeData
               : AppThemeData.lightThemeData,
-          routes: Routes.routes,
-          onGenerateRoute: Routes.onGenerateRoute,
+          onGenerateRoute: (settings) {
+            final String routeName = settings.name ?? '/';
+
+            // Check if the route is public
+            bool isPublic = routeName == '/' ||
+                routeName == Routes.login ||
+                routeName == Routes.onboarding ||
+                routeName.startsWith('/storefront');
+
+            // If the route is protected and there is no session, force login
+            if (!isPublic && !_hasSession) {
+              return MaterialPageRoute(
+                builder: (context) => LoginScreen(),
+                settings: settings,
+              );
+            }
+
+            // Resolve static routes
+            WidgetBuilder? builder;
+            if (routeName == '/') {
+              builder = (context) => _hasSession ? HomeScreen() : LoginScreen();
+            } else {
+              builder = Routes.routes[routeName];
+            }
+
+            if (builder != null) {
+              return MaterialPageRoute(
+                builder: builder,
+                settings: settings,
+              );
+            }
+
+            // Resolve dynamic routes
+            return Routes.onGenerateRoute(settings);
+          },
           locale: Locale(_languageStore.locale),
           supportedLocales: _languageStore.supportedLanguages
               .map((language) => Locale(language.locale, language.code))
               .toList(),
-          localizationsDelegates: [
+          localizationsDelegates: const [
             // A class which loads the translations from JSON files
             AppLocalizations.delegate,
             // Built-in localization of basic text for Material widgets
@@ -97,7 +112,6 @@ class MyApp extends StatelessWidget {
             // Built-in localization of basic text for Cupertino widgets
             GlobalCupertinoLocalizations.delegate,
           ],
-          home: AuthWrapper(),
         );
       },
     );

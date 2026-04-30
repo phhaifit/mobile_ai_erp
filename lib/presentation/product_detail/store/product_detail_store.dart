@@ -147,13 +147,17 @@ abstract class _ProductDetailStore with Store {
   }
 
   ProductDetail _mapProductDetail(dynamic remote) {
-    final variants = remote.variants as List<dynamic>;
-    final hasColorDimension = variants.any((variant) =>
-        (variant.attributes as List<dynamic>)
-            .any((attribute) => attribute.toString().toLowerCase().startsWith('color:')));
-    final hasSizeDimension = variants.any((variant) =>
-        (variant.attributes as List<dynamic>)
-            .any((attribute) => attribute.toString().toLowerCase().startsWith('size:')));
+    final variants = (remote.variants as List<dynamic>? ?? const []);
+    final hasColorDimension = variants.any(
+      (variant) => (variant.attributes as List<dynamic>).any(
+        (attribute) => attribute.toString().toLowerCase().startsWith('color:'),
+      ),
+    );
+    final hasSizeDimension = variants.any(
+      (variant) => (variant.attributes as List<dynamic>).any(
+        (attribute) => attribute.toString().toLowerCase().startsWith('size:'),
+      ),
+    );
 
     return ProductDetail(
       id: remote.id as String,
@@ -165,10 +169,14 @@ abstract class _ProductDetailStore with Store {
           .toList(),
       variants: variants
           .map((item) => _mapVariant(item, hasColorDimension, hasSizeDimension))
+          .cast<ProductVariant>()
           .toList(),
       descriptionHtml: remote.description as String? ?? '',
       specifications: [
-        ProductSpecification(name: 'Brand', value: remote.brand as String? ?? 'Unknown'),
+        ProductSpecification(
+          name: 'Brand',
+          value: remote.brand as String? ?? 'Unknown',
+        ),
         ProductSpecification(
           name: 'Category',
           value: remote.category as String? ?? 'Uncategorized',
@@ -189,24 +197,25 @@ abstract class _ProductDetailStore with Store {
     bool hasColorDimension,
     bool hasSizeDimension,
   ) {
-    final attributes = (variant.attributes as List<dynamic>)
+    final attributes = (variant.attributes as List<dynamic>? ?? const [])
         .map((item) => item.toString())
         .toList();
     final colorValue = _extractAttribute(attributes, 'color');
     final sizeValue = _extractAttribute(attributes, 'size');
+    final effectiveVariantId =
+        variant.id as String? ?? variant.sku as String? ?? 'default';
+    final effectiveSku = variant.sku as String? ?? effectiveVariantId;
     return ProductVariant(
-      id: variant.id as String,
-      sku: variant.sku as String,
+      id: effectiveVariantId,
+      sku: effectiveSku,
       color: hasColorDimension && colorValue != null
-          ? ProductColor(
-              name: colorValue,
-              color: _colorFromName(colorValue),
-            )
+          ? ProductColor(name: colorValue, color: _colorFromName(colorValue))
           : (!hasColorDimension
-              ? const ProductColor(name: 'Default', color: Color(0xFF424242))
-              : null),
+                ? const ProductColor(name: 'Default', color: Color(0xFF424242))
+                : null),
       size: hasSizeDimension ? sizeValue : 'Default',
-      price: (variant.basePrice as num?)?.toDouble() ??
+      price:
+          (variant.basePrice as num?)?.toDouble() ??
           (variant.sellingPrice as num?)?.toDouble() ??
           0,
       salePrice: (variant.sellingPrice as num?)?.toDouble(),
