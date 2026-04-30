@@ -455,11 +455,10 @@ abstract class CartStoreBase with Store {
   Future<void> moveCartItemToWishlist(CartItem item) async {
     isLoading = true;
     errorMessage = null;
+    final previousCouponCode = selectedCouponCode;
 
     try {
       selectedItemIds.remove(item.id);
-      calculation = null;
-      selectedCouponCode = null;
       couponValidationError = null;
       validatedCoupon = null;
 
@@ -469,6 +468,15 @@ abstract class CartStoreBase with Store {
 
       await loadCart();
       await _wishlistStore.loadWishlist();
+
+      if (selectedItemIds.isEmpty) {
+        calculation = null;
+        selectedCouponCode = null;
+        return;
+      }
+
+      selectedCouponCode = previousCouponCode;
+      await calculateSelectedCart(couponCode: previousCouponCode);
     } catch (e) {
       errorMessage = e.toString();
     } finally {

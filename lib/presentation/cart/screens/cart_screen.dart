@@ -28,6 +28,7 @@ class _CartScreenState extends State<CartScreen> {
   void initState() {
     super.initState();
     _cartStore = GetIt.instance<CartStore>();
+    _cartStore.dispose();
     _initializeCart();
   }
 
