@@ -3,6 +3,7 @@ import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/categories/widgets/category_status_chip.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/utils/metadata_date_text.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_detail_section_card.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_status_chip.dart';
 
 class CategoryDetailBody extends StatelessWidget {
   const CategoryDetailBody({
@@ -36,7 +37,15 @@ class CategoryDetailBody extends StatelessWidget {
         MetadataDetailSectionCard(
           title: 'Hierarchy',
           children: <Widget>[
-            MetadataDetailRow(label: 'Parent', value: parent?.name ?? 'Top-level category'),
+            MetadataDetailRow(
+              label: 'Parent',
+              value: category.parentId?.isNotEmpty ?? false
+                  ? parent?.name ?? category.parentId
+                  : null,
+              valueChild: category.parentId?.isNotEmpty ?? false
+                  ? null
+                  : const MetadataStatusChip(label: 'Top-level category'),
+            ),
             MetadataDetailRow(label: 'Level', value: category.level.toString()),
             if (category.childrenCount != null)
               MetadataDetailRow(

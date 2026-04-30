@@ -3,6 +3,7 @@ import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_navigator.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_route_args.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_list_card.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_status_chip.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/categories/widgets/category_actions_menu.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/categories/widgets/category_status_chip.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/categories/widgets/subcategory_count_badge.dart';
@@ -34,12 +35,17 @@ class CategoryListItem extends StatelessWidget {
         size: 28,
       ),
       detailLines: [
-        'Parent: ${category.parentName ?? 'Top-level category'}',
+        if (category.parentId?.isNotEmpty ?? false)
+          'Parent: ${category.parentName ?? category.parentId}',
         'Slug: ${category.slug}',
         if (category.description?.trim().isNotEmpty ?? false)
           category.description!.trim(),
       ],
-      chips: <Widget>[CategoryStatusChip(status: category.status)],
+      chips: <Widget>[
+        CategoryStatusChip(status: category.status),
+        if (!(category.parentId?.isNotEmpty ?? false))
+          const MetadataStatusChip(label: 'Top-level category'),
+      ],
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

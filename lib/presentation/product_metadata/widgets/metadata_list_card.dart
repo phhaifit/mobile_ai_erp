@@ -1,5 +1,4 @@
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_secondary_details.dart';
-import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_status_chip.dart';
 import 'package:flutter/material.dart';
 
 class MetadataListCard extends StatelessWidget {
@@ -28,64 +27,73 @@ class MetadataListCard extends StatelessWidget {
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: leading,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Text(
-                      title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: leading,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Text(
+                          title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                        if (detailLines.isNotEmpty) ...<Widget>[
+                          const SizedBox(height: 8),
+                          MetadataSecondaryDetails(lines: detailLines),
+                        ],
+                      ],
                     ),
-                    if (detailLines.isNotEmpty) ...<Widget>[
-                      const SizedBox(height: 8),
-                      MetadataSecondaryDetails(lines: detailLines),
-                    ],
-                    if (chips.isNotEmpty) ...<Widget>[
-                      const SizedBox(height: 10),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: chips,
-                      ),
-                    ],
+                  ),
+                  if (trailing != null) ...<Widget>[
+                    const SizedBox(width: 12),
+                    trailing!,
                   ],
-                ),
+                ],
               ),
-              if (trailing != null) ...<Widget>[
-                const SizedBox(width: 12),
-                trailing!,
+              if (chips.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 10),
+                Padding(
+                  padding: const EdgeInsets.only(left: 40),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          for (
+                            var index = 0;
+                            index < chips.length;
+                            index++
+                          ) ...[
+                            chips[index],
+                            if (index < chips.length - 1)
+                              const SizedBox(width: 8),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ],
           ),
         ),
       ),
     );
-  }
-}
-
-class MetadataBooleanChip extends StatelessWidget {
-  const MetadataBooleanChip({
-    super.key,
-    required this.label,
-  });
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return MetadataStatusChip(label: label);
   }
 }

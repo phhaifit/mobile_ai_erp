@@ -20,28 +20,30 @@ class MetadataSecondaryDetails extends StatelessWidget {
           fontWeight: FontWeight.w400,
         );
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        for (var index = 0; index < lines.length; index++) ...<Widget>[
-          Text(
-            lines[index],
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: textStyle,
-          ),
-          if (index < lines.length - 1) ...<Widget>[
-            const SizedBox(height: 4),
-            Divider(
-              height: 1,
-              thickness: 0.6,
-              color: color.withValues(alpha: 0.24),
+    return SizedBox(
+      width: double.infinity,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          for (var index = 0; index < lines.length; index++) ...<Widget>[
+            Text(
+              lines[index],
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: textStyle,
             ),
-            const SizedBox(height: 4),
+            if (index < lines.length - 1) ...<Widget>[
+              const SizedBox(height: 4),
+              ColoredBox(
+                color: color.withValues(alpha: 0.32),
+                child: const SizedBox(height: 1),
+              ),
+              const SizedBox(height: 4),
+            ],
           ],
         ],
-      ],
+      ),
     );
   }
 }
