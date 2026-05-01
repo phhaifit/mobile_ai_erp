@@ -324,13 +324,14 @@ class MiniCartBadge extends StatelessWidget {
           ),
           if (itemCount > 0)
             Positioned(
-              right: 6,
-              top: 6,
+              right: 2,
+              top: 2,
               child: Container(
-                padding: const EdgeInsets.all(4),
-                constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-                decoration: const BoxDecoration(
-                  color: _accentRed,
+                constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: Colors.red,
                   shape: BoxShape.circle,
                 ),
                 child: Text(
@@ -340,6 +341,7 @@ class MiniCartBadge extends StatelessWidget {
                     color: Colors.white,
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
+                    height: 1,
                   ),
                 ),
               ),

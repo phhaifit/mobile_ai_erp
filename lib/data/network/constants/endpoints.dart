@@ -2,10 +2,10 @@ class Endpoints {
   Endpoints._();
 
   // ERP backend base url - override at build time:
-  //   --dart-define=ERP_BASE_URL=http://10.0.2.2:3000
+  //   --dart-define=ERP_BASE_URL=https://erp-api.jarvis.cx/api
   static const String erpBaseUrl = String.fromEnvironment(
     'ERP_BASE_URL',
-    defaultValue: 'http://10.0.2.2:3000',
+    defaultValue: 'https://erp-api.jarvis.cx',
   );
 
   // Tenant id sent via X-Tenant-Id header to ERP backend.
@@ -70,4 +70,23 @@ class Endpoints {
   // web builder - themes
   static const String themes = "/themes";
   static const String activeTheme = "/themes/active";
+
+  // order endpoints
+  static const String orders = "/erp/orders";
+  static String orderDetail(String id) => "/erp/orders/$id";
+  static String orderStatus(String id) => "/erp/orders/$id/status";
+  static String orderShipment(String id) => "/orders/$id/shipment";
+  static String orderShipmentTracking(String id) =>
+      "/orders/$id/shipment/tracking";
+  static String orderShipmentsTracking(String id) =>
+      "/orders/$id/shipments/tracking";
+  static String orderShipmentLabels(String orderId, String shipmentId) =>
+      "/orders/$orderId/shipments/$shipmentId/labels";
+  static String orderShipmentPrintJobs(String orderId, String shipmentId) =>
+      "/orders/$orderId/shipments/$shipmentId/print-jobs";
+  static String orderShipmentPrintAttempts(
+    String orderId,
+    String shipmentId,
+    String printJobId,
+  ) => "/orders/$orderId/shipments/$shipmentId/print-jobs/$printJobId/attempts";
 }

@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:mobile_ai_erp/core/stores/supplier/supplier_store.dart';
-import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/presentation/customer_management/navigation/customer_navigator.dart';
 import 'package:mobile_ai_erp/presentation/home/store/language/language_store.dart';
 import 'package:mobile_ai_erp/presentation/home/store/theme/theme_store.dart';
 import 'package:mobile_ai_erp/presentation/login/store/login_store.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_navigator.dart';
-import 'package:mobile_ai_erp/presentation/supplier/supplier_list/supplier_list_screen.dart';
 import 'package:mobile_ai_erp/presentation/cart/store/cart_store.dart';
 import 'package:mobile_ai_erp/presentation/cart/widgets/mini_cart_drawer.dart';
 import 'package:mobile_ai_erp/presentation/cart/store/wishlist_store.dart';
@@ -208,18 +205,19 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             if (count > 0)
               Positioned(
-                right: 6,
-                top: 6,
+                right: 2,
+                top: 2,
                 child: Container(
-                  padding: const EdgeInsets.all(4),
                   constraints: const BoxConstraints(
-                    minWidth: 18,
-                    minHeight: 18,
+                    minWidth: 16,
+                    minHeight: 16,
                   ),
-                  decoration: const BoxDecoration(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(
                     color: Colors.red,
                     shape: BoxShape.circle,
                   ),
+                  alignment: Alignment.center,
                   child: Text(
                     count > 99 ? '99+' : '$count',
                     textAlign: TextAlign.center,
@@ -227,6 +225,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       color: Colors.white,
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
+                      height: 1,
                     ),
                   ),
                 ),
@@ -339,15 +338,7 @@ class _HomeScreenState extends State<HomeScreen> {
           leading: Icon(Icons.store),
           title: Text("Suppliers"),
           trailing: Icon(Icons.chevron_right),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) =>
-                    SupplierListScreen(store: getIt<SupplierStore>()),
-              ),
-            );
-          },
+          onTap: () => Navigator.of(context).pushNamed(Routes.suppliers),
         ),
       ),
     );

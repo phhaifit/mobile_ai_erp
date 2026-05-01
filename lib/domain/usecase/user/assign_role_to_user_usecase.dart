@@ -10,7 +10,7 @@ class AssignRoleToUserUseCase {
     required User user,
     required String roleId,
   }) async {
-    final updatedUser = user.copyWith(role: roleId);
-    await userRepository.update(updatedUser);
+    final updatedUser = user.copyWith(roleId: roleId);
+    await userRepository.update(user.id, updatedUser);
   }
 }
