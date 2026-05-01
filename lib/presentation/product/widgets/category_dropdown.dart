@@ -57,7 +57,9 @@ class _CategoryDropdownState extends State<CategoryDropdown> {
           );
         }
 
-        final categories = snapshot.data ?? [];
+        final response = snapshot.data;
+        final categories = response?.categories ?? [];
+
 
         return DropdownButtonFormField<String?>(
           initialValue: widget.selectedCategoryId,

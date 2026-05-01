@@ -24,6 +24,7 @@ class PaginationMeta {
   int get totalPages => _totalPages;
 
   int get nextPage => _page < _totalPages ? _page + 1 : -1;
+  int get previousPage => _page > 1 ? _page - 1 : -1;
   int get firstIndex => (_page - 1) * _pageSize + 1;
   int get lastIndex => min(_page * _pageSize, _totalItems);
   bool get isLastPage => _page >= _totalPages;

@@ -68,4 +68,14 @@ class ProductStrings {
   // Category & Brand field labels with required indicator
   static const String categoryRequired = "Category *";
   static const String brandRequired = "Brand *";
+
+  // Category & Brand form modal labels
+  static const String selectCategoryTitle = "Select Category";
+  static const String selectBrandTitle = "Select Brand";
+  static const String selectedCategoryLabel = "Selected category";
+  static const String selectedBrandLabel = "Selected brand";
+  static const String noCategoriesMessage = "No categories available";
+  static const String noBrandsMessage = "No brands available";
+  static const String noCategorySelectedText = "No category selected";
+  static const String noBrandSelectedText = "No brand selected";
 }

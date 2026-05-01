@@ -69,7 +69,7 @@ class Category {
       slug: json['slug'] as String,
       parentId: json['parent_id'] as String?,
       sortOrder: 0, 
-      status: (json['is_active'] as bool? ?? true)
+      status: (json['status'] as String? ?? 'active') == 'active'
           ? CategoryStatus.active
           : CategoryStatus.archived,
       description: json['description'] as String?,

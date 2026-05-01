@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:dio/dio.dart';
 import 'package:dio_cache_interceptor/dio_cache_interceptor.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/configs/dio_configs.dart';
@@ -9,7 +11,7 @@ class BrandApi {
 
   BrandApi()
     : _dioClient = DioClient(
-        dioConfigs: DioConfigs(baseUrl: Endpoints.brandsUrl),
+        dioConfigs: DioConfigs(baseUrl: Endpoints.baseUrl),
       ) {
     _addInterceptors();
   }

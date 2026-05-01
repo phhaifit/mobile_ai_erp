@@ -112,7 +112,7 @@ abstract class ProductMetadataStoreBase with Store {
   @action
   Future<void> saveCategory(Category category) async {
     await _repository.saveCategory(category);
-    categories = ObservableList<Category>.of(await _repository.getCategories());
+    categories = ObservableList<Category>.of((await _repository.getCategories()).categories);
   }
 
   @action

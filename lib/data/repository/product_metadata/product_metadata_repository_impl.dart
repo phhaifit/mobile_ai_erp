@@ -9,6 +9,7 @@ import 'package:mobile_ai_erp/domain/entity/product_metadata/brand.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/brand_list_response.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/category_attribute.dart';
+import 'package:mobile_ai_erp/domain/entity/product_metadata/category_list_response.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/tag.dart';
 import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadata_repository.dart';
 
@@ -22,7 +23,15 @@ class ProductMetadataRepositoryImpl extends ProductMetadataRepository {
   final ProductMetadataDatasource _metadataSource  = ProductMetadataDatasource(); // network source
 
   @override
-  Future<List<Category>> getCategories() => _metadataSource.getCategories();
+  Future<CategoryListResponse> getCategories({int? page, int? pageSize, String? search, bool? isActive}) {
+    final queryParameters = <String, String>{};
+    if (page != null) queryParameters['page'] = page.toString();
+    if (pageSize != null) queryParameters['pageSize'] = pageSize.toString();
+    if (search != null) queryParameters['search'] = search;
+    if (isActive != null) queryParameters['isActive'] = isActive.toString();
+
+    return _metadataSource.getCategories(queryParameters);
+  }
 
   @override
   Future<Category> saveCategory(Category category) =>

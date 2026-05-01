@@ -11,7 +11,7 @@ import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadat
 import 'package:mobile_ai_erp/presentation/product/store/product_form_store.dart';
 import 'package:mobile_ai_erp/presentation/product/store/product_store.dart';
 import 'package:mobile_ai_erp/presentation/product/widgets/brand_select_modal.dart';
-import 'package:mobile_ai_erp/presentation/product/widgets/category_dropdown.dart';
+import 'package:mobile_ai_erp/presentation/product/widgets/category_select_modal.dart';
 import 'package:mobile_ai_erp/presentation/product/widgets/tag_selector.dart';
 import 'package:mobile_ai_erp/constants/strings.dart';
 
@@ -38,6 +38,7 @@ class _ProductFormState extends State<ProductForm> {
   late TextEditingController _weightController;
 
   String? _selectedBrandName;
+  String? _selectedCategoryName;
 
   // Mock weight units data
   final List<Map<String, dynamic>> weightUnits = [
@@ -66,6 +67,7 @@ class _ProductFormState extends State<ProductForm> {
     // fetchBrands();
     _initializeControllers();
     _loadSelectedBrandName();
+    _loadSelectedCategoryName();
     
     // Sync controllers with form store values (especially important for edit mode)
     Future.microtask(() {
@@ -100,6 +102,31 @@ class _ProductFormState extends State<ProductForm> {
     }
   }
 
+  Future<void> _loadSelectedCategoryName() async {
+    if (widget.formStore.categoryId == null) {
+      setState(() {
+        _selectedCategoryName = null;
+      });
+      return;
+    }
+
+    try {
+      final repository = getIt<ProductMetadataRepository>();
+      final response = await repository.getCategories(page: 1, pageSize: 100);
+      var foundCategory = response.categories
+          .where((c) => c.id == widget.formStore.categoryId)
+          .firstOrNull;
+      
+      if (foundCategory != null && mounted) {
+        setState(() {
+          _selectedCategoryName = foundCategory.name;
+        });
+      }
+    } catch (e) {
+      // Handle error silently
+    }
+  }
+
   void _initializeControllers() {
     _nameController = TextEditingController(text: widget.formStore.name);
     _skuController = TextEditingController(text: widget.formStore.sku);
@@ -126,6 +153,7 @@ class _ProductFormState extends State<ProductForm> {
     _warranteeMonthsController.text = widget.formStore.warranteeMonths ?? '';
     _weightController.text = widget.formStore.weight ?? '';
     _loadSelectedBrandName();
+    _loadSelectedCategoryName();
   }
 
   void _openBrandModal() {
@@ -137,6 +165,20 @@ class _ProductFormState extends State<ProductForm> {
         onBrandSelected: (brandId) {
           widget.formStore.setBrandId(brandId);
           _loadSelectedBrandName();
+        },
+      ),
+    );
+  }
+
+  void _openCategoryModal() {
+    showDialog(
+      context: context,
+      builder: (context) => CategorySelectModal(
+        initialCategoryId: widget.formStore.categoryId,
+        initialCategoryName: _selectedCategoryName,
+        onCategorySelected: (categoryId) {
+          widget.formStore.setCategoryId(categoryId);
+          _loadSelectedCategoryName();
         },
       ),
     );
@@ -428,9 +470,22 @@ class _ProductFormState extends State<ProductForm> {
               SizedBox(height: 16),
 
               // Category
-              CategoryDropdown(
-                selectedCategoryId: widget.formStore.categoryId,
-                onCategoryChanged: widget.formStore.setCategoryId,
+              GestureDetector(
+                onTap: _openCategoryModal,
+                child: InputDecorator(
+                  decoration: InputDecoration(
+                    labelText: ProductStrings.category,
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.category),
+                    suffixIcon: Icon(Icons.open_in_new, size: 18),
+                  ),
+                  child: Text(
+                    _selectedCategoryName ?? 'No category selected',
+                    style: TextStyle(
+                      color: _selectedCategoryName != null ? Colors.black87 : Colors.grey,
+                    ),
+                  ),
+                ),
               ),
               SizedBox(height: 16),
 
@@ -439,7 +494,7 @@ class _ProductFormState extends State<ProductForm> {
                 onTap: _openBrandModal,
                 child: InputDecorator(
                   decoration: InputDecoration(
-                    labelText: ProductStrings.brandRequired,
+                    labelText: ProductStrings.brand,
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.business),
                     suffixIcon: Icon(Icons.open_in_new, size: 18),
