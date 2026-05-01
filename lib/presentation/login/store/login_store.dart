@@ -68,13 +68,10 @@ abstract class _LoginStore with Store {
   bool success = false;
 
   @observable
-  User? currentUser;
+  AuthResponseUser? currentUser;
 
   @observable
   String? currentTenantId;
-
-  @observable
-  String? currentTenantName;
 
   @observable
   bool needsOnboarding = false;
@@ -93,7 +90,6 @@ abstract class _LoginStore with Store {
         params: CreateTenantParams(name: name, subdomain: subdomain),
       );
       currentTenantId = result['tenantId'];
-      currentTenantName = result['name'];
       if (currentTenantId != null) {
         await _sharedPreferenceHelper.saveTenantId(currentTenantId!);
       }
@@ -138,7 +134,6 @@ abstract class _LoginStore with Store {
 
       currentUser = authStatusResponse.user;
       currentTenantId = authStatusResponse.user!.tenantId;
-      currentTenantName = authStatusResponse.user?.tenantName;
       needsOnboarding = false;
       isLoggedIn = true;
 
@@ -156,7 +151,6 @@ abstract class _LoginStore with Store {
   Future<void> _clearSession() async {
     currentUser = null;
     currentTenantId = null;
-    currentTenantName = null;
     needsOnboarding = false;
     success = false;
     errorMessage = null;
@@ -198,7 +192,6 @@ abstract class _LoginStore with Store {
     }
     currentUser = authStatusResponse.user;
     currentTenantId = authStatusResponse.user?.tenantId;
-    currentTenantName = authStatusResponse.user?.tenantName;
     if (currentTenantId != null) {
       await _sharedPreferenceHelper.saveTenantId(currentTenantId!);
     }

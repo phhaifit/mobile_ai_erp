@@ -6,8 +6,10 @@ import 'package:mobile_ai_erp/data/local/datasources/order_tracking/order_tracki
 import 'package:mobile_ai_erp/data/local/datasources/post/post_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/post_purchase/post_purchase_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/product_metadata/product_metadata_datasource.dart';
-import 'package:mobile_ai_erp/data/local/datasources/user/role_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/user/user_datasource.dart';
+import 'package:mobile_ai_erp/data/network/datasources/user/user_remote_datasource.dart';
+import 'package:mobile_ai_erp/data/network/datasources/role/role_remote_datasource.dart';
+import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/web_builder/web_builder_api.dart';
 import 'package:mobile_ai_erp/data/repository/checkout/checkout_repository_impl.dart';
@@ -17,6 +19,11 @@ import 'package:mobile_ai_erp/data/repository/fulfillment/fulfillment_repository
 import 'package:mobile_ai_erp/data/repository/inventory_audit_outbound/mock_inventory_audit_outbound_repository.dart';
 import 'package:mobile_ai_erp/data/repository/order_tracking/order_tracking_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/post/post_repository_impl.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/get_all_users_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/get_user_by_id_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/create_user_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/update_user_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/delete_user_usecase.dart';
 import 'package:mobile_ai_erp/data/repository/post_purchase/post_purchase_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/product_metadata/product_metadata_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/setting/setting_repository_impl.dart';
@@ -116,12 +123,11 @@ class RepositoryModule {
 
     // user:---------------------------------------------------------------------
     getIt.registerSingleton<UserDataSource>(UserDataSource());
-    getIt.registerSingleton<RoleDataSource>(RoleDataSource());
     getIt.registerSingleton<UserRepository>(
-      UserRepositoryImpl(getIt<UserDataSource>()),
+      UserRepositoryImpl(getIt<UserRemoteDataSource>()),
     );
     getIt.registerSingleton<RoleRepository>(
-      RoleRepositoryImpl(getIt<RoleDataSource>()),
+      RoleRepositoryImpl(getIt<RoleRemoteDataSource>()),
     );
     getIt.registerSingleton<AuthRepository>(
       AuthRepositoryImpl(getIt()),
@@ -140,6 +146,13 @@ class RepositoryModule {
 
     getIt.registerLazySingleton<SupplierRepository>(() => SupplierMockRepository());
     getIt.registerSingleton<FulfillmentRepository>(FulfillmentRepositoryImpl());
+
+    // user use cases:---------------------------------------------------------
+    getIt.registerSingleton<GetAllUsersUseCase>(GetAllUsersUseCase(getIt()));
+    getIt.registerSingleton<GetUserByIdUseCase>(GetUserByIdUseCase(getIt()));
+    getIt.registerSingleton<CreateUserUseCase>(CreateUserUseCase(getIt()));
+    getIt.registerSingleton<UpdateUserUseCase>(UpdateUserUseCase(getIt()));
+    getIt.registerSingleton<DeleteUserUseCase>(DeleteUserUseCase(getIt()));
 
     // checkout:--------------------------------------------------------------
     getIt.registerSingleton<CheckoutDataSource>(CheckoutLocalDataSourceImpl());
