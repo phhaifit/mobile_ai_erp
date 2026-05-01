@@ -24,11 +24,11 @@ class OrderTrackingScreen extends StatefulWidget {
 class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   final OrderTrackingStore _orderTrackingStore = getIt<OrderTrackingStore>();
   bool _isSeededFromRouteArgs = false;
+  String? _orderId;
 
   @override
   void initState() {
     super.initState();
-    _orderTrackingStore.loadScenarios();
   }
 
   @override
@@ -43,12 +43,13 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     if (args is Map<String, dynamic>) {
       final String orderId = (args['orderId'] ?? '').toString().trim();
       if (orderId.isNotEmpty) {
-        final OrderTrackingScenario? found =
-            _orderTrackingStore.findByOrderId(orderId);
-        if (found != null) {
-          _orderTrackingStore.selectScenario(found);
-        }
+        _orderId = orderId;
+        _orderTrackingStore.loadOrderDetail(orderId);
       }
+    }
+
+    if (_orderId == null || _orderId!.isEmpty) {
+      _orderTrackingStore.loadScenarios();
     }
     _isSeededFromRouteArgs = true;
   }
@@ -70,7 +71,63 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         final double contentMaxWidth = isWideLayout ? 1200 : 860;
         final OrderTrackingScenario? selected =
             _orderTrackingStore.selectedScenario;
+        final Map<String, dynamic>? orderDetail =
+            _orderTrackingStore.orderDetail;
         final String title = _tr(t, 'tracking_title', 'Order Tracking');
+
+        if (_orderTrackingStore.isLoading) {
+          return Scaffold(
+            backgroundColor: colorScheme.surface,
+            appBar: AppBar(
+              elevation: 0,
+              backgroundColor: colorScheme.surface,
+              foregroundColor: colorScheme.onSurface,
+              title: Text(
+                title,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+            body: const Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (_orderTrackingStore.errorMessage != null) {
+          return Scaffold(
+            backgroundColor: colorScheme.surface,
+            appBar: AppBar(
+              elevation: 0,
+              backgroundColor: colorScheme.surface,
+              foregroundColor: colorScheme.onSurface,
+              title: Text(
+                title,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    _orderTrackingStore.errorMessage ?? 'Unable to load order',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: colorScheme.error),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      if (_orderId != null && _orderId!.isNotEmpty) {
+                        _orderTrackingStore.loadOrderDetail(_orderId!);
+                      } else {
+                        _orderTrackingStore.loadScenarios();
+                      }
+                    },
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
 
         if (selected == null) {
           return Scaffold(
@@ -84,7 +141,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
-            body: const Center(child: CircularProgressIndicator()),
+            body: const Center(
+              child: Text('No order details available.'),
+            ),
           );
         }
 
@@ -117,6 +176,19 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                             _shipmentStageLabel(stage, t),
                         orderIdLabel:
                             _tr(t, 'tracking_order_id_label', 'Order ID'),
+                      ),
+                    if (orderDetail != null)
+                      Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          isWideLayout ? 20 : 16,
+                          20,
+                          isWideLayout ? 20 : 16,
+                          0,
+                        ),
+                        child: _buildOrderSummaryCard(
+                          context: context,
+                          detail: orderDetail,
+                        ),
                       ),
                     Padding(
                       padding: EdgeInsets.fromLTRB(
@@ -395,6 +467,133 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
   List<OrderTrackingScenario> get _scenarios => _orderTrackingStore.scenarios;
 
+  Widget _buildOrderSummaryCard({
+    required BuildContext context,
+    required Map<String, dynamic> detail,
+  }) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final TextTheme textTheme = Theme.of(context).textTheme;
+    final NumberFormat currencyFormat = NumberFormat.decimalPattern('vi_VN');
+
+    final String code = _orderTrackingStore.getOrderCode(detail);
+    final String status = _orderTrackingStore.getOrderStatus(detail);
+    final String total = _orderTrackingStore.getTotalPrice(detail);
+    final int itemsCount = _orderTrackingStore.getItemsCount(detail);
+    final String customerName = _orderTrackingStore.getCustomerName(detail);
+    final String deliveryInfo = _orderTrackingStore.getDeliveryInfo(detail);
+    final DateTime? createdAt = _orderTrackingStore.getOrderCreatedAt(detail);
+    final String createdLabel = createdAt == null
+        ? ''
+        : DateFormat('dd MMM yyyy, HH:mm').format(createdAt);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colorScheme.outlineVariant.withOpacity(0.4)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      code,
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      customerName,
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurface.withOpacity(0.7),
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              _StatusBadge(
+                label: _formatStatus(status),
+                background: _getStatusColor(status, colorScheme),
+              ),
+            ],
+          ),
+          if (deliveryInfo.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              deliveryInfo,
+              style: textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurface.withOpacity(0.65),
+              ),
+            ),
+          ],
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _InfoRow(
+                  label: 'Total',
+                  value: '${_formatPrice(total, currencyFormat)} đ',
+                  valueStyle: textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              if (itemsCount > 0)
+                Expanded(
+                  child: _InfoRow(
+                    label: 'Items',
+                    value: '$itemsCount items',
+                    alignEnd: true,
+                    valueStyle: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurface.withOpacity(0.7),
+                    ),
+                  ),
+                )
+              else if (createdLabel.isNotEmpty)
+                Expanded(
+                  child: _InfoRow(
+                    label: 'Created',
+                    value: createdLabel,
+                    alignEnd: true,
+                    valueStyle: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurface.withOpacity(0.7),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          if (itemsCount > 0 && createdLabel.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            _InfoRow(
+              label: 'Created',
+              value: createdLabel,
+              valueStyle: textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurface.withOpacity(0.7),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Future<void> _openCarrierUrl(String url) async {
     final Uri uri = Uri.parse(url);
     final bool launched =
@@ -464,5 +663,108 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
   String _formatDateTime(DateTime value) {
     return DateFormat('dd MMM yyyy, HH:mm').format(value);
+  }
+
+  Color _getStatusColor(String status, ColorScheme colorScheme) {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return Colors.orange;
+      case 'confirmed':
+      case 'packed':
+      case 'shipped':
+      case 'shipping':
+      case 'in_transit':
+        return Colors.blue;
+      case 'delivered':
+        return Colors.green;
+      case 'cancelled':
+      case 'canceled':
+      case 'failed':
+        return colorScheme.error;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String _formatPrice(String price, NumberFormat currencyFormat) {
+    try {
+      final num value = num.parse(price);
+      return currencyFormat.format(value.round());
+    } catch (_) {
+      return price;
+    }
+  }
+
+  String _formatStatus(String status) {
+    final normalized = status.replaceAll('_', ' ').trim();
+    if (normalized.isEmpty) return 'Unknown';
+    return normalized[0].toUpperCase() + normalized.substring(1);
+  }
+}
+
+class _StatusBadge extends StatelessWidget {
+  const _StatusBadge({
+    required this.label,
+    required this.background,
+  });
+
+  final String label;
+  final Color background;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  const _InfoRow({
+    required this.label,
+    required this.value,
+    this.alignEnd = false,
+    this.valueStyle,
+  });
+
+  final String label;
+  final String value;
+  final bool alignEnd;
+  final TextStyle? valueStyle;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment:
+          alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurface.withOpacity(0.6),
+              ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: valueStyle,
+          textAlign: alignEnd ? TextAlign.end : TextAlign.start,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    );
   }
 }
