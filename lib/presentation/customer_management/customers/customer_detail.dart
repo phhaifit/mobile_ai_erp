@@ -48,6 +48,12 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
           appBar: AppBar(
             title: const Text('Customer detail'),
             actions: <Widget>[
+              if (customer.status != CustomerStatus.deactivated)
+                IconButton(
+                  onPressed: () => _showDeactivateDialog(context, customer),
+                  icon: const Icon(Icons.block_outlined),
+                  tooltip: 'Deactivate customer',
+                ),
               IconButton(
                 onPressed: () => CustomerNavigator.openCustomerForm(
                   context,
@@ -114,6 +120,52 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
         );
       },
     );
+  }
+
+  Future<void> _showDeactivateDialog(
+    BuildContext context,
+    Customer customer,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Deactivate Customer?'),
+        content: Text(
+          'Are you sure you want to deactivate ${customer.fullName}? '
+          'They will not be able to place orders.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Deactivate'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      try {
+        await _store.deactivateCustomer(customer.id);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Customer deactivated successfully')),
+          );
+          Future<void>.microtask(
+            () => CustomerNavigator.openCustomers(context),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error deactivating customer: $e')),
+          );
+        }
+      }
+    }
   }
 }
 
