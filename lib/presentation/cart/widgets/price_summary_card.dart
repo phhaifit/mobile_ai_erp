@@ -1,43 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_ai_erp/core/utils/price_formatter.dart';
+import 'package:mobile_ai_erp/domain/entity/cart/cart_calculation.dart';
 
-/// Card widget displaying price breakdown summary
 class PriceSummaryCard extends StatelessWidget {
-  final double subtotal;
-  final double discountAmount;
-  final double taxAmount;
-  final double shippingAmount;
-  final double total;
+  final CartCalculationSummary summary;
+  final AppliedCoupon? coupon;
   final String? discountLabel;
   final bool showDividers;
   final EdgeInsets? padding;
-  final bool? isShippingDetermined;
 
   const PriceSummaryCard({
     Key? key,
-    required this.subtotal,
-    required this.discountAmount,
-    required this.taxAmount,
-    required this.shippingAmount,
-    required this.total,
+    required this.summary,
+    this.coupon,
     this.discountLabel,
     this.showDividers = true,
     this.padding,
-    this.isShippingDetermined,
   }) : super(key: key);
 
-  String _getShippingDisplayText() {
-    if (shippingAmount == 0) {
-      if (isShippingDetermined == false) {
-        return 'Calculated at checkout';
-      }
-      return 'FREE';
-    }
-    return PriceFormatter.formatPrice(shippingAmount);
+  String _formatMoney(String value) {
+    return PriceFormatter.formatPrice(double.tryParse(value) ?? 0);
   }
 
   @override
   Widget build(BuildContext context) {
+    final hasDiscount = (int.tryParse(summary.discount) ?? 0) > 0;
+
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -46,7 +34,6 @@ class PriceSummaryCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Title
             Text(
               'Order Summary',
               style: Theme.of(
@@ -58,51 +45,57 @@ class PriceSummaryCard extends StatelessWidget {
               Divider(color: Colors.grey[200]),
             ],
             const SizedBox(height: 12),
-            // Subtotal row
+
             _SummaryRow(
               label: 'Subtotal',
-              amount: PriceFormatter.formatPrice(subtotal),
-              isBold: false,
+              amount: _formatMoney(summary.subtotal),
             ),
-            const SizedBox(height: 8),
-            // Discount row (if applicable)
-            if (discountAmount > 0) ...[
+
+            if (hasDiscount) ...[
+              const SizedBox(height: 8),
               _SummaryRow(
-                label: discountLabel ?? 'Discount',
-                amount: '-${PriceFormatter.formatPrice(discountAmount)}',
-                isBold: false,
+                label: discountLabel ?? coupon?.name ?? 'Discount',
+                amount: '-${_formatMoney(summary.discount)}',
                 isDiscount: true,
               ),
-              const SizedBox(height: 8),
             ],
-            // Tax row
-            _SummaryRow(
-              label: 'Tax',
-              amount: PriceFormatter.formatPrice(taxAmount),
-              isBold: false,
-            ),
-            // Shipping row - only show when determined
-            if (isShippingDetermined ?? true) ...[
+
+            if (coupon != null) ...[
               const SizedBox(height: 8),
-              _SummaryRow(
-                label: 'Shipping',
-                amount: _getShippingDisplayText(),
-                isBold: false,
-                isShipping: shippingAmount == 0,
-              ),
+              _SummaryRow(label: 'Coupon', amount: coupon!.code, isMeta: true),
             ],
+
             if (showDividers) ...[
               const SizedBox(height: 12),
               Divider(color: Colors.grey[200]),
             ],
             const SizedBox(height: 12),
-            // Total row
+
             _SummaryRow(
               label: 'Total',
-              amount: PriceFormatter.formatPrice(total),
-              isBold: true,
+              amount: _formatMoney(summary.total),
               isTotal: true,
             ),
+
+            const SizedBox(height: 8),
+
+            Text(
+              '${summary.selectedItemsCount} selected item${summary.selectedItemsCount != 1 ? 's' : ''} • ${summary.selectedQuantity} qty',
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+            ),
+
+            if (coupon != null &&
+                coupon!.reason != null &&
+                coupon!.reason!.trim().isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                coupon!.reason!,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: coupon!.isValid ? Colors.grey[600] : Colors.red[700],
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -110,30 +103,27 @@ class PriceSummaryCard extends StatelessWidget {
   }
 }
 
-/// Individual price summary row
 class _SummaryRow extends StatelessWidget {
   final String label;
   final String amount;
-  final bool isBold;
   final bool isDiscount;
-  final bool isShipping;
   final bool isTotal;
+  final bool isMeta;
 
   const _SummaryRow({
     required this.label,
     required this.amount,
-    this.isBold = false,
     this.isDiscount = false,
-    this.isShipping = false,
     this.isTotal = false,
+    this.isMeta = false,
   });
 
   @override
   Widget build(BuildContext context) {
     Color amountColor = Colors.black;
     if (isDiscount) amountColor = Colors.green[600]!;
-    if (isShipping) amountColor = Colors.green[600]!;
     if (isTotal) amountColor = Colors.blue[600]!;
+    if (isMeta) amountColor = Colors.grey[700]!;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -142,18 +132,19 @@ class _SummaryRow extends StatelessWidget {
           label,
           style: TextStyle(
             fontSize: 14,
-            fontWeight: isBold ? FontWeight.w600 : FontWeight.w400,
+            fontWeight: isTotal ? FontWeight.w600 : FontWeight.w400,
             color: Colors.grey[700],
           ),
         ),
-        Text(
-          amount,
-          style: TextStyle(
-            fontSize: isTotal ? 16 : 14,
-            fontWeight: isTotal
-                ? FontWeight.bold
-                : (isBold ? FontWeight.w600 : FontWeight.w400),
-            color: amountColor,
+        Flexible(
+          child: Text(
+            amount,
+            textAlign: TextAlign.right,
+            style: TextStyle(
+              fontSize: isTotal ? 16 : 14,
+              fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
+              color: amountColor,
+            ),
           ),
         ),
       ],
@@ -161,18 +152,15 @@ class _SummaryRow extends StatelessWidget {
   }
 }
 
-/// Compact price summary (for mini cart)
 class CompactPriceSummary extends StatelessWidget {
-  final double subtotal;
-  final double total;
-  final int itemCount;
+  final CartCalculationSummary summary;
 
-  const CompactPriceSummary({
-    Key? key,
-    required this.subtotal,
-    required this.total,
-    required this.itemCount,
-  }) : super(key: key);
+  const CompactPriceSummary({Key? key, required this.summary})
+    : super(key: key);
+
+  String _formatMoney(String value) {
+    return PriceFormatter.formatPrice(double.tryParse(value) ?? 0);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -185,11 +173,11 @@ class CompactPriceSummary extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '$itemCount item${itemCount != 1 ? 's' : ''}',
+                '${summary.selectedItemsCount} item${summary.selectedItemsCount != 1 ? 's' : ''}',
                 style: TextStyle(color: Colors.grey[600]),
               ),
               Text(
-                'Total: \$${total.toStringAsFixed(2)}',
+                'Total: ${_formatMoney(summary.total)}',
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,

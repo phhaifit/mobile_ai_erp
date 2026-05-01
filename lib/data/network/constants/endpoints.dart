@@ -32,6 +32,33 @@ class Endpoints {
   static const String stackAuthAuthenticate = '/api/v1/auth/oauth/authorize/';
   static const String stackAuthToken = 'https://$stackAuthHost/api/v1/auth/oauth/token';
 
+  static const String storefront = "$erpBaseUrl/storefront";
+
+  // cart
+  static const String storefrontCart = "$storefront/cart";
+  static const String storefrontCartSummary = "$storefront/cart/summary";
+  static const String storefrontCartItems = "$storefront/cart/items";
+  static const String storefrontCartCalculate = "$storefront/cart/calculate";
+  static const String storefrontCartMerge = "$storefront/cart/merge";
+
+  static String storefrontCartItemById(String cartItemId) =>
+      "$storefrontCartItems/$cartItemId";
+
+  // wishlist
+  static const String storefrontWishlist = "$storefront/wishlist";
+  static const String storefrontWishlistSummary =
+      "$storefront/wishlist/summary";
+  static const String storefrontWishlistItems = "$storefront/wishlist/items";
+  static const String storefrontWishlistMerge = "$storefront/wishlist/merge";
+
+  static String storefrontWishlistItemById(String wishlistItemId) =>
+      "$storefrontWishlistItems/$wishlistItemId";
+
+  // coupon
+  static const String storefrontCoupons = "$storefront/coupons";
+  static const String storefrontCouponsValidate =
+      "$storefront/coupons/validate";
+
   // web builder - store settings
   static const String storeSettings = "/store-settings";
 

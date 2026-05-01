@@ -1,355 +1,210 @@
-import 'package:mobile_ai_erp/data/local/datasources/cart/cart_datasource.dart';
+import 'package:mobile_ai_erp/data/network/apis/cart/cart_api.dart';
 import 'package:mobile_ai_erp/data/repository/cart/cart_repository.dart';
-import './cart_external_mock_service.dart';
 import 'package:mobile_ai_erp/domain/entity/cart/cart.dart';
+import 'package:mobile_ai_erp/domain/entity/cart/cart_calculation.dart';
 import 'package:mobile_ai_erp/domain/entity/cart/cart_item.dart';
-import 'package:mobile_ai_erp/domain/entity/cart/coupon.dart';
-import 'package:mobile_ai_erp/domain/entity/cart/wishlist_item.dart';
 
-/// Implementation of CartRepository using CartDataSource
-/// This layer adds business logic and orchestration on top of data source
 class CartRepositoryImpl implements CartRepository {
-  final CartDataSource _dataSource;
-  final CartExternalMockService _externalMockService;
+  final CartApi _cartApi;
 
-  CartRepositoryImpl({
-    required CartDataSource dataSource,
-    CartExternalMockService? externalMockService,
-  }) : _dataSource = dataSource,
-       _externalMockService = externalMockService ?? CartExternalMockService();
+  CartRepositoryImpl({required CartApi cartApi}) : _cartApi = cartApi;
 
   @override
-  Future<Cart> getCart(String userId) async {
-    return await _dataSource.getCart(userId);
+  Future<Cart> getCart() async {
+    final res = await _cartApi.getCart();
+    return _mapCart(_unwrapData(res));
   }
 
   @override
-  Future<void> saveCart(Cart cart) async {
-    return await _dataSource.saveCart(cart);
+  Future<Map<String, dynamic>> getCartSummary() async {
+    final res = await _cartApi.getCartSummary();
+    return _unwrapData(res);
   }
 
   @override
-  Future<void> addItemToCart(String userId, CartItem item) async {
-    return await _dataSource.addItemToCart(userId, item);
-  }
-
-  @override
-  Future<void> addMultipleItemsToCart(
-    String userId,
-    List<CartItem> items,
-  ) async {
-    for (final item in items) {
-      await _dataSource.addItemToCart(userId, item);
-    }
-  }
-
-  @override
-  Future<void> removeItemFromCart(String userId, String itemId) async {
-    return await _dataSource.removeItemFromCart(userId, itemId);
-  }
-
-  @override
-  Future<void> removeMultipleItemsFromCart(
-    String userId,
-    List<String> itemIds,
-  ) async {
-    for (final itemId in itemIds) {
-      try {
-        await _dataSource.removeItemFromCart(userId, itemId);
-      } catch (_) {
-        continue;
-      }
-    }
-  }
-
-  @override
-  Future<void> updateItemQuantity(
-    String userId,
-    String itemId,
-    int newQuantity,
-  ) async {
-    return await _dataSource.updateItemQuantity(userId, itemId, newQuantity);
-  }
-
-  @override
-  Future<void> clearCart(String userId) async {
-    return await _dataSource.clearCart(userId);
-  }
-
-  @override
-  Future<double> getCartTotal(String userId) async {
-    final cart = await getCart(userId);
-    return cart.total;
-  }
-
-  @override
-  Future<void> applyCoupon(String userId, String couponCode) async {
-    final coupon = await validateCoupon(couponCode);
-
-    final cart = await getCart(userId);
-
-    if (coupon.minCartValue != null && cart.subtotal < coupon.minCartValue!) {
-      throw Exception(
-        'Coupon requires minimum cart value of \$${coupon.minCartValue}. '
-        'Current: \$${cart.subtotal.toStringAsFixed(2)}',
-      );
-    }
-
-    final updatedCart = cart.applyCoupon(coupon);
-
-    await _dataSource.saveCart(updatedCart);
-  }
-
-  @override
-  Future<void> removeCoupon(String userId) async {
-    return await _dataSource.removeCoupon(userId);
-  }
-
-  @override
-  Future<List<Coupon>> getAvailableCoupons({String? userId}) async {
-    return await _dataSource.getAvailableCoupons(userId: userId);
-  }
-
-  @override
-  Future<Coupon> validateCoupon(String code) async {
-    final coupon = await _externalMockService.validateCoupon(code);
-    if (!coupon.isValid) {
-      throw Exception('Coupon is invalid or expired: $code');
-    }
-    return coupon;
-  }
-
-  @override
-  Future<Coupon?> getCouponByCode(String couponCode) async {
-    try {
-      return await validateCoupon(couponCode);
-    } catch (_) {
-      return await _dataSource.getCouponByCode(couponCode);
-    }
-  }
-
-  @override
-  Future<int> getRealtimeStock(String variantId) async {
-    return await _externalMockService.getRealtimeStock(variantId);
-  }
-
-  @override
-  Future<void> saveWishlist(String userId, List<WishlistItem> items) async {
-    return await _dataSource.saveWishlist(userId, items);
-  }
-
-  @override
-  Future<List<WishlistItem>> getWishlist(String userId) async {
-    return await _dataSource.getWishlist(userId);
-  }
-
-  @override
-  Future<void> addToWishlist(String userId, WishlistItem item) async {
-    return await _dataSource.addToWishlist(userId, item);
-  }
-
-  @override
-  Future<void> removeFromWishlist(String userId, String variantId) async {
-    return await _dataSource.removeFromWishlist(userId, variantId);
-  }
-
-  @override
-  Future<void> removeMultipleFromWishlist(
-    String userId,
-    List<String> variantIds,
-  ) async {
-    for (final variantId in variantIds) {
-      try {
-        await _dataSource.removeFromWishlist(userId, variantId);
-      } catch (_) {
-        continue;
-      }
-    }
-  }
-
-  @override
-  Future<void> clearWishlist(String userId) async {
-    return await _dataSource.clearWishlist(userId);
-  }
-
-  @override
-  Future<bool> isInWishlist(String userId, String variantId) async {
-    return await _dataSource.isInWishlist(userId, variantId);
-  }
-
-  @override
-  Future<void> moveWishlistToCart(String userId) async {
-    final wishlistItems = await getWishlist(userId);
-
-    if (wishlistItems.isEmpty) return;
-
-    final now = DateTime.now();
-
-    final cartItems = wishlistItems.map((wish) {
-      return CartItem(
-        id: 'item_${wish.variantId}_${now.microsecondsSinceEpoch}',
-        productId: wish.productId,
-        productName: wish.productName,
-        imageUrl: wish.imageUrl,
-        variantId: wish.variantId,
-        sku: wish.sku,
-        selectedSize: wish.selectedSize,
-        selectedColorName: wish.selectedColorName,
-        selectedColorValue: wish.selectedColorValue,
-        price: wish.price,
-        salePrice: wish.salePrice,
-        stockAvailable: wish.stockAvailable,
-        quantity: 1,
-        dateAdded: now,
-      );
-    }).toList();
-
-    await addMultipleItemsToCart(userId, cartItems);
-    await clearWishlist(userId);
-  }
-
-  @override
-  Future<void> moveWishlistItemToCart(String userId, String variantId) async {
-    final wishlistItems = await getWishlist(userId);
-
-    final wishItem = wishlistItems.firstWhere(
-      (item) => item.variantId == variantId,
-      orElse: () => throw Exception('Item not in wishlist'),
+  Future<Cart> addCartItem({
+    required String productId,
+    required int quantity,
+  }) async {
+    final res = await _cartApi.addCartItem(
+      productId: productId,
+      quantity: quantity,
     );
+    return _mapCart(_unwrapData(res));
+  }
 
-    final cartItem = CartItem(
-      id: 'item_${wishItem.variantId}_${DateTime.now().millisecondsSinceEpoch}',
-      productId: wishItem.productId,
-      productName: wishItem.productName,
-      imageUrl: wishItem.imageUrl,
-      variantId: wishItem.variantId,
-      sku: wishItem.sku,
-      selectedSize: wishItem.selectedSize,
-      selectedColorName: wishItem.selectedColorName,
-      selectedColorValue: wishItem.selectedColorValue,
-      price: wishItem.price,
-      salePrice: wishItem.salePrice,
-      stockAvailable: wishItem.stockAvailable,
-      quantity: 1,
-      dateAdded: DateTime.now(),
+  @override
+  Future<Cart> updateCartItemQuantity({
+    required String itemId,
+    required int quantity,
+  }) async {
+    final res = await _cartApi.updateCartItemQuantity(
+      itemId: itemId,
+      quantity: quantity,
     );
-
-    await addItemToCart(userId, cartItem);
-    await removeFromWishlist(userId, variantId);
+    return _mapCart(_unwrapData(res));
   }
 
   @override
-  Future<List<Cart>> getCartHistory(String userId, {int limit = 10}) async {
-    return await _dataSource.getCartHistory(userId, limit: limit);
+  Future<void> removeCartItem({required String itemId}) async {
+    await _cartApi.removeCartItem(itemId: itemId);
   }
 
   @override
-  Future<int> getCartCount(String userId) async {
-    final history = await getCartHistory(userId, limit: 1000);
-    return history.length;
+  Future<CartCalculation> calculateCart({
+    required List<String> selectedItemIds,
+    String? couponCode,
+  }) async {
+    final res = await _cartApi.calculateCart(
+      itemIds: selectedItemIds,
+      couponCode: couponCode,
+    );
+    return _mapCartCalculation(_unwrapData(res));
   }
 
   @override
-  Future<void> markCartAsAbandoned(String userId) async {
-    return await _dataSource.markCartAsAbandoned(userId);
+  Future<Cart> mergeCart({required List<Map<String, dynamic>> items}) async {
+    final res = await _cartApi.mergeCart(items: items);
+    return _mapCart(_unwrapData(res));
   }
 
-  @override
-  Future<List<Cart>> getAbandonedCarts({int hoursThreshold = 24}) async {
-    return await _dataSource.getAbandonedCarts(hoursThreshold: hoursThreshold);
-  }
-
-  @override
-  Future<List<String>> validateCartForCheckout(String userId) async {
-    final cart = await getCart(userId);
-    return cart.validate();
-  }
-
-  @override
-  Future<void> syncCartWithServer(String userId) async {
-    return await _dataSource.syncCartWithServer(userId);
-  }
-
-  @override
-  Future<void> migrateGuestCartToUser(String guestCartId, String userId) async {
-    return await _dataSource.migrateGuestCartToUser(guestCartId, userId);
-  }
-
-  @override
-  Future<Map<String, dynamic>> getCartStatistics(String userId) async {
-    final cart = await getCart(userId);
-
-    double avgPrice = 0;
-    if (cart.items.isNotEmpty) {
-      final totalPrice = cart.items.fold<double>(
-        0,
-        (sum, item) => sum + item.effectivePrice,
-      );
-      avgPrice = totalPrice / cart.items.length;
+  Map<String, dynamic> _unwrapData(Map<String, dynamic> json) {
+    final data = json['data'];
+    if (data is Map) {
+      return Map<String, dynamic>.from(data);
     }
-
-    return {
-      'itemCount': cart.itemCount,
-      'uniqueItems': cart.uniqueItemCount,
-      'cartValue': cart.total,
-      'subtotal': cart.subtotal,
-      'discount': cart.cartLevelDiscount,
-      'tax': cart.taxAmount,
-      'shipping': cart.shippingAmount,
-      'averageItemPrice': avgPrice,
-      'savings': cart.savingsAmount,
-      'savingsPercentage': cart.savingsPercentage,
-      'hasCoupon': cart.hasCoupon,
-      'couponCode': cart.appliedCoupon?.code,
-    };
+    return json;
   }
 
-  @override
-  Future<bool> hasLowStockItems(String userId) async {
-    final cart = await getCart(userId);
-    return cart.hasLowStockItems;
+  List<Map<String, dynamic>> _asListOfMap(dynamic value) {
+    if (value == null) return [];
+    return (value as List)
+        .map((e) => Map<String, dynamic>.from(e as Map))
+        .toList();
   }
 
-  @override
-  Future<List<CartItem>> getLowStockItems(String userId) async {
-    final cart = await getCart(userId);
-    return cart.lowStockItems;
+  Cart _mapCart(Map<String, dynamic> json) {
+    final itemsJson = _asListOfMap(json['items']);
+    final cartId = (json['id'] ?? '').toString();
+
+    return Cart(
+      id: cartId,
+      tenantId: (json['tenantId'] ?? json['tenant_id'] ?? '').toString(),
+      customerId: (json['customerId'] ?? json['customer_id'] ?? '').toString(),
+      subtotal: (json['subtotal'] ?? '0').toString(),
+      totalItems: (json['totalItems'] as num?)?.toInt() ?? 0,
+      items: itemsJson.map((e) => _mapCartItem(e, cartId)).toList(),
+      createdAt: DateTime.parse(
+        (json['createdAt'] ?? json['created_at']).toString(),
+      ),
+      updatedAt: DateTime.parse(
+        (json['updatedAt'] ?? json['updated_at']).toString(),
+      ),
+    );
   }
 
-  @override
-  Future<void> validateCartStock(String userId) async {
-    final cart = await getCart(userId);
+  CartItem _mapCartItem(Map<String, dynamic> json, String cartId) {
+    final attributesJson = _asListOfMap(json['attributes']);
 
-    if (cart.items.isEmpty) return;
+    return CartItem(
+      id: (json['id'] ?? '').toString(),
+      cartId: cartId,
+      productId: (json['productId'] ?? json['product_id'] ?? '').toString(),
+      variantId: json['variantId']?.toString(),
+      quantity: (json['quantity'] as num?)?.toInt() ?? 0,
+      unitPrice: (json['unitPrice'] ?? '0').toString(),
+      originalPrice: json['originalPrice']?.toString(),
+      lineTotal: (json['lineTotal'] ?? '0').toString(),
+      addedAt: json['addedAt'] != null
+          ? DateTime.parse(json['addedAt'].toString())
+          : DateTime.now(),
+      productName: (json['productName'] ?? '').toString(),
+      sku: (json['sku'] ?? '').toString(),
+      productType: (json['productType'] ?? '').toString(),
+      productStatus: (json['productStatus'] ?? '').toString(),
+      thumbnailUrl: json['thumbnailUrl']?.toString(),
+      variantSummary: json['variantSummary']?.toString(),
+      attributes: attributesJson
+          .map(
+            (attr) => CartItemAttribute(
+              label: (attr['label'] ?? '').toString(),
+              value: (attr['value'] ?? '').toString(),
+            ),
+          )
+          .toList(),
+      availableStock: (json['availableStock'] as num?)?.toInt() ?? 0,
+      isPriceChanged: json['isPriceChanged'] as bool? ?? false,
+      isAvailable: json['isAvailable'] as bool? ?? false,
+      stockWarning: json['stockWarning'] as bool? ?? false,
+    );
+  }
 
-    final outOfStockNames = <String>[];
-    final insufficientStockMessages = <String>[];
+  CartCalculation _mapCartCalculation(Map<String, dynamic> json) {
+    final itemsJson = _asListOfMap(json['items']);
+    final summaryJson = Map<String, dynamic>.from(
+      (json['summary'] ?? {}) as Map,
+    );
+    final couponJson = json['coupon'] is Map
+        ? Map<String, dynamic>.from(json['coupon'] as Map)
+        : null;
 
-    for (final item in cart.items) {
-      final realtimeStock = await getRealtimeStock(item.variantId);
+    return CartCalculation(
+      items: itemsJson.map((e) => _mapCartCalculationItem(e)).toList(),
+      summary: CartCalculationSummary(
+        subtotal: (summaryJson['subtotal'] ?? '0').toString(),
+        discount: (summaryJson['discount'] ?? '0').toString(),
+        total: (summaryJson['total'] ?? '0').toString(),
+        selectedItemsCount:
+            (summaryJson['selectedItemsCount'] as num?)?.toInt() ?? 0,
+        selectedQuantity:
+            (summaryJson['selectedQuantity'] as num?)?.toInt() ?? 0,
+      ),
+      coupon: couponJson == null
+          ? null
+          : AppliedCoupon(
+              code: (couponJson['code'] ?? '').toString(),
+              name: couponJson['name']?.toString(),
+              isApplied: couponJson['isApplied'] as bool? ?? false,
+              isValid: couponJson['isValid'] as bool? ?? false,
+              discountAmount: couponJson['discountAmount']?.toString(),
+              reason: couponJson['reason']?.toString(),
+            ),
+    );
+  }
 
-      if (realtimeStock <= 0) {
-        outOfStockNames.add(item.productName);
-        continue;
-      }
+  CartItem _mapCartCalculationItem(Map<String, dynamic> json) {
+    final attributesJson = _asListOfMap(json['attributes']);
 
-      if (item.quantity > realtimeStock) {
-        insufficientStockMessages.add(
-          '${item.productName} (requested: ${item.quantity}, available: $realtimeStock)',
-        );
-      }
-    }
-
-    if (outOfStockNames.isNotEmpty) {
-      throw Exception(
-        'The following items are out of stock: ${outOfStockNames.join(', ')}',
-      );
-    }
-
-    if (insufficientStockMessages.isNotEmpty) {
-      throw Exception(
-        'Some items exceed realtime stock: ${insufficientStockMessages.join('; ')}',
-      );
-    }
+    return CartItem(
+      id: (json['id'] ?? '').toString(),
+      cartId: '',
+      productId: (json['productId'] ?? json['product_id'] ?? '').toString(),
+      variantId: json['variantId']?.toString(),
+      quantity: (json['quantity'] as num?)?.toInt() ?? 0,
+      unitPrice: (json['unitPrice'] ?? '0').toString(),
+      originalPrice: json['originalPrice']?.toString(),
+      lineTotal: (json['lineTotal'] ?? '0').toString(),
+      addedAt: json['addedAt'] != null
+          ? DateTime.parse(json['addedAt'].toString())
+          : DateTime.now(),
+      productName: (json['productName'] ?? '').toString(),
+      sku: (json['sku'] ?? '').toString(),
+      productType: (json['productType'] ?? '').toString(),
+      productStatus: (json['productStatus'] ?? '').toString(),
+      thumbnailUrl: json['thumbnailUrl']?.toString(),
+      variantSummary: json['variantSummary']?.toString(),
+      attributes: attributesJson
+          .map(
+            (attr) => CartItemAttribute(
+              label: (attr['label'] ?? '').toString(),
+              value: (attr['value'] ?? '').toString(),
+            ),
+          )
+          .toList(),
+      availableStock: (json['availableStock'] as num?)?.toInt() ?? 0,
+      isPriceChanged: json['isPriceChanged'] as bool? ?? false,
+      isAvailable: json['isAvailable'] as bool? ?? false,
+      stockWarning: json['stockWarning'] as bool? ?? false,
+    );
   }
 }

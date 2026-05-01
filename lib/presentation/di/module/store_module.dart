@@ -108,7 +108,10 @@ import 'package:mobile_ai_erp/presentation/web_builder/store/web_theme_store.dar
 import 'package:mobile_ai_erp/presentation/post_purchase/store/post_purchase_store.dart';
 import 'package:mobile_ai_erp/presentation/storefront/store/product_listing_store.dart';
 import 'package:mobile_ai_erp/presentation/cart/store/cart_store.dart';
-
+import 'package:mobile_ai_erp/presentation/cart/store/wishlist_store.dart';
+import 'package:mobile_ai_erp/data/repository/cart/cart_repository.dart';
+import 'package:mobile_ai_erp/data/repository/wishlist/wishlist_repository.dart';
+import 'package:mobile_ai_erp/data/repository/coupon/coupon_repository.dart';
 import 'package:mobile_ai_erp/presentation/product/store/product_form_store.dart';
 import 'package:mobile_ai_erp/presentation/product/store/product_store.dart';
 import 'package:mobile_ai_erp/domain/repository/product/product_management_repository.dart';
@@ -291,7 +294,10 @@ class StoreModule {
     );
 
     getIt.registerFactory<ProductDetailStore>(
-      () => ProductDetailStore(getIt<StorefrontRepository>(), getIt<ErrorStore>()),
+      () => ProductDetailStore(
+        getIt<StorefrontRepository>(),
+        getIt<ErrorStore>(),
+      ),
     );
 
     getIt.registerSingleton<FulfillmentStore>(
@@ -316,6 +322,20 @@ class StoreModule {
     getIt.registerSingleton<ListingFilters>(
       ListingFilters(getIt<StorefrontRepository>()),
     );
+
+    // Cart and Wishlist stores:------------------------------------------------
+    getIt.registerSingleton<WishlistStore>(
+      WishlistStore(wishlistRepository: getIt<WishlistRepository>()),
+    );
+
+    getIt.registerSingleton<CartStore>(
+      CartStore(
+        cartRepository: getIt<CartRepository>(),
+        couponRepository: getIt<CouponRepository>(),
+        wishlistStore: getIt<WishlistStore>(),
+      ),
+    );
+
     // checkout:---------------------------------------------------------------
     getIt.registerSingleton<CheckoutStore>(
       CheckoutStore(
@@ -329,7 +349,7 @@ class StoreModule {
         getIt<SaveAddressUseCase>(),
         getIt<DeleteAddressUseCase>(),
         getIt<ErrorStore>(),
-        getIt.isRegistered<CartStore>() ? getIt<CartStore>() : null,
+        getIt<CartStore>(),
       ),
     );
 
