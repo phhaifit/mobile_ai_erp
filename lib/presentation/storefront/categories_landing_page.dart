@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_ai_erp/domain/entity/product/product.dart';
-import 'package:mobile_ai_erp/domain/entity/product/product_status.dart';
-import 'package:mobile_ai_erp/domain/entity/product_metadata/brand.dart';
-import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
+import 'package:mobile_ai_erp/di/service_locator.dart';
+import 'package:mobile_ai_erp/domain/repository/storefront/storefront_repository.dart';
 import 'package:mobile_ai_erp/presentation/storefront/classes/filter_arguments.dart';
+import 'package:mobile_ai_erp/presentation/storefront/models/storefront_models.dart';
+import 'package:mobile_ai_erp/presentation/storefront/widgets/page_banner.dart';
 import 'package:mobile_ai_erp/presentation/storefront/widgets/section_header.dart';
-import 'package:mobile_ai_erp/presentation/storefront/widgets/product_card_small.dart';
+import 'package:mobile_ai_erp/presentation/storefront/widgets/storefront_ui.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
 
 class CategoriesLandingPage extends StatefulWidget {
@@ -16,181 +16,20 @@ class CategoriesLandingPage extends StatefulWidget {
 }
 
 class _CategoriesLandingPageState extends State<CategoriesLandingPage> {
-  late List<Category> majorCategories;
-  late Map<String, List<Product>> productsByCategory;
-  late Map<String, List<Category>> subcategoriesByCategory;
-  late Map<String, bool> expandedCategoriesState;
+  final StorefrontRepository _repository = getIt<StorefrontRepository>();
+  late Future<List<StorefrontCategoryTreeNode>> _categoriesFuture;
 
   @override
   void initState() {
     super.initState();
-    majorCategories = fetchMajorCategories();
-    productsByCategory = fetchProductsByCategory();
-    subcategoriesByCategory = fetchSubcategoriesByCategory();
-    expandedCategoriesState = {};
+    _categoriesFuture = _repository.getCategories();
   }
 
-  List<Category> fetchMajorCategories() {
-    return [
-      Category(
-        id: 'CAT1',
-        name: 'Electronics',
-        code: 'ELEC',
-        slug: 'electronics',
-      ),
-      Category(
-        id: 'CAT2',
-        name: 'Clothing',
-        code: 'CLOTH',
-        slug: 'clothing',
-      ),
-      Category(
-        id: 'CAT3',
-        name: 'Home & Garden',
-        code: 'HOME',
-        slug: 'home-garden',
-      ),
-    ];
-  }
-
-  List<Product> fetchMockProducts() {
-    return [
-      Product(
-        id: 1,
-        name: 'Smile',
-        sku: 'SMILE-001',
-        price: 2000.0,
-        currency: 'USD',
-        rating: 5.0,
-        description: 'Premium smile product for happy customers',
-        status: ProductStatus.ACTIVE,
-        categoryId: 1,
-        brandId: 1,
-        tagIds: [1],
-        imageUrls: ['https://picsum.photos/id/17/250/250'],
-        category: Category(id: 'CAT1', name: 'Happy', code: 'CAT1', slug: 'happy'),
-        brand: Brand(id: 'BRAND1', name: 'CLX', code: 'BRAND1'),
-      ),
-      Product(
-        id: 2,
-        name: 'Surprise',
-        sku: 'SURPRISE-001',
-        price: 29.99,
-        currency: 'USD',
-        rating: 4.0,
-        description: 'Amazing surprise product that delights customers',
-        status: ProductStatus.ACTIVE,
-        categoryId: 1,
-        brandId: 2,
-        tagIds: [1, 2],
-        imageUrls: [],
-        category: Category(id: 'CAT1', name: 'Happy', code: 'CAT1', slug: 'happy'),
-        brand: Brand(id: 'BRAND2', name: 'MGMG', code: 'BRAND2'),
-      ),
-      Product(
-        id: 3,
-        name: 'Fresh Pro',
-        sku: 'FRESH-PRO-001',
-        price: 29.99,
-        currency: 'USD',
-        rating: 1.0,
-        description: 'Professional fresh product for everyday use',
-        status: ProductStatus.ACTIVE,
-        categoryId: 2,
-        brandId: 2,
-        tagIds: [2, 3],
-        imageUrls: ['https://picsum.photos/id/19/250/250'],
-        category: Category(id: 'CAT2', name: 'General', code: 'CAT2', slug: 'general'),
-        brand: Brand(id: 'BRAND2', name: 'MGMG', code: 'BRAND2'),
-      ),
-      Product(
-        id: 4,
-        name: 'Super Item',
-        sku: 'SUPER-ITEM-001',
-        price: 40.50,
-        currency: 'USD',
-        rating: 4.0,
-        description: 'Super quality item for superior performance',
-        status: ProductStatus.ACTIVE,
-        categoryId: 2,
-        brandId: 3,
-        tagIds: [3],
-        imageUrls: ['https://picsum.photos/id/20/250/250'],
-        category: Category(id: 'CAT2', name: 'General', code: 'CAT2', slug: 'general'),
-        brand: Brand(id: 'BRAND3', name: 'SOUPS', code: 'BRAND3'),
-      ),
-    ].toList();
-  }
-
-  Map<String, List<Product>> fetchProductsByCategory() {
-    final products = fetchMockProducts();
-    final result = <String, List<Product>>{};
-    for (final category in majorCategories) {
-      result[category.id] = products
-          .where((p) => (p.category != null && p.category!.id == category.id))
-          .toList();
-    }
-    return result;
-  }
-
-  Map<String, List<Category>> fetchSubcategoriesByCategory() {
-    return {
-      'CAT1': [
-        Category(
-          id: 'CAT1_1',
-          name: 'Phones',
-          code: 'PHONES',
-          slug: 'phones',
-          parentId: 'CAT1',
-        ),
-        Category(
-          id: 'CAT1_2',
-          name: 'Computers',
-          code: 'COMPUTERS',
-          slug: 'computers',
-          parentId: 'CAT1',
-        ),
-        Category(
-          id: 'CAT1_3',
-          name: 'Accessories',
-          code: 'ACCESSORIES',
-          slug: 'accessories',
-          parentId: 'CAT1',
-        ),
-      ],
-      'CAT2': [
-        Category(
-          id: 'CAT2_1',
-          name: 'Men',
-          code: 'MEN',
-          slug: 'men',
-          parentId: 'CAT2',
-        ),
-        Category(
-          id: 'CAT2_2',
-          name: 'Women',
-          code: 'WOMEN',
-          slug: 'women',
-          parentId: 'CAT2',
-        ),
-      ],
-      'CAT3': [
-        Category(
-          id: 'CAT3_1',
-          name: 'Furniture',
-          code: 'FURNITURE',
-          slug: 'furniture',
-          parentId: 'CAT3',
-        ),
-        Category(
-          id: 'CAT3_2',
-          name: 'Garden Tools',
-          code: 'GARDEN_TOOLS',
-          slug: 'garden-tools',
-          parentId: 'CAT3',
-        ),
-      ],
-    };
+  Future<void> _reload() async {
+    setState(() {
+      _categoriesFuture = _repository.getCategories();
+    });
+    await _categoriesFuture;
   }
 
   @override
@@ -199,111 +38,144 @@ class _CategoriesLandingPageState extends State<CategoriesLandingPage> {
       appBar: AppBar(
         title: const Text('Categories'),
         actions: [
-          IconButton(onPressed: () => Navigator.of(context).pushNamed(Routes.storeHome), icon: Icon(Icons.home))
+          IconButton(
+            onPressed: () => Navigator.of(context).pushNamed(Routes.storeHome),
+            icon: const Icon(Icons.home_outlined),
+          ),
         ],
       ),
-      body: Container(
-        alignment: Alignment.topCenter,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20.0),
-              for (final category in majorCategories)
-                _buildCategorySection(context, category),
-            ],
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFF7F4EF), Color(0xFFFBFBFA)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
+        ),
+        child: FutureBuilder<List<StorefrontCategoryTreeNode>>(
+          future: _categoriesFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState != ConnectionState.done) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) {
+              return StorefrontEmptyState(
+                icon: Icons.category_outlined,
+                title: 'Unable to load categories',
+                message: snapshot.error.toString(),
+                actionLabel: 'Retry',
+                onPressed: _reload,
+              );
+            }
+
+            final categories = snapshot.data ?? const [];
+            if (categories.isEmpty) {
+              return StorefrontEmptyState(
+                icon: Icons.category_outlined,
+                title: 'No categories available',
+                message:
+                    'The public storefront runtime did not return category navigation for this tenant.',
+                actionLabel: 'Refresh',
+                onPressed: _reload,
+              );
+            }
+
+            return RefreshIndicator(
+              onRefresh: _reload,
+              child: ListView(
+                padding: const EdgeInsets.only(bottom: 28),
+                children: [
+                  const PageBanner(
+                    imageSource: null,
+                    heading: 'Category Navigation',
+                    subheading:
+                        'Browse the live category tree and jump into category-aware product discovery with breadcrumb support.',
+                    tags: ['API breadcrumbs', 'Category tree'],
+                  ),
+                  for (final category in categories)
+                    _buildCategorySection(context, category),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _buildCategorySection(BuildContext context, Category category) {
-    final products = productsByCategory[category.id] ?? [];
-    final subcategories = subcategoriesByCategory[category.id] ?? [];
-    final isExpanded = expandedCategoriesState[category.id] ?? false;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SectionHeader(
-          headingText: category.name,
-          linkText: 'See all ${category.name}',
-          linkDestination: Routes.storefrontProductListing,
-          filterArguments: FilterArguments(selectedCategories: [category.id], selectedBrands: [], searchQuery: ""),
-        ),
-        if (products.isNotEmpty)
-          Wrap(
-            spacing: 5.0,
-            runSpacing: 5.0,
-            children: [
-              for (final product in products)
-                ProductCardSmall(
-                  productId: product.id,
-                  productName: product.name,
-                  imageSource: product.imageUrls.isNotEmpty ? product.imageUrls[0] : null,
-                )
-            ],
+  Widget _buildCategorySection(
+    BuildContext context,
+    StorefrontCategoryTreeNode category,
+  ) {
+    return StorefrontSurface(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionHeader(
+            headingText: category.name,
+            subheadingText:
+                category.description ??
+                'Browse products from this category and its children.',
+            linkText: 'View products',
+            linkDestination: Routes.storefrontProductListing,
+            filterArguments: FilterArguments(
+              selectedCategories: [category.slug],
+              categoryKey: category.slug,
+            ),
           ),
-        if (subcategories.isNotEmpty) ...[
-          const SizedBox(height: 15.0),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Wrap(
+              spacing: 10,
+              runSpacing: 10,
               children: [
-                Text(
-                  'Subcategories',
-                  style: Theme.of(context).textTheme.titleMedium,
+                StorefrontTag(
+                  label: 'Category slug: ${category.slug}',
+                  icon: Icons.route_outlined,
                 ),
-                const SizedBox(height: 10.0),
-                Wrap(
-                  spacing: 8.0,
-                  runSpacing: 8.0,
-                  children: [
-                    for (int i = 0;
-                        i < (isExpanded ? subcategories.length : 3);
-                        i++)
-                      if (i < subcategories.length)
-                        _buildSubcategoryChip(
-                          context,
-                          subcategories[i],
-                        )
-                  ],
-                ),
-                if (subcategories.length > 3)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 10.0),
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        setState(() {
-                          expandedCategoriesState[category.id] = !isExpanded;
-                        });
-                      },
-                      icon: Icon(isExpanded
-                          ? Icons.expand_less
-                          : Icons.expand_more),
-                      label: Text(isExpanded ? 'Show less' : 'Show more'),
-                    ),
+                if (category.children.isNotEmpty)
+                  StorefrontTag(
+                    label: '${category.children.length} subcategories',
+                    icon: Icons.account_tree_outlined,
+                    backgroundColor: const Color(0xFFFCE7DF),
                   ),
               ],
             ),
           ),
+          if (category.children.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: category.children
+                    .map(
+                      (child) => ActionChip(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        label: Text(child.name),
+                        avatar: const Icon(
+                          Icons.arrow_outward_rounded,
+                          size: 16,
+                        ),
+                        onPressed: () => Navigator.of(context).pushNamed(
+                          Routes.storefrontProductListing,
+                          arguments: FilterArguments(
+                            selectedCategories: [child.slug],
+                            categoryKey: child.slug,
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+            ),
+          ],
         ],
-        const SizedBox(height: 20.0),
-      ],
-    );
-  }
-
-  Widget _buildSubcategoryChip(
-    BuildContext context,
-    Category subcategory,
-  ) {
-    return ActionChip(
-      label: Text(subcategory.name),
-      onPressed: () {
-        Navigator.of(context).pushNamed(Routes.storefrontProductListing, arguments: FilterArguments(selectedCategories: [subcategory.id], selectedBrands: [], searchQuery: ""));
-      },
+      ),
     );
   }
 }

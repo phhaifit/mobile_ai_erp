@@ -25,11 +25,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   final CartStore _cartStore = getIt<CartStore>();
 
   int _quantity = 1;
+  bool _hasLoadedInitialProduct = false;
 
   @override
   void initState() {
     super.initState();
-    _store.loadProduct('prod_001');
   }
 
   void _onShare() {
@@ -113,9 +113,53 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Observer(
       builder: (_) {
         final product = _store.product;
-        if (product == null) {
+        final routeProductId =
+            ModalRoute.of(context)?.settings.arguments as String?;
+        if (!_hasLoadedInitialProduct && routeProductId != null) {
+          _hasLoadedInitialProduct = true;
+          _store.loadProduct(routeProductId);
+        }
+
+        if (routeProductId == null && product == null) {
+          return const Scaffold(
+            body: Center(
+              child: Text('Please open a product from the storefront listing.'),
+            ),
+          );
+        }
+
+        if (_store.isLoading) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (product == null) {
+          return Scaffold(
+            appBar: AppBar(),
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.cloud_off, size: 40),
+                    const SizedBox(height: 12),
+                    Text(
+                      _store.errorStore.errorMessage.isEmpty
+                          ? 'Unable to load product detail from the storefront API.'
+                          : _store.errorStore.errorMessage,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    FilledButton(
+                      onPressed: () => _store.loadProduct(routeProductId!),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           );
         }
 
