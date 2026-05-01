@@ -21,15 +21,14 @@ class _CustomerManagementHomeScreenState
   void initState() {
     super.initState();
     Future<void>.microtask(
-        () => Future.wait([_store.loadCustomers(), _store.loadGroups()]));
+      () => Future.wait([_store.loadCustomers(), _store.loadGroups()]),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Customer Management'),
-      ),
+      appBar: AppBar(title: const Text('Customer Management')),
       body: Observer(
         builder: (context) {
           if (_store.isLoading) {
@@ -43,7 +42,6 @@ class _CustomerManagementHomeScreenState
                 title: 'Customers',
                 description:
                     'View and manage all customer profiles and contacts.',
-                countLabel: '${_store.customers.length} customers',
                 icon: Icons.people_outline,
                 onTap: () => CustomerNavigator.openCustomers(context),
               ),
@@ -51,7 +49,6 @@ class _CustomerManagementHomeScreenState
                 title: 'Customer Groups',
                 description:
                     'Organize customers into segments for targeted actions.',
-                countLabel: '${_store.groups.length} groups',
                 icon: Icons.group_work_outlined,
                 onTap: () => CustomerNavigator.openGroups(context),
               ),

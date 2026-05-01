@@ -12,7 +12,7 @@ class GetCustomersParams {
 
   const GetCustomersParams({
     this.page = 1,
-    this.pageSize = 20,
+    this.pageSize = 3,
     this.search,
     this.status,
     this.groupId,
@@ -21,7 +21,8 @@ class GetCustomersParams {
   });
 }
 
-class GetCustomersUseCase extends UseCase<CustomerListResult, GetCustomersParams> {
+class GetCustomersUseCase
+    extends UseCase<CustomerListResult, GetCustomersParams> {
   final CustomerRepository _repository;
 
   GetCustomersUseCase(this._repository);

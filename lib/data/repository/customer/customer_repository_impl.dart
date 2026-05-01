@@ -5,11 +5,10 @@ import 'package:mobile_ai_erp/data/network/apis/customer/dto/address_response.da
 import 'package:mobile_ai_erp/data/network/apis/customer/dto/customer_detail_response.dart';
 import 'package:mobile_ai_erp/data/network/apis/customer/dto/customer_segment_list_response.dart';
 import 'package:mobile_ai_erp/data/network/apis/customer/dto/customer_segment_member_response.dart';
-import 'package:mobile_ai_erp/data/network/apis/customer/dto/customer_transaction_response.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/address.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/customer.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/customer_group.dart';
-import 'package:mobile_ai_erp/domain/entity/customer/customer_transaction.dart';
+import 'package:mobile_ai_erp/domain/entity/customer/customer_order.dart';
 import 'package:mobile_ai_erp/domain/repository/customer/customer_repository.dart';
 
 class CustomerRepositoryImpl extends CustomerRepository {
@@ -23,7 +22,7 @@ class CustomerRepositoryImpl extends CustomerRepository {
   @override
   Future<CustomerListResult> getCustomers({
     int page = 1,
-    int pageSize = 20,
+    int pageSize = 3,
     String? search,
     String? status,
     String? groupId,
@@ -91,7 +90,10 @@ class CustomerRepositoryImpl extends CustomerRepository {
       dto = await _customerApi.createAddress(address.customerId, body);
     } else {
       dto = await _customerApi.updateAddress(
-          address.customerId, address.id, body);
+        address.customerId,
+        address.id,
+        body,
+      );
     }
     return _mapAddressToEntity(dto, fallbackCustomerId: address.customerId);
   }
@@ -102,9 +104,10 @@ class CustomerRepositoryImpl extends CustomerRepository {
   }
 
   @override
-  Future<void> setDefaultAddress(
-      String customerId, String addressId) async {
-    await _customerApi.setDefaultAddress(customerId, addressId);
+  Future<void> setDefaultAddress(String customerId, String addressId) async {
+    await _customerApi.updateAddress(customerId, addressId, {
+      'isDefault': true,
+    });
   }
 
   // ─── Groups / Segments ────────────────────────────────────────────────────
@@ -112,7 +115,7 @@ class CustomerRepositoryImpl extends CustomerRepository {
   @override
   Future<CustomerGroupListResult> getCustomerGroups({
     int page = 1,
-    int pageSize = 20,
+    int pageSize = 3,
     String? search,
     String? sortBy,
     String? sortOrder,
@@ -168,23 +171,41 @@ class CustomerRepositoryImpl extends CustomerRepository {
 
   @override
   Future<void> addSegmentMembers(
-      String groupId, List<String> customerIds) async {
+    String groupId,
+    List<String> customerIds,
+  ) async {
     await _segmentApi.addMembers(groupId, customerIds);
   }
 
   @override
   Future<void> removeSegmentMembers(
-      String groupId, List<String> customerIds) async {
+    String groupId,
+    List<String> customerIds,
+  ) async {
     await _segmentApi.removeMembers(groupId, customerIds);
   }
 
   // ─── Transactions ─────────────────────────────────────────────────────────
 
   @override
-  Future<List<CustomerTransaction>> getCustomerTransactions(
-      String customerId) async {
+  Future<List<CustomerOrder>> getCustomerTransactions(String customerId) async {
     final dtos = await _customerApi.getTransactions(customerId);
-    return dtos.map(_mapTransactionToEntity).toList();
+    return dtos
+        .map(
+          (dto) => _mapOrderToEntity({
+            'id': dto.id,
+            'orderId': dto.orderId,
+            'code': dto.orderId,
+            'status': dto.status,
+            'paymentStatus': '',
+            'subtotal': dto.amount,
+            'discountAmount': 0,
+            'shippingFee': 0,
+            'totalPrice': dto.amount,
+            'createdAt': dto.createdAt,
+          }),
+        )
+        .toList();
   }
 
   // ─── Mappers ──────────────────────────────────────────────────────────────
@@ -201,7 +222,8 @@ class CustomerRepositoryImpl extends CustomerRepository {
       email: (dto.email as String?) ?? '',
       phone: dto.phone as String?,
       groupId: dto.groupId as String?,
-      status: CustomerStatus.fromApiString(dto.status as String?) ??
+      status:
+          CustomerStatus.fromApiString(dto.status as String?) ??
           CustomerStatus.active,
       createdAt: DateTime.parse(dto.createdAt as String),
       updatedAt: _tryParseDate(dto.updatedAt as String?),
@@ -212,6 +234,11 @@ class CustomerRepositoryImpl extends CustomerRepository {
     final parts = dto.name.trim().split(' ');
     final firstName = parts.first;
     final lastName = parts.length > 1 ? parts.skip(1).join(' ') : '';
+
+    final transactions = dto.transactions
+        .map((transaction) => _mapOrderToEntity(transaction))
+        .toList();
+
     return Customer(
       id: dto.id,
       firstName: firstName,
@@ -226,6 +253,7 @@ class CustomerRepositoryImpl extends CustomerRepository {
       updatedAt: _tryParseDate(dto.updatedAt),
       lastSignInAt: _tryParseDate(dto.lastSignInAt),
       emailVerifiedAt: _tryParseDate(dto.emailVerifiedAt),
+      transactions: transactions,
     );
   }
 
@@ -246,10 +274,15 @@ class CustomerRepositoryImpl extends CustomerRepository {
     );
   }
 
-  Address _mapAddressToEntity(AddressDto dto, {String fallbackCustomerId = ''}) {
+  Address _mapAddressToEntity(
+    AddressDto dto, {
+    String fallbackCustomerId = '',
+  }) {
     return Address(
       id: dto.id,
-      customerId: dto.customerId.isNotEmpty ? dto.customerId : fallbackCustomerId,
+      customerId: dto.customerId.isNotEmpty
+          ? dto.customerId
+          : fallbackCustomerId,
       label: dto.province ?? dto.address ?? '',
       street: dto.address ?? '',
       city: dto.province ?? '',
@@ -274,16 +307,6 @@ class CustomerRepositoryImpl extends CustomerRepository {
     );
   }
 
-  CustomerTransaction _mapTransactionToEntity(CustomerTransactionDto dto) {
-    return CustomerTransaction(
-      id: dto.id,
-      orderId: dto.orderId,
-      status: dto.status,
-      amount: double.tryParse(dto.amount) ?? 0,
-      createdAt: DateTime.parse(dto.createdAt),
-    );
-  }
-
   // ─── Request builders ─────────────────────────────────────────────────────
 
   Map<String, dynamic> _buildCustomerBody(Customer c) {
@@ -298,12 +321,13 @@ class CustomerRepositoryImpl extends CustomerRepository {
 
   Map<String, dynamic> _buildAddressBody(Address a) {
     return <String, dynamic>{
-      'address': a.street,
-      'province': a.city,
+      'street': a.street,
+      'city': a.city,
       'type': a.type.name,
       'isDefault': a.isDefault,
       if (a.state != null && a.state!.isNotEmpty) 'district': a.state,
-      if (a.postalCode != null && a.postalCode!.isNotEmpty) 'ward': a.postalCode,
+      if (a.postalCode != null && a.postalCode!.isNotEmpty)
+        'ward': a.postalCode,
     };
   }
 
@@ -331,5 +355,40 @@ class CustomerRepositoryImpl extends CustomerRepository {
       default:
         return AddressType.both;
     }
+  }
+
+  CustomerOrder _mapOrderToEntity(Map<String, dynamic> json) {
+    final items = json['items'] != null
+        ? (json['items'] as List<dynamic>)
+              .map<CustomerOrderItem>(
+                (item) => CustomerOrderItem(
+                  id: item['id'] as String? ?? '',
+                  productId: item['productId'] as String? ?? '',
+                  productName: item['productName'] as String? ?? '',
+                  sku: item['sku'] as String? ?? '',
+                  quantity: item['quantity'] as int? ?? 0,
+                  unitPrice: double.tryParse(item['unitPrice'].toString()) ?? 0,
+                  totalPrice:
+                      double.tryParse(item['totalPrice'].toString()) ?? 0,
+                ),
+              )
+              .toList()
+        : <CustomerOrderItem>[];
+
+    return CustomerOrder(
+      id: json['id'] as String? ?? '',
+      code: json['code'] as String? ?? '',
+      status: json['status'] as String? ?? '',
+      paymentStatus: json['paymentStatus'] as String? ?? '',
+      subtotal: double.tryParse(json['subtotal'].toString()) ?? 0,
+      discountAmount: double.tryParse(json['discountAmount'].toString()) ?? 0,
+      shippingFee: double.tryParse(json['shippingFee'].toString()) ?? 0,
+      totalPrice: double.tryParse(json['totalPrice'].toString()) ?? 0,
+      createdAt:
+          DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+          DateTime.now(),
+      source: json['source'] as String?,
+      items: items,
+    );
   }
 }

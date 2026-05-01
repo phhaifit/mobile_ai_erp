@@ -25,7 +25,6 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
   final TextEditingController _notesController = TextEditingController();
 
   CustomerStatus _status = CustomerStatus.active;
-  CustomerType _type = CustomerType.individual;
   String? _selectedGroupId;
   bool _isSaving = false;
   Customer? _editingCustomer;
@@ -38,8 +37,7 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
 
   Future<void> _initialize() async {
     await Future.wait([_store.loadCustomers(), _store.loadGroups()]);
-    _editingCustomer =
-        _store.findCustomerById(widget.args?.customerId);
+    _editingCustomer = _store.findCustomerById(widget.args?.customerId);
 
     if (_editingCustomer != null) {
       _firstNameController.text = _editingCustomer!.firstName;
@@ -48,7 +46,6 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
       _phoneController.text = _editingCustomer!.phone ?? '';
       _notesController.text = _editingCustomer!.notes ?? '';
       _status = _editingCustomer!.status;
-      _type = _editingCustomer!.type;
       _selectedGroupId = _editingCustomer!.groupId;
     }
 
@@ -70,7 +67,8 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-            _editingCustomer == null ? 'New customer' : 'Edit customer'),
+          _editingCustomer == null ? 'New customer' : 'Edit customer',
+        ),
       ),
       body: SafeArea(
         child: Form(
@@ -85,7 +83,8 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
                     child: TextFormField(
                       controller: _firstNameController,
                       decoration: customerFormDecoration(
-                          labelText: 'First name'),
+                        labelText: 'First name',
+                      ),
                       textCapitalization: TextCapitalization.words,
                       validator: (value) {
                         if ((value == null || value.trim().isEmpty) &&
@@ -101,7 +100,8 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
                     child: TextFormField(
                       controller: _lastNameController,
                       decoration: customerFormDecoration(
-                          labelText: 'Last name'),
+                        labelText: 'Last name',
+                      ),
                       textCapitalization: TextCapitalization.words,
                     ),
                   ),
@@ -110,8 +110,7 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _emailController,
-                decoration:
-                    customerFormDecoration(labelText: 'Email'),
+                decoration: customerFormDecoration(labelText: 'Email'),
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -123,26 +122,10 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _phoneController,
-                decoration:
-                    customerFormDecoration(labelText: 'Phone (optional)'),
+                decoration: customerFormDecoration(
+                  labelText: 'Phone (optional)',
+                ),
                 keyboardType: TextInputType.phone,
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<CustomerType>(
-                initialValue: _type,
-                decoration:
-                    customerFormDecoration(labelText: 'Customer type'),
-                items: CustomerType.values
-                    .map(
-                      (t) => DropdownMenuItem<CustomerType>(
-                        value: t,
-                        child: Text(t.label),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (value) {
-                  if (value != null) setState(() => _type = value);
-                },
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<CustomerStatus>(
@@ -179,17 +162,16 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
                 ],
                 selectedItemBuilder: (context) => <Widget>[
                   const _DropdownLabel('No group'),
-                  ..._store.groups
-                      .map((g) => _DropdownLabel(g.name)),
+                  ..._store.groups.map((g) => _DropdownLabel(g.name)),
                 ],
-                onChanged: (value) =>
-                    setState(() => _selectedGroupId = value),
+                onChanged: (value) => setState(() => _selectedGroupId = value),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _notesController,
-                decoration:
-                    customerFormDecoration(labelText: 'Notes (optional)'),
+                decoration: customerFormDecoration(
+                  labelText: 'Notes (optional)',
+                ),
                 minLines: 2,
                 maxLines: 4,
               ),
@@ -203,9 +185,9 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.save_outlined),
-                label: Text(_editingCustomer == null
-                    ? 'Create customer'
-                    : 'Save changes'),
+                label: Text(
+                  _editingCustomer == null ? 'Create customer' : 'Save changes',
+                ),
               ),
             ],
           ),
@@ -230,9 +212,7 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
           groupId: _selectedGroupId,
           notes: _trimOrNull(_notesController.text),
           status: _status,
-          type: _type,
-          createdAt:
-              _editingCustomer?.createdAt ?? DateTime.now(),
+          createdAt: _editingCustomer?.createdAt ?? DateTime.now(),
         ),
       );
 
@@ -240,14 +220,13 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
       Navigator.of(context).pop();
     } on CustomerValidationException catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Couldn\'t save customer. Try again.')),
+        const SnackBar(content: Text('Couldn\'t save customer. Try again.')),
       );
     } finally {
       if (mounted) setState(() => _isSaving = false);
