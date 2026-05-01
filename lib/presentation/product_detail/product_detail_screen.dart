@@ -46,6 +46,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Future<void> _onAddToCart() async {
+    final product = _store.product;
+    if (product == null) return;
     final variant = _store.selectedVariant;
     if (variant == null || !variant.inStock) return;
 
@@ -61,7 +63,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       return;
     }
 
-    await _cartStore.addToCart(variant.id, _quantity);
+    await _cartStore.addToCart(productId: product.id, qty: _quantity);
 
     if (!mounted) return;
 
