@@ -28,6 +28,7 @@ import 'package:mobile_ai_erp/data/repository/post_purchase/post_purchase_reposi
 import 'package:mobile_ai_erp/data/repository/product_metadata/product_metadata_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/setting/setting_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/stock_operations/mock_stock_operations_repository.dart';
+import 'package:mobile_ai_erp/data/repository/storefront/storefront_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/supplier/supplier_mock_repository.dart';
 import 'package:mobile_ai_erp/data/repository/user/role_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/user/user_repository_impl.dart';
@@ -46,6 +47,7 @@ import 'package:mobile_ai_erp/domain/repository/post_purchase/post_purchase_repo
 import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadata_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/setting/setting_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/stock_operations/stock_operations_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/storefront/storefront_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/supplier/supplier_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/role_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/user_repository.dart';
@@ -64,6 +66,7 @@ import 'package:mobile_ai_erp/domain/repository/web_builder/web_theme_repository
 import 'package:mobile_ai_erp/data/repository/product/product_management_repository_impl.dart';
 import 'package:mobile_ai_erp/domain/repository/product/product_management_repository.dart';
 import 'package:mobile_ai_erp/data/local/datasources/product/mock_product_datasource.dart';
+import 'package:mobile_ai_erp/data/network/apis/storefront/storefront_api.dart';
 
 import '../../../di/service_locator.dart';
 
@@ -88,6 +91,10 @@ class RepositoryModule {
 
     getIt.registerSingleton<StockOperationsRepository>(
       MockStockOperationsRepository(),
+    );
+
+    getIt.registerSingleton<StorefrontRepository>(
+      StorefrontRepositoryImpl(getIt<StorefrontApi>()),
     );
 
     getIt.registerSingleton<InventoryAuditOutboundRepository>(
