@@ -110,6 +110,7 @@ import 'package:mobile_ai_erp/presentation/storefront/store/product_listing_stor
 import 'package:mobile_ai_erp/presentation/cart/store/cart_store.dart';
 import 'package:mobile_ai_erp/presentation/cart/store/wishlist_store.dart';
 import 'package:mobile_ai_erp/data/repository/cart/cart_repository.dart';
+import 'package:mobile_ai_erp/data/repository/wishlist/wishlist_repository.dart';
 import 'package:mobile_ai_erp/data/repository/coupon/coupon_repository.dart';
 import 'package:mobile_ai_erp/presentation/product/store/product_form_store.dart';
 import 'package:mobile_ai_erp/presentation/product/store/product_store.dart';
@@ -324,7 +325,7 @@ class StoreModule {
 
     // Cart and Wishlist stores:------------------------------------------------
     getIt.registerSingleton<WishlistStore>(
-      WishlistStore(cartRepository: getIt<CartRepository>()),
+      WishlistStore(wishlistRepository: getIt<WishlistRepository>()),
     );
 
     getIt.registerSingleton<CartStore>(

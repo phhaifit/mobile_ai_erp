@@ -1,6 +1,5 @@
 import 'package:mobile_ai_erp/domain/entity/cart/cart.dart';
 import 'package:mobile_ai_erp/domain/entity/cart/cart_calculation.dart';
-import 'package:mobile_ai_erp/domain/entity/cart/wishlist.dart';
 
 abstract class CartRepository {
   Future<Cart> getCart();
@@ -22,14 +21,4 @@ abstract class CartRepository {
   });
 
   Future<Cart> mergeCart({required List<Map<String, dynamic>> items});
-
-  Future<Wishlist> getWishlist();
-
-  Future<Map<String, dynamic>> getWishlistSummary();
-
-  Future<Wishlist> addToWishlist({required String productId});
-
-  Future<void> removeFromWishlist({required String itemId});
-
-  Future<Wishlist> mergeWishlist({required List<Map<String, dynamic>> items});
 }

@@ -51,9 +51,13 @@ class CouponRepositoryImpl implements CouponRepository {
       minOrderAmount:
           (json['min_order_amount'] ?? json['minOrderAmount'] ?? '0')
               .toString(),
-      maxUses: (json['max_uses'] ?? json['maxUses'] as num?)?.toInt(),
+      maxUses:
+          (json['max_uses'] as num?)?.toInt() ??
+          (json['maxUses'] as num?)?.toInt(),
       usedCount:
-          (json['used_count'] ?? json['usedCount'] as num?)?.toInt() ?? 0,
+          (json['used_count'] as num?)?.toInt() ??
+          (json['usedCount'] as num?)?.toInt() ??
+          0,
       validFrom: DateTime.parse(
         (json['valid_from'] ?? json['validFrom']).toString(),
       ),
