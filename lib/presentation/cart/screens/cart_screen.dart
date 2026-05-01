@@ -214,15 +214,15 @@ class _CartScreenState extends State<CartScreen> {
       (sum, item) => sum + item.quantity,
     );
 
-    final selectedSubtotal = _cartStore.checkoutItems.fold<int>(
-      0,
-      (sum, item) => sum + int.parse(item.lineTotal),
+    final selectedSubtotal = _cartStore.checkoutItems.fold<double>(
+      0.0,
+      (sum, item) => sum + (double.tryParse(item.lineTotal) ?? 0.0),
     );
 
     return CartCalculationSummary(
-      subtotal: selectedSubtotal.toString(),
+      subtotal: selectedSubtotal.toStringAsFixed(2),
       discount: '0',
-      total: selectedSubtotal.toString(),
+      total: selectedSubtotal.toStringAsFixed(2),
       selectedItemsCount: _cartStore.checkoutItems.length,
       selectedQuantity: selectedQuantity,
     );

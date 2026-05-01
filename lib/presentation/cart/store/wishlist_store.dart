@@ -90,16 +90,18 @@ abstract class WishlistStoreBase with Store {
 
     switch (sortBy) {
       case 'price-low':
-        sorted.sort(
-          (a, b) =>
-              int.parse(a.sellingPrice).compareTo(int.parse(b.sellingPrice)),
-        );
+        sorted.sort((a, b) {
+          final priceA = double.tryParse(a.sellingPrice) ?? 0.0;
+          final priceB = double.tryParse(b.sellingPrice) ?? 0.0;
+          return priceA.compareTo(priceB);
+        });
         break;
       case 'price-high':
-        sorted.sort(
-          (a, b) =>
-              int.parse(b.sellingPrice).compareTo(int.parse(a.sellingPrice)),
-        );
+        sorted.sort((a, b) {
+          final priceA = double.tryParse(a.sellingPrice) ?? 0.0;
+          final priceB = double.tryParse(b.sellingPrice) ?? 0.0;
+          return priceB.compareTo(priceA);
+        });
         break;
       case 'name':
         sorted.sort((a, b) => a.productName.compareTo(b.productName));
