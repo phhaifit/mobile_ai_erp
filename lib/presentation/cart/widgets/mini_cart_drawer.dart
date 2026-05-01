@@ -238,7 +238,7 @@ class MiniCartDrawer extends StatelessWidget {
           subtotal: cartData.cart.subtotal,
           discount: '0',
           total: cartData.cart.subtotal,
-          selectedItemsCount: cartData.cart.items.length,
+          selectedItemsCount: cartData.cart.totalItems,
           selectedQuantity: cartData.cart.totalItems,
         );
 
