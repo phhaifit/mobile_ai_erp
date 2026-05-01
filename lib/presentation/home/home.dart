@@ -44,10 +44,32 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (!mounted) return;
 
-    final cartUIModel = CartUIModel(
-      cart: _cartStore.cart,
-      calculation: _cartStore.calculation,
-    );
+    MiniCartDrawer buildMiniCartDrawer() {
+      final cartUIModel = CartUIModel(
+        cart: _cartStore.cart,
+        calculation: _cartStore.calculation,
+      );
+
+      return MiniCartDrawer(
+        cartData: cartUIModel,
+        onViewFullCart: () {
+          Navigator.pop(context);
+          CartRoutes.navigateToCart(context);
+        },
+        onCheckout: () {
+          Navigator.pop(context);
+          CartRoutes.navigateToCart(context);
+        },
+        onRemoveItem: (itemId) async {
+          await _cartStore.removeItemFromCart(itemId);
+        },
+        onQuantityChanged: (itemId, quantity) async {
+          await _cartStore.updateItemQuantity(itemId, quantity);
+        },
+        isLoading: _cartStore.isLoading,
+        onDrawerToggle: () {},
+      );
+    }
 
     await showGeneralDialog(
       context: context,
@@ -67,25 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: SizedBox(
                 height: sheetHeight,
                 width: double.infinity,
-                child: MiniCartDrawer(
-                  cartData: cartUIModel,
-                  onViewFullCart: () {
-                    Navigator.pop(context);
-                    CartRoutes.navigateToCart(context);
-                  },
-                  onCheckout: () {
-                    Navigator.pop(context);
-                    CartRoutes.navigateToCart(context);
-                  },
-                  onRemoveItem: (itemId) async {
-                    await _cartStore.removeItemFromCart(itemId);
-                  },
-                  onQuantityChanged: (itemId, quantity) async {
-                    await _cartStore.updateItemQuantity(itemId, quantity);
-                  },
-                  isLoading: _cartStore.isLoading,
-                  onDrawerToggle: () {},
-                ),
+                child: Observer(builder: (_) => buildMiniCartDrawer()),
               ),
             ),
           );
@@ -99,25 +103,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: SizedBox(
                 width: 420,
                 height: sheetHeight,
-                child: MiniCartDrawer(
-                  cartData: cartUIModel,
-                  onViewFullCart: () {
-                    Navigator.pop(context);
-                    CartRoutes.navigateToCart(context);
-                  },
-                  onCheckout: () {
-                    Navigator.pop(context);
-                    CartRoutes.navigateToCart(context);
-                  },
-                  onRemoveItem: (itemId) async {
-                    await _cartStore.removeItemFromCart(itemId);
-                  },
-                  onQuantityChanged: (itemId, quantity) async {
-                    await _cartStore.updateItemQuantity(itemId, quantity);
-                  },
-                  isLoading: _cartStore.isLoading,
-                  onDrawerToggle: () {},
-                ),
+                child: Observer(builder: (_) => buildMiniCartDrawer()),
               ),
             ),
           ),
