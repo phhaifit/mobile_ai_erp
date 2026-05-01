@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
+import 'package:mobile_ai_erp/data/network/dto/shared/paginated_response.dto.dart';
 import 'package:mobile_ai_erp/data/repository/product_metadata/product_metadata_network_utils.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/attribute.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/metadata_page.dart';
@@ -36,16 +37,19 @@ class AttributeSetApi {
         erpMetadataPath('/attribute-sets'),
         queryParameters: queryParams,
       );
-      final data = response.data?['data'] as List<dynamic>? ?? const <dynamic>[];
-      final meta = response.data?['meta'] as Map<String, dynamic>? ?? const <String, dynamic>{};
+      final pageDto = PaginatedResponseDto.fromJson(
+        response.data ?? const <String, dynamic>{},
+        pageFallback: normalizedPage,
+        pageSizeFallback: normalizedPageSize,
+      );
       return MetadataPage<AttributeSet>(
-        items: data
-            .map((item) => _mapAttributeSet(item as Map<String, dynamic>))
+        items: pageDto.data
+            .map(_mapAttributeSet)
             .toList(growable: false),
-        page: meta['page'] as int? ?? normalizedPage,
-        pageSize: meta['pageSize'] as int? ?? normalizedPageSize,
-        totalItems: meta['totalItems'] as int? ?? data.length,
-        totalPages: meta['totalPages'] as int? ?? (data.isEmpty ? 0 : 1),
+        page: pageDto.page,
+        pageSize: pageDto.pageSize,
+        totalItems: pageDto.totalItems,
+        totalPages: pageDto.totalPages,
       );
     } on DioException catch (error) {
       throw mapMetadataWriteError(error);
