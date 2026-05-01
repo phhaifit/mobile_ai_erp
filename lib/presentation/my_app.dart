@@ -84,6 +84,8 @@ class _MyAppState extends State<MyApp> {
 
     return Observer(
       builder: (context) {
+        final loginStore = getIt<LoginStore>();
+        final hasSession = _hasSession || loginStore.isLoggedIn;
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           title: Strings.appName,
@@ -105,7 +107,7 @@ class _MyAppState extends State<MyApp> {
                 routeName.startsWith(Routes.storefrontLegacyHome);
 
             // If the route is protected and there is no session, force login
-            if (!isPublic && !_hasSession) {
+            if (!isPublic && !hasSession) {
               return MaterialPageRoute(
                 builder: (context) => LoginScreen(),
                 settings: settings,
@@ -115,7 +117,7 @@ class _MyAppState extends State<MyApp> {
             // Resolve static routes
             WidgetBuilder? builder;
             if (routeName == '/') {
-              builder = (context) => _hasSession ? HomeScreen() : LoginScreen();
+              builder = (context) => hasSession ? HomeScreen() : LoginScreen();
             } else {
               builder = Routes.routes[routeName];
             }
