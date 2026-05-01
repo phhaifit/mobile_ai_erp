@@ -1,5 +1,5 @@
 import 'package:mobx/mobx.dart';
-import 'package:mobile_ai_erp/data/repository/cart/cart_repository.dart';
+import 'package:mobile_ai_erp/data/repository/wishlist/wishlist_repository.dart';
 import 'package:mobile_ai_erp/domain/entity/cart/wishlist.dart';
 import 'package:mobile_ai_erp/domain/entity/cart/wishlist_item.dart';
 
@@ -8,10 +8,10 @@ part 'wishlist_store.g.dart';
 class WishlistStore = WishlistStoreBase with _$WishlistStore;
 
 abstract class WishlistStoreBase with Store {
-  final CartRepository _cartRepository;
+  final WishlistRepository _wishlistRepository;
 
-  WishlistStoreBase({required CartRepository cartRepository})
-    : _cartRepository = cartRepository {
+  WishlistStoreBase({required WishlistRepository wishlistRepository})
+    : _wishlistRepository = wishlistRepository {
     wishlist = Wishlist(
       id: '',
       tenantId: '',
@@ -146,7 +146,7 @@ abstract class WishlistStoreBase with Store {
     errorMessage = null;
 
     try {
-      wishlist = await _cartRepository.getWishlist();
+      wishlist = await _wishlistRepository.getWishlist();
       _pruneInvalidSelections();
       await loadWishlistSummary();
     } catch (e) {
@@ -159,7 +159,7 @@ abstract class WishlistStoreBase with Store {
   @action
   Future<void> loadWishlistSummary() async {
     try {
-      wishlistSummary = await _cartRepository.getWishlistSummary();
+      wishlistSummary = await _wishlistRepository.getWishlistSummary();
     } catch (_) {}
   }
 
@@ -173,7 +173,7 @@ abstract class WishlistStoreBase with Store {
         return;
       }
 
-      wishlist = await _cartRepository.addToWishlist(productId: productId);
+      wishlist = await _wishlistRepository.addToWishlist(productId: productId);
       _pruneInvalidSelections();
       await loadWishlistSummary();
     } catch (e) {
@@ -189,7 +189,7 @@ abstract class WishlistStoreBase with Store {
     errorMessage = null;
 
     try {
-      await _cartRepository.removeFromWishlist(itemId: item.id);
+      await _wishlistRepository.removeFromWishlist(itemId: item.id);
       selectedItemIds.remove(item.id);
       await loadWishlist();
     } catch (e) {
@@ -210,7 +210,7 @@ abstract class WishlistStoreBase with Store {
 
     try {
       for (final item in itemsToRemove) {
-        await _cartRepository.removeFromWishlist(itemId: item.id);
+        await _wishlistRepository.removeFromWishlist(itemId: item.id);
       }
 
       selectedItemIds.clear();

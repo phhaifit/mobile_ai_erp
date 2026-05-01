@@ -308,8 +308,6 @@ class MiniCartBadge extends StatelessWidget {
     this.hasDiscount = false,
   }) : super(key: key);
 
-  static const Color _accentRed = Color(0xFFC63D2F);
-
   @override
   Widget build(BuildContext context) {
     return Tooltip(
