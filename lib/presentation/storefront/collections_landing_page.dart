@@ -9,35 +9,35 @@ import 'package:mobile_ai_erp/presentation/storefront/widgets/section_header.dar
 import 'package:mobile_ai_erp/presentation/storefront/widgets/storefront_ui.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
 
-class BrandsLandingPage extends StatefulWidget {
-  const BrandsLandingPage({super.key});
+class CollectionsLandingPage extends StatefulWidget {
+  const CollectionsLandingPage({super.key});
 
   @override
-  State<BrandsLandingPage> createState() => _BrandsLandingPageState();
+  State<CollectionsLandingPage> createState() => _CollectionsLandingPageState();
 }
 
-class _BrandsLandingPageState extends State<BrandsLandingPage> {
+class _CollectionsLandingPageState extends State<CollectionsLandingPage> {
   final StorefrontRepository _repository = getIt<StorefrontRepository>();
-  late Future<List<StorefrontBrand>> _brandsFuture;
+  late Future<List<StorefrontCollection>> _collectionsFuture;
 
   @override
   void initState() {
     super.initState();
-    _brandsFuture = _repository.getBrands();
+    _collectionsFuture = _repository.getCollections();
   }
 
   Future<void> _reload() async {
     setState(() {
-      _brandsFuture = _repository.getBrands();
+      _collectionsFuture = _repository.getCollections();
     });
-    await _brandsFuture;
+    await _collectionsFuture;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Brands'),
+        title: const Text('Collections'),
         actions: [
           IconButton(
             onPressed: () => Navigator.of(context).pushNamed(Routes.storeHome),
@@ -53,29 +53,29 @@ class _BrandsLandingPageState extends State<BrandsLandingPage> {
             end: Alignment.bottomCenter,
           ),
         ),
-        child: FutureBuilder<List<StorefrontBrand>>(
-          future: _brandsFuture,
+        child: FutureBuilder<List<StorefrontCollection>>(
+          future: _collectionsFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState != ConnectionState.done) {
               return const Center(child: CircularProgressIndicator());
             }
             if (snapshot.hasError) {
               return StorefrontEmptyState(
-                icon: Icons.storefront_outlined,
-                title: 'Unable to load brands',
+                icon: Icons.layers_outlined,
+                title: 'Unable to load collections',
                 message: snapshot.error.toString(),
                 actionLabel: 'Retry',
                 onPressed: _reload,
               );
             }
 
-            final brands = snapshot.data ?? const [];
-            if (brands.isEmpty) {
+            final collections = snapshot.data ?? const [];
+            if (collections.isEmpty) {
               return StorefrontEmptyState(
-                icon: Icons.storefront_outlined,
-                title: 'No brands available',
+                icon: Icons.layers_outlined,
+                title: 'No collections available',
                 message:
-                    'The public storefront runtime did not return brand landing data for this tenant.',
+                    'The public storefront runtime did not return collection data for this tenant.',
                 actionLabel: 'Refresh',
                 onPressed: _reload,
               );
@@ -88,13 +88,13 @@ class _BrandsLandingPageState extends State<BrandsLandingPage> {
                 children: [
                   const PageBanner(
                     imageSource: null,
-                    heading: 'Brand Landings',
+                    heading: 'Collection Landings',
                     subheading:
-                        'Browse brands connected to live discovery APIs and jump into filtered product listings.',
-                    tags: ['Live brand data', 'Filtered PLP'],
+                        'Curated collection pages backed by live storefront data and connected product listing filters.',
+                    tags: ['Curated discovery', 'Live collection data'],
                   ),
-                  for (final brand in brands)
-                    _buildBrandSection(context, brand),
+                  for (final collection in collections)
+                    _buildCollectionSection(context, collection),
                 ],
               ),
             );
@@ -104,21 +104,21 @@ class _BrandsLandingPageState extends State<BrandsLandingPage> {
     );
   }
 
-  Widget _buildBrandSection(BuildContext context, StorefrontBrand brand) {
+  Widget _buildCollectionSection(
+    BuildContext context,
+    StorefrontCollection collection,
+  ) {
     return StorefrontSurface(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SectionHeader(
-            headingText: brand.name,
+            headingText: collection.name,
             subheadingText:
-                brand.description ?? 'Explore this brand in the storefront.',
-            linkText: 'View all products',
+                collection.description ?? 'Discover this curated collection.',
+            linkText: 'View collection',
             linkDestination: Routes.storefrontProductListing,
-            filterArguments: FilterArguments(
-              selectedBrands: [brand.slug],
-              brandKey: brand.slug,
-            ),
+            filterArguments: FilterArguments(collectionSlug: collection.slug),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -127,28 +127,28 @@ class _BrandsLandingPageState extends State<BrandsLandingPage> {
               runSpacing: 10,
               children: [
                 StorefrontTag(
-                  label: '${brand.productCount} products',
+                  label: '${collection.productCount} items',
                   icon: Icons.inventory_2_outlined,
                 ),
                 StorefrontTag(
-                  label: 'Brand slug: ${brand.slug}',
-                  icon: Icons.sell_outlined,
+                  label: 'Slug: ${collection.slug}',
+                  icon: Icons.bookmark_outline,
                   backgroundColor: const Color(0xFFFCE7DF),
                 ),
               ],
             ),
           ),
-          if (brand.featuredProducts.isNotEmpty) ...[
+          if (collection.featuredProducts.isNotEmpty) ...[
             const SizedBox(height: 16),
             SizedBox(
               height: 290,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: brand.featuredProducts.length,
+                itemCount: collection.featuredProducts.length,
                 separatorBuilder: (context, index) => const SizedBox(width: 12),
                 itemBuilder: (context, index) {
-                  final product = brand.featuredProducts[index];
+                  final product = collection.featuredProducts[index];
                   return ProductCardSmall(
                     productId: product.id,
                     productName: product.title,

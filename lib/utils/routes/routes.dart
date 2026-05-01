@@ -38,6 +38,7 @@ import 'package:mobile_ai_erp/presentation/reports/reports_analytics.dart';
 import 'package:mobile_ai_erp/presentation/stock_operations/stock_operations_screen.dart';
 import 'package:mobile_ai_erp/presentation/storefront/brands_landing_page.dart';
 import 'package:mobile_ai_erp/presentation/storefront/categories_landing_page.dart';
+import 'package:mobile_ai_erp/presentation/storefront/collections_landing_page.dart';
 import 'package:mobile_ai_erp/presentation/storefront/product_listing_page.dart';
 import 'package:mobile_ai_erp/presentation/storefront/storefront_home_page.dart';
 import 'package:mobile_ai_erp/presentation/supplier/supplier_list/supplier_list_screen.dart';
@@ -88,9 +89,11 @@ class Routes {
   static const String postPurchaseExchangeDetail = '/post-purchase/exchange';
   static const String postPurchaseRefundDetail = '/post-purchase/refund';
   static const String storeHome = '/storefront';
+  static const String storefrontLegacyHome = '/stockfront';
   static const String storefrontProductListing = '/storefront/product-listing';
   static const String categoriesLanding = '/storefront/categories';
   static const String brandsLanding = '/storefront/brands';
+  static const String collectionsLanding = '/storefront/collections';
   static const String checkout = '/checkout';
   static const String checkoutTest = '/checkout-test';
   static const String productManagementList = '/products-management';
@@ -129,7 +132,7 @@ class Routes {
     ...CartRoutes.getRoutes(),
     reports: (BuildContext context) => ReportsAnalyticsScreen(),
     suppliers: (BuildContext context) =>
-      SupplierListScreen(store: getIt<SupplierStore>()),
+        SupplierListScreen(store: getIt<SupplierStore>()),
     profileDashboard: (BuildContext context) => ProfileDashboardScreen(),
     addressBook: (BuildContext context) => const AddressBookScreen(),
     addressForm: (BuildContext context) => const AddressFormScreen(),
@@ -155,9 +158,12 @@ class Routes {
     postPurchaseRefundDetail: (BuildContext context) =>
         const RefundDetailScreen(),
     storeHome: (BuildContext context) => StorefrontHomePage(),
+    storefrontLegacyHome: (BuildContext context) => StorefrontHomePage(),
     storefrontProductListing: (BuildContext context) => ProductListingScreen(),
     categoriesLanding: (BuildContext context) => const CategoriesLandingPage(),
     brandsLanding: (BuildContext context) => const BrandsLandingPage(),
+    collectionsLanding: (BuildContext context) =>
+        const CollectionsLandingPage(),
     checkoutTest: (BuildContext context) => const CheckoutTestScreen(),
     productManagementList: (BuildContext context) => ProductListScreen(),
     productManagementFilter: (BuildContext context) => ProductFilterScreen(),
