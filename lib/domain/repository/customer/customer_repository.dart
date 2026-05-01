@@ -2,7 +2,7 @@ import 'package:mobile_ai_erp/data/network/apis/common/pagination_meta.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/address.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/customer.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/customer_group.dart';
-import 'package:mobile_ai_erp/domain/entity/customer/customer_transaction.dart';
+import 'package:mobile_ai_erp/domain/entity/customer/customer_order.dart';
 
 class CustomerListResult {
   final List<Customer> data;
@@ -64,5 +64,5 @@ abstract class CustomerRepository {
   Future<void> removeSegmentMembers(String groupId, List<String> customerIds);
 
   // Transaction history
-  Future<List<CustomerTransaction>> getCustomerTransactions(String customerId);
+  Future<List<CustomerOrder>> getCustomerTransactions(String customerId);
 }

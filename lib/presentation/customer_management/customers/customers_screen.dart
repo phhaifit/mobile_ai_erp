@@ -207,7 +207,6 @@ class _CustomersScreenState extends State<CustomersScreen> {
                         runSpacing: 6,
                         children: <Widget>[
                           CustomerStatusChip(label: customer.status.label),
-                          CustomerStatusChip(label: customer.type.label),
                           if (group != null)
                             CustomerStatusChip(label: group.name),
                         ],

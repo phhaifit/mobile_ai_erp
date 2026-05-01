@@ -2,7 +2,7 @@ import 'package:mobile_ai_erp/core/stores/error/error_store.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/address.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/customer.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/customer_group.dart';
-import 'package:mobile_ai_erp/domain/entity/customer/customer_transaction.dart';
+import 'package:mobile_ai_erp/domain/entity/customer/customer_order.dart';
 import 'package:mobile_ai_erp/domain/usecase/customer/add_segment_members_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/customer/delete_customer_address_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/customer/delete_customer_group_usecase.dart';
@@ -97,8 +97,8 @@ abstract class CustomerStoreBase with Store {
   String? activeCustomerId;
 
   @observable
-  ObservableList<CustomerTransaction> activeTransactions =
-      ObservableList<CustomerTransaction>();
+  ObservableList<CustomerOrder> activeTransactions =
+      ObservableList<CustomerOrder>();
 
   @observable
   ObservableList<Customer> segmentMembers = ObservableList<Customer>();
@@ -262,7 +262,7 @@ abstract class CustomerStoreBase with Store {
       final transactions = await _getCustomerTransactionsUseCase.call(
         params: customerId,
       );
-      activeTransactions = ObservableList<CustomerTransaction>.of(transactions);
+      activeTransactions = ObservableList<CustomerOrder>.of(transactions);
     });
   }
 

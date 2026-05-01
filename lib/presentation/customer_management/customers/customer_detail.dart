@@ -1,5 +1,6 @@
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/customer.dart';
+import 'package:mobile_ai_erp/domain/entity/customer/customer_order.dart';
 import 'package:mobile_ai_erp/presentation/customer_management/navigation/customer_navigator.dart';
 import 'package:mobile_ai_erp/presentation/customer_management/navigation/customer_route_args.dart';
 import 'package:mobile_ai_erp/presentation/customer_management/store/customer_store.dart';
@@ -24,7 +25,9 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   @override
   void initState() {
     super.initState();
-    Future<void>.microtask(() => _store.loadCustomers());
+    Future<void>.microtask(
+      () => _store.loadCustomerDetail(widget.args.customerId),
+    );
   }
 
   @override
@@ -68,7 +71,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                     label: 'Phone',
                     value: customer.phone ?? 'Not set',
                   ),
-                  CustomerDetailRow(label: 'Type', value: customer.type.label),
                   CustomerDetailRow(
                     label: 'Group',
                     value: group?.name ?? 'No group',
@@ -103,6 +105,10 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                   _AddressPreview(store: _store, customerId: customer.id),
                 ],
               ),
+              if (customer.transactions.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 16),
+                _TransactionHistory(transactions: customer.transactions),
+              ],
             ],
           ),
         );
@@ -153,7 +159,6 @@ class _CustomerHeaderCard extends StatelessWidget {
                     runSpacing: 6,
                     children: <Widget>[
                       CustomerStatusChip(label: customer.status.label),
-                      CustomerStatusChip(label: customer.type.label),
                     ],
                   ),
                 ],
@@ -240,5 +245,131 @@ class _AddressPreviewState extends State<_AddressPreview> {
         );
       },
     );
+  }
+}
+
+class _TransactionHistory extends StatelessWidget {
+  const _TransactionHistory({required this.transactions});
+
+  final List<CustomerOrder> transactions;
+
+  @override
+  Widget build(BuildContext context) {
+    final displayTransactions = transactions.take(5).toList();
+
+    return CustomerDetailSectionCard(
+      title: 'Transaction History',
+      trailing: transactions.length > 5
+          ? Text(
+              '+${transactions.length - 5} more',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            )
+          : null,
+      children: <Widget>[
+        ...displayTransactions.map(
+          (order) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: <Widget>[
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            order.code,
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            DateFormat(
+                              'MMM d, y h:mm a',
+                            ).format(order.createdAt),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: <Widget>[
+                        Text(
+                          '${order.totalPrice.toStringAsFixed(0)}đ',
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 4),
+                        _StatusBadge(
+                          status: order.status,
+                          paymentStatus: order.paymentStatus,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StatusBadge extends StatelessWidget {
+  const _StatusBadge({required this.status, required this.paymentStatus});
+
+  final String status;
+  final String paymentStatus;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _getStatusColor(status);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: color, width: 0.5),
+      ),
+      child: Text(
+        status.replaceFirst(status[0], status[0].toUpperCase()),
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'delivered':
+      case 'success':
+        return Colors.green;
+      case 'shipping':
+      case 'pending':
+        return Colors.orange;
+      case 'failed':
+      case 'cancelled':
+        return Colors.red;
+      case 'confirmed':
+      case 'packing':
+        return Colors.blue;
+      default:
+        return Colors.grey;
+    }
   }
 }

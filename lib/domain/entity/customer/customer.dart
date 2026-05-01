@@ -1,3 +1,5 @@
+import 'customer_order.dart';
+
 enum CustomerStatus {
   pendingVerification('Pending verification'),
   active('Active'),
@@ -58,6 +60,7 @@ class Customer {
     this.updatedAt,
     this.lastSignInAt,
     this.emailVerifiedAt,
+    this.transactions = const [],
   });
 
   final String id;
@@ -74,6 +77,7 @@ class Customer {
   final DateTime? updatedAt;
   final DateTime? lastSignInAt;
   final DateTime? emailVerifiedAt;
+  final List<CustomerOrder> transactions;
 
   String get fullName {
     final first = firstName.trim();
@@ -110,6 +114,7 @@ class Customer {
     Object? updatedAt = _sentinel,
     Object? lastSignInAt = _sentinel,
     Object? emailVerifiedAt = _sentinel,
+    List<CustomerOrder>? transactions,
   }) {
     return Customer(
       id: id ?? this.id,
@@ -120,8 +125,9 @@ class Customer {
       avatarUrl: identical(avatarUrl, _sentinel)
           ? this.avatarUrl
           : avatarUrl as String?,
-      groupId:
-          identical(groupId, _sentinel) ? this.groupId : groupId as String?,
+      groupId: identical(groupId, _sentinel)
+          ? this.groupId
+          : groupId as String?,
       notes: identical(notes, _sentinel) ? this.notes : notes as String?,
       status: status ?? this.status,
       type: type ?? this.type,
@@ -135,6 +141,7 @@ class Customer {
       emailVerifiedAt: identical(emailVerifiedAt, _sentinel)
           ? this.emailVerifiedAt
           : emailVerifiedAt as DateTime?,
+      transactions: transactions ?? this.transactions,
     );
   }
 }

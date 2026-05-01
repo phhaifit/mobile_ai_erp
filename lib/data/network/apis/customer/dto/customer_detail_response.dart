@@ -11,6 +11,7 @@ class CustomerDetailDto {
   final String? emailVerifiedAt;
   final String? notes;
   final String? avatarUrl;
+  final List<Map<String, dynamic>> transactions;
 
   CustomerDetailDto({
     required this.id,
@@ -25,6 +26,7 @@ class CustomerDetailDto {
     this.emailVerifiedAt,
     this.notes,
     this.avatarUrl,
+    this.transactions = const [],
   });
 
   factory CustomerDetailDto.fromJson(Map<String, dynamic> json) {
@@ -41,6 +43,11 @@ class CustomerDetailDto {
       emailVerifiedAt: json['emailVerifiedAt'] as String?,
       notes: json['notes'] as String?,
       avatarUrl: json['avatarUrl'] as String?,
+      transactions: json['transactions'] != null
+          ? List<Map<String, dynamic>>.from(
+              json['transactions'] as List<dynamic>,
+            )
+          : [],
     );
   }
 }
