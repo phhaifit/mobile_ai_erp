@@ -9,7 +9,6 @@ import 'package:mobile_ai_erp/data/local/datasources/product_metadata/product_me
 import 'package:mobile_ai_erp/data/local/datasources/user/user_datasource.dart';
 import 'package:mobile_ai_erp/data/network/datasources/user/user_remote_datasource.dart';
 import 'package:mobile_ai_erp/data/network/datasources/role/role_remote_datasource.dart';
-import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/web_builder/web_builder_api.dart';
 import 'package:mobile_ai_erp/data/repository/checkout/checkout_repository_impl.dart';
@@ -29,7 +28,8 @@ import 'package:mobile_ai_erp/data/repository/product_metadata/product_metadata_
 import 'package:mobile_ai_erp/data/repository/setting/setting_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/stock_operations/mock_stock_operations_repository.dart';
 import 'package:mobile_ai_erp/data/repository/storefront/storefront_repository_impl.dart';
-import 'package:mobile_ai_erp/data/repository/supplier/supplier_mock_repository.dart';
+import 'package:mobile_ai_erp/data/repository/supplier/supplier_repository_impl.dart';
+import 'package:mobile_ai_erp/data/network/apis/suppliers/supplier_api.dart';
 import 'package:mobile_ai_erp/data/repository/user/role_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/user/user_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/web_builder/cms_page_repository_impl.dart';
@@ -151,7 +151,9 @@ class RepositoryModule {
       () => StoreSettingsRepositoryImpl(getIt<WebBuilderApi>()),
     );
 
-    getIt.registerLazySingleton<SupplierRepository>(() => SupplierMockRepository());
+    getIt.registerLazySingleton<SupplierRepository>(
+      () => SupplierRepositoryImpl(getIt<SupplierApi>()),
+    );
     getIt.registerSingleton<FulfillmentRepository>(FulfillmentRepositoryImpl());
 
     // user use cases:---------------------------------------------------------

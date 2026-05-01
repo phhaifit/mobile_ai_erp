@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../domain/entity/supplier/supplier.dart';
-import '../../../core/stores/supplier/supplier_store.dart';
+import '../../../domain/entity/supplier/supplier_upsert_payload.dart';
+import '../store/supplier_store.dart';
+import 'widgets/supplier_form_body.dart';
 
 class SupplierFormScreen extends StatefulWidget {
   final SupplierStore store;
@@ -19,12 +21,16 @@ class SupplierFormScreen extends StatefulWidget {
 class _SupplierFormScreenState extends State<SupplierFormScreen> {
   final _formKey = GlobalKey<FormState>();
 
+  late final TextEditingController _codeCtrl;
   late final TextEditingController _nameCtrl;
-  late final TextEditingController _contactCtrl;
   late final TextEditingController _phoneCtrl;
   late final TextEditingController _emailCtrl;
   late final TextEditingController _addressCtrl;
-  late final TextEditingController _notesCtrl;
+  late final TextEditingController _taxCodeCtrl;
+  late final TextEditingController _idCardCtrl;
+  late final TextEditingController _bankNameCtrl;
+  late final TextEditingController _bankAccountCtrl;
+  late final TextEditingController _bankNoteCtrl;
 
   bool _isSaving = false;
   bool get _isEditing => widget.supplier != null;
@@ -33,22 +39,30 @@ class _SupplierFormScreenState extends State<SupplierFormScreen> {
   void initState() {
     super.initState();
     final s = widget.supplier;
+    _codeCtrl = TextEditingController(text: s?.code ?? '');
     _nameCtrl = TextEditingController(text: s?.name ?? '');
-    _contactCtrl = TextEditingController(text: s?.contactName ?? '');
     _phoneCtrl = TextEditingController(text: s?.phone ?? '');
     _emailCtrl = TextEditingController(text: s?.email ?? '');
     _addressCtrl = TextEditingController(text: s?.address ?? '');
-    _notesCtrl = TextEditingController(text: s?.notes ?? '');
+    _taxCodeCtrl = TextEditingController(text: s?.taxCode ?? '');
+    _idCardCtrl = TextEditingController(text: s?.idCard ?? '');
+    _bankNameCtrl = TextEditingController(text: s?.bankName ?? '');
+    _bankAccountCtrl = TextEditingController(text: s?.bankAccount ?? '');
+    _bankNoteCtrl = TextEditingController(text: s?.bankNote ?? '');
   }
 
   @override
   void dispose() {
+    _codeCtrl.dispose();
     _nameCtrl.dispose();
-    _contactCtrl.dispose();
     _phoneCtrl.dispose();
     _emailCtrl.dispose();
     _addressCtrl.dispose();
-    _notesCtrl.dispose();
+    _taxCodeCtrl.dispose();
+    _idCardCtrl.dispose();
+    _bankNameCtrl.dispose();
+    _bankAccountCtrl.dispose();
+    _bankNoteCtrl.dispose();
     super.dispose();
   }
 
@@ -57,26 +71,24 @@ class _SupplierFormScreenState extends State<SupplierFormScreen> {
 
     setState(() => _isSaving = true);
 
+    final payload = SupplierUpsertPayload(
+      code: _codeCtrl.text.trim(),
+      name: _nameCtrl.text.trim(),
+      phone: _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
+      email: _emailCtrl.text.trim().isEmpty ? null : _emailCtrl.text.trim(),
+      address: _addressCtrl.text.trim().isEmpty ? null : _addressCtrl.text.trim(),
+      taxCode: _taxCodeCtrl.text.trim().isEmpty ? null : _taxCodeCtrl.text.trim(),
+      idCard: _idCardCtrl.text.trim().isEmpty ? null : _idCardCtrl.text.trim(),
+      bankName: _bankNameCtrl.text.trim().isEmpty ? null : _bankNameCtrl.text.trim(),
+      bankAccount: _bankAccountCtrl.text.trim().isEmpty ? null : _bankAccountCtrl.text.trim(),
+      bankNote: _bankNoteCtrl.text.trim().isEmpty ? null : _bankNoteCtrl.text.trim(),
+    );
+
     bool success;
     if (_isEditing) {
-      final updated = widget.supplier!.copyWith(
-        name: _nameCtrl.text.trim(),
-        contactName: _contactCtrl.text.trim(),
-        phone: _phoneCtrl.text.trim(),
-        email: _emailCtrl.text.trim(),
-        address: _addressCtrl.text.trim(),
-        notes: _notesCtrl.text.trim(),
-      );
-      success = await widget.store.updateSupplier(updated);
+      success = await widget.store.updateSupplier(widget.supplier!.id, payload);
     } else {
-      success = await widget.store.addSupplier(
-        name: _nameCtrl.text.trim(),
-        contactName: _contactCtrl.text.trim(),
-        phone: _phoneCtrl.text.trim(),
-        email: _emailCtrl.text.trim(),
-        address: _addressCtrl.text.trim(),
-        notes: _notesCtrl.text.trim(),
-      );
+      success = await widget.store.addSupplier(payload);
     }
 
     setState(() => _isSaving = false);
@@ -119,156 +131,21 @@ class _SupplierFormScreenState extends State<SupplierFormScreen> {
             ),
         ],
       ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            _SectionLabel('Basic Information'),
-            const SizedBox(height: 12),
-            _FormField(
-              controller: _nameCtrl,
-              label: 'Supplier Name',
-              hint: 'e.g. Alpha Trading Co.',
-              icon: Icons.business_outlined,
-              isRequired: true,
-              validator: (v) {
-                if (v == null || v.trim().isEmpty) {
-                  return 'Supplier name is required';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 12),
-            _FormField(
-              controller: _contactCtrl,
-              label: 'Contact Person',
-              hint: 'e.g. Nguyen Van A',
-              icon: Icons.person_outline,
-            ),
-            const SizedBox(height: 24),
-            _SectionLabel('Contact Details'),
-            const SizedBox(height: 12),
-            _FormField(
-              controller: _phoneCtrl,
-              label: 'Phone Number',
-              hint: 'e.g. 0901234567',
-              icon: Icons.phone_outlined,
-              keyboardType: TextInputType.phone,
-              validator: (v) {
-                if (v != null && v.isNotEmpty) {
-                  final cleaned = v.replaceAll(RegExp(r'[\s\-\(\)]'), '');
-                  if (!RegExp(r'^\+?[0-9]{7,15}$').hasMatch(cleaned)) {
-                    return 'Enter a valid phone number';
-                  }
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 12),
-            _FormField(
-              controller: _emailCtrl,
-              label: 'Email Address',
-              hint: 'e.g. supplier@example.com',
-              icon: Icons.email_outlined,
-              keyboardType: TextInputType.emailAddress,
-              validator: (v) {
-                if (v != null && v.isNotEmpty) {
-                  if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v)) {
-                    return 'Enter a valid email address';
-                  }
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 12),
-            _FormField(
-              controller: _addressCtrl,
-              label: 'Address',
-              hint: 'Street, District, City',
-              icon: Icons.location_on_outlined,
-              maxLines: 2,
-            ),
-            const SizedBox(height: 24),
-            _SectionLabel('Additional'),
-            const SizedBox(height: 12),
-            _FormField(
-              controller: _notesCtrl,
-              label: 'Notes',
-              hint: 'Any additional information…',
-              icon: Icons.notes_outlined,
-              maxLines: 3,
-            ),
-            const SizedBox(height: 32),
-            FilledButton(
-              onPressed: _isSaving ? null : _submit,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Text(
-                  _isEditing ? 'Update Supplier' : 'Create Supplier',
-                  style: const TextStyle(fontSize: 16),
-                ),
-              ),
-            ),
-            const SizedBox(height: 32),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  final String text;
-  const _SectionLabel(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-            color: Theme.of(context).colorScheme.primary,
-            fontWeight: FontWeight.w600,
-          ),
-    );
-  }
-}
-
-class _FormField extends StatelessWidget {
-  final TextEditingController controller;
-  final String label;
-  final String? hint;
-  final IconData? icon;
-  final bool isRequired;
-  final TextInputType? keyboardType;
-  final int maxLines;
-  final String? Function(String?)? validator;
-
-  const _FormField({
-    required this.controller,
-    required this.label,
-    this.hint,
-    this.icon,
-    this.isRequired = false,
-    this.keyboardType,
-    this.maxLines = 1,
-    this.validator,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      maxLines: maxLines,
-      validator: validator,
-      decoration: InputDecoration(
-        labelText: isRequired ? '$label *' : label,
-        hintText: hint,
-        prefixIcon: icon != null ? Icon(icon, size: 20) : null,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-        filled: true,
-        fillColor: Theme.of(context).colorScheme.surface,
+      body: SupplierFormBody(
+        formKey: _formKey,
+        codeCtrl: _codeCtrl,
+        nameCtrl: _nameCtrl,
+        phoneCtrl: _phoneCtrl,
+        emailCtrl: _emailCtrl,
+        addressCtrl: _addressCtrl,
+        taxCodeCtrl: _taxCodeCtrl,
+        idCardCtrl: _idCardCtrl,
+        bankNameCtrl: _bankNameCtrl,
+        bankAccountCtrl: _bankAccountCtrl,
+        bankNoteCtrl: _bankNoteCtrl,
+        isSaving: _isSaving,
+        isEditing: _isEditing,
+        onSubmit: _submit,
       ),
     );
   }
