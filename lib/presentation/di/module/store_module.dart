@@ -10,6 +10,7 @@ import 'package:mobile_ai_erp/domain/repository/dashboard/dashboard_repository.d
 import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadata_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/setting/setting_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/stock_operations/stock_operations_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/storefront/storefront_repository.dart';
 import 'package:mobile_ai_erp/domain/usecase/supplier/supplier_usecases.dart';
 import 'package:mobile_ai_erp/domain/repository/user/auth_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/role_repository.dart';
@@ -52,7 +53,15 @@ import 'package:mobile_ai_erp/domain/usecase/order_tracking/get_order_tracking_s
 import 'package:mobile_ai_erp/domain/usecase/post/get_post_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/assign_role_to_user_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/create_role_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/delete_role_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/get_all_roles_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/get_role_by_id_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/update_role_usercase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/get_all_users_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/get_user_by_id_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/create_user_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/update_user_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/delete_user_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/auth/create_tenant_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/apply_web_theme_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/delete_cms_page_usecase.dart';
@@ -202,6 +211,11 @@ class StoreModule {
         getIt<UserRepository>(),
         getIt<RoleRepository>(),
         getIt<AssignRoleToUserUseCase>(),
+        getIt<GetAllUsersUseCase>(),
+        getIt<GetUserByIdUseCase>(),
+        getIt<CreateUserUseCase>(),
+        getIt<UpdateUserUseCase>(),
+        getIt<DeleteUserUseCase>(),
       ),
     );
 
@@ -210,6 +224,9 @@ class StoreModule {
         getIt<RoleRepository>(),
         getIt<CreateRoleUseCase>(),
         getIt<UpdateRoleUseCase>(),
+        getIt<DeleteRoleUseCase>(),
+        getIt<GetAllRolesUseCase>(),
+        getIt<GetRoleByIdUseCase>(),
       ),
     );
 
@@ -262,7 +279,7 @@ class StoreModule {
     );
 
     getIt.registerFactory<ProductDetailStore>(
-      () => ProductDetailStore(getIt<ErrorStore>()),
+      () => ProductDetailStore(getIt<StorefrontRepository>(), getIt<ErrorStore>()),
     );
 
     getIt.registerSingleton<FulfillmentStore>(
@@ -279,7 +296,7 @@ class StoreModule {
 
     // Product listing store:---------------------------------------------------
     getIt.registerSingleton<ListingFilters>(
-      ListingFilters(),
+      ListingFilters(getIt<StorefrontRepository>()),
     );
     // checkout:---------------------------------------------------------------
     getIt.registerSingleton<CheckoutStore>(

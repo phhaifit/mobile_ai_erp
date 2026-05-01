@@ -1,24 +1,27 @@
 import 'dart:async';
 
-import 'package:mobile_ai_erp/data/local/datasources/user/user_datasource.dart';
+import 'package:mobile_ai_erp/data/network/datasources/user/user_remote_datasource.dart';
 import 'package:mobile_ai_erp/domain/repository/user/user_repository.dart';
 
 import '../../../domain/entity/user/user.dart';
 
 class UserRepositoryImpl implements UserRepository {
-  final UserDataSource dataSource;
+  final UserRemoteDataSource remoteDataSource;
 
-  UserRepositoryImpl(this.dataSource);
-
-  @override
-  Future<List<User>> getAll() => dataSource.getUsers();
+  UserRepositoryImpl(this.remoteDataSource);
 
   @override
-  Future<void> create(User user) => dataSource.addUser(user);
+  Future<List<User>> getAll() => remoteDataSource.getUsers();
 
   @override
-  Future<void> update(User user) => dataSource.updateUser(user);
+  Future<User> getById(String id) => remoteDataSource.getUserById(id);
 
   @override
-  Future<void> delete(String id) => dataSource.deleteUser(id);
+  Future<User> create(User user) => remoteDataSource.createUser(user);
+
+  @override
+  Future<User> update(String id, User user) => remoteDataSource.updateUser(id, user);
+
+  @override
+  Future<void> delete(String id) => remoteDataSource.deleteUser(id);
 }

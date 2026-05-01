@@ -44,6 +44,29 @@ class TenantSummary {
 }
 
 @JsonSerializable()
+class AuthResponseUser
+{
+  final String id;
+  final String? email;
+  final String? name;
+  final String? role;
+  final String tenantId;
+  final String? profileImageUrl;
+
+  AuthResponseUser({
+    required this.id,
+    required this.email,
+    required this.name,
+    required this.role,
+    required this.tenantId,
+    this.profileImageUrl,
+  });
+
+  factory AuthResponseUser.fromJson(Map<String, dynamic> json) => _$AuthResponseUserFromJson(json);
+  Map<String, dynamic> toJson() => _$AuthResponseUserToJson(this);
+}
+
+@JsonSerializable()
 class AuthStatusResponse
 {
   final bool hasTenant;
@@ -51,7 +74,7 @@ class AuthStatusResponse
   final SsoProfile? ssoProfile;
 
   final String? subdomain;
-  final User? user;
+  final AuthResponseUser? user;
   final List<TenantSummary>? tenants;
 
   factory AuthStatusResponse.fromJson(Map<String, dynamic> json) => _$AuthStatusResponseFromJson(json);
