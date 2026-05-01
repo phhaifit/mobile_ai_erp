@@ -199,6 +199,17 @@ abstract class CustomerStoreBase with Store {
   }
 
   @action
+  Future<void> deactivateCustomer(String customerId) async {
+    final customer = findCustomerById(customerId);
+    if (customer == null) return;
+
+    final deactivatedCustomer = customer.copyWith(
+      status: CustomerStatus.deactivated,
+    );
+    await saveCustomer(deactivatedCustomer);
+  }
+
+  @action
   Future<void> loadCustomerDetail(String customerId) async {
     await _runWithLoading(() async {
       final customer = await _getCustomerDetailUseCase.call(params: customerId);
