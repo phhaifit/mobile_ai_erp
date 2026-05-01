@@ -218,11 +218,13 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
 
       if (!mounted) return;
 
-      // Navigate to customer list after successful save
-      // Use pushReplacementNamed to replace the current route
-      if (Navigator.canPop(context)) {
-        Navigator.popUntil(context, (route) => route.isFirst);
-      }
+      // Reload customers list to update pagination
+      await _store.loadCustomers();
+
+      if (!mounted) return;
+
+      // Navigate back to customer list
+      Navigator.of(context).pop();
     } on CustomerValidationException catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(
