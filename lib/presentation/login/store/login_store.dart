@@ -89,7 +89,7 @@ abstract class _LoginStore with Store {
       final result = await _createTenantUseCase.call(
         params: CreateTenantParams(name: name, subdomain: subdomain),
       );
-      currentTenantId = result['tenantId'];
+      currentTenantId = result['id'] ?? result['tenantId'];
       if (currentTenantId != null) {
         await _sharedPreferenceHelper.saveTenantId(currentTenantId!);
       }

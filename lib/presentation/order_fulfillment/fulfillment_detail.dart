@@ -4,21 +4,28 @@ import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/entity/fulfillment/fulfillment_item.dart';
 import 'package:mobile_ai_erp/domain/entity/fulfillment/fulfillment_order.dart';
 import 'package:mobile_ai_erp/domain/entity/fulfillment/fulfillment_status.dart';
+import 'package:mobile_ai_erp/domain/entity/fulfillment/shipment_tracking.dart';
+import 'package:mobile_ai_erp/presentation/order_fulfillment/fulfillment_shipment.dart';
+import 'package:mobile_ai_erp/presentation/order_fulfillment/order_print_label.dart';
+import 'package:mobile_ai_erp/presentation/order_fulfillment/order_tracking.dart';
 import 'package:mobile_ai_erp/presentation/order_fulfillment/store/fulfillment_store.dart';
-import 'package:mobile_ai_erp/utils/routes/routes.dart';
 import 'package:intl/intl.dart';
 import 'package:mobx/mobx.dart';
 
 class FulfillmentDetailScreen extends StatefulWidget {
+  const FulfillmentDetailScreen({super.key});
+
   @override
-  State<FulfillmentDetailScreen> createState() =>
-      _FulfillmentDetailScreenState();
+  State<FulfillmentDetailScreen> createState() => _FulfillmentDetailScreenState();
 }
 
 class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
   final FulfillmentStore _store = getIt<FulfillmentStore>();
   final _currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: 'VND');
   late ReactionDisposer _errorDisposer;
+  
+  List<ShipmentTrackingInfo> _shipmentBatches = const [];
+  bool _loadingShipments = false;
 
   @override
   void initState() {
@@ -37,6 +44,21 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
         }
       },
     );
+    
+    _loadShipments();
+  }
+
+  Future<void> _loadShipments() async {
+    final order = _store.selectedOrder;
+    if (order == null) return;
+    setState(() => _loadingShipments = true);
+    final shipments = await _store.getOrderShipmentBatches(order.id);
+    if (mounted) {
+      setState(() {
+        _shipmentBatches = shipments;
+        _loadingShipments = false;
+      });
+    }
   }
 
   @override
@@ -62,32 +84,17 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
             body: const Center(child: Text('Order not found')),
           );
         }
+
         return Scaffold(
+          backgroundColor: Colors.grey.shade50,
           appBar: AppBar(
-            title: Text(order.id),
+            title: Text(order.code),
             actions: [
               IconButton(
-                icon: const Icon(Icons.timeline),
-                tooltip: 'Track Order',
-                onPressed: () => Navigator.of(context).pushNamed(
-                  Routes.fulfillmentTracking,
-                  arguments: order.id,
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.inventory_2_outlined),
-                tooltip: 'Packaging',
-                onPressed: () => Navigator.of(context).pushNamed(
-                  Routes.fulfillmentPackaging,
-                  arguments: order.id,
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.print_outlined),
-                tooltip: 'Print Label',
-                onPressed: () => Navigator.of(context).pushNamed(
-                  Routes.fulfillmentPrintLabel,
-                  arguments: order.id,
+                icon: const Icon(Icons.track_changes),
+                tooltip: 'History & Tracking',
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const FulfillmentTrackingScreen()),
                 ),
               ),
             ],
@@ -97,10 +104,10 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildOrderHeader(order),
-                const Divider(height: 1),
-                _buildItemsSection(order),
-                const Divider(height: 1),
+                _buildShipmentBatchesSection(order),
                 _buildActionButtons(order),
+                _buildItemsSection(order),
+                const SizedBox(height: 40),
               ],
             ),
           ),
@@ -110,7 +117,8 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
   }
 
   Widget _buildOrderHeader(FulfillmentOrder order) {
-    return Padding(
+    return Container(
+      color: Colors.white,
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -120,26 +128,209 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
             children: [
               Text(
                 'Order Information',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
               _buildStatusChip(order.status),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           _buildInfoRow(Icons.person_outline, 'Customer', order.customerName),
-          _buildInfoRow(Icons.phone_outlined, 'Phone', order.customerPhone),
-          _buildInfoRow(
-              Icons.location_on_outlined, 'Address', order.shippingAddress),
-          _buildInfoRow(Icons.storefront, 'Channel', order.channel),
-          _buildInfoRow(Icons.calendar_today, 'Created',
-              DateFormat('dd/MM/yyyy HH:mm').format(order.createdAt)),
-          _buildInfoRow(Icons.attach_money, 'Total',
-              _currencyFormat.format(order.totalAmount)),
-          if (order.notes != null && order.notes!.isNotEmpty)
-            _buildInfoRow(Icons.note_outlined, 'Notes', order.notes!),
+          if (order.customerPhone != null)
+            _buildInfoRow(Icons.phone_outlined, 'Phone', order.customerPhone!),
+          if (order.shippingAddress != null)
+            _buildInfoRow(Icons.location_on_outlined, 'Address', order.shippingAddress!),
+          _buildInfoRow(Icons.attach_money, 'Total Price', _currencyFormat.format(order.totalAmount)),
+          _buildInfoRow(Icons.calendar_today, 'Created At', DateFormat('dd/MM/yyyy HH:mm').format(order.createdAt)),
         ],
+      ),
+    );
+  }
+
+  Widget _buildShipmentBatchesSection(FulfillmentOrder order) {
+    if (_shipmentBatches.isEmpty && !_loadingShipments) return const SizedBox.shrink();
+    
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.all(16),
+      color: Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Shipment Batches',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          if (_loadingShipments)
+            const Center(child: LinearProgressIndicator())
+          else
+            ..._shipmentBatches.map((s) => Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+                side: BorderSide(color: Colors.grey.shade200),
+              ),
+              child: ListTile(
+                dense: true,
+                title: Text('Batch #${s.shipmentNumber} • ${s.trackingCode}'),
+                subtitle: Text('Status: ${s.status}'),
+                trailing: IconButton(
+                  icon: const Icon(Icons.print, color: Colors.blue),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => OrderPrintLabelScreen(shipment: s)),
+                  ),
+                ),
+              ),
+            )),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButtons(FulfillmentOrder order) {
+    final isActiveShipping = order.status.isActiveShippingPhase;
+    final isFulfillmentPhase = order.status == FulfillmentStatus.confirmed ||
+        order.status == FulfillmentStatus.packing ||
+        isActiveShipping;
+
+    // Nothing to show for terminal statuses.
+    if (order.status.isTerminal) return const SizedBox.shrink();
+
+    final nextStatus = _getNextStatus(order.status);
+    
+    // Logic: If we are in a phase that requires the Fulfillment Manager (Manifest), 
+    // we hide the manual "Mark as..." button to prevent confusion.
+    // The user should go through the "Start Fulfillment" flow instead.
+    final showManualNextButton = nextStatus != null && 
+        order.status != FulfillmentStatus.confirmed && 
+        order.status != FulfillmentStatus.packing;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (isFulfillmentPhase) ...[
+            _buildFulfillmentPrompt(order),
+            const SizedBox(height: 12),
+          ],
+          if (showManualNextButton)
+            ElevatedButton.icon(
+              onPressed: () => _store.updateStatus(order.id, nextStatus),
+              icon: Icon(_getStatusIcon(nextStatus)),
+              label: Text('Mark as ${nextStatus.displayName}'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: nextStatus == FulfillmentStatus.success ? Colors.green.shade600 : Colors.indigo.shade700,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                elevation: 1,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          if (!order.status.isActiveShippingPhase && order.status != FulfillmentStatus.delivered) ...[
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () => _confirmCancelOrder(order.id),
+              icon: const Icon(Icons.cancel_outlined, size: 16),
+              label: const Text('Cancel Order'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.red.shade600,
+                side: BorderSide(color: Colors.red.shade200),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFulfillmentPrompt(FulfillmentOrder order) {
+    final isShipping = order.status.isActiveShippingPhase;
+    final accentColor = isShipping ? Colors.indigo : Colors.blue.shade600;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: IntrinsicHeight(
+          child: Row(
+            children: [
+              Container(width: 6, color: accentColor),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            isShipping ? Icons.local_shipping_outlined : Icons.inventory_2_outlined,
+                            color: accentColor,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  isShipping ? 'Active Shipments' : 'Packing Required',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                ),
+                                Text(
+                                  isShipping 
+                                      ? 'Manage batches or create more.' 
+                                      : 'Start allocating items for delivery.',
+                                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 40,
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            await Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => const FulfillmentShipmentScreen()),
+                            );
+                            _loadShipments();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: accentColor,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          child: Text(
+                            isShipping ? 'OPEN MANIFEST' : 'START FULFILLMENT',
+                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -148,23 +339,11 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 18, color: Theme.of(context).hintColor),
+          Icon(icon, size: 16, color: Colors.grey),
           const SizedBox(width: 8),
-          SizedBox(
-            width: 70,
-            child: Text(
-              label,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: Theme.of(context).hintColor),
-            ),
-          ),
-          Expanded(
-            child: Text(value, style: Theme.of(context).textTheme.bodyMedium),
-          ),
+          Text('$label: ', style: const TextStyle(color: Colors.grey, fontSize: 13)),
+          Expanded(child: Text(value, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13))),
         ],
       ),
     );
@@ -177,196 +356,23 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Items (${order.items.length})',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            'Order Items (${order.items.length})',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
-          ...order.items.map((item) => _buildItemTile(order, item)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildItemTile(FulfillmentOrder order, FulfillmentItem item) {
-    final canPick = order.status == FulfillmentStatus.picking ||
-        order.status == FulfillmentStatus.pending;
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    item.productName,
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                ),
-                Text(
-                  _currencyFormat.format(item.totalPrice),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                ),
-              ],
+          ...order.items.map((item) => Card(
+            elevation: 0,
+            margin: const EdgeInsets.only(bottom: 8),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(color: Colors.grey.shade100),
             ),
-            const SizedBox(height: 4),
-            Text(
-              'SKU: ${item.sku}',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: Theme.of(context).hintColor),
+            child: ListTile(
+              title: Text(item.productName, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+              subtitle: Text('SKU: ${item.sku} • Qty: ${item.quantity}', style: const TextStyle(fontSize: 12)),
+              trailing: Text(_currencyFormat.format(item.totalPrice), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
             ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                _buildProgressIndicator(
-                    'Picked', item.pickedQuantity, item.quantity, Colors.blue),
-                const SizedBox(width: 12),
-                _buildProgressIndicator(
-                    'Packed', item.packedQuantity, item.quantity, Colors.purple),
-                const SizedBox(width: 12),
-                _buildProgressIndicator(
-                    'Shipped', item.shippedQuantity, item.quantity, Colors.teal),
-              ],
-            ),
-            if (canPick) ...[
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  if (item.pickedQuantity > 0)
-                    IconButton(
-                      icon: const Icon(Icons.remove_circle_outline, size: 22),
-                      tooltip: 'Pick -1',
-                      onPressed: () => _store.updatePickedQuantity(
-                          order.id, item.id, item.pickedQuantity - 1),
-                    ),
-                  if (!item.isFullyPicked)
-                    IconButton(
-                      icon: const Icon(Icons.add_circle_outline, size: 22),
-                      tooltip: 'Pick +1',
-                      onPressed: () => _store.updatePickedQuantity(
-                          order.id, item.id, item.pickedQuantity + 1),
-                    ),
-                  if (!item.isFullyPicked)
-                    TextButton.icon(
-                      icon: const Icon(Icons.done_all, size: 18),
-                      label: const Text('Pick All'),
-                      onPressed: () => _store.updatePickedQuantity(
-                          order.id, item.id, item.quantity),
-                    ),
-                  if (item.isFullyPicked)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.green.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.check_circle,
-                              size: 16, color: Colors.green),
-                          SizedBox(width: 4),
-                          Text(
-                            'Fully Picked',
-                            style: TextStyle(
-                                color: Colors.green,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProgressIndicator(
-      String label, int current, int total, Color color) {
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '$label: $current/$total',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontSize: 11,
-                  color: Theme.of(context).hintColor,
-                ),
-          ),
-          const SizedBox(height: 4),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: total > 0 ? current / total : 0,
-              backgroundColor: color.withOpacity(0.1),
-              valueColor: AlwaysStoppedAnimation<Color>(color),
-              minHeight: 6,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionButtons(FulfillmentOrder order) {
-    final nextStatus = _getNextStatus(order.status);
-    if (nextStatus == null) return const SizedBox.shrink();
-
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          ElevatedButton.icon(
-            onPressed: () => _store.updateStatus(order.id, nextStatus),
-            icon: Icon(_getStatusIcon(nextStatus)),
-            label: Text('Mark as ${nextStatus.displayName}'),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-            ),
-          ),
-          if (order.status == FulfillmentStatus.shipped) ...[
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: () => _store.updateStatus(
-                  order.id, FulfillmentStatus.partiallyDelivered),
-              icon: const Icon(Icons.call_split),
-              label: const Text('Mark as Partially Delivered'),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-              ),
-            ),
-          ],
-          if (order.status != FulfillmentStatus.cancelled &&
-              order.status != FulfillmentStatus.delivered) ...[
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: () => _confirmCancelOrder(order.id),
-              icon: const Icon(Icons.cancel_outlined),
-              label: const Text('Cancel Order'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.red,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-              ),
-            ),
-          ],
+          )),
         ],
       ),
     );
@@ -377,16 +383,12 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Cancel Order'),
-        content: const Text(
-            'Are you sure you want to cancel this order? This action cannot be undone.'),
+        content: const Text('Are you sure? This will stop the fulfillment process.'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('No'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('No')),
           ElevatedButton(
             onPressed: () {
-              Navigator.of(ctx).pop();
+              Navigator.pop(ctx);
               _store.updateStatus(orderId, FulfillmentStatus.cancelled);
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -399,42 +401,23 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
 
   FulfillmentStatus? _getNextStatus(FulfillmentStatus current) {
     switch (current) {
-      case FulfillmentStatus.pending:
-        return FulfillmentStatus.picking;
-      case FulfillmentStatus.picking:
-        return FulfillmentStatus.packing;
-      case FulfillmentStatus.packing:
-        return FulfillmentStatus.packed;
-      case FulfillmentStatus.packed:
-        return FulfillmentStatus.shipped;
-      case FulfillmentStatus.shipped:
-        return FulfillmentStatus.delivered;
-      case FulfillmentStatus.partiallyDelivered:
-        return FulfillmentStatus.delivered;
-      case FulfillmentStatus.delivered:
-      case FulfillmentStatus.cancelled:
-        return null;
+      case FulfillmentStatus.newOrder: return FulfillmentStatus.pending;
+      case FulfillmentStatus.pending: return FulfillmentStatus.confirmed;
+      case FulfillmentStatus.confirmed: return FulfillmentStatus.packing;
+      case FulfillmentStatus.packing: return FulfillmentStatus.shipping;
+      case FulfillmentStatus.delivered: return FulfillmentStatus.success;
+      default: return null;
     }
   }
 
   IconData _getStatusIcon(FulfillmentStatus status) {
     switch (status) {
-      case FulfillmentStatus.pending:
-        return Icons.hourglass_empty;
-      case FulfillmentStatus.picking:
-        return Icons.shopping_cart;
-      case FulfillmentStatus.packing:
-        return Icons.inventory;
-      case FulfillmentStatus.packed:
-        return Icons.check_box;
-      case FulfillmentStatus.shipped:
-        return Icons.local_shipping;
-      case FulfillmentStatus.partiallyDelivered:
-        return Icons.call_split;
-      case FulfillmentStatus.delivered:
-        return Icons.done_all;
-      case FulfillmentStatus.cancelled:
-        return Icons.cancel;
+      case FulfillmentStatus.pending: return Icons.hourglass_top;
+      case FulfillmentStatus.confirmed: return Icons.check_circle;
+      case FulfillmentStatus.packing: return Icons.inventory;
+      case FulfillmentStatus.shipping: return Icons.local_shipping;
+      case FulfillmentStatus.success: return Icons.verified;
+      default: return Icons.arrow_forward;
     }
   }
 
@@ -442,38 +425,26 @@ class _FulfillmentDetailScreenState extends State<FulfillmentDetailScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: _getStatusColor(status).withOpacity(0.15),
-        borderRadius: BorderRadius.circular(12),
+        color: _getStatusColor(status).withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         status.displayName,
-        style: TextStyle(
-          color: _getStatusColor(status),
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
+        style: TextStyle(color: _getStatusColor(status), fontSize: 11, fontWeight: FontWeight.bold),
       ),
     );
   }
 
   Color _getStatusColor(FulfillmentStatus status) {
     switch (status) {
-      case FulfillmentStatus.pending:
-        return Colors.orange;
-      case FulfillmentStatus.picking:
-        return Colors.blue;
-      case FulfillmentStatus.packing:
-        return Colors.indigo;
-      case FulfillmentStatus.packed:
-        return Colors.purple;
-      case FulfillmentStatus.shipped:
-        return Colors.teal;
-      case FulfillmentStatus.partiallyDelivered:
-        return Colors.amber.shade800;
-      case FulfillmentStatus.delivered:
-        return Colors.green;
-      case FulfillmentStatus.cancelled:
-        return Colors.red;
+      case FulfillmentStatus.newOrder: return Colors.grey;
+      case FulfillmentStatus.pending: return Colors.orange;
+      case FulfillmentStatus.confirmed: return Colors.blue;
+      case FulfillmentStatus.packing: return Colors.deepOrange;
+      case FulfillmentStatus.shipping: return Colors.indigo;
+      case FulfillmentStatus.success: return Colors.green;
+      case FulfillmentStatus.cancelled: return Colors.red;
+      default: return Colors.grey;
     }
   }
 }

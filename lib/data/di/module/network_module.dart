@@ -4,6 +4,7 @@ import 'package:mobile_ai_erp/core/data/network/dio/interceptors/auth_intercepto
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/logging_interceptor.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/tenant_header_interceptor.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/token_refresh_interceptor.dart';
+import 'package:mobile_ai_erp/data/network/apis/orders/order_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/product_metadata/brand_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/product_metadata/brand_image_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/product_metadata/category_api.dart';
@@ -155,5 +156,6 @@ class NetworkModule {
     );
 
     getIt.registerSingleton(SupplierApi(getIt<DioClient>(instanceName: erpDioClientName)));
+    getIt.registerSingleton(OrderApi(getIt<DioClient>(instanceName: erpDioClientName)));
   }
 }

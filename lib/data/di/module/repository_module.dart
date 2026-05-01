@@ -8,6 +8,7 @@ import 'package:mobile_ai_erp/data/local/datasources/post_purchase/post_purchase
 import 'package:mobile_ai_erp/data/local/datasources/user/user_datasource.dart';
 import 'package:mobile_ai_erp/data/network/datasources/user/user_remote_datasource.dart';
 import 'package:mobile_ai_erp/data/network/datasources/role/role_remote_datasource.dart';
+import 'package:mobile_ai_erp/data/network/apis/orders/order_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/product_metadata/brand_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/product_metadata/brand_image_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/product_metadata/category_api.dart';
@@ -165,7 +166,9 @@ class RepositoryModule {
     getIt.registerLazySingleton<SupplierRepository>(
       () => SupplierRepositoryImpl(getIt<SupplierApi>()),
     );
-    getIt.registerSingleton<FulfillmentRepository>(FulfillmentRepositoryImpl());
+    getIt.registerSingleton<FulfillmentRepository>(
+      FulfillmentRepositoryImpl(getIt<OrderApi>()),
+    );
 
     // user use cases:---------------------------------------------------------
     getIt.registerSingleton<GetAllUsersUseCase>(GetAllUsersUseCase(getIt()));
