@@ -43,4 +43,22 @@ class Endpoints {
   // web builder - themes
   static const String themes = "/themes";
   static const String activeTheme = "/themes/active";
+
+  // customer segments
+  static const String customerSegments = '/erp/customer-segments';
+  static String customerSegmentById(String id) => '/erp/customer-segments/$id';
+  static String customerSegmentMembers(String id) =>
+      '/erp/customer-segments/$id/members';
+
+  // customers
+  static const String customers = '/erp/customers';
+  static String customerById(String id) => '/erp/customers/$id';
+  static String customerStatus(String id) => '/erp/customers/$id/status';
+  static String customerAddresses(String id) => '/erp/customers/$id/addresses';
+  static String customerAddressById(String customerId, String addressId) =>
+      '/erp/customers/$customerId/addresses/$addressId';
+  static String customerAddressDefault(String customerId, String addressId) =>
+      '/erp/customers/$customerId/addresses/$addressId/default';
+  static String customerTransactions(String id) =>
+      '/erp/customers/$id/transactions';
 }
