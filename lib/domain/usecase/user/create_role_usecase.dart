@@ -6,7 +6,7 @@ class CreateRoleUseCase {
 
   CreateRoleUseCase(this.roleRepository);
 
-  Future<void> execute(Role role) async {
-    await roleRepository.create(role);
+  Future<Role> execute(Role role) async {
+    return await roleRepository.create(role);
   }
 }
