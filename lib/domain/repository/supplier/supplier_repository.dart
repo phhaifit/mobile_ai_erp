@@ -1,15 +1,55 @@
+import '../../entity/shared/paginated_result.dart';
+import '../../entity/supplier/product_summary.dart';
 import '../../entity/supplier/supplier.dart';
+import '../../entity/supplier/supplier_product_link.dart';
+import '../../entity/supplier/supplier_upsert_payload.dart';
 
 abstract class SupplierRepository {
-  Future<List<Supplier>> getAll();
+  Future<PaginatedResult<Supplier>> getSuppliers({
+    String search = '',
+    int page = 1,
+    int pageSize = 10,
+    bool? hasProducts,
+    String? sortBy,
+    String? sortOrder,
+  });
+
   Future<Supplier?> getById(String id);
-  Future<void> add(Supplier supplier);
-  Future<void> update(Supplier supplier);
+
+  Future<Supplier> add(SupplierUpsertPayload payload);
+
+  Future<Supplier> update(String id, SupplierUpsertPayload payload);
+
   Future<void> delete(String id);
 
-  // Product–Supplier mapping
-  Future<List<String>> getSupplierIdsForProduct(String productId);
-  Future<void> linkSupplierToProduct(String productId, String supplierId);
-  Future<void> unlinkSupplierFromProduct(String productId, String supplierId);
-  Future<List<String>> getProductIdsForSupplier(String supplierId);
+  Future<PaginatedResult<SupplierProductLink>> getSupplierProducts(
+    String supplierId, {
+    int page = 1,
+    int pageSize = 10,
+    String search = '',
+  });
+
+  Future<void> addProductToSupplier(
+    String productId,
+    String supplierId, {
+    String? supplierSku,
+    double? costPrice,
+    bool isPrimary = false,
+  });
+
+  Future<void> updateProductSupplierLink(
+    String productId,
+    String supplierId, {
+    String? supplierSku,
+    double? costPrice,
+    bool? isPrimary,
+  });
+
+  Future<void> removeProductFromSupplier(String productId, String supplierId);
+
+  Future<PaginatedResult<ProductSummary>> searchProducts({
+    String search = '',
+    int page = 1,
+    int pageSize = 10,
+  });
 }

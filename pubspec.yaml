@@ -26,6 +26,7 @@ dependencies:
   event_bus: ^2.0.0
   # F
   flutter_mobx: ^2.0.6+5
+  flutter_web_auth_2: 5.0.2
   # G
   get_it: ^7.2.0
   google_fonts: ^6.0.0

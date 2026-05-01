@@ -2,25 +2,35 @@ import 'dart:async';
 
 import 'package:mobile_ai_erp/core/stores/error/error_store.dart';
 import 'package:mobile_ai_erp/core/stores/form/form_store.dart';
-import 'package:mobile_ai_erp/core/stores/supplier/supplier_store.dart';
+import 'package:mobile_ai_erp/presentation/supplier/store/supplier_store.dart';
+import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
+import 'package:mobile_ai_erp/presentation/supplier/store/supplier_products_store.dart';
 import 'package:mobile_ai_erp/domain/repository/customer/customer_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/dashboard/dashboard_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadata_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/setting/setting_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/stock_operations/stock_operations_repository.dart';
-import 'package:mobile_ai_erp/domain/repository/supplier/supplier_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/storefront/storefront_repository.dart';
+import 'package:mobile_ai_erp/domain/usecase/supplier/supplier_usecases.dart';
+import 'package:mobile_ai_erp/domain/repository/user/auth_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/role_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/user_repository.dart';
 import 'package:mobile_ai_erp/domain/usecase/checkout/checkout_usecases.dart';
 import 'package:mobile_ai_erp/domain/usecase/checkout/get_payment_methods_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/checkout/get_shipping_methods_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/checkout/validate_coupon_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/fulfillment/add_package_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/create_or_link_shipment_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/apply_order_routing_recommendation_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/create_shipment_print_attempt_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/create_shipment_print_job_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_fulfillment_order_detail_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_fulfillment_orders_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_order_routing_recommendation_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_order_shipments_tracking_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_shipment_label_artifacts_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_shipment_print_jobs_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_shipment_tracking_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/update_fulfillment_status_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/fulfillment/update_package_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/fulfillment/update_picked_quantity_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/post_purchase/get_issue_detail_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/post_purchase/get_issue_list_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/post_purchase/get_order_pool_usecase.dart';
@@ -49,10 +59,16 @@ import 'package:mobile_ai_erp/domain/usecase/order_tracking/get_order_tracking_s
 import 'package:mobile_ai_erp/domain/usecase/post/get_post_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/assign_role_to_user_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/create_role_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/user/is_logged_in_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/user/login_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/user/save_login_in_status_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/delete_role_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/get_all_roles_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/get_role_by_id_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/update_role_usercase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/get_all_users_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/get_user_by_id_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/create_user_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/update_user_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/delete_user_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/auth/create_tenant_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/apply_web_theme_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/delete_cms_page_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/get_cms_page_by_id_usecase.dart';
@@ -60,6 +76,7 @@ import 'package:mobile_ai_erp/domain/usecase/web_builder/get_cms_pages_usecase.d
 import 'package:mobile_ai_erp/domain/usecase/web_builder/get_store_settings_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/get_web_theme_by_id_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/get_web_themes_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/web_builder/publish_cms_page_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/save_cms_page_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/save_store_settings_usecase.dart';
 import 'package:mobile_ai_erp/presentation/customer_management/store/customer_store.dart';
@@ -67,7 +84,8 @@ import 'package:mobile_ai_erp/presentation/dashboard/store/dashboard_store.dart'
 import 'package:mobile_ai_erp/presentation/home/store/language/language_store.dart';
 import 'package:mobile_ai_erp/presentation/home/store/theme/theme_store.dart';
 import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/store/inventory_audit_outbound_store.dart';
-import 'package:mobile_ai_erp/presentation/login/store/login_store.dart' as auth;
+import 'package:mobile_ai_erp/presentation/login/store/login_store.dart'
+    as auth;
 import 'package:mobile_ai_erp/presentation/order_fulfillment/store/fulfillment_store.dart';
 import 'package:mobile_ai_erp/presentation/order_tracking/store/order_tracking_store.dart';
 import 'package:mobile_ai_erp/presentation/post/store/post_store.dart';
@@ -82,7 +100,8 @@ import 'package:mobile_ai_erp/domain/repository/account/address_repository.dart'
 import 'package:mobile_ai_erp/domain/repository/account/order_repository.dart';
 import 'package:mobile_ai_erp/presentation/stock_operations/store/stock_operations_store.dart';
 import 'package:mobile_ai_erp/presentation/user/store/role_store.dart';
-import 'package:mobile_ai_erp/presentation/user/store/user_store.dart' as user_mgmt;
+import 'package:mobile_ai_erp/presentation/user/store/user_store.dart'
+    as user_mgmt;
 import 'package:mobile_ai_erp/presentation/web_builder/store/cms_page_store.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/store/store_settings_store.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/store/web_theme_store.dart';
@@ -103,17 +122,21 @@ class StoreModule {
     getIt.registerFactory(
       () => FormStore(getIt<FormErrorStore>(), getIt<ErrorStore>()),
     );
-    
+
     getIt.registerLazySingleton<ProfileStore>(() => ProfileStore());
-    getIt.registerLazySingleton<AddressStore>(() => AddressStore(getIt<AddressRepository>()));
-    getIt.registerLazySingleton<OrderStore>(() => OrderStore(getIt<OrderRepository>()));
+    getIt.registerLazySingleton<AddressStore>(
+      () => AddressStore(getIt<AddressRepository>()),
+    );
+    getIt.registerLazySingleton<OrderStore>(
+      () => OrderStore(getIt<OrderRepository>()),
+    );
     getIt.registerLazySingleton(() => ReportsMockRepository());
 
-    getIt.registerSingleton<auth.UserStore>(
-      auth.UserStore(
-        getIt<IsLoggedInUseCase>(),
-        getIt<SaveLoginStatusUseCase>(),
-        getIt<LoginUseCase>(),
+    getIt.registerSingleton<auth.LoginStore>(
+      auth.LoginStore(
+        getIt<CreateTenantUseCase>(),
+        getIt<AuthRepository>(),
+        getIt<SharedPreferenceHelper>(),
         getIt<FormErrorStore>(),
         getIt<ErrorStore>(),
       ),
@@ -200,6 +223,11 @@ class StoreModule {
         getIt<UserRepository>(),
         getIt<RoleRepository>(),
         getIt<AssignRoleToUserUseCase>(),
+        getIt<GetAllUsersUseCase>(),
+        getIt<GetUserByIdUseCase>(),
+        getIt<CreateUserUseCase>(),
+        getIt<UpdateUserUseCase>(),
+        getIt<DeleteUserUseCase>(),
       ),
     );
 
@@ -208,11 +236,30 @@ class StoreModule {
         getIt<RoleRepository>(),
         getIt<CreateRoleUseCase>(),
         getIt<UpdateRoleUseCase>(),
+        getIt<DeleteRoleUseCase>(),
+        getIt<GetAllRolesUseCase>(),
+        getIt<GetRoleByIdUseCase>(),
       ),
     );
 
     getIt.registerLazySingleton<SupplierStore>(
-      () => SupplierStore(getIt<SupplierRepository>()),
+      () => SupplierStore(
+        getIt<GetSuppliersUseCase>(),
+        getIt<GetSupplierByIdUseCase>(),
+        getIt<CreateSupplierUseCase>(),
+        getIt<UpdateSupplierUseCase>(),
+        getIt<DeleteSupplierUseCase>(),
+      ),
+    );
+
+    getIt.registerLazySingleton<SupplierProductsStore>(
+      () => SupplierProductsStore(
+        getIt<GetSupplierProductsUseCase>(),
+        getIt<AddProductToSupplierUseCase>(),
+        getIt<UpdateProductSupplierLinkUseCase>(),
+        getIt<RemoveProductFromSupplierUseCase>(),
+        getIt<SearchProductsUseCase>(),
+      ),
     );
 
     getIt.registerSingleton<CmsPageStore>(
@@ -221,6 +268,7 @@ class StoreModule {
         getIt<GetCmsPageByIdUseCase>(),
         getIt<SaveCmsPageUseCase>(),
         getIt<DeleteCmsPageUseCase>(),
+        getIt<PublishCmsPageUseCase>(),
         getIt<ErrorStore>(),
       ),
     );
@@ -243,7 +291,7 @@ class StoreModule {
     );
 
     getIt.registerFactory<ProductDetailStore>(
-      () => ProductDetailStore(getIt<ErrorStore>()),
+      () => ProductDetailStore(getIt<StorefrontRepository>(), getIt<ErrorStore>()),
     );
 
     getIt.registerSingleton<FulfillmentStore>(
@@ -251,16 +299,22 @@ class StoreModule {
         getIt<GetFulfillmentOrdersUseCase>(),
         getIt<GetFulfillmentOrderDetailUseCase>(),
         getIt<UpdateFulfillmentStatusUseCase>(),
-        getIt<UpdatePickedQuantityUseCase>(),
-        getIt<AddPackageUseCase>(),
-        getIt<UpdatePackageUseCase>(),
+        getIt<CreateOrLinkShipmentUseCase>(),
+        getIt<GetOrderRoutingRecommendationUseCase>(),
+        getIt<ApplyOrderRoutingRecommendationUseCase>(),
+        getIt<GetShipmentTrackingUseCase>(),
+        getIt<GetOrderShipmentsTrackingUseCase>(),
+        getIt<GetShipmentLabelArtifactsUseCase>(),
+        getIt<GetShipmentPrintJobsUseCase>(),
+        getIt<CreateShipmentPrintJobUseCase>(),
+        getIt<CreateShipmentPrintAttemptUseCase>(),
         getIt<ErrorStore>(),
       ),
     );
 
     // Product listing store:---------------------------------------------------
     getIt.registerSingleton<ListingFilters>(
-      ListingFilters(),
+      ListingFilters(getIt<StorefrontRepository>()),
     );
     // checkout:---------------------------------------------------------------
     getIt.registerSingleton<CheckoutStore>(
@@ -284,7 +338,10 @@ class StoreModule {
     );
 
     getIt.registerSingleton<ProductFormStore>(
-      ProductFormStore(getIt<ProductManagementRepository>(), getIt<ErrorStore>()),
+      ProductFormStore(
+        getIt<ProductManagementRepository>(),
+        getIt<ErrorStore>(),
+      ),
     );
   }
 }

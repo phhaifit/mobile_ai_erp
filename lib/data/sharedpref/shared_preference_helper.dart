@@ -12,12 +12,19 @@ class SharedPreferenceHelper {
   SharedPreferenceHelper(this._sharedPreference);
 
   // General Methods: ----------------------------------------------------------
-  Future<String?> get authToken async {
-    return _sharedPreference.getString(Preferences.auth_token);
+  Future<String?> get accessToken async {
+    final authTokenValue = _sharedPreference.get(Preferences.auth_token);
+    if (authTokenValue is List<dynamic>) {
+      return authTokenValue.isNotEmpty ? authTokenValue.first : null;
+    }
+    if (authTokenValue is String && authTokenValue.isNotEmpty) {
+      return authTokenValue;
+    }
+    return null;
   }
 
-  Future<bool> saveAuthToken(String authToken) async {
-    return _sharedPreference.setString(Preferences.auth_token, authToken);
+  Future<bool> saveAuthToken({required String accessToken, required String refreshToken}) async {
+    return _sharedPreference.setStringList(Preferences.auth_token, [accessToken, refreshToken]);
   }
 
   Future<bool> removeAuthToken() async {
@@ -25,24 +32,47 @@ class SharedPreferenceHelper {
   }
 
   Future<String?> get currentTenantId async {
-    return _sharedPreference.getString(Preferences.current_tenant_id);
+    return tenantId;
   }
 
-  Future<bool> saveCurrentTenantId(String tenantId) async {
-    return _sharedPreference.setString(Preferences.current_tenant_id, tenantId);
+  Future<bool> saveCurrentTenantId(String currentTenantId) async {
+    return saveTenantId(currentTenantId);
   }
 
   Future<bool> removeCurrentTenantId() async {
-    return _sharedPreference.remove(Preferences.current_tenant_id);
+    return removeTenantId();
+  }
+
+  Future<String?> get refreshToken async {
+    final authTokenValue = _sharedPreference.get(Preferences.auth_token);
+    if (authTokenValue is List<dynamic> && authTokenValue.length > 1) {
+      return authTokenValue[1].isNotEmpty ? authTokenValue[1] : null;
+    }
+    return null;
+  }
+
+  Future<String?> get tenantId async {
+    return _sharedPreference.getString(Preferences.tenant_id);
+  }
+
+  Future<bool> saveTenantId(String tenantId) {
+    return _sharedPreference.setString(Preferences.tenant_id, tenantId);
+  }
+
+  Future<bool> removeTenantId() async {
+    return _sharedPreference.remove(Preferences.tenant_id);
   }
 
   // Login:---------------------------------------------------------------------
-  Future<bool> get isLoggedIn async {
-    return _sharedPreference.getBool(Preferences.is_logged_in) ?? false;
-  }
-
-  Future<bool> saveIsLoggedIn(bool value) async {
-    return _sharedPreference.setBool(Preferences.is_logged_in, value);
+  bool get isLoggedIn {
+    final authTokenValue = _sharedPreference.get(Preferences.auth_token);
+    if (authTokenValue is List<dynamic>) {
+      return authTokenValue.isNotEmpty && authTokenValue.first.isNotEmpty;
+    }
+    if (authTokenValue is String) {
+      return authTokenValue.isNotEmpty;
+    }
+    return false;
   }
 
   // Theme:------------------------------------------------------
