@@ -2,7 +2,22 @@ import 'package:mobile_ai_erp/core/stores/error/error_store.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/address.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/customer.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/customer_group.dart';
-import 'package:mobile_ai_erp/domain/repository/customer/customer_repository.dart';
+import 'package:mobile_ai_erp/domain/entity/customer/customer_transaction.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/add_segment_members_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/delete_customer_address_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/delete_customer_group_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/delete_customer_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/get_customer_addresses_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/get_customer_detail_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/get_customer_groups_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/get_customer_transactions_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/get_customers_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/get_segment_members_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/remove_segment_members_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/save_customer_address_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/save_customer_group_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/save_customer_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/set_default_address_usecase.dart';
 import 'package:mobx/mobx.dart';
 
 part 'customer_store.g.dart';
@@ -10,26 +25,67 @@ part 'customer_store.g.dart';
 class CustomerStore = CustomerStoreBase with _$CustomerStore;
 
 abstract class CustomerStoreBase with Store {
-  CustomerStoreBase(this._repository, this.errorStore);
+  CustomerStoreBase(
+    this._getCustomersUseCase,
+    this._getCustomerDetailUseCase,
+    this._saveCustomerUseCase,
+    this._deleteCustomerUseCase,
+    this._getCustomerGroupsUseCase,
+    this._saveCustomerGroupUseCase,
+    this._deleteCustomerGroupUseCase,
+    this._getCustomerAddressesUseCase,
+    this._saveCustomerAddressUseCase,
+    this._deleteCustomerAddressUseCase,
+    this._setDefaultAddressUseCase,
+    this._getCustomerTransactionsUseCase,
+    this._getSegmentMembersUseCase,
+    this._addSegmentMembersUseCase,
+    this._removeSegmentMembersUseCase,
+    this.errorStore,
+  );
 
-  final CustomerRepository _repository;
+  final GetCustomersUseCase _getCustomersUseCase;
+  final GetCustomerDetailUseCase _getCustomerDetailUseCase;
+  final SaveCustomerUseCase _saveCustomerUseCase;
+  final DeleteCustomerUseCase _deleteCustomerUseCase;
+  final GetCustomerGroupsUseCase _getCustomerGroupsUseCase;
+  final SaveCustomerGroupUseCase _saveCustomerGroupUseCase;
+  final DeleteCustomerGroupUseCase _deleteCustomerGroupUseCase;
+  final GetCustomerAddressesUseCase _getCustomerAddressesUseCase;
+  final SaveCustomerAddressUseCase _saveCustomerAddressUseCase;
+  final DeleteCustomerAddressUseCase _deleteCustomerAddressUseCase;
+  final SetDefaultAddressUseCase _setDefaultAddressUseCase;
+  final GetCustomerTransactionsUseCase _getCustomerTransactionsUseCase;
+  final GetSegmentMembersUseCase _getSegmentMembersUseCase;
+  final AddSegmentMembersUseCase _addSegmentMembersUseCase;
+  final RemoveSegmentMembersUseCase _removeSegmentMembersUseCase;
   final ErrorStore errorStore;
+
+  // ── State ─────────────────────────────────────────────────────────────────
 
   @observable
   bool isLoading = false;
 
   @observable
-  bool hasLoadedDashboard = false;
+  ObservableList<Customer> customers = ObservableList<Customer>();
 
   @observable
-  ObservableList<Customer> customers = ObservableList<Customer>();
+  int currentPage = 1;
+
+  @observable
+  int totalPages = 1;
+
+  @observable
+  int totalItems = 0;
 
   @observable
   ObservableList<CustomerGroup> groups = ObservableList<CustomerGroup>();
 
   @observable
-  ObservableMap<String, int> customerCountsByGroup =
-      ObservableMap<String, int>();
+  int groupCurrentPage = 1;
+
+  @observable
+  int groupTotalPages = 1;
 
   @observable
   ObservableList<Address> activeAddresses = ObservableList<Address>();
@@ -37,58 +93,107 @@ abstract class CustomerStoreBase with Store {
   @observable
   String? activeCustomerId;
 
-  // ── Dashboard ─────────────────────────────────────────────────────────────
+  @observable
+  ObservableList<CustomerTransaction> activeTransactions =
+      ObservableList<CustomerTransaction>();
 
-  @action
-  Future<void> loadDashboard({bool force = false}) async {
-    if (hasLoadedDashboard && !force) return;
+  @observable
+  ObservableList<Customer> segmentMembers = ObservableList<Customer>();
 
-    await _runWithLoading(() async {
-      final results = await Future.wait<dynamic>(<Future<dynamic>>[
-        _repository.getCustomers(),
-        _repository.getCustomerGroups(),
-      ]);
+  @observable
+  String? activeGroupId;
 
-      customers =
-          ObservableList<Customer>.of(results[0] as List<Customer>);
-      groups =
-          ObservableList<CustomerGroup>.of(results[1] as List<CustomerGroup>);
-      customerCountsByGroup = ObservableMap<String, int>.of(
-        await _repository.getCustomerCountsByGroup(
-          groups.map((g) => g.id).toList(),
-        ),
-      );
-      hasLoadedDashboard = true;
-      errorStore.errorMessage = '';
-    });
-  }
+  @observable
+  int segmentMembersCurrentPage = 1;
+
+  @observable
+  int segmentMembersTotalPages = 1;
+
+  // ── Computed ──────────────────────────────────────────────────────────────
+
+  @computed
+  bool get hasMoreCustomers => currentPage < totalPages;
+
+  @computed
+  bool get hasMoreGroups => groupCurrentPage < groupTotalPages;
+
+  @computed
+  bool get hasMoreSegmentMembers =>
+      segmentMembersCurrentPage < segmentMembersTotalPages;
 
   // ── Customers ─────────────────────────────────────────────────────────────
 
   @action
-  Future<void> saveCustomer(Customer customer) async {
-    final saved = await _repository.saveCustomer(customer);
-    _upsertCustomer(saved);
-    customerCountsByGroup = ObservableMap<String, int>.of(
-      await _repository.getCustomerCountsByGroup(
-        groups.map((g) => g.id).toList(),
-      ),
+  Future<void> loadCustomers({
+    int page = 1,
+    String? search,
+    String? status,
+    String? groupId,
+    bool append = false,
+  }) async {
+    await _runWithLoading(() async {
+      final result = await _getCustomersUseCase.call(
+        params: GetCustomersParams(
+          page: page,
+          search: search,
+          status: status,
+          groupId: groupId,
+        ),
+      );
+      if (append) {
+        customers.addAll(result.data);
+      } else {
+        customers = ObservableList<Customer>.of(result.data);
+      }
+      currentPage = result.meta.page;
+      totalPages = result.meta.totalPages;
+      totalItems = result.meta.totalItems;
+    });
+  }
+
+  @action
+  Future<void> loadMoreCustomers({
+    String? search,
+    String? status,
+    String? groupId,
+  }) async {
+    if (!hasMoreCustomers || isLoading) return;
+    await loadCustomers(
+      page: currentPage + 1,
+      search: search,
+      status: status,
+      groupId: groupId,
+      append: true,
     );
   }
 
   @action
+  Future<void> saveCustomer(Customer customer) async {
+    final saved = await _saveCustomerUseCase.call(params: customer);
+    _upsertCustomer(saved);
+    await _refreshGroupMemberCounts();
+  }
+
+  @action
   Future<void> deleteCustomer(String customerId) async {
-    await _repository.deleteCustomer(customerId);
+    await _deleteCustomerUseCase.call(params: customerId);
     customers.removeWhere((c) => c.id == customerId);
+    totalItems = (totalItems - 1).clamp(0, totalItems);
     if (activeCustomerId == customerId) {
       activeCustomerId = null;
       activeAddresses.clear();
+      activeTransactions.clear();
     }
-    customerCountsByGroup = ObservableMap<String, int>.of(
-      await _repository.getCustomerCountsByGroup(
-        groups.map((g) => g.id).toList(),
-      ),
-    );
+    await _refreshGroupMemberCounts();
+  }
+
+  @action
+  Future<void> loadCustomerDetail(String customerId) async {
+    await _runWithLoading(() async {
+      final customer =
+          await _getCustomerDetailUseCase.call(params: customerId);
+      if (customer != null) _upsertCustomer(customer);
+    });
   }
 
   // ── Addresses ─────────────────────────────────────────────────────────────
@@ -97,30 +202,40 @@ abstract class CustomerStoreBase with Store {
   Future<void> loadAddresses(String customerId) async {
     activeCustomerId = customerId;
     await _runWithLoading(() async {
-      final loaded = await _repository.getAddresses(customerId);
+      final loaded =
+          await _getCustomerAddressesUseCase.call(params: customerId);
       activeAddresses = ObservableList<Address>.of(loaded);
-      errorStore.errorMessage = '';
     });
   }
 
   @action
   Future<void> saveAddress(Address address) async {
-    final saved = await _repository.saveAddress(address);
+    final saved = await _saveCustomerAddressUseCase.call(params: address);
     if (activeCustomerId == saved.customerId) {
       _upsertAddress(saved);
     }
   }
 
   @action
-  Future<void> deleteAddress(String addressId) async {
-    await _repository.deleteAddress(addressId);
+  Future<void> deleteAddress(String customerId, String addressId) async {
+    await _deleteCustomerAddressUseCase.call(
+      params: DeleteCustomerAddressParams(
+        customerId: customerId,
+        addressId: addressId,
+      ),
+    );
     activeAddresses.removeWhere((a) => a.id == addressId);
   }
 
   @action
   Future<void> setDefaultAddress(
       String customerId, String addressId) async {
-    await _repository.setDefaultAddress(customerId, addressId);
+    await _setDefaultAddressUseCase.call(
+      params: SetDefaultAddressParams(
+        customerId: customerId,
+        addressId: addressId,
+      ),
+    );
     if (activeCustomerId == customerId) {
       for (var i = 0; i < activeAddresses.length; i++) {
         final addr = activeAddresses[i];
@@ -129,20 +244,102 @@ abstract class CustomerStoreBase with Store {
     }
   }
 
+  // ── Transactions ──────────────────────────────────────────────────────────
+
+  @action
+  Future<void> loadCustomerTransactions(String customerId) async {
+    await _runWithLoading(() async {
+      final transactions =
+          await _getCustomerTransactionsUseCase.call(params: customerId);
+      activeTransactions = ObservableList<CustomerTransaction>.of(transactions);
+    });
+  }
+
   // ── Groups ────────────────────────────────────────────────────────────────
 
   @action
+  Future<void> loadGroups({
+    int page = 1,
+    String? search,
+    String? sortBy,
+    String? sortOrder,
+    bool append = false,
+  }) async {
+    await _runWithLoading(() async {
+      final result = await _getCustomerGroupsUseCase.call(
+        params: GetCustomerGroupsParams(
+          page: page,
+          search: search,
+          sortBy: sortBy,
+          sortOrder: sortOrder,
+        ),
+      );
+      if (append) {
+        groups.addAll(result.data);
+      } else {
+        groups = ObservableList<CustomerGroup>.of(result.data);
+      }
+      groupCurrentPage = result.meta.page;
+      groupTotalPages = result.meta.totalPages;
+    });
+  }
+
+  @action
   Future<void> saveCustomerGroup(CustomerGroup group) async {
-    final saved = await _repository.saveCustomerGroup(group);
+    final saved = await _saveCustomerGroupUseCase.call(params: group);
     _upsertGroup(saved);
-    customerCountsByGroup.putIfAbsent(saved.id, () => 0);
   }
 
   @action
   Future<void> deleteCustomerGroup(String groupId) async {
-    await _repository.deleteCustomerGroup(groupId);
+    await _deleteCustomerGroupUseCase.call(params: groupId);
     groups.removeWhere((g) => g.id == groupId);
-    customerCountsByGroup.remove(groupId);
+    if (activeGroupId == groupId) {
+      activeGroupId = null;
+      segmentMembers.clear();
+    }
+  }
+
+  // ── Segment members ───────────────────────────────────────────────────────
+
+  @action
+  Future<void> loadSegmentMembers(String groupId, {int page = 1}) async {
+    activeGroupId = groupId;
+    await _runWithLoading(() async {
+      final result = await _getSegmentMembersUseCase.call(
+        params: GetSegmentMembersParams(groupId: groupId, page: page),
+      );
+      if (page == 1) {
+        segmentMembers = ObservableList<Customer>.of(result.data);
+      } else {
+        segmentMembers.addAll(result.data);
+      }
+      segmentMembersCurrentPage = result.meta.page;
+      segmentMembersTotalPages = result.meta.totalPages;
+    });
+  }
+
+  @action
+  Future<void> addSegmentMembers(
+      String groupId, List<String> customerIds) async {
+    await _addSegmentMembersUseCase.call(
+      params: AddSegmentMembersParams(
+          groupId: groupId, customerIds: customerIds),
+    );
+    // Re-fetch members and refresh group to get updated memberCount
+    await loadSegmentMembers(groupId);
+    await _refreshGroupById(groupId);
+  }
+
+  @action
+  Future<void> removeSegmentMembers(
+      String groupId, List<String> customerIds) async {
+    await _removeSegmentMembersUseCase.call(
+      params: RemoveSegmentMembersParams(
+          groupId: groupId, customerIds: customerIds),
+    );
+    await loadSegmentMembers(groupId);
+    await _refreshGroupById(groupId);
   }
 
   // ── Finders ───────────────────────────────────────────────────────────────
@@ -153,11 +350,10 @@ abstract class CustomerStoreBase with Store {
   CustomerGroup? findGroupById(String? id) =>
       _findById(groups, id, (g) => g.id);
 
-  int customerCountForGroup(String groupId) =>
-      customerCountsByGroup[groupId] ?? 0;
-
-  List<Customer> customersInGroup(String groupId) =>
-      customers.where((c) => c.groupId == groupId).toList();
+  int customerCountForGroup(String groupId) {
+    final group = groups.where((g) => g.id == groupId).firstOrNull;
+    return group?.memberCount ?? 0;
+  }
 
   // ── Private helpers ───────────────────────────────────────────────────────
 
@@ -171,6 +367,35 @@ abstract class CustomerStoreBase with Store {
       rethrow;
     } finally {
       isLoading = false;
+    }
+  }
+
+  Future<void> _refreshGroupById(String groupId) async {
+    try {
+      final result = await _getCustomerGroupsUseCase.call(
+        params: const GetCustomerGroupsParams(pageSize: 100),
+      );
+      final updated = result.data.where((g) => g.id == groupId).firstOrNull;
+      if (updated != null) _upsertGroup(updated);
+    } catch (_) {
+      // Non-critical refresh — ignore failures
+    }
+  }
+
+  Future<void> _refreshGroupMemberCounts() async {
+    if (groups.isEmpty) return;
+    try {
+      final result = await _getCustomerGroupsUseCase.call(
+        params: GetCustomerGroupsParams(
+          page: groupCurrentPage,
+          pageSize: groups.length.clamp(1, 100),
+        ),
+      );
+      for (final updated in result.data) {
+        _upsertGroup(updated);
+      }
+    } catch (_) {
+      // Non-critical refresh — ignore failures
     }
   }
 
@@ -205,11 +430,7 @@ abstract class CustomerStoreBase with Store {
       list: groups,
       item: group,
       idSelector: (g) => g.id,
-      compare: (a, b) {
-        final orderCompare = a.sortOrder.compareTo(b.sortOrder);
-        if (orderCompare != 0) return orderCompare;
-        return a.name.toLowerCase().compareTo(b.name.toLowerCase());
-      },
+      compare: (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
     );
   }
 

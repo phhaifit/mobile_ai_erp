@@ -1,7 +1,8 @@
 import 'dart:async';
 
 import 'package:mobile_ai_erp/data/local/datasources/checkout/checkout_datasource.dart';
-import 'package:mobile_ai_erp/data/local/datasources/customer/customer_datasource.dart';
+import 'package:mobile_ai_erp/data/network/apis/customer/customer_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/customer/customer_segment_api.dart';
 import 'package:mobile_ai_erp/data/local/datasources/order_tracking/order_tracking_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/post/post_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/post_purchase/post_purchase_datasource.dart';
@@ -72,9 +73,8 @@ import '../../../di/service_locator.dart';
 
 class RepositoryModule {
   static Future<void> configureRepositoryModuleInjection() async {
-    getIt.registerSingleton<CustomerDataSource>(CustomerDataSource());
     getIt.registerSingleton<CustomerRepository>(
-      CustomerRepositoryImpl(getIt<CustomerDataSource>()),
+      CustomerRepositoryImpl(getIt<CustomerApi>(), getIt<CustomerSegmentApi>()),
     );
 
     getIt.registerSingleton<DashboardRepository>(
