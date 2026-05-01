@@ -6,7 +6,7 @@ class UpdateRoleUseCase {
 
   UpdateRoleUseCase(this.roleRepository);
 
-  Future<void> execute(Role role) async {
-    await roleRepository.update(role);
+  Future<Role> execute(String id, Role role) async {
+    return await roleRepository.update(id, role);
   }
 }
