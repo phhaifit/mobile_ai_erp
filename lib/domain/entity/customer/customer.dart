@@ -6,6 +6,22 @@ enum CustomerStatus {
   const CustomerStatus(this.label);
 
   final String label;
+
+  static CustomerStatus? fromApiString(String? value) {
+    switch (value) {
+      case 'active':
+        return CustomerStatus.active;
+      case 'inactive':
+        return CustomerStatus.inactive;
+      case 'banned':
+      case 'blocked':
+        return CustomerStatus.blocked;
+      default:
+        return null;
+    }
+  }
+
+  String get apiValue => name;
 }
 
 enum CustomerType {
@@ -30,6 +46,9 @@ class Customer {
     this.status = CustomerStatus.active,
     this.type = CustomerType.individual,
     required this.createdAt,
+    this.updatedAt,
+    this.lastSignInAt,
+    this.emailVerifiedAt,
   });
 
   final String id;
@@ -43,6 +62,9 @@ class Customer {
   final CustomerStatus status;
   final CustomerType type;
   final DateTime createdAt;
+  final DateTime? updatedAt;
+  final DateTime? lastSignInAt;
+  final DateTime? emailVerifiedAt;
 
   String get fullName {
     final first = firstName.trim();
@@ -74,6 +96,9 @@ class Customer {
     CustomerStatus? status,
     CustomerType? type,
     DateTime? createdAt,
+    Object? updatedAt = _sentinel,
+    Object? lastSignInAt = _sentinel,
+    Object? emailVerifiedAt = _sentinel,
   }) {
     return Customer(
       id: id ?? this.id,
@@ -90,6 +115,15 @@ class Customer {
       status: status ?? this.status,
       type: type ?? this.type,
       createdAt: createdAt ?? this.createdAt,
+      updatedAt: identical(updatedAt, _sentinel)
+          ? this.updatedAt
+          : updatedAt as DateTime?,
+      lastSignInAt: identical(lastSignInAt, _sentinel)
+          ? this.lastSignInAt
+          : lastSignInAt as DateTime?,
+      emailVerifiedAt: identical(emailVerifiedAt, _sentinel)
+          ? this.emailVerifiedAt
+          : emailVerifiedAt as DateTime?,
     );
   }
 }

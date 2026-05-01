@@ -13,16 +13,20 @@ class CustomerGroup {
     required this.name,
     this.description,
     this.colorHex,
-    this.sortOrder = 0,
+    this.memberCount = 0,
     this.status = CustomerGroupStatus.active,
+    required this.createdAt,
+    required this.updatedAt,
   });
 
   final String id;
   final String name;
   final String? description;
   final String? colorHex;
-  final int sortOrder;
+  final int memberCount;
   final CustomerGroupStatus status;
+  final DateTime createdAt;
+  final DateTime updatedAt;
 
   bool get isActive => status == CustomerGroupStatus.active;
 
@@ -31,8 +35,10 @@ class CustomerGroup {
     String? name,
     Object? description = _sentinel,
     Object? colorHex = _sentinel,
-    int? sortOrder,
+    int? memberCount,
     CustomerGroupStatus? status,
+    DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return CustomerGroup(
       id: id ?? this.id,
@@ -43,8 +49,10 @@ class CustomerGroup {
       colorHex: identical(colorHex, _sentinel)
           ? this.colorHex
           : colorHex as String?,
-      sortOrder: sortOrder ?? this.sortOrder,
+      memberCount: memberCount ?? this.memberCount,
       status: status ?? this.status,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }
