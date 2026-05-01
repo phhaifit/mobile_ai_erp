@@ -22,7 +22,7 @@ class CustomerRepositoryImpl extends CustomerRepository {
   @override
   Future<CustomerListResult> getCustomers({
     int page = 1,
-    int pageSize = 3,
+    int pageSize = 5,
     String? search,
     String? status,
     String? groupId,
@@ -115,7 +115,7 @@ class CustomerRepositoryImpl extends CustomerRepository {
   @override
   Future<CustomerGroupListResult> getCustomerGroups({
     int page = 1,
-    int pageSize = 3,
+    int pageSize = 5,
     String? search,
     String? sortBy,
     String? sortOrder,

@@ -69,8 +69,7 @@ class _CustomerGroupFormScreenState extends State<CustomerGroupFormScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title:
-            Text(_editingGroup == null ? 'New group' : 'Edit group'),
+        title: Text(_editingGroup == null ? 'New group' : 'Edit group'),
       ),
       body: SafeArea(
         child: Form(
@@ -93,7 +92,8 @@ class _CustomerGroupFormScreenState extends State<CustomerGroupFormScreen> {
               TextFormField(
                 controller: _descriptionController,
                 decoration: customerFormDecoration(
-                    labelText: 'Description (optional)'),
+                  labelText: 'Description (optional)',
+                ),
                 minLines: 2,
                 maxLines: 4,
               ),
@@ -114,16 +114,12 @@ class _CustomerGroupFormScreenState extends State<CustomerGroupFormScreen> {
                 },
               ),
               const SizedBox(height: 16),
-              Text(
-                'Color',
-                style: Theme.of(context).textTheme.labelLarge,
-              ),
+              Text('Color', style: Theme.of(context).textTheme.labelLarge),
               const SizedBox(height: 8),
               _ColorPicker(
                 selectedColor: _selectedColor,
                 presetColors: _kPresetColors,
-                onSelected: (color) =>
-                    setState(() => _selectedColor = color),
+                onSelected: (color) => setState(() => _selectedColor = color),
               ),
               const SizedBox(height: 24),
               FilledButton.icon(
@@ -136,7 +132,8 @@ class _CustomerGroupFormScreenState extends State<CustomerGroupFormScreen> {
                       )
                     : const Icon(Icons.save_outlined),
                 label: Text(
-                    _editingGroup == null ? 'Create group' : 'Save changes'),
+                  _editingGroup == null ? 'Create group' : 'Save changes',
+                ),
               ),
             ],
           ),
@@ -164,17 +161,21 @@ class _CustomerGroupFormScreenState extends State<CustomerGroupFormScreen> {
       );
 
       if (!mounted) return;
+
+      // Reload groups list to update pagination
+      await _store.loadGroups();
+
+      if (!mounted) return;
       Navigator.of(context).pop();
     } on CustomerValidationException catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Couldn\'t save group. Try again.')),
+        const SnackBar(content: Text('Couldn\'t save group. Try again.')),
       );
     } finally {
       if (mounted) setState(() => _isSaving = false);

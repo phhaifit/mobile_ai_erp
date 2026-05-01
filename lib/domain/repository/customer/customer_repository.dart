@@ -26,7 +26,7 @@ abstract class CustomerRepository {
   // Customers
   Future<CustomerListResult> getCustomers({
     int page = 1,
-    int pageSize = 20,
+    int pageSize = 5,
     String? search,
     String? status,
     String? groupId,
@@ -46,7 +46,7 @@ abstract class CustomerRepository {
   // Customer Groups / Segments
   Future<CustomerGroupListResult> getCustomerGroups({
     int page = 1,
-    int pageSize = 20,
+    int pageSize = 5,
     String? search,
     String? sortBy,
     String? sortOrder,

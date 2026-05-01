@@ -12,7 +12,7 @@ class GetCustomersParams {
 
   const GetCustomersParams({
     this.page = 1,
-    this.pageSize = 3,
+    this.pageSize = 5,
     this.search,
     this.status,
     this.groupId,

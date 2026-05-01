@@ -10,7 +10,7 @@ class GetCustomerGroupsParams {
 
   const GetCustomerGroupsParams({
     this.page = 1,
-    this.pageSize = 20,
+    this.pageSize = 5,
     this.search,
     this.sortBy,
     this.sortOrder,
@@ -24,8 +24,9 @@ class GetCustomerGroupsUseCase
   GetCustomerGroupsUseCase(this._repository);
 
   @override
-  Future<CustomerGroupListResult> call(
-      {required GetCustomerGroupsParams params}) {
+  Future<CustomerGroupListResult> call({
+    required GetCustomerGroupsParams params,
+  }) {
     return _repository.getCustomerGroups(
       page: params.page,
       pageSize: params.pageSize,
