@@ -5,7 +5,7 @@ class Endpoints {
   //   --dart-define=ERP_BASE_URL=https://erp-api.jarvis.cx/api
   static const String erpBaseUrl = String.fromEnvironment(
     'ERP_BASE_URL',
-    defaultValue: 'https://erp-api.jarvis.cx/api',
+    defaultValue: 'https://erp-api.jarvis.cx',
   );
 
   // Tenant id sent via X-Tenant-Id header to ERP backend.

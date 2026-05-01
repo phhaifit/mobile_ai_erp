@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/configs/dio_configs.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/auth_interceptor.dart';
@@ -7,6 +6,7 @@ import 'package:mobile_ai_erp/core/data/network/dio/interceptors/tenant_header_i
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/token_refresh_interceptor.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/web_builder/web_builder_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/suppliers/supplier_api.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
 import 'package:mobile_ai_erp/data/network/constants/storefront_endpoints.dart';
 import 'package:mobile_ai_erp/data/network/datasources/role/role_remote_datasource.dart';
@@ -144,5 +144,6 @@ class NetworkModule {
       UserRemoteDataSourceImpl(erpDioClient.dio),
     );
 
+    getIt.registerSingleton(SupplierApi(getIt<DioClient>(instanceName: erpDioClientName)));
   }
 }

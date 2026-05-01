@@ -2,15 +2,16 @@ import 'dart:async';
 
 import 'package:mobile_ai_erp/core/stores/error/error_store.dart';
 import 'package:mobile_ai_erp/core/stores/form/form_store.dart';
-import 'package:mobile_ai_erp/core/stores/supplier/supplier_store.dart';
+import 'package:mobile_ai_erp/presentation/supplier/store/supplier_store.dart';
 import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
+import 'package:mobile_ai_erp/presentation/supplier/store/supplier_products_store.dart';
 import 'package:mobile_ai_erp/domain/repository/customer/customer_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/dashboard/dashboard_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadata_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/setting/setting_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/stock_operations/stock_operations_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/storefront/storefront_repository.dart';
-import 'package:mobile_ai_erp/domain/repository/supplier/supplier_repository.dart';
+import 'package:mobile_ai_erp/domain/usecase/supplier/supplier_usecases.dart';
 import 'package:mobile_ai_erp/domain/repository/user/auth_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/role_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/user_repository.dart';
@@ -55,7 +56,6 @@ import 'package:mobile_ai_erp/domain/usecase/user/create_role_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/delete_role_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/get_all_roles_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/get_role_by_id_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/user/login_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/update_role_usercase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/get_all_users_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/get_user_by_id_usecase.dart';
@@ -231,7 +231,23 @@ class StoreModule {
     );
 
     getIt.registerLazySingleton<SupplierStore>(
-      () => SupplierStore(getIt<SupplierRepository>()),
+      () => SupplierStore(
+        getIt<GetSuppliersUseCase>(),
+        getIt<GetSupplierByIdUseCase>(),
+        getIt<CreateSupplierUseCase>(),
+        getIt<UpdateSupplierUseCase>(),
+        getIt<DeleteSupplierUseCase>(),
+      ),
+    );
+
+    getIt.registerLazySingleton<SupplierProductsStore>(
+      () => SupplierProductsStore(
+        getIt<GetSupplierProductsUseCase>(),
+        getIt<AddProductToSupplierUseCase>(),
+        getIt<UpdateProductSupplierLinkUseCase>(),
+        getIt<RemoveProductFromSupplierUseCase>(),
+        getIt<SearchProductsUseCase>(),
+      ),
     );
 
     getIt.registerSingleton<CmsPageStore>(
