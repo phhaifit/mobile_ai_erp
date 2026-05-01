@@ -167,11 +167,12 @@ abstract class CartStoreBase with Store {
   }
 
   String _sumSelectedLineTotals() {
-    final total = checkoutItems.fold<int>(
-      0,
-      (sum, item) => sum + int.parse(item.lineTotal),
+    final total = checkoutItems.fold<double>(
+      0.0,
+      (sum, item) => sum + (double.tryParse(item.lineTotal) ?? 0.0),
     );
-    return total.toString();
+
+    return total.toStringAsFixed(2);
   }
 
   @action
