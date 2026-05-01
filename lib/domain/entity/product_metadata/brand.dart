@@ -1,98 +1,54 @@
-enum BrandStatus {
-  active('Active'),
-  archived('Archived');
-
-  const BrandStatus(this.label);
-
-  final String label;
-}
-
 class Brand {
   const Brand({
     required this.id,
+    required this.tenantId,
     required this.name,
-    required this.code,
     this.description,
     this.logoUrl,
-    this.countryCode,
-    this.regionOrState,
-    this.city,
-    this.sortOrder = 0,
-    this.status = BrandStatus.active,
+    this.createdAt,
+    this.updatedAt,
   });
 
   final String id;
+  final String tenantId;
   final String name;
-  final String code;
   final String? description;
   final String? logoUrl;
-  final String? countryCode; // not in db design, remove from model when refactoring
-  final String? regionOrState; // not in db design, remove from model when refactoring
-  final String? city; // not in db design, remove from model when refactoring
-  final int sortOrder; //// what is sort order
-  final BrandStatus status; // can only delete brand, no archive status, remove when refactoring
-
-  bool get isActive => status == BrandStatus.active;
-
-  String? get displayLocation {
-    final parts = <String>[
-      if (city != null && city!.trim().isNotEmpty) city!.trim(),
-      if (regionOrState != null && regionOrState!.trim().isNotEmpty)
-        regionOrState!.trim(),
-      if (countryCode != null && countryCode!.trim().isNotEmpty)
-        countryCode!.trim().toUpperCase(),
-    ];
-    if (parts.isEmpty) {
-      return null;
-    }
-    return parts.join(', ');
-  }
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   Brand copyWith({
     String? id,
+    String? tenantId,
     String? name,
-    String? code,
     Object? description = _sentinel,
     Object? logoUrl = _sentinel,
-    Object? countryCode = _sentinel,
-    Object? regionOrState = _sentinel,
-    Object? city = _sentinel,
-    int? sortOrder,
-    BrandStatus? status,
+    DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return Brand(
       id: id ?? this.id,
+      tenantId: tenantId ?? this.tenantId,
       name: name ?? this.name,
-      code: code ?? this.code,
       description: identical(description, _sentinel)
           ? this.description
           : description as String?,
       logoUrl:
           identical(logoUrl, _sentinel) ? this.logoUrl : logoUrl as String?,
-      countryCode: identical(countryCode, _sentinel)
-          ? this.countryCode
-          : countryCode as String?,
-      regionOrState: identical(regionOrState, _sentinel)
-          ? this.regionOrState
-          : regionOrState as String?,
-      city: identical(city, _sentinel) ? this.city : city as String?,
-      sortOrder: sortOrder ?? this.sortOrder,
-      status: status ?? this.status,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
   factory Brand.fromJson(Map<String, dynamic> json) {
     return Brand(
       id: json['id'] as String,
+      tenantId: json['tenant_id'] as String,
       name: json['name'] as String,
-      code: "", // not in db design, remove from model when refactoring
       description: json['description'] as String?,
       logoUrl: json['logoUrl'] as String?,
-      countryCode: null, // not in db design, remove from model when refactoring
-      regionOrState: null, // not in db design, remove from model when refactoring
-      city: null, // not in db design, remove from model when refactoring
-      sortOrder: 0, // default value, remove if unused
-      status: BrandStatus.active, // not in response, default to active
+      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
+      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at']) : null,
     );
   }
 }

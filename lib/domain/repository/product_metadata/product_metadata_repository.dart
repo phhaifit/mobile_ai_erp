@@ -1,37 +1,67 @@
 import 'package:mobile_ai_erp/domain/entity/product_metadata/attribute.dart';
-import 'package:mobile_ai_erp/domain/entity/product_metadata/attribute_option.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/brand.dart';
-import 'package:mobile_ai_erp/domain/entity/product_metadata/brand_list_response.dart';
+import 'package:mobile_ai_erp/domain/entity/product_metadata/brand_image.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
-import 'package:mobile_ai_erp/domain/entity/product_metadata/category_attribute.dart';
-import 'package:mobile_ai_erp/domain/entity/product_metadata/category_list_response.dart';
+import 'package:mobile_ai_erp/domain/entity/product_metadata/metadata_page.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/tag.dart';
 
 abstract class ProductMetadataRepository {
-  // Future<List<Category>> getCategories();
-  Future<CategoryListResponse> getCategories({int? page, int? pageSize, String? search, bool? isActive});
+  Future<MetadataPage<Category>> getCategories({
+    int page = 1,
+    int pageSize = 10,
+    String? search,
+    String? sortBy,
+    String? sortOrder,
+    CategoryStatus? status,
+    String? parentId,
+    bool rootOnly = false,
+  });
+  Future<List<Category>> getCategoryTree({CategoryStatus? status});
+  Future<Category> getCategoryById(String categoryId);
   Future<Category> saveCategory(Category category);
   Future<void> deleteCategory(String categoryId);
 
-  Future<List<Attribute>> getAttributes();
-  Future<Attribute> saveAttribute(Attribute attribute);
-  Future<void> deleteAttribute(String attributeId);
+  Future<MetadataPage<AttributeSet>> getAttributeSets({
+    int page = 1,
+    int pageSize = 10,
+    String? search,
+    String? sortBy,
+    String? sortOrder,
+  });
+  Future<AttributeSet> getAttributeSetById(String attributeSetId);
+  Future<AttributeSet> saveAttributeSet(AttributeSet attributeSet);
+  Future<void> deleteAttributeSet(String attributeSetId);
 
-  Future<List<AttributeOption>> getAttributeOptions(String attributeId);
-  Future<Map<String, int>> getAttributeOptionCounts(List<String> attributeIds);
-  Future<AttributeOption> saveAttributeOption(AttributeOption attributeOption);
-  Future<void> deleteAttributeOption(String attributeOptionId);
+  Future<List<AttributeValue>> getAttributeValues(String attributeSetId);
+  Future<List<AttributeValue>> getAllAttributeValues();
+  Future<AttributeValue> saveAttributeValue(AttributeValue attributeValue);
 
-  Future<List<CategoryAttribute>> getCategoryAttributes();
-  Future<CategoryAttribute> saveCategoryAttribute(CategoryAttribute item);
-  Future<void> deleteCategoryAttribute(String categoryAttributeId);
+  /// Deletes the attribute value identified by [valueId] from the
+  /// attribute set identified by [attributeSetId].
+  Future<void> deleteAttributeValue(String attributeSetId, String valueId);
 
-  // Future<List<Brand>> getBrands();
-  Future<BrandListResponse> getBrands({int? page, int? pageSize, String? search, bool? isActive});
+  Future<MetadataPage<Brand>> getBrands({
+    int page = 1,
+    int pageSize = 10,
+    String? search,
+    String? sortBy,
+    String? sortOrder,
+  });
+  Future<Brand> getBrandById(String brandId);
   Future<Brand> saveBrand(Brand brand);
   Future<void> deleteBrand(String brandId);
+  Future<BrandImage?> getBrandImage(String brandId);
+  Future<BrandImage> uploadBrandImage(String brandId, dynamic file);
+  Future<void> deleteBrandImage(String brandId);
 
-  Future<List<Tag>> getTags();
+  Future<MetadataPage<Tag>> getTags({
+    int page = 1,
+    int pageSize = 10,
+    String? search,
+    String? sortBy,
+    String? sortOrder,
+  });
+  Future<Tag> getTagById(String tagId);
   Future<Tag> saveTag(Tag tag);
   Future<void> deleteTag(String tagId);
 }

@@ -1,110 +1,162 @@
-import 'package:mobile_ai_erp/data/datasources/product_metadata/product_metadata_datasource.dart';
-import 'package:mobile_ai_erp/data/local/datasources/product_metadata/product_metadata_datasource.dart';
-// import 'package:mobile_ai_erp/data/network/apis/brands/brand_api.dart';
-// import 'package:mobile_ai_erp/data/network/rest_client.dart';
-// import 'package:mobile_ai_erp/domain/entity/product/product.dart';
+import 'package:mobile_ai_erp/data/network/apis/product_metadata/metadata_api_client.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/attribute.dart';
-import 'package:mobile_ai_erp/domain/entity/product_metadata/attribute_option.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/brand.dart';
-import 'package:mobile_ai_erp/domain/entity/product_metadata/brand_list_response.dart';
+import 'package:mobile_ai_erp/domain/entity/product_metadata/brand_image.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
-import 'package:mobile_ai_erp/domain/entity/product_metadata/category_attribute.dart';
-import 'package:mobile_ai_erp/domain/entity/product_metadata/category_list_response.dart';
+import 'package:mobile_ai_erp/domain/entity/product_metadata/metadata_page.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/tag.dart';
 import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadata_repository.dart';
 
 class ProductMetadataRepositoryImpl extends ProductMetadataRepository {
-  ProductMetadataRepositoryImpl(this._dataSource);
-  ProductMetadataRepositoryImpl.init() :
-    _dataSource = ProductMetadataDataSource();
+  ProductMetadataRepositoryImpl(this._apiClient);
 
-  final ProductMetadataDataSource _dataSource; // mock source, remove later
-
-  final ProductMetadataDatasource _metadataSource  = ProductMetadataDatasource(); // network source
+  final MetadataApiClient _apiClient;
 
   @override
-  Future<CategoryListResponse> getCategories({int? page, int? pageSize, String? search, bool? isActive}) {
-    final queryParameters = <String, String>{};
-    if (page != null) queryParameters['page'] = page.toString();
-    if (pageSize != null) queryParameters['pageSize'] = pageSize.toString();
-    if (search != null) queryParameters['search'] = search;
-    if (isActive != null) queryParameters['isActive'] = isActive.toString();
+  Future<MetadataPage<Category>> getCategories({
+    int page = 1,
+    int pageSize = 10,
+    String? search,
+    String? sortBy,
+    String? sortOrder,
+    CategoryStatus? status,
+    String? parentId,
+    bool rootOnly = false,
+  }) =>
+      _apiClient.categories.getCategories(
+        page: page,
+        pageSize: pageSize,
+        search: search,
+        sortBy: sortBy,
+        sortOrder: sortOrder,
+        status: status,
+        parentId: parentId,
+        rootOnly: rootOnly,
+      );
 
-    return _metadataSource.getCategories(queryParameters);
-  }
+  @override
+  Future<List<Category>> getCategoryTree({CategoryStatus? status}) =>
+      _apiClient.categories.getCategoryTree(status: status);
+
+  @override
+  Future<Category> getCategoryById(String categoryId) =>
+      _apiClient.categories.getCategoryById(categoryId);
 
   @override
   Future<Category> saveCategory(Category category) =>
-      _dataSource.saveCategory(category);
+      _apiClient.categories.saveCategory(category);
 
   @override
   Future<void> deleteCategory(String categoryId) =>
-      _dataSource.deleteCategory(categoryId);
+      _apiClient.categories.deleteCategory(categoryId);
 
   @override
-  Future<List<Attribute>> getAttributes() => _dataSource.getAttributes();
+  Future<MetadataPage<AttributeSet>> getAttributeSets({
+    int page = 1,
+    int pageSize = 10,
+    String? search,
+    String? sortBy,
+    String? sortOrder,
+  }) =>
+      _apiClient.attributeSets.getAttributeSets(
+        page: page,
+        pageSize: pageSize,
+        search: search,
+        sortBy: sortBy,
+        sortOrder: sortOrder,
+      );
 
   @override
-  Future<Attribute> saveAttribute(Attribute attribute) =>
-      _dataSource.saveAttribute(attribute);
+  Future<AttributeSet> getAttributeSetById(String attributeSetId) =>
+      _apiClient.attributeSets.getAttributeSetById(attributeSetId);
 
   @override
-  Future<void> deleteAttribute(String attributeId) =>
-      _dataSource.deleteAttribute(attributeId);
+  Future<AttributeSet> saveAttributeSet(AttributeSet attributeSet) =>
+      _apiClient.attributeSets.saveAttributeSet(attributeSet);
 
   @override
-  Future<List<AttributeOption>> getAttributeOptions(String attributeId) =>
-      _dataSource.getAttributeOptions(attributeId);
+  Future<void> deleteAttributeSet(String attributeSetId) =>
+      _apiClient.attributeSets.deleteAttributeSet(attributeSetId);
 
   @override
-  Future<Map<String, int>> getAttributeOptionCounts(
-          List<String> attributeIds) =>
-      _dataSource.getAttributeOptionCounts(attributeIds);
+  Future<List<AttributeValue>> getAttributeValues(String attributeSetId) =>
+      _apiClient.attributeSets
+          .getAttributeSetById(attributeSetId)
+          .then((attributeSet) => attributeSet.values);
 
   @override
-  Future<AttributeOption> saveAttributeOption(
-          AttributeOption attributeOption) =>
-      _dataSource.saveAttributeOption(attributeOption);
+  Future<List<AttributeValue>> getAllAttributeValues() =>
+      _apiClient.attributeSets.getAllAttributeValues();
 
   @override
-  Future<void> deleteAttributeOption(String attributeOptionId) =>
-      _dataSource.deleteAttributeOption(attributeOptionId);
+  Future<AttributeValue> saveAttributeValue(AttributeValue attributeValue) =>
+      _apiClient.attributeSets.saveAttributeValue(attributeValue);
 
   @override
-  Future<List<CategoryAttribute>> getCategoryAttributes() =>
-      _dataSource.getCategoryAttributes();
+  Future<void> deleteAttributeValue(String attributeSetId, String valueId) =>
+      _apiClient.attributeSets.deleteAttributeValue(attributeSetId, valueId);
 
   @override
-  Future<CategoryAttribute> saveCategoryAttribute(CategoryAttribute item) =>
-      _dataSource.saveCategoryAttribute(item);
+  Future<MetadataPage<Brand>> getBrands({
+    int page = 1,
+    int pageSize = 10,
+    String? search,
+    String? sortBy,
+    String? sortOrder,
+  }) =>
+      _apiClient.brands.getBrands(
+        page: page,
+        pageSize: pageSize,
+        search: search,
+        sortBy: sortBy,
+        sortOrder: sortOrder,
+      );
 
   @override
-  Future<void> deleteCategoryAttribute(String categoryAttributeId) =>
-      _dataSource.deleteCategoryAttribute(categoryAttributeId);
+  Future<Brand> getBrandById(String brandId) =>
+      _apiClient.brands.getBrandById(brandId);
 
   @override
-  Future<BrandListResponse> getBrands({int? page, int? pageSize, String? search, bool? isActive}) {
-    final queryParameters = <String, String>{};
-    if (page != null) queryParameters['page'] = page.toString();
-    if (pageSize != null) queryParameters['pageSize'] = pageSize.toString();
-    if (search != null) queryParameters['search'] = search;
-    if (isActive != null) queryParameters['isActive'] = isActive.toString();
-
-    return _metadataSource.getBrands(queryParameters);
-  }
+  Future<Brand> saveBrand(Brand brand) => _apiClient.brands.saveBrand(brand);
 
   @override
-  Future<Brand> saveBrand(Brand brand) => _dataSource.saveBrand(brand);
+  Future<void> deleteBrand(String brandId) =>
+      _apiClient.brands.deleteBrand(brandId);
 
   @override
-  Future<void> deleteBrand(String brandId) => _dataSource.deleteBrand(brandId);
+  Future<BrandImage?> getBrandImage(String brandId) =>
+      _apiClient.brandImages.getBrandImage(brandId);
 
   @override
-  Future<List<Tag>> getTags() => _dataSource.getTags();
+  Future<BrandImage> uploadBrandImage(String brandId, dynamic file) =>
+      _apiClient.brandImages.uploadBrandImage(brandId: brandId, file: file);
 
   @override
-  Future<Tag> saveTag(Tag tag) => _dataSource.saveTag(tag);
+  Future<void> deleteBrandImage(String brandId) =>
+      _apiClient.brandImages.deleteBrandImage(brandId);
 
   @override
-  Future<void> deleteTag(String tagId) => _dataSource.deleteTag(tagId);
+  Future<MetadataPage<Tag>> getTags({
+    int page = 1,
+    int pageSize = 10,
+    String? search,
+    String? sortBy,
+    String? sortOrder,
+  }) =>
+      _apiClient.tags.getTags(
+        page: page,
+        pageSize: pageSize,
+        search: search,
+        sortBy: sortBy,
+        sortOrder: sortOrder,
+      );
+
+  @override
+  Future<Tag> getTagById(String tagId) => _apiClient.tags.getTagById(tagId);
+
+  @override
+  Future<Tag> saveTag(Tag tag) => _apiClient.tags.saveTag(tag);
+
+  @override
+  Future<void> deleteTag(String tagId) => _apiClient.tags.deleteTag(tagId);
 }

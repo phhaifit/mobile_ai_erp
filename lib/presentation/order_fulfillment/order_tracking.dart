@@ -2,43 +2,135 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/entity/fulfillment/fulfillment_status.dart';
+import 'package:mobile_ai_erp/domain/entity/fulfillment/shipment_tracking.dart';
 import 'package:mobile_ai_erp/domain/entity/fulfillment/tracking_event.dart';
 import 'package:mobile_ai_erp/presentation/order_fulfillment/store/fulfillment_store.dart';
 import 'package:intl/intl.dart';
 
 class FulfillmentTrackingScreen extends StatefulWidget {
+  const FulfillmentTrackingScreen({super.key});
+
   @override
-  State<FulfillmentTrackingScreen> createState() => _FulfillmentTrackingScreenState();
+  State<FulfillmentTrackingScreen> createState() =>
+      _FulfillmentTrackingScreenState();
 }
 
 class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
   final FulfillmentStore _store = getIt<FulfillmentStore>();
+  List<ShipmentTrackingInfo> _shipments = const [];
+  ShipmentTrackingInfo? _shipment;
+  bool _isRefreshingCarrier = false;
+
+  bool _canUseCarrierTracking(FulfillmentStatus status) {
+    return status == FulfillmentStatus.shipping ||
+        status == FulfillmentStatus.partiallyShipped ||
+        status == FulfillmentStatus.delivered ||
+        status == FulfillmentStatus.success;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadCarrierTracking(refresh: true);
+    });
+  }
+
+  Future<void> _loadCarrierTracking({required bool refresh}) async {
+    final order = _store.selectedOrder;
+    final orderId = order?.id;
+    if (
+      orderId == null ||
+      order == null ||
+      !_canUseCarrierTracking(order.status) ||
+      _isRefreshingCarrier
+    ) {
+      return;
+    }
+
+    setState(() {
+      _isRefreshingCarrier = true;
+    });
+
+    final shipments = await _store.getOrderShipmentBatches(
+      orderId,
+      refresh: refresh,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _shipments = shipments;
+      _shipment = shipments.isEmpty ? null : shipments.last;
+      _isRefreshingCarrier = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Observer(
       builder: (_) {
         final order = _store.selectedOrder;
+        final canUseCarrierTracking =
+            order != null && _canUseCarrierTracking(order.status);
         return Scaffold(
           appBar: AppBar(
-            title: Text(order != null ? 'Tracking ${order.id}' : 'Tracking'),
+            title: Text(order != null ? 'Tracking ${order.code}' : 'Tracking'),
+            actions: canUseCarrierTracking
+                ? [
+                    IconButton(
+                      tooltip: 'Refresh carrier tracking',
+                      onPressed: _isRefreshingCarrier
+                          ? null
+                          : () => _loadCarrierTracking(refresh: true),
+                      icon: _isRefreshingCarrier
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.refresh),
+                    ),
+                  ]
+                : null,
           ),
           body: order == null
               ? const Center(child: Text('No order selected'))
-              : _buildTrackingBody(order.trackingEvents, order.status),
+              : _buildTrackingBody(
+                  order.trackingEvents,
+                  order.status,
+                  _shipment,
+                  _shipments,
+                ),
         );
       },
     );
   }
 
   Widget _buildTrackingBody(
-      List<TrackingEvent> events, FulfillmentStatus currentStatus) {
+    List<TrackingEvent> events,
+    FulfillmentStatus currentStatus,
+    ShipmentTrackingInfo? shipment,
+    List<ShipmentTrackingInfo> shipments,
+  ) {
     if (events.isEmpty) {
-      return const Center(child: Text('No tracking events'));
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            shipment == null
+                ? 'No tracking events'
+                : 'Tracking timeline will appear when carrier posts events.',
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
     }
 
     final sortedEvents = List<TrackingEvent>.from(events)
-      ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      ..sort((a, b) => b.changedAt.compareTo(a.changedAt));
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -46,12 +138,23 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildCurrentStatusBanner(currentStatus),
+          if (shipment != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              'Shipment batches: ${shipments.length}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 8),
+            _buildCarrierCard(shipment, currentStatus),
+            const SizedBox(height: 12),
+            _buildAllBatchesCardList(shipments),
+          ],
           const SizedBox(height: 24),
           Text(
             'Timeline',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
           ...List.generate(
@@ -67,15 +170,79 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
     );
   }
 
+  Widget _buildCarrierCard(
+    ShipmentTrackingInfo shipment,
+    FulfillmentStatus currentStatus,
+  ) {
+    final eta = shipment.estimatedDelivery;
+    final isTerminalOrder =
+        currentStatus == FulfillmentStatus.delivered ||
+        currentStatus == FulfillmentStatus.returned ||
+        currentStatus == FulfillmentStatus.cancelled;
+
+    final isCarrierOutOfSync =
+        isTerminalOrder &&
+        ((currentStatus == FulfillmentStatus.delivered &&
+                shipment.status.toLowerCase() != 'delivered') ||
+            (currentStatus == FulfillmentStatus.returned &&
+                shipment.status.toLowerCase() != 'returned'));
+
+    final displayCarrierStatus = isCarrierOutOfSync
+        ? currentStatus.apiValue
+        : shipment.status;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${shipment.provider.toUpperCase()} • ${shipment.trackingCode}',
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 6),
+          Text('Carrier status: $displayCarrierStatus'),
+          if (isCarrierOutOfSync)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                'Order status has been synchronized via webhook. Provider detail may take time to converge.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+          if (shipment.latestNote != null && shipment.latestNote!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(shipment.latestNote!),
+            ),
+          if (eta != null && !isCarrierOutOfSync)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                'Estimated delivery: ${DateFormat('dd/MM/yyyy HH:mm').format(eta)}',
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildCurrentStatusBanner(FulfillmentStatus status) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: _getStatusColor(status).withOpacity(0.1),
+        color: _getStatusColor(status).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: _getStatusColor(status).withOpacity(0.3),
+          color: _getStatusColor(status).withValues(alpha: 0.3),
         ),
       ),
       child: Column(
@@ -89,19 +256,72 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
           Text(
             status.displayName,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: _getStatusColor(status),
-                  fontWeight: FontWeight.bold,
-                ),
+              color: _getStatusColor(status),
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             'Current Status',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).hintColor,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: Theme.of(context).hintColor),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildAllBatchesCardList(List<ShipmentTrackingInfo> shipments) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'All Shipment Batches',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+        const SizedBox(height: 8),
+        ...shipments.map((shipment) {
+          return Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Theme.of(context)
+                  .colorScheme
+                  .surfaceContainerHighest
+                  .withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Batch #${shipment.shipmentNumber} • ${shipment.provider.toUpperCase()} • ${shipment.trackingCode}',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+                const SizedBox(height: 4),
+                Text('Status: ${shipment.status}'),
+                if (shipment.latestNote != null &&
+                    shipment.latestNote!.isNotEmpty)
+                  Text(
+                    shipment.latestNote!,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                if (shipment.estimatedDelivery != null)
+                  Text(
+                    'ETA: ${DateFormat('dd/MM/yyyy HH:mm').format(shipment.estimatedDelivery!)}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+              ],
+            ),
+          );
+        }),
+      ],
     );
   }
 
@@ -110,9 +330,10 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
     required bool isFirst,
     required bool isLast,
   }) {
+    final displayNote = _normalizedEventNote(event.note);
     final color = isFirst
-        ? _getStatusColor(event.status)
-        : _getStatusColor(event.status).withOpacity(0.5);
+        ? _getStatusColor(event.newStatus)
+      : _getStatusColor(event.newStatus).withValues(alpha: 0.5);
 
     return IntrinsicHeight(
       child: Row(
@@ -138,7 +359,7 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
                   Expanded(
                     child: Container(
                       width: 2,
-                      color: color.withOpacity(0.3),
+                      color: color.withValues(alpha: 0.3),
                     ),
                   ),
               ],
@@ -159,13 +380,17 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
-                              color: color.withOpacity(0.15),
+                              color: color.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              event.status.displayName,
+                              event.oldStatus != null
+                                  ? '${event.oldStatus!.displayName} → ${event.newStatus.displayName}'
+                                  : event.newStatus.displayName,
                               style: TextStyle(
                                 color: color,
                                 fontSize: 11,
@@ -174,51 +399,35 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
                             ),
                           ),
                           Text(
-                            DateFormat('dd/MM HH:mm').format(event.timestamp),
-                            style:
-                                Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Theme.of(context).hintColor,
-                                    ),
+                            DateFormat('dd/MM HH:mm').format(event.changedAt),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: Theme.of(context).hintColor),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        event.description,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                      if (event.location != null) ...[
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Icon(Icons.location_on,
-                                size: 14, color: Theme.of(context).hintColor),
-                            const SizedBox(width: 4),
-                            Text(
-                              event.location!,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(
-                                      color: Theme.of(context).hintColor),
-                            ),
-                          ],
+                      if (displayNote != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          displayNote,
+                          style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ],
-                      if (event.updatedBy != null) ...[
+                      if (event.changedByName != null) ...[
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            Icon(Icons.person,
-                                size: 14, color: Theme.of(context).hintColor),
+                            Icon(
+                              Icons.person,
+                              size: 14,
+                              color: Theme.of(context).hintColor,
+                            ),
                             const SizedBox(width: 4),
                             Text(
-                              event.updatedBy!,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
+                              event.changedByName!,
+                              style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(
-                                      color: Theme.of(context).hintColor),
+                                    color: Theme.of(context).hintColor,
+                                  ),
                             ),
                           ],
                         ),
@@ -236,43 +445,86 @@ class _FulfillmentTrackingScreenState extends State<FulfillmentTrackingScreen> {
 
   Color _getStatusColor(FulfillmentStatus status) {
     switch (status) {
+      case FulfillmentStatus.newOrder:
+        return Colors.grey.shade500;
       case FulfillmentStatus.pending:
         return Colors.orange;
-      case FulfillmentStatus.picking:
-        return Colors.blue;
-      case FulfillmentStatus.packing:
+      case FulfillmentStatus.confirmed:
         return Colors.indigo;
-      case FulfillmentStatus.packed:
-        return Colors.purple;
-      case FulfillmentStatus.shipped:
+      case FulfillmentStatus.packing:
+        return Colors.deepOrange;
+      case FulfillmentStatus.shipping:
         return Colors.teal;
-      case FulfillmentStatus.partiallyDelivered:
-        return Colors.amber.shade800;
+      case FulfillmentStatus.partiallyShipped:
+        return Colors.cyan;
       case FulfillmentStatus.delivered:
         return Colors.green;
+      case FulfillmentStatus.success:
+        return Colors.green.shade700;
       case FulfillmentStatus.cancelled:
         return Colors.red;
+      case FulfillmentStatus.returned:
+        return Colors.grey;
     }
   }
 
   IconData _getStatusIcon(FulfillmentStatus status) {
     switch (status) {
+      case FulfillmentStatus.newOrder:
+        return Icons.fiber_new_outlined;
       case FulfillmentStatus.pending:
         return Icons.hourglass_empty;
-      case FulfillmentStatus.picking:
-        return Icons.shopping_cart;
+      case FulfillmentStatus.confirmed:
+        return Icons.check_circle_outline;
       case FulfillmentStatus.packing:
-        return Icons.inventory;
-      case FulfillmentStatus.packed:
-        return Icons.check_box;
-      case FulfillmentStatus.shipped:
+        return Icons.inventory_2_outlined;
+      case FulfillmentStatus.shipping:
         return Icons.local_shipping;
-      case FulfillmentStatus.partiallyDelivered:
-        return Icons.call_split;
+      case FulfillmentStatus.partiallyShipped:
+        return Icons.local_shipping_outlined;
       case FulfillmentStatus.delivered:
         return Icons.done_all;
+      case FulfillmentStatus.success:
+        return Icons.verified;
       case FulfillmentStatus.cancelled:
         return Icons.cancel;
+      case FulfillmentStatus.returned:
+        return Icons.assignment_return;
     }
+  }
+
+  String? _normalizedEventNote(String? rawNote) {
+    if (rawNote == null) {
+      return null;
+    }
+
+    final note = rawNote.trim();
+    if (note.isEmpty) {
+      return null;
+    }
+
+    final lower = note.toLowerCase();
+    final hasNonAscii = note.runes.any((codePoint) => codePoint > 127);
+    final hasSystemStatusToken =
+      lower.contains('pending') ||
+      lower.contains('confirmed') ||
+      lower.contains('packing') ||
+      lower.contains('processing') ||
+      lower.contains('shipping') ||
+      lower.contains('shipped') ||
+      lower.contains('delivered') ||
+      lower.contains('cancelled') ||
+      lower.contains('returned');
+
+    final isLegacyAutoMessage =
+      hasNonAscii ||
+      (lower.startsWith('status:') &&
+        (lower.contains('system') || lower.contains('auto')));
+
+    if (isLegacyAutoMessage && hasSystemStatusToken) {
+      return 'Status updated automatically by system';
+    }
+
+    return note;
   }
 }
