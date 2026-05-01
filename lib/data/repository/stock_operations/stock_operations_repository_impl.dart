@@ -25,7 +25,7 @@ class StockOperationsRepositoryImpl extends StockOperationsRepository {
 
   @override
   Future<List<Warehouse>> getWarehouses() async {
-    final response = await _getPaginated('/erp/warehouses', pageSize: 200);
+    final response = await _getPaginated('/erp/warehouses', pageSize: 100);
 
     return response
         .map(
@@ -42,7 +42,7 @@ class StockOperationsRepositoryImpl extends StockOperationsRepository {
   Future<List<ProductStock>> getProductStocks() async {
     final response = await _getPaginated(
       '/erp/stock-levels/aggregated',
-      pageSize: 500,
+      pageSize: 100,
     );
 
     return response
@@ -63,7 +63,7 @@ class StockOperationsRepositoryImpl extends StockOperationsRepository {
   Future<List<StockOperation>> getOperations() async {
     final response = await _getPaginated(
       '/erp/stock-operations',
-      pageSize: 200,
+      pageSize: 100,
     );
 
     return response
