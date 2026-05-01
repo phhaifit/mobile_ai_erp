@@ -20,7 +20,8 @@ class _CustomerManagementHomeScreenState
   @override
   void initState() {
     super.initState();
-    Future<void>.microtask(() => _store.loadDashboard());
+    Future<void>.microtask(
+        () => Future.wait([_store.loadCustomers(), _store.loadGroups()]));
   }
 
   @override
@@ -31,7 +32,7 @@ class _CustomerManagementHomeScreenState
       ),
       body: Observer(
         builder: (context) {
-          if (_store.isLoading && !_store.hasLoadedDashboard) {
+          if (_store.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
 

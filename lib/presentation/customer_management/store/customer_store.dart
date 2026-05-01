@@ -88,6 +88,9 @@ abstract class CustomerStoreBase with Store {
   int groupTotalPages = 1;
 
   @observable
+  int groupTotalItems = 0;
+
+  @observable
   ObservableList<Address> activeAddresses = ObservableList<Address>();
 
   @observable
@@ -129,6 +132,8 @@ abstract class CustomerStoreBase with Store {
     String? search,
     String? status,
     String? groupId,
+    String? sortBy,
+    String? sortOrder,
     bool append = false,
   }) async {
     await _runWithLoading(() async {
@@ -138,6 +143,8 @@ abstract class CustomerStoreBase with Store {
           search: search,
           status: status,
           groupId: groupId,
+          sortBy: sortBy,
+          sortOrder: sortOrder,
         ),
       );
       if (append) {
@@ -156,6 +163,8 @@ abstract class CustomerStoreBase with Store {
     String? search,
     String? status,
     String? groupId,
+    String? sortBy,
+    String? sortOrder,
   }) async {
     if (!hasMoreCustomers || isLoading) return;
     await loadCustomers(
@@ -163,6 +172,8 @@ abstract class CustomerStoreBase with Store {
       search: search,
       status: status,
       groupId: groupId,
+      sortBy: sortBy,
+      sortOrder: sortOrder,
       append: true,
     );
   }
@@ -190,8 +201,7 @@ abstract class CustomerStoreBase with Store {
   @action
   Future<void> loadCustomerDetail(String customerId) async {
     await _runWithLoading(() async {
-      final customer =
-          await _getCustomerDetailUseCase.call(params: customerId);
+      final customer = await _getCustomerDetailUseCase.call(params: customerId);
       if (customer != null) _upsertCustomer(customer);
     });
   }
@@ -202,8 +212,9 @@ abstract class CustomerStoreBase with Store {
   Future<void> loadAddresses(String customerId) async {
     activeCustomerId = customerId;
     await _runWithLoading(() async {
-      final loaded =
-          await _getCustomerAddressesUseCase.call(params: customerId);
+      final loaded = await _getCustomerAddressesUseCase.call(
+        params: customerId,
+      );
       activeAddresses = ObservableList<Address>.of(loaded);
     });
   }
@@ -228,8 +239,7 @@ abstract class CustomerStoreBase with Store {
   }
 
   @action
-  Future<void> setDefaultAddress(
-      String customerId, String addressId) async {
+  Future<void> setDefaultAddress(String customerId, String addressId) async {
     await _setDefaultAddressUseCase.call(
       params: SetDefaultAddressParams(
         customerId: customerId,
@@ -249,14 +259,14 @@ abstract class CustomerStoreBase with Store {
   @action
   Future<void> loadCustomerTransactions(String customerId) async {
     await _runWithLoading(() async {
-      final transactions =
-          await _getCustomerTransactionsUseCase.call(params: customerId);
+      final transactions = await _getCustomerTransactionsUseCase.call(
+        params: customerId,
+      );
       activeTransactions = ObservableList<CustomerTransaction>.of(transactions);
     });
   }
 
   // ── Groups ────────────────────────────────────────────────────────────────
-
   @action
   Future<void> loadGroups({
     int page = 1,
@@ -274,13 +284,16 @@ abstract class CustomerStoreBase with Store {
           sortOrder: sortOrder,
         ),
       );
+
       if (append) {
         groups.addAll(result.data);
       } else {
         groups = ObservableList<CustomerGroup>.of(result.data);
       }
+
       groupCurrentPage = result.meta.page;
       groupTotalPages = result.meta.totalPages;
+      groupTotalItems = result.meta.totalItems;
     });
   }
 
@@ -321,10 +334,14 @@ abstract class CustomerStoreBase with Store {
 
   @action
   Future<void> addSegmentMembers(
-      String groupId, List<String> customerIds) async {
+    String groupId,
+    List<String> customerIds,
+  ) async {
     await _addSegmentMembersUseCase.call(
       params: AddSegmentMembersParams(
-          groupId: groupId, customerIds: customerIds),
+        groupId: groupId,
+        customerIds: customerIds,
+      ),
     );
     // Re-fetch members and refresh group to get updated memberCount
     await loadSegmentMembers(groupId);
@@ -333,10 +350,14 @@ abstract class CustomerStoreBase with Store {
 
   @action
   Future<void> removeSegmentMembers(
-      String groupId, List<String> customerIds) async {
+    String groupId,
+    List<String> customerIds,
+  ) async {
     await _removeSegmentMembersUseCase.call(
       params: RemoveSegmentMembersParams(
-          groupId: groupId, customerIds: customerIds),
+        groupId: groupId,
+        customerIds: customerIds,
+      ),
     );
     await loadSegmentMembers(groupId);
     await _refreshGroupById(groupId);
@@ -441,8 +462,9 @@ abstract class CustomerStoreBase with Store {
     required String Function(T item) idSelector,
     required int Function(T left, T right) compare,
   }) {
-    final index =
-        list.indexWhere((existing) => idSelector(existing) == idSelector(item));
+    final index = list.indexWhere(
+      (existing) => idSelector(existing) == idSelector(item),
+    );
     if (index >= 0) {
       list[index] = item;
     } else {

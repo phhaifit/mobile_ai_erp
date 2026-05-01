@@ -17,6 +17,8 @@ class CustomerApi {
     String? search,
     String? status,
     String? groupId,
+    String? sortBy,
+    String? sortOrder,
   }) async {
     try {
       final res = await _dioClient.dio.get(
@@ -27,6 +29,8 @@ class CustomerApi {
           if (search != null && search.isNotEmpty) 'search': search,
           if (status != null && status.isNotEmpty) 'status': status,
           if (groupId != null && groupId.isNotEmpty) 'groupId': groupId,
+          if (sortBy != null && sortBy.isNotEmpty) 'sortBy': sortBy,
+          if (sortOrder != null && sortOrder.isNotEmpty) 'sortOrder': sortOrder,
         },
       );
       return CustomerListResponse.fromJson(res.data as Map<String, dynamic>);
@@ -96,9 +100,17 @@ class CustomerApi {
     try {
       final res =
           await _dioClient.dio.get(Endpoints.customerAddresses(customerId));
-      final data = res.data;
-      if (data is! List<dynamic>) return const [];
-      return data
+      final body = res.data;
+      final List<dynamic> items;
+      if (body is List<dynamic>) {
+        items = body;
+      } else if (body is Map<String, dynamic> &&
+          body['data'] is List<dynamic>) {
+        items = body['data'] as List<dynamic>;
+      } else {
+        return const [];
+      }
+      return items
           .whereType<Map<String, dynamic>>()
           .map(AddressDto.fromJson)
           .toList();
@@ -115,7 +127,7 @@ class CustomerApi {
         Endpoints.customerAddresses(customerId),
         data: body,
       );
-      return AddressDto.fromJson(res.data as Map<String, dynamic>);
+      return AddressDto.fromJson(_unwrapData(res.data));
     } catch (e) {
       debugPrint('CustomerApi.createAddress error: $e');
       rethrow;
@@ -129,7 +141,7 @@ class CustomerApi {
         Endpoints.customerAddressById(customerId, addressId),
         data: body,
       );
-      return AddressDto.fromJson(res.data as Map<String, dynamic>);
+      return AddressDto.fromJson(_unwrapData(res.data));
     } catch (e) {
       debugPrint('CustomerApi.updateAddress error: $e');
       rethrow;
@@ -162,9 +174,17 @@ class CustomerApi {
     try {
       final res = await _dioClient.dio
           .get(Endpoints.customerTransactions(customerId));
-      final data = res.data;
-      if (data is! List<dynamic>) return const [];
-      return data
+      final body = res.data;
+      final List<dynamic> items;
+      if (body is List<dynamic>) {
+        items = body;
+      } else if (body is Map<String, dynamic> &&
+          body['data'] is List<dynamic>) {
+        items = body['data'] as List<dynamic>;
+      } else {
+        return const [];
+      }
+      return items
           .whereType<Map<String, dynamic>>()
           .map(CustomerTransactionDto.fromJson)
           .toList();
@@ -172,5 +192,16 @@ class CustomerApi {
       debugPrint('CustomerApi.getTransactions error: $e');
       rethrow;
     }
+  }
+
+  Map<String, dynamic> _unwrapData(dynamic responseData) {
+    if (responseData is Map<String, dynamic>) {
+      if (responseData.containsKey('data') &&
+          responseData['data'] is Map<String, dynamic>) {
+        return responseData['data'] as Map<String, dynamic>;
+      }
+      return responseData;
+    }
+    throw FormatException('Unexpected response format: $responseData');
   }
 }

@@ -35,10 +35,10 @@ class Address {
 
   String get displayAddress {
     final parts = <String>[
-      street,
-      city,
+      if (street.isNotEmpty) street,
+      if (city.isNotEmpty) city,
       if (state != null && state!.trim().isNotEmpty) state!.trim(),
-      countryCode.toUpperCase(),
+      if (countryCode.isNotEmpty) countryCode.toUpperCase(),
       if (postalCode != null && postalCode!.trim().isNotEmpty)
         postalCode!.trim(),
     ];

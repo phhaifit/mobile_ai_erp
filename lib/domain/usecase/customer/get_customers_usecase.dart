@@ -7,6 +7,8 @@ class GetCustomersParams {
   final String? search;
   final String? status;
   final String? groupId;
+  final String? sortBy;
+  final String? sortOrder;
 
   const GetCustomersParams({
     this.page = 1,
@@ -14,6 +16,8 @@ class GetCustomersParams {
     this.search,
     this.status,
     this.groupId,
+    this.sortBy,
+    this.sortOrder,
   });
 }
 
@@ -30,6 +34,8 @@ class GetCustomersUseCase extends UseCase<CustomerListResult, GetCustomersParams
       search: params.search,
       status: params.status,
       groupId: params.groupId,
+      sortBy: params.sortBy,
+      sortOrder: params.sortOrder,
     );
   }
 }

@@ -32,7 +32,6 @@ class _CustomerGroupFormScreenState extends State<CustomerGroupFormScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-  final TextEditingController _sortOrderController = TextEditingController();
 
   CustomerGroupStatus _status = CustomerGroupStatus.active;
   String? _selectedColor;
@@ -46,17 +45,14 @@ class _CustomerGroupFormScreenState extends State<CustomerGroupFormScreen> {
   }
 
   Future<void> _initialize() async {
-    await _store.loadDashboard();
+    await _store.loadGroups();
     _editingGroup = _store.findGroupById(widget.args?.groupId);
 
     if (_editingGroup != null) {
       _nameController.text = _editingGroup!.name;
       _descriptionController.text = _editingGroup!.description ?? '';
-      _sortOrderController.text = _editingGroup!.sortOrder.toString();
       _status = _editingGroup!.status;
       _selectedColor = _editingGroup!.colorHex;
-    } else {
-      _sortOrderController.text = '0';
     }
 
     if (mounted) setState(() {});
@@ -66,7 +62,6 @@ class _CustomerGroupFormScreenState extends State<CustomerGroupFormScreen> {
   void dispose() {
     _nameController.dispose();
     _descriptionController.dispose();
-    _sortOrderController.dispose();
     super.dispose();
   }
 
@@ -119,21 +114,6 @@ class _CustomerGroupFormScreenState extends State<CustomerGroupFormScreen> {
                 },
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _sortOrderController,
-                keyboardType: TextInputType.number,
-                decoration: customerFormDecoration(labelText: 'Sort order'),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Sort order is required.';
-                  }
-                  if (int.tryParse(value.trim()) == null) {
-                    return 'Must be a number.';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
               Text(
                 'Color',
                 style: Theme.of(context).textTheme.labelLarge,
@@ -177,8 +157,9 @@ class _CustomerGroupFormScreenState extends State<CustomerGroupFormScreen> {
           name: _nameController.text.trim(),
           description: _trimOrNull(_descriptionController.text),
           colorHex: _selectedColor,
-          sortOrder: int.parse(_sortOrderController.text.trim()),
           status: _status,
+          createdAt: _editingGroup?.createdAt ?? DateTime.now(),
+          updatedAt: DateTime.now(),
         ),
       );
 

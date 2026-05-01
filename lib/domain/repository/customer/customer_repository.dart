@@ -30,6 +30,8 @@ abstract class CustomerRepository {
     String? search,
     String? status,
     String? groupId,
+    String? sortBy,
+    String? sortOrder,
   });
   Future<Customer?> getCustomerById(String id);
   Future<Customer> saveCustomer(Customer customer);
