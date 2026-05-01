@@ -24,7 +24,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   @override
   void initState() {
     super.initState();
-    Future<void>.microtask(() => _store.loadDashboard());
+    Future<void>.microtask(() => _store.loadCustomers());
   }
 
   @override
@@ -63,18 +63,12 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
               CustomerDetailSectionCard(
                 title: 'Profile',
                 children: <Widget>[
-                  CustomerDetailRow(
-                    label: 'Email',
-                    value: customer.email,
-                  ),
+                  CustomerDetailRow(label: 'Email', value: customer.email),
                   CustomerDetailRow(
                     label: 'Phone',
                     value: customer.phone ?? 'Not set',
                   ),
-                  CustomerDetailRow(
-                    label: 'Type',
-                    value: customer.type.label,
-                  ),
+                  CustomerDetailRow(label: 'Type', value: customer.type.label),
                   CustomerDetailRow(
                     label: 'Group',
                     value: group?.name ?? 'No group',
@@ -85,8 +79,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                   ),
                 ],
               ),
-              if (customer.notes != null &&
-                  customer.notes!.trim().isNotEmpty)
+              if (customer.notes != null && customer.notes!.trim().isNotEmpty)
                 CustomerDetailSectionCard(
                   title: 'Notes',
                   children: <Widget>[
@@ -101,17 +94,13 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                 trailing: TextButton.icon(
                   onPressed: () => CustomerNavigator.openAddresses(
                     context,
-                    args:
-                        CustomerAddressesArgs(customerId: customer.id),
+                    args: CustomerAddressesArgs(customerId: customer.id),
                   ),
                   icon: const Icon(Icons.chevron_right, size: 18),
                   label: const Text('Manage'),
                 ),
                 children: <Widget>[
-                  _AddressPreview(
-                    store: _store,
-                    customerId: customer.id,
-                  ),
+                  _AddressPreview(store: _store, customerId: customer.id),
                 ],
               ),
             ],
@@ -154,10 +143,9 @@ class _CustomerHeaderCard extends StatelessWidget {
                 children: <Widget>[
                   Text(
                     customer.fullName,
-                    style: Theme.of(context)
-                        .textTheme
-                        .headlineSmall
-                        ?.copyWith(fontWeight: FontWeight.w600),
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Wrap(
@@ -179,10 +167,7 @@ class _CustomerHeaderCard extends StatelessWidget {
 }
 
 class _AddressPreview extends StatefulWidget {
-  const _AddressPreview({
-    required this.store,
-    required this.customerId,
-  });
+  const _AddressPreview({required this.store, required this.customerId});
 
   final CustomerStore store;
   final String customerId;
@@ -198,8 +183,11 @@ class _AddressPreviewState extends State<_AddressPreview> {
   void initState() {
     super.initState();
     Future<void>.microtask(() async {
-      await widget.store.loadAddresses(widget.customerId);
-      if (mounted) setState(() => _loaded = true);
+      try {
+        await widget.store.loadAddresses(widget.customerId);
+      } finally {
+        if (mounted) setState(() => _loaded = true);
+      }
     });
   }
 
@@ -212,48 +200,45 @@ class _AddressPreviewState extends State<_AddressPreview> {
       );
     }
 
-    return Observer(builder: (context) {
-      final addresses = widget.store.activeAddresses
-          .where((a) => a.customerId == widget.customerId)
-          .toList();
+    return Observer(
+      builder: (context) {
+        final addresses = widget.store.activeAddresses.toList();
 
-      if (addresses.isEmpty) {
-        return const Text('No addresses added yet.');
-      }
+        if (addresses.isEmpty) {
+          return const Text('No addresses added yet.');
+        }
 
-      final defaults =
-          addresses.where((a) => a.isDefault).toList();
-      final preview = defaults.isNotEmpty ? defaults.first : addresses.first;
+        final defaults = addresses.where((a) => a.isDefault).toList();
+        final preview = defaults.isNotEmpty ? defaults.first : addresses.first;
 
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            preview.label,
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            preview.displayAddress,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color:
-                      Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-          ),
-          if (addresses.length > 1) ...<Widget>[
-            const SizedBox(height: 4),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
             Text(
-              '+${addresses.length - 1} more address${addresses.length - 1 > 1 ? 'es' : ''}',
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
+              preview.label,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
+            const SizedBox(height: 2),
+            Text(
+              preview.displayAddress,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            if (addresses.length > 1) ...<Widget>[
+              const SizedBox(height: 4),
+              Text(
+                '+${addresses.length - 1} more address${addresses.length - 1 > 1 ? 'es' : ''}',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ],
           ],
-        ],
-      );
-    });
+        );
+      },
+    );
   }
 }

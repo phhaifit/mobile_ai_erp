@@ -37,7 +37,7 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
   }
 
   Future<void> _initialize() async {
-    await _store.loadDashboard();
+    await Future.wait([_store.loadCustomers(), _store.loadGroups()]);
     _editingCustomer =
         _store.findCustomerById(widget.args?.customerId);
 

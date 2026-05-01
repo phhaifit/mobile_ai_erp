@@ -27,6 +27,8 @@ class CustomerRepositoryImpl extends CustomerRepository {
     String? search,
     String? status,
     String? groupId,
+    String? sortBy,
+    String? sortOrder,
   }) async {
     final response = await _customerApi.getCustomers(
       page: page,
@@ -34,6 +36,8 @@ class CustomerRepositoryImpl extends CustomerRepository {
       search: search,
       status: status,
       groupId: groupId,
+      sortBy: sortBy,
+      sortOrder: sortOrder,
     );
     return CustomerListResult(
       data: response.data.map(_mapCustomerDtoToEntity).toList(),
@@ -74,7 +78,9 @@ class CustomerRepositoryImpl extends CustomerRepository {
   @override
   Future<List<Address>> getAddresses(String customerId) async {
     final dtos = await _customerApi.getAddresses(customerId);
-    return dtos.map(_mapAddressToEntity).toList();
+    return dtos
+        .map((dto) => _mapAddressToEntity(dto, fallbackCustomerId: customerId))
+        .toList();
   }
 
   @override
@@ -87,7 +93,7 @@ class CustomerRepositoryImpl extends CustomerRepository {
       dto = await _customerApi.updateAddress(
           address.customerId, address.id, body);
     }
-    return _mapAddressToEntity(dto);
+    return _mapAddressToEntity(dto, fallbackCustomerId: address.customerId);
   }
 
   @override
@@ -240,17 +246,17 @@ class CustomerRepositoryImpl extends CustomerRepository {
     );
   }
 
-  Address _mapAddressToEntity(AddressDto dto) {
+  Address _mapAddressToEntity(AddressDto dto, {String fallbackCustomerId = ''}) {
     return Address(
       id: dto.id,
-      customerId: dto.customerId,
-      label: dto.label,
-      street: dto.street,
-      city: dto.city,
-      countryCode: dto.countryCode,
+      customerId: dto.customerId.isNotEmpty ? dto.customerId : fallbackCustomerId,
+      label: dto.province ?? dto.address ?? '',
+      street: dto.address ?? '',
+      city: dto.province ?? '',
+      countryCode: '',
       type: _parseAddressType(dto.type),
-      state: dto.state,
-      postalCode: dto.postalCode,
+      state: dto.district,
+      postalCode: dto.ward,
       isDefault: dto.isDefault,
     );
   }
@@ -292,14 +298,12 @@ class CustomerRepositoryImpl extends CustomerRepository {
 
   Map<String, dynamic> _buildAddressBody(Address a) {
     return <String, dynamic>{
-      'label': a.label,
-      'street': a.street,
-      'city': a.city,
-      'countryCode': a.countryCode,
-      'isDefault': a.isDefault,
+      'address': a.street,
+      'province': a.city,
       'type': a.type.name,
-      if (a.state != null) 'state': a.state,
-      if (a.postalCode != null) 'postalCode': a.postalCode,
+      'isDefault': a.isDefault,
+      if (a.state != null && a.state!.isNotEmpty) 'district': a.state,
+      if (a.postalCode != null && a.postalCode!.isNotEmpty) 'ward': a.postalCode,
     };
   }
 

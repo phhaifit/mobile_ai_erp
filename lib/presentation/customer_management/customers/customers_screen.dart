@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/customer.dart';
 import 'package:mobile_ai_erp/presentation/customer_management/navigation/customer_navigator.dart';
@@ -11,14 +13,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 
 enum _CustomerSortOption {
-  nameAsc('Name A-Z'),
-  nameDesc('Name Z-A'),
-  newest('Newest first'),
-  oldest('Oldest first');
+  nameAsc('Name A-Z', 'name', 'asc'),
+  nameDesc('Name Z-A', 'name', 'desc'),
+  newest('Newest first', 'createdAt', 'desc'),
+  oldest('Oldest first', 'createdAt', 'asc');
 
-  const _CustomerSortOption(this.label);
+  const _CustomerSortOption(this.label, this.sortBy, this.sortOrder);
 
   final String label;
+  final String sortBy;
+  final String sortOrder;
 }
 
 class _CustomerFilterResult {
@@ -36,26 +40,37 @@ class CustomersScreen extends StatefulWidget {
 }
 
 class _CustomersScreenState extends State<CustomersScreen> {
-  static const int _pageSize = 10;
-
   final CustomerStore _store = getIt<CustomerStore>();
   final TextEditingController _searchController = TextEditingController();
+  Timer? _debounce;
+
   String _query = '';
   CustomerStatus? _statusFilter;
   String? _groupFilter;
-  _CustomerSortOption _sortOption = _CustomerSortOption.nameAsc;
-  int _currentPage = 1;
+  _CustomerSortOption _sortOption = _CustomerSortOption.newest;
 
   @override
   void initState() {
     super.initState();
-    Future<void>.microtask(() => _store.loadDashboard());
+    Future<void>.microtask(_reload);
   }
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _reload({int page = 1}) {
+    _store.loadCustomers(
+      page: page,
+      search: _query.isEmpty ? null : _query,
+      status: _statusFilter?.apiValue,
+      groupId: _groupFilter,
+      sortBy: _sortOption.sortBy,
+      sortOrder: _sortOption.sortOrder,
+    );
   }
 
   @override
@@ -78,62 +93,66 @@ class _CustomersScreenState extends State<CustomersScreen> {
       ),
       body: Observer(
         builder: (context) {
-          if (_store.isLoading && !_store.hasLoadedDashboard) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final filtered = _applyFilters(_store.customers.toList());
-          final totalPages = _totalPages(filtered.length);
-          final currentPage =
-              totalPages == 0 ? 1 : _currentPage.clamp(1, totalPages);
-          final visible = _pageItems(filtered, currentPage, _pageSize);
+          final customers = _store.customers;
+          final totalPages = _store.totalPages;
+          final currentPage = _store.currentPage;
+          final totalItems = _store.totalItems;
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
             children: <Widget>[
               CustomerListControls(
                 searchController: _searchController,
-                onSearchChanged: (value) => setState(() {
-                  _query = value.trim();
-                  _currentPage = 1;
-                }),
+                onSearchChanged: (value) {
+                  _debounce?.cancel();
+                  _debounce = Timer(const Duration(milliseconds: 400), () {
+                    setState(() => _query = value.trim());
+                    _reload();
+                  });
+                },
                 searchHint: 'Search by name, email, or phone',
                 resultLabel:
-                    'Showing ${visible.length} of ${filtered.length} customers',
-                hasActiveFilter:
-                    _statusFilter != null || _groupFilter != null,
-                hasCustomSort: _sortOption != _CustomerSortOption.nameAsc,
+                    'Showing ${customers.length} of $totalItems customers',
+                hasActiveFilter: _statusFilter != null || _groupFilter != null,
+                hasCustomSort: _sortOption != _CustomerSortOption.newest,
                 onOpenFilter: _openFilterSheet,
                 onOpenSort: _openSortSheet,
               ),
               const SizedBox(height: 16),
-              if (filtered.isEmpty)
+              if (_store.isLoading)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(32),
+                    child: CircularProgressIndicator(),
+                  ),
+                )
+              else if (customers.isEmpty)
                 CustomerEmptyState(
                   icon: Icons.people_outline,
-                  title: _query.isNotEmpty ||
+                  title:
+                      _query.isNotEmpty ||
                           _statusFilter != null ||
                           _groupFilter != null
                       ? 'No matching customers'
                       : 'No customers yet',
-                  message: _query.isNotEmpty ||
+                  message:
+                      _query.isNotEmpty ||
                           _statusFilter != null ||
                           _groupFilter != null
                       ? 'Try changing your search or filters.'
                       : 'Add the first customer to get started.',
                 )
               else ...<Widget>[
-                ...visible.map(_buildCustomerCard),
+                ...customers.map(_buildCustomerCard),
                 if (totalPages > 1)
                   CustomerPaginationControls(
                     currentPage: currentPage,
                     totalPages: totalPages,
                     onPrevious: currentPage > 1
-                        ? () =>
-                            setState(() => _currentPage = currentPage - 1)
+                        ? () => _reload(page: currentPage - 1)
                         : null,
                     onNext: currentPage < totalPages
-                        ? () =>
-                            setState(() => _currentPage = currentPage + 1)
+                        ? () => _reload(page: currentPage + 1)
                         : null,
                   ),
               ],
@@ -142,33 +161,6 @@ class _CustomersScreenState extends State<CustomersScreen> {
         },
       ),
     );
-  }
-
-  List<Customer> _applyFilters(List<Customer> source) {
-    final query = _query.toLowerCase();
-    final filtered = source.where((c) {
-      if (_statusFilter != null && c.status != _statusFilter) return false;
-      if (_groupFilter != null && c.groupId != _groupFilter) return false;
-      if (query.isEmpty) return true;
-      return c.fullName.toLowerCase().contains(query) ||
-          c.email.toLowerCase().contains(query) ||
-          (c.phone?.toLowerCase().contains(query) ?? false);
-    }).toList();
-
-    filtered.sort((a, b) {
-      switch (_sortOption) {
-        case _CustomerSortOption.nameAsc:
-          return a.fullName.toLowerCase().compareTo(b.fullName.toLowerCase());
-        case _CustomerSortOption.nameDesc:
-          return b.fullName.toLowerCase().compareTo(a.fullName.toLowerCase());
-        case _CustomerSortOption.newest:
-          return b.createdAt.compareTo(a.createdAt);
-        case _CustomerSortOption.oldest:
-          return a.createdAt.compareTo(b.createdAt);
-      }
-    });
-
-    return filtered;
   }
 
   Widget _buildCustomerCard(Customer customer) {
@@ -197,22 +189,17 @@ class _CustomersScreenState extends State<CustomersScreen> {
                         customer.fullName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         customer.email,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style:
-                            Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
-                                ),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                       ),
                       const SizedBox(height: 6),
                       Wrap(
@@ -257,6 +244,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
       builder: (context) {
         CustomerStatus? tempStatus = _statusFilter;
         String? tempGroup = _groupFilter;
+
         return StatefulBuilder(
           builder: (context, setModalState) {
             return SafeArea(
@@ -266,38 +254,49 @@ class _CustomersScreenState extends State<CustomersScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Text('Filter customers',
-                        style: Theme.of(context).textTheme.titleMedium),
+                    Text(
+                      'Filter customers',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                     const SizedBox(height: 12),
-                    Text('Status',
-                        style: Theme.of(context).textTheme.labelMedium),
+
+                    /// STATUS
+                    Text(
+                      'Status',
+                      style: Theme.of(context).textTheme.labelMedium,
+                    ),
                     ListTile(
                       contentPadding: EdgeInsets.zero,
                       title: const Text('All statuses'),
                       trailing: tempStatus == null
                           ? const Icon(Icons.check)
                           : null,
-                      onTap: () =>
-                          setModalState(() => tempStatus = null),
+                      onTap: () => setModalState(() => tempStatus = null),
                     ),
                     for (final s in CustomerStatus.values)
                       ListTile(
                         contentPadding: EdgeInsets.zero,
                         title: Text(s.label),
-                        trailing:
-                            tempStatus == s ? const Icon(Icons.check) : null,
+                        trailing: tempStatus == s
+                            ? const Icon(Icons.check)
+                            : null,
                         onTap: () => setModalState(() => tempStatus = s),
                       ),
+
                     const Divider(),
-                    Text('Group',
-                        style: Theme.of(context).textTheme.labelMedium),
+
+                    /// GROUP
+                    Text(
+                      'Group',
+                      style: Theme.of(context).textTheme.labelMedium,
+                    ),
                     ListTile(
                       contentPadding: EdgeInsets.zero,
                       title: const Text('All groups'),
-                      trailing:
-                          tempGroup == null ? const Icon(Icons.check) : null,
-                      onTap: () =>
-                          setModalState(() => tempGroup = null),
+                      trailing: tempGroup == null
+                          ? const Icon(Icons.check)
+                          : null,
+                      onTap: () => setModalState(() => tempGroup = null),
                     ),
                     for (final g in _store.groups)
                       ListTile(
@@ -308,13 +307,36 @@ class _CustomersScreenState extends State<CustomersScreen> {
                             : null,
                         onTap: () => setModalState(() => tempGroup = g.id),
                       ),
-                    const SizedBox(height: 8),
-                    FilledButton(
-                      onPressed: () => Navigator.of(context).pop(
-                        _CustomerFilterResult(
-                            status: tempStatus, groupId: tempGroup),
-                      ),
-                      child: const Text('Apply'),
+
+                    const SizedBox(height: 16),
+
+                    /// BUTTONS
+                    Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () {
+                              setModalState(() {
+                                tempStatus = null;
+                                tempGroup = null;
+                              });
+                            },
+                            child: const Text('Reset'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: FilledButton(
+                            onPressed: () => Navigator.of(context).pop(
+                              _CustomerFilterResult(
+                                status: tempStatus,
+                                groupId: tempGroup,
+                              ),
+                            ),
+                            child: const Text('Apply'),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -326,11 +348,13 @@ class _CustomersScreenState extends State<CustomersScreen> {
     );
 
     if (result == null || !mounted) return;
+
     setState(() {
       _statusFilter = result.status;
       _groupFilter = result.groupId;
-      _currentPage = 1;
     });
+
+    _reload();
   }
 
   Future<void> _openSortSheet() async {
@@ -347,8 +371,10 @@ class _CustomersScreenState extends State<CustomersScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Text('Sort customers',
-                        style: Theme.of(context).textTheme.titleMedium),
+                    Text(
+                      'Sort customers',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                     const SizedBox(height: 16),
                     for (final option in _CustomerSortOption.values)
                       ListTile(
@@ -374,19 +400,19 @@ class _CustomersScreenState extends State<CustomersScreen> {
     );
 
     if (selected == null || !mounted) return;
-    setState(() {
-      _sortOption = selected;
-      _currentPage = 1;
-    });
+    setState(() => _sortOption = selected);
+    _reload();
   }
 
   Future<void> _confirmDelete(Customer customer) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed =
+        await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('Delete customer?'),
             content: Text(
-                'Delete "${customer.fullName}"? This will also remove their addresses and cannot be undone.'),
+              'Delete "${customer.fullName}"? This will also remove their addresses and cannot be undone.',
+            ),
             actions: <Widget>[
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
@@ -409,11 +435,11 @@ class _CustomersScreenState extends State<CustomersScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Deleted "${customer.fullName}".')),
       );
+      _reload();
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Couldn\'t delete customer. Try again.')),
+        const SnackBar(content: Text('Couldn\'t delete customer. Try again.')),
       );
     }
   }
@@ -421,18 +447,8 @@ class _CustomersScreenState extends State<CustomersScreen> {
   void _goToHome() {
     Navigator.of(context).popUntil(
       (route) =>
-          route.settings.name == CustomerNavigator.homeRoute ||
-          route.isFirst,
+          route.settings.name == CustomerNavigator.homeRoute || route.isFirst,
     );
-  }
-
-  int _totalPages(int count) =>
-      count == 0 ? 0 : ((count - 1) ~/ _pageSize) + 1;
-
-  List<Customer> _pageItems(List<Customer> items, int page, int pageSize) {
-    final start = (page - 1) * pageSize;
-    if (start >= items.length) return const <Customer>[];
-    return items.sublist(start, (start + pageSize).clamp(0, items.length));
   }
 }
 
@@ -450,8 +466,7 @@ class _CustomerActionsMenu extends StatelessWidget {
       padding: EdgeInsets.zero,
       iconSize: 20,
       onSelected: onSelected,
-      itemBuilder: (context) =>
-          const <PopupMenuEntry<_CustomerMenuAction>>[
+      itemBuilder: (context) => const <PopupMenuEntry<_CustomerMenuAction>>[
         PopupMenuItem<_CustomerMenuAction>(
           value: _CustomerMenuAction.edit,
           child: ListTile(

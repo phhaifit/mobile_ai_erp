@@ -1,7 +1,8 @@
 enum CustomerStatus {
+  pendingVerification('Pending verification'),
   active('Active'),
-  inactive('Inactive'),
-  blocked('Blocked');
+  suspended('Suspended'),
+  deactivated('Deactivated');
 
   const CustomerStatus(this.label);
 
@@ -9,19 +10,27 @@ enum CustomerStatus {
 
   static CustomerStatus? fromApiString(String? value) {
     switch (value) {
+      case 'pending_verification':
+        return CustomerStatus.pendingVerification;
       case 'active':
         return CustomerStatus.active;
-      case 'inactive':
-        return CustomerStatus.inactive;
-      case 'banned':
-      case 'blocked':
-        return CustomerStatus.blocked;
+      case 'suspended':
+        return CustomerStatus.suspended;
+      case 'deactivated':
+        return CustomerStatus.deactivated;
       default:
         return null;
     }
   }
 
-  String get apiValue => name;
+  String get apiValue {
+    switch (this) {
+      case CustomerStatus.pendingVerification:
+        return 'pending_verification';
+      default:
+        return name;
+    }
+  }
 }
 
 enum CustomerType {
@@ -82,7 +91,9 @@ class Customer {
     return '$f$l';
   }
 
-  bool get isActive => status == CustomerStatus.active;
+  bool get isActive =>
+      status == CustomerStatus.active ||
+      status == CustomerStatus.pendingVerification;
 
   Customer copyWith({
     String? id,

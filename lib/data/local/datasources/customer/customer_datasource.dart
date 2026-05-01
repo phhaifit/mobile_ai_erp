@@ -5,33 +5,37 @@ import 'package:mobile_ai_erp/domain/entity/customer/customer_validation_excepti
 
 class CustomerDataSource {
   final List<CustomerGroup> _groups = <CustomerGroup>[
-    const CustomerGroup(
+    CustomerGroup(
       id: 'group_vip',
       name: 'VIP',
       description: 'High-value customers with premium benefits.',
       colorHex: '#6A1B9A',
-      sortOrder: 10,
+      createdAt: DateTime(2023, 1, 1),
+      updatedAt: DateTime(2023, 1, 1),
     ),
-    const CustomerGroup(
+    CustomerGroup(
       id: 'group_wholesale',
       name: 'Wholesale',
       description: 'Business customers purchasing in bulk.',
       colorHex: '#1565C0',
-      sortOrder: 20,
+      createdAt: DateTime(2023, 1, 1),
+      updatedAt: DateTime(2023, 1, 1),
     ),
-    const CustomerGroup(
+    CustomerGroup(
       id: 'group_retail',
       name: 'Retail',
       description: 'Standard retail customers.',
       colorHex: '#2E7D32',
-      sortOrder: 30,
+      createdAt: DateTime(2023, 1, 1),
+      updatedAt: DateTime(2023, 1, 1),
     ),
-    const CustomerGroup(
+    CustomerGroup(
       id: 'group_new',
       name: 'New Customers',
       description: 'Customers who joined in the last 30 days.',
       colorHex: '#EF6C00',
-      sortOrder: 40,
+      createdAt: DateTime(2023, 1, 1),
+      updatedAt: DateTime(2023, 1, 1),
     ),
   ];
 
@@ -97,7 +101,7 @@ class CustomerDataSource {
       firstName: 'Mark',
       lastName: 'Brown',
       email: 'mark.brown@example.com',
-      status: CustomerStatus.inactive,
+      status: CustomerStatus.deactivated,
       type: CustomerType.individual,
       createdAt: DateTime(2023, 5, 5),
     ),
@@ -179,7 +183,8 @@ class CustomerDataSource {
   // ── Groups ────────────────────────────────────────────────────────────────
 
   Future<List<CustomerGroup>> getCustomerGroups() async =>
-      _sortByOrderThenName(_groups, (g) => g.name, (g) => g.sortOrder);
+      List<CustomerGroup>.from(_groups)
+        ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
 
   Future<CustomerGroup> saveCustomerGroup(CustomerGroup group) async {
     final name = group.name.trim();
@@ -401,20 +406,4 @@ class CustomerDataSource {
     }
   }
 
-  List<T> _sortByOrderThenName<T>(
-    List<T> source,
-    String Function(T item) nameSelector,
-    int Function(T item) sortOrderSelector,
-  ) {
-    final items = List<T>.from(source);
-    items.sort((left, right) {
-      final orderCompare =
-          sortOrderSelector(left).compareTo(sortOrderSelector(right));
-      if (orderCompare != 0) return orderCompare;
-      return nameSelector(left)
-          .toLowerCase()
-          .compareTo(nameSelector(right).toLowerCase());
-    });
-    return items;
-  }
 }
