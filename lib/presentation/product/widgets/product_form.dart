@@ -88,7 +88,7 @@ class _ProductFormState extends State<ProductForm> {
     try {
       final repository = getIt<ProductMetadataRepository>();
       final response = await repository.getBrands(page: 1, pageSize: 100);
-      var foundBrand = response.brands
+      var foundBrand = response.items
           .where((b) => b.id == widget.formStore.brandId)
           .firstOrNull;
       
@@ -113,7 +113,7 @@ class _ProductFormState extends State<ProductForm> {
     try {
       final repository = getIt<ProductMetadataRepository>();
       final response = await repository.getCategories(page: 1, pageSize: 100);
-      var foundCategory = response.categories
+      var foundCategory = response.items
           .where((c) => c.id == widget.formStore.categoryId)
           .firstOrNull;
       

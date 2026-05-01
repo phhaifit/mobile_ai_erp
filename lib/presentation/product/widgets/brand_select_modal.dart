@@ -23,7 +23,7 @@ class BrandSelectModal extends StatelessWidget {
       page: page,
       pageSize: pageSize,
     );
-    return (response.brands, response.meta.totalPages);
+    return (response.items, response.totalPages);
   }
 
   @override

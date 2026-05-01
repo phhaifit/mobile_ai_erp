@@ -3,6 +3,7 @@ class Endpoints {
 
   // base url
   static const String baseUrl = String.fromEnvironment('API_URL', defaultValue: 'http://jsonplaceholder.typicode.com');
+  static const String erpBaseUrl = String.fromEnvironment('API_URL', defaultValue: 'http://jsonplaceholder.typicode.com');
 
   // Tenant id sent via X-Tenant-Id header to ERP backend.
   // Override at build time:

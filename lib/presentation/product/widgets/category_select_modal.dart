@@ -23,7 +23,7 @@ class CategorySelectModal extends StatelessWidget {
       page: page,
       pageSize: pageSize,
     );
-    return (response.categories, response.meta.totalPages);
+    return (response.items, response.totalPages);
   }
 
   @override
