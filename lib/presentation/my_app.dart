@@ -25,7 +25,6 @@ class _MyAppState extends State<MyApp> {
   final LanguageStore _languageStore = getIt<LanguageStore>();
   
   bool _initialized = false;
-  bool _hasSession = false;
 
   @override
   void initState() {
@@ -34,12 +33,10 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> _validateStoredSession() async {
-    final loginStore = getIt<LoginStore>();
-    final validSession = await loginStore.validateStoredSession();
+    await getIt<LoginStore>().validateStoredSession();
     if (!mounted) return;
     setState(() {
       _initialized = true;
-      _hasSession = validSession;
     });
   }
 
@@ -85,7 +82,7 @@ class _MyAppState extends State<MyApp> {
     return Observer(
       builder: (context) {
         final loginStore = getIt<LoginStore>();
-        final hasSession = _hasSession || loginStore.isLoggedIn;
+        final hasSession = loginStore.isLoggedIn;
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           title: Strings.appName,
