@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:mobile_ai_erp/domain/entity/stock_operations/product_stock.dart';
 import 'package:mobile_ai_erp/domain/entity/stock_operations/stock_operation.dart';
 import 'package:mobile_ai_erp/presentation/stock_operations/store/stock_operations_store.dart';
 import 'package:mobile_ai_erp/presentation/stock_operations/widgets/stock_operations_shared_widgets.dart';
@@ -16,7 +17,7 @@ class DamagedExpiredPanel extends StatelessWidget {
         final selectedProducts = store.getProductsByWarehouse(
           store.disposalWarehouseId,
         );
-        dynamic selectedStock;
+        ProductStock? selectedStock;
         for (final stock in selectedProducts) {
           if (stock.productId == store.disposalProductId) {
             selectedStock = stock;
