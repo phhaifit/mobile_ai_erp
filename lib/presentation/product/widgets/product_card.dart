@@ -32,11 +32,11 @@ class ProductCard extends StatelessWidget {
                   color: Colors.grey[200],
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: product.imageUrls.isNotEmpty
+                child: product.images.isNotEmpty
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.network(
-                          product.imageUrls.first,
+                          product.images.first,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) => Icon(
                             Icons.shopping_bag_outlined,
@@ -80,14 +80,14 @@ class ProductCard extends StatelessWidget {
                     ),
                     SizedBox(height: 6),
                     Text(
-                      product.description,
+                      product.description ?? '',
                       style: Theme.of(context).textTheme.bodySmall,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     SizedBox(height: 12),
                     Text(
-                      '\$${product.price.toStringAsFixed(2)}',
+                      '\$${product.sellingPrice.toStringAsFixed(2)}',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             color: Colors.green,
                             fontWeight: FontWeight.bold,

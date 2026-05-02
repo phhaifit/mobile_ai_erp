@@ -136,7 +136,7 @@ class _ProductFormState extends State<ProductForm> {
     _sellingPriceController = TextEditingController(text: widget.formStore.sellingPrice ?? '');
     _webTitleController = TextEditingController(text: widget.formStore.webTitle ?? '');
     _webDescriptionController = TextEditingController(text: widget.formStore.webDescription ?? '');
-    _warranteeMonthsController = TextEditingController(text: widget.formStore.warranteeMonths ?? '');
+    _warranteeMonthsController = TextEditingController(text: widget.formStore.warrantyMonths ?? '');
     _weightController = TextEditingController(text: widget.formStore.weight ?? '');
   }
 
@@ -150,7 +150,7 @@ class _ProductFormState extends State<ProductForm> {
     _sellingPriceController.text = widget.formStore.sellingPrice ?? '';
     _webTitleController.text = widget.formStore.webTitle ?? '';
     _webDescriptionController.text = widget.formStore.webDescription ?? '';
-    _warranteeMonthsController.text = widget.formStore.warranteeMonths ?? '';
+    _warranteeMonthsController.text = widget.formStore.warrantyMonths ?? '';
     _weightController.text = widget.formStore.weight ?? '';
     _loadSelectedBrandName();
     _loadSelectedCategoryName();
@@ -417,7 +417,7 @@ class _ProductFormState extends State<ProductForm> {
                     flex: 1,
                     child: Observer(
                       builder: (context) {
-                        return DropdownButtonFormField<int?>(
+                        return DropdownButtonFormField<String?>(
                           initialValue: widget.formStore.weightUnitId,
                           decoration: InputDecoration(
                             labelText: 'Unit',
@@ -427,13 +427,13 @@ class _ProductFormState extends State<ProductForm> {
                                 : widget.formStore.weightUnitError,
                           ),
                           items: [
-                            const DropdownMenuItem<int?>(
+                            const DropdownMenuItem<String?>(
                               value: null,
                               child: Text('None'),
                             ),
                             ...weightUnits.map((unit) {
-                              return DropdownMenuItem<int?>(
-                                value: unit['id'] as int,
+                              return DropdownMenuItem<String?>(
+                                value: unit['id'] as String,
                                 child: Text(unit['name'] as String),
                               );
                             }),

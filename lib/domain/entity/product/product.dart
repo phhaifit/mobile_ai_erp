@@ -1,31 +1,57 @@
+import 'package:mobile_ai_erp/domain/entity/product/product_status.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/attribute.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/brand.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/category.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/tag.dart';
-import 'package:mobile_ai_erp/domain/entity/product/product_status.dart';
+
+enum ProductType {
+  standalone,
+  group,
+  variant
+}
 
 /// Product entity class. Mainly contains information shown to customers of the store
 /// Used in storefront pages
 class Product {
-  final int? id;
+  final String? id;
   final String name;
   final String sku;
-  final double price;
-  final String currency; // currency display, e.g. USD, CNY
-  final double rating; // average rating from customers, between 0 and 5
-  final String description;
-  final ProductStatus status;
-  final String? categoryId;
+  final String? barcode;
+  final String? description;
+  final String? webTitle;
+  final String? webDescription;
   final String? brandId;
-  final List<int> tagIds;
-  final List<String> imageUrls;
+  final String? brandName;
+  final String? categoryId;
+  final String? categoryName;
+  final String? parentId;
+  final String? attributeSetId;
+  final ProductType type; // e.g., "standalone"
+  final ProductStatus status; // e.g., "selling"
+  final int? warrantyMonths;
+  final double? lengthCm;
+  final double? widthCm;
+  final double? heightCm;
+  final double? weightG;
+  final double basePrice;
+  final double sellingPrice;
+  final String? imageUrl;
+  final List<String> images;
+  final List<String> attributeValueIds;
+  final List<dynamic> variants;
+  final List<dynamic> suppliers;
   final DateTime? createdAt;
+  final DateTime? updatedAt;
 
-  // Metadata (currently may overlap with above fields)
-  final Category? category; // product category //// can this be null?
-  final Brand? brand; // product brand //// can this be null?
+  // Metadata 
+  // final Category? category;
+  // final Brand? brand;
   final List<Tag> tags; // list of tags, can be empty
   final List<AttributeSet> attributes; // list of attributes, can be empty
+  final dynamic productMetadata;
+  final bool isFlashSale;
+  final DateTime? flashSaleFrom;
+  final DateTime? flashSaleTo;
 
 
 
@@ -33,28 +59,47 @@ class Product {
     this.id,
     required this.name,
     required this.sku,
-    required this.price,
-    required this.currency,
-    required this.rating,
-    required this.description,
+    this.barcode,
+    this.description,
+    this.webTitle,
+    this.webDescription,
+    this.brandId,
+    this.brandName,
+    this.categoryId,
+    this.categoryName,
+    this.parentId,
+    this.attributeSetId,
+    required this.type,
     required this.status,
-    required this.categoryId,
-    required this.brandId,
-    required this.tagIds,
-    required this.imageUrls,
+    required this.warrantyMonths,
+    this.lengthCm,
+    this.widthCm,
+    this.heightCm,
+    this.weightG,
+    required this.basePrice,
+    required this.sellingPrice,
+    this.imageUrl,
+    this.images = const <String>[],
+    this.attributeValueIds = const <String>[],
+    this.variants = const <dynamic>[],
+    this.suppliers = const <dynamic>[],
     this.createdAt,
-
-    this.category,
-    this.brand,
+    this.updatedAt,
+    // this.category,
+    // this.brand,
     this.tags = const <Tag>[],
     this.attributes = const <AttributeSet>[],
+    this.productMetadata,
+    this.isFlashSale = false,
+    this.flashSaleFrom,
+    this.flashSaleTo,
   }) {
     // Validation
-    if (price < 0) {
-      throw ArgumentError('Price cannot be negative');
+    if (basePrice < 0) {
+      throw ArgumentError('Base price cannot be negative');
     }
-    if (rating < 0 || rating > 5) {
-      throw ArgumentError('Rating must be between 0 and 5');
+    if (sellingPrice < 0) {
+      throw ArgumentError('Selling price cannot be negative');
     }
   }
 
@@ -62,17 +107,49 @@ class Product {
         id: json["id"],
         name: json["name"] ?? "",
         sku: json["sku"] ?? "",
-        price: (json["price"] as num?)?.toDouble() ?? 0.0,
-        currency: json["currency"] ?? "USD",
-        rating: (json["rating"] as num?)?.toDouble() ?? 0.0,
-        description: json["description"] ?? "",
-        status: productStatusFromValue(json["status"] ?? 2),
-        categoryId: json["categoryId"] ?? 0,
-        brandId: json["brandId"] ?? 0,
-        tagIds: List<int>.from(json["tagIds"] ?? []),
-        imageUrls: List<String>.from(json["imageUrls"] ?? []),
+        barcode: json["barcode"],
+        description: json["description"],
+        webTitle: json["webTitle"],
+        webDescription: json["webDescription"],
+        brandId: json["brandId"],
+        brandName: json["brandName"],
+        categoryId: json["categoryId"],
+        categoryName: json["categoryName"],
+        parentId: json["parentId"],
+        attributeSetId: json["attributeSetId"],
+        type: ProductType.values.byName(json["type"] ?? "standalone"),
+        status: switch (json["status"] ?? "selling") {
+          "new" => ProductStatus.NEW,
+          "selling" => ProductStatus.ACTIVE,
+          "out_of_stock" => ProductStatus.OUT_OF_STOCK,
+          "discontinued" => ProductStatus.DISCONTINUED,
+          _ => ProductStatus.ACTIVE,
+        },
+        warrantyMonths: json["warrantyMonths"] ?? 0,
+        lengthCm: (json["lengthCm"] as num?)?.toDouble(),
+        widthCm: (json["widthCm"] as num?)?.toDouble(),
+        heightCm: (json["heightCm"] as num?)?.toDouble(),
+        weightG: (json["weightG"] as num?)?.toDouble(),
+        basePrice: (json["basePrice"] as num?)?.toDouble() ?? 0.0,
+        sellingPrice: (json["sellingPrice"] as num?)?.toDouble() ?? 0.0,
+        imageUrl: json["imageUrl"],
+        images: List<String>.from(json["images"] ?? []),
+        attributeValueIds: List<String>.from(json["attributeValueIds"] ?? []),
+        variants: json["variants"] ?? [],
+        suppliers: json["suppliers"] ?? [],
         createdAt: json["createdAt"] != null 
             ? DateTime.parse(json["createdAt"] as String)
+            : null,
+        updatedAt: json["updatedAt"] != null
+            ? DateTime.parse(json["updatedAt"] as String)
+            : null,
+        productMetadata: json["productMetadata"],
+        isFlashSale: json["isFlashSale"] ?? false,
+        flashSaleFrom: json["flashSaleFrom"] != null
+            ? DateTime.parse(json["flashSaleFrom"] as String)
+            : null,
+        flashSaleTo: json["flashSaleTo"] != null
+            ? DateTime.parse(json["flashSaleTo"] as String)
             : null,
       );
 
@@ -80,45 +157,115 @@ class Product {
         "id": id,
         "name": name,
         "sku": sku,
-        "price": price,
+        "barcode": barcode,
         "description": description,
-        "status": status.value,
-        "categoryId": categoryId,
+        "webTitle": webTitle,
+        "webDescription": webDescription,
         "brandId": brandId,
-        "tagIds": tagIds,
-        "imageUrls": imageUrls,
+        "brandName": brandName,
+        "categoryId": categoryId,
+        "categoryName": categoryName,
+        "parentId": parentId,
+        "attributeSetId": attributeSetId,
+        "type": type,
+        "status": status,
+        "warrantyMonths": warrantyMonths,
+        "lengthCm": lengthCm,
+        "widthCm": widthCm,
+        "heightCm": heightCm,
+        "weightG": weightG,
+        "basePrice": basePrice,
+        "sellingPrice": sellingPrice,
+        "imageUrl": imageUrl,
+        "images": images,
+        "attributeValueIds": attributeValueIds,
+        "variants": variants,
+        "suppliers": suppliers,
         "createdAt": createdAt?.toIso8601String(),
+        "updatedAt": updatedAt?.toIso8601String(),
+        "productMetadata": productMetadata,
+        "isFlashSale": isFlashSale,
+        "flashSaleFrom": flashSaleFrom?.toIso8601String(),
+        "flashSaleTo": flashSaleTo?.toIso8601String(),
       };
 
   Product copyWith({
-    int? id,
+    String? id,
     String? name,
     String? sku,
-    double? price,
-    String? currency,
-    double? rating,
+    String? barcode,
     String? description,
-    ProductStatus? status,
-    String? categoryId,
+    String? webTitle,
+    String? webDescription,
     String? brandId,
-    List<int>? tagIds,
-    List<String>? imageUrls,
+    String? brandName,
+    String? categoryId,
+    String? categoryName,
+    String? parentId,
+    String? attributeSetId,
+    ProductType? type,
+    ProductStatus? status,
+    int? warrantyMonths,
+    double? lengthCm,
+    double? widthCm,
+    double? heightCm,
+    double? weightG,
+    double? basePrice,
+    double? sellingPrice,
+    String? imageUrl,
+    List<String>? images,
+    List<String>? attributeValueIds,
+    List<dynamic>? variants,
+    List<dynamic>? suppliers,
     DateTime? createdAt,
+    DateTime? updatedAt,
+    Category? category,
+    Brand? brand,
+    List<Tag>? tags,
+    List<AttributeSet>? attributes,
+    dynamic productMetadata,
+    bool? isFlashSale,
+    DateTime? flashSaleFrom,
+    DateTime? flashSaleTo,
   }) {
     return Product(
       id: id ?? this.id,
       name: name ?? this.name,
       sku: sku ?? this.sku,
-      price: price ?? this.price,
-      currency: currency ?? this.currency,
-      rating: rating ?? this.rating,
+      barcode: barcode ?? this.barcode,
       description: description ?? this.description,
-      status: status ?? this.status,
-      categoryId: categoryId ?? this.categoryId,
+      webTitle: webTitle ?? this.webTitle,
+      webDescription: webDescription ?? this.webDescription,
       brandId: brandId ?? this.brandId,
-      tagIds: tagIds ?? this.tagIds,
-      imageUrls: imageUrls ?? this.imageUrls,
+      brandName: brandName ?? this.brandName,
+      categoryId: categoryId ?? this.categoryId,
+      categoryName: categoryName ?? this.categoryName,
+      parentId: parentId ?? this.parentId,
+      attributeSetId: attributeSetId ?? this.attributeSetId,
+      type: type ?? this.type,
+      status: status ?? this.status,
+      warrantyMonths: warrantyMonths ?? this.warrantyMonths,
+      lengthCm: lengthCm ?? this.lengthCm,
+      widthCm: widthCm ?? this.widthCm,
+      heightCm: heightCm ?? this.heightCm,
+      weightG: weightG ?? this.weightG,
+      basePrice: basePrice ?? this.basePrice,
+      sellingPrice: sellingPrice ?? this.sellingPrice,
+      imageUrl: imageUrl ?? this.imageUrl,
+      images: images ?? this.images,
+      attributeValueIds: attributeValueIds ?? this.attributeValueIds,
+      variants: variants ?? this.variants,
+      suppliers: suppliers ?? this.suppliers,
       createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      // category: category ?? this.category,
+      // brand: brand ?? this.brand,
+      tags: tags ?? this.tags,
+      attributes: attributes ?? this.attributes,
+      productMetadata: productMetadata ?? this.productMetadata,
+      isFlashSale: isFlashSale ?? this.isFlashSale,
+      flashSaleFrom: flashSaleFrom ?? this.flashSaleFrom,
+      flashSaleTo: flashSaleTo ?? this.flashSaleTo,
     );
   }
 }

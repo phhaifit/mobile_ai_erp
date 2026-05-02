@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:mobile_ai_erp/core/stores/error/error_store.dart';
 import 'package:mobile_ai_erp/domain/entity/product/product.dart';
+import 'package:mobile_ai_erp/domain/entity/product_metadata/tag.dart';
 import 'package:mobile_ai_erp/domain/entity/product/product_status.dart';
 import 'package:mobile_ai_erp/domain/repository/product/product_management_repository.dart';
 import 'package:mobx/mobx.dart';
@@ -57,16 +58,16 @@ abstract class _ProductFormStore with Store {
   String? brandId; // brand ID of product (UUID string from backend). product can have no brand (send null)
 
   @observable
-  String? warranteeMonths; // warrantee time for product, in months
+  String? warrantyMonths; // warranty time for product, in months
 
   @observable
   String? weight;
 
   @observable
-  int? weightUnitId;
+  String? weightUnitId;
 
   @observable
-  List<int> tagIds = [];
+  List<String> tagIds = [];
 
   @observable
   List<String> imageUrls = [];
@@ -259,7 +260,7 @@ abstract class _ProductFormStore with Store {
   }
 
   @action
-  void setTagIds(List<int> value) {
+  void setTagIds(List<String> value) {
     tagIds = value;
     validateForm();
   }
@@ -287,7 +288,7 @@ abstract class _ProductFormStore with Store {
   }
 
   @action
-  void toggleTag(int tagId) {
+  void toggleTag(String tagId) {
     if (tagIds.contains(tagId)) {
       tagIds.remove(tagId);
     } else {
@@ -323,7 +324,7 @@ abstract class _ProductFormStore with Store {
 
   @action
   void setWarranteeMonths(String value) {
-    warranteeMonths = value.isEmpty ? null : value;
+    warrantyMonths = value.isEmpty ? null : value;
     validateForm();
   }
 
@@ -334,7 +335,7 @@ abstract class _ProductFormStore with Store {
   }
 
   @action
-  void setWeightUnitId(int? value) {
+  void setWeightUnitId(String? value) {
     weightUnitId = value;
     validateForm();
   }
@@ -344,20 +345,22 @@ abstract class _ProductFormStore with Store {
     editingProduct = product;
     name = product.name;
     sku = product.sku;
-    price = product.price.toString();
-    description = product.description;
+    price = product.basePrice.toString();
+    description = product.description ?? "";
     status = product.status;
     categoryId = product.categoryId;
     brandId = product.brandId;
-    tagIds = List.from(product.tagIds);
-    imageUrls = List.from(product.imageUrls);
+    // Product model now stores images as `images` and tags as `Tag` objects.
+    // For now, keep existing UI lists in store but map from new fields where possible.
+    tagIds = [];
+    imageUrls = List.from(product.images);
+    sellingPrice = product.sellingPrice.toString();
     // barcode = product.barcode;
     // sellingPrice = product.sellingPrice;
     // webTitle = product.webTitle;
     // webDescription = product.webDescription;
-    // warranteeMonths = product.warranteeMonths;
-    // weight = product.weight;
-    // weightUnitId = product.weightUnitId;
+    warrantyMonths = product.warrantyMonths?.toString();
+    // weight and weight unit handling omitted (conversion needed)
     
     // Clear validation errors when initializing for edit
     nameError = "";
@@ -392,26 +395,24 @@ abstract class _ProductFormStore with Store {
 
       // Create product and submit
       final parsedPrice = double.parse(price); // Safe to parse since validation passed
+      final parsedSelling = (sellingPrice != null && sellingPrice!.isNotEmpty)
+          ? double.tryParse(sellingPrice!)
+          : null;
+
       result = Product(
         id: editingProduct?.id,
         name: name,
         sku: sku,
-        price: parsedPrice,
-        currency: 'USD', // placeholder,
-        rating: editingProduct?.rating ?? 0.0, // keep existing rating if editing
         description: description,
+        type: ProductType.standalone,
         status: status,
+        warrantyMonths: warrantyMonths != null ? int.tryParse(warrantyMonths!) : null,
+        basePrice: parsedPrice,
+        sellingPrice: parsedSelling ?? parsedPrice,
         categoryId: categoryId,
         brandId: brandId,
-        tagIds: tagIds,
-        imageUrls: imageUrls,
-        // barcode: barcode,
-        // sellingPrice: sellingPrice,
-        // webTitle: webTitle,
-        // webDescription: webDescription,
-        // warranteeMonths: warranteeMonths,
-        // weight: weight,
-        // weightUnitId: weightUnitId,
+        images: imageUrls,
+        tags: const <Tag>[],
         createdAt: editingProduct?.createdAt,
       );
 
@@ -443,7 +444,7 @@ abstract class _ProductFormStore with Store {
     sellingPrice = null;
     webTitle = null;
     webDescription = null;
-    warranteeMonths = null;
+    warrantyMonths = null;
     weight = null;
     weightUnitId = null;
     status = ProductStatus.ACTIVE;
