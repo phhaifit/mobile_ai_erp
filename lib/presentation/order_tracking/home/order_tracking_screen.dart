@@ -9,7 +9,6 @@ import 'package:mobile_ai_erp/presentation/order_tracking/widgets/tracking_curre
 import 'package:mobile_ai_erp/presentation/order_tracking/widgets/tracking_delivery_alert_banner.dart';
 import 'package:mobile_ai_erp/presentation/order_tracking/widgets/tracking_detailed_timeline_card.dart';
 import 'package:mobile_ai_erp/presentation/order_tracking/widgets/tracking_return_exchange_card.dart';
-import 'package:mobile_ai_erp/presentation/order_tracking/widgets/tracking_scenario_selector.dart';
 import 'package:mobile_ai_erp/presentation/order_tracking/widgets/tracking_timeline_header.dart';
 import 'package:mobile_ai_erp/utils/locale/app_localization.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -44,18 +43,15 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       final String orderId = (args['orderId'] ?? '').toString().trim();
       if (orderId.isNotEmpty) {
         _orderId = orderId;
-        _orderTrackingStore.loadOrderDetail(orderId);
+        _orderTrackingStore.startRealtimeTracking(orderId);
       }
-    }
-
-    if (_orderId == null || _orderId!.isEmpty) {
-      _orderTrackingStore.loadScenarios();
     }
     _isSeededFromRouteArgs = true;
   }
 
   @override
   void dispose() {
+    _orderTrackingStore.stopRealtimeTracking();
     super.dispose();
   }
 
@@ -116,9 +112,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   ElevatedButton(
                     onPressed: () {
                       if (_orderId != null && _orderId!.isNotEmpty) {
-                        _orderTrackingStore.loadOrderDetail(_orderId!);
-                      } else {
-                        _orderTrackingStore.loadScenarios();
+                        _orderTrackingStore.startRealtimeTracking(_orderId!);
                       }
                     },
                     child: const Text('Retry'),
@@ -141,8 +135,12 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
-            body: const Center(
-              child: Text('No order details available.'),
+            body: Center(
+              child: Text(
+                _orderId == null || _orderId!.isEmpty
+                    ? 'Missing order ID.'
+                    : 'No order details available.',
+              ),
             ),
           );
         }
@@ -177,7 +175,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                         orderIdLabel:
                             _tr(t, 'tracking_order_id_label', 'Order ID'),
                       ),
-                    if (orderDetail != null)
+                    if (orderDetail != null) ...[
                       Padding(
                         padding: EdgeInsets.fromLTRB(
                           isWideLayout ? 20 : 16,
@@ -190,6 +188,16 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                           detail: orderDetail,
                         ),
                       ),
+                      Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          isWideLayout ? 20 : 16,
+                          12,
+                          isWideLayout ? 20 : 16,
+                          0,
+                        ),
+                        child: _buildLiveIndicator(context),
+                      ),
+                    ],
                     Padding(
                       padding: EdgeInsets.fromLTRB(
                         isWideLayout ? 20 : 16,
@@ -233,19 +241,6 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        TrackingScenarioSelector(
-          isCompact: isCompact,
-          scenarios: _scenarios,
-          selected: selectedScenario,
-          primaryColor: colorScheme.primary,
-          onChanged: _orderTrackingStore.selectScenario,
-          scenarioLabel: _tr(
-            t,
-            'tracking_scenario_label',
-            'Tracking scenario',
-          ),
-        ),
-        const SizedBox(height: 16),
         TrackingCurrentStatusCard(
           selected: selectedScenario,
           primaryColor: colorScheme.primary,
@@ -343,19 +338,6 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        TrackingScenarioSelector(
-          isCompact: isCompact,
-          scenarios: _scenarios,
-          selected: selectedScenario,
-          primaryColor: colorScheme.primary,
-          onChanged: _orderTrackingStore.selectScenario,
-          scenarioLabel: _tr(
-            t,
-            'tracking_scenario_label',
-            'Tracking scenario',
-          ),
-        ),
-        const SizedBox(height: 16),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
@@ -464,8 +446,6 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       ],
     );
   }
-
-  List<OrderTrackingScenario> get _scenarios => _orderTrackingStore.scenarios;
 
   Widget _buildOrderSummaryCard({
     required BuildContext context,
@@ -663,6 +643,45 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
   String _formatDateTime(DateTime value) {
     return DateFormat('dd MMM yyyy, HH:mm').format(value);
+  }
+
+  Widget _buildLiveIndicator(BuildContext context) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final TextTheme textTheme = Theme.of(context).textTheme;
+    final DateTime? lastUpdated = _orderTrackingStore.lastUpdatedAt;
+    final String lastUpdatedLabel = lastUpdated == null
+        ? 'Updating...'
+        : 'Last updated: ${DateFormat('HH:mm:ss').format(lastUpdated)}';
+
+    return Row(
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: _orderTrackingStore.isPolling
+                ? Colors.green
+                : colorScheme.outline,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          'Live tracking',
+          style: textTheme.bodySmall?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: colorScheme.onSurface.withOpacity(0.75),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Text(
+          lastUpdatedLabel,
+          style: textTheme.bodySmall?.copyWith(
+            color: colorScheme.onSurface.withOpacity(0.6),
+          ),
+        ),
+      ],
+    );
   }
 
   Color _getStatusColor(String status, ColorScheme colorScheme) {
