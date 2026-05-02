@@ -8,11 +8,13 @@ import 'package:mobile_ai_erp/data/local/datasources/post/post_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/post_purchase/post_purchase_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/product_metadata/product_metadata_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/user/user_datasource.dart';
-import 'package:mobile_ai_erp/data/network/datasources/user/user_remote_datasource.dart';
+import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
 import 'package:mobile_ai_erp/data/network/datasources/role/role_remote_datasource.dart';
+import 'package:mobile_ai_erp/data/network/datasources/user/user_remote_datasource.dart';
 import 'package:mobile_ai_erp/data/network/apis/orders/order_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/storefront_products_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/suppliers/supplier_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/web_builder/web_builder_api.dart';
 import 'package:mobile_ai_erp/data/repository/checkout/checkout_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/customer/customer_repository_impl.dart';
@@ -29,10 +31,9 @@ import 'package:mobile_ai_erp/domain/usecase/user/delete_user_usecase.dart';
 import 'package:mobile_ai_erp/data/repository/post_purchase/post_purchase_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/product_metadata/product_metadata_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/setting/setting_repository_impl.dart';
-import 'package:mobile_ai_erp/data/repository/stock_operations/mock_stock_operations_repository.dart';
+import 'package:mobile_ai_erp/data/repository/stock_operations/stock_operations_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/storefront/storefront_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/supplier/supplier_repository_impl.dart';
-import 'package:mobile_ai_erp/data/network/apis/suppliers/supplier_api.dart';
 import 'package:mobile_ai_erp/data/repository/user/role_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/user/user_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/web_builder/cms_page_repository_impl.dart';
@@ -92,7 +93,10 @@ class RepositoryModule {
     );
 
     getIt.registerSingleton<StockOperationsRepository>(
-      MockStockOperationsRepository(),
+      StockOperationsRepositoryImpl(
+        getIt<DioClient>(),
+        getIt<SharedPreferenceHelper>(),
+      ),
     );
 
     getIt.registerSingleton<StorefrontRepository>(
