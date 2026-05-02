@@ -1,21 +1,37 @@
-import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
+import 'dart:convert';
+
 import 'package:mobile_ai_erp/data/sharedpref/constants/preferences.dart';
+import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
+import 'package:mobile_ai_erp/domain/entity/customer_auth/token_pair.dart';
 
 class CustomerSharedPreferenceHelper extends SharedPreferenceHelper {
-  CustomerSharedPreferenceHelper(super._sharedPreference) : super();
+  CustomerSharedPreferenceHelper(super.sharedPreference);
 
-  /// Save subdomain to shared preferences
-  Future<void> saveSubdomain(String subdomain) async {
-    await sharedPreference.setString(Preferences.customer_subdomain, subdomain);
+  TokenPair? loadTokenPair() {
+    final tokenPairStr = sharedPreference.getString(Preferences.token_pair);
+
+    if (tokenPairStr == null) {
+      return null;
+    }
+
+    return TokenPair.fromJson(jsonDecode(tokenPairStr));
   }
 
-  /// Get stored subdomain
-  String? get subdomain => sharedPreference.getString(Preferences.customer_subdomain);
+  Future<void> saveTokenPair(TokenPair tokenPair) async {
+    await saveAuthToken(
+      accessToken: tokenPair.accessToken,
+      refreshToken: tokenPair.refreshToken,
+    );
+
+    await sharedPreference.setString(
+      Preferences.token_pair,
+      jsonEncode(tokenPair.toJson()),
+    );
+  }
 
   /// Clear subdomain and tenant ID data
   Future<void> clearSubdomainData() async {
-    await sharedPreference.remove(Preferences.customer_subdomain);
-    await sharedPreference.remove(Preferences.tenant_id);
+    await removeSubdomain();
+    await removeTenantId();
   }
 }
-

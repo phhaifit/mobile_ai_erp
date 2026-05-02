@@ -1,55 +1,51 @@
 import 'package:json_annotation/json_annotation.dart';
 import 'package:mobile_ai_erp/domain/entity/customer_auth/customer_auth_entities.dart';
-import 'customer_model.dart';
+import '../customer_model.dart';
 
-part 'token_response_model.g.dart';
+part 'token_response_dto.g.dart';
 
 @JsonSerializable()
-class TokenResponseModel {
+class TokenResponseDto {
   final String accessToken;
   final String refreshToken;
-  @JsonKey(name: 'expiresIn')
-  final int expiresIn; // in seconds, typically 900 (15 minutes)
-  final CustomerModel? customer;
+  final String? expiresIn; // in seconds, typically 900 (15 minutes)
   final String? sessionId;
 
-  TokenResponseModel({
+  TokenResponseDto({
     required this.accessToken,
     required this.refreshToken,
-    required this.expiresIn,
-    this.customer,
+    this.expiresIn,
     this.sessionId,
   });
 
-  factory TokenResponseModel.fromJson(Map<String, dynamic> json) =>
-      _$TokenResponseModelFromJson(json);
+  factory TokenResponseDto.fromJson(Map<String, dynamic> json) =>
+      _$TokenResponseDtoFromJson(json);
 
-  Map<String, dynamic> toJson() => _$TokenResponseModelToJson(this);
+  Map<String, dynamic> toJson() => _$TokenResponseDtoToJson(this);
 
   // Convert to domain TokenPair
   TokenPair toTokenPair() {
     return TokenPair(
       accessToken: accessToken,
       refreshToken: refreshToken,
-      expiresAt: DateTime.now().add(Duration(seconds: expiresIn)),
+      expiresAt: DateTime.now().add(Duration(seconds: int.tryParse(expiresIn ?? "") ?? 0)),
       sessionId: sessionId,
     );
   }
 }
 
 @JsonSerializable()
-class SignInResponseModel extends TokenResponseModel {
+class SignInResponseModel extends TokenResponseDto {
   SignInResponseModel({
     required String accessToken,
     required String refreshToken,
-    required int expiresIn,
+    String? expiresIn,
     CustomerModel? customer,
     String? sessionId,
   }) : super(
     accessToken: accessToken,
     refreshToken: refreshToken,
     expiresIn: expiresIn,
-    customer: customer,
     sessionId: sessionId,
   );
 

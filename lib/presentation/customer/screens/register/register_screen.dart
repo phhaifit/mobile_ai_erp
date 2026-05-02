@@ -1,16 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_ai_erp/di/service_locator.dart';
+import 'package:mobile_ai_erp/presentation/customer/store/signup_store.dart';
 import 'widgets/sign_up_form.dart';
 
 /// RegisterScreen - Main registration screen
 /// Displays the sign-up form for new customers
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({Key? key}) : super(key: key);
+  const RegisterScreen({super.key}) : super();
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Reset signup store when entering the screen
+    Future.microtask(() {
+      if (mounted) {
+        getIt<SignUpStore>().resetSignUp();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

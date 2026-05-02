@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:mobile_ai_erp/presentation/customer/store/signup_store.dart';
 
 /// EmailVerificationDialog - Dialog for email verification flow
 /// Displays verification code input and resend options
 class EmailVerificationDialog extends StatefulWidget {
-  final String? emailAddress;
+  final String? email;
+  final SignUpStore? signUpStore;
 
   const EmailVerificationDialog({
-    Key? key,
-    this.emailAddress,
-  }) : super(key: key);
+    super.key,
+    this.email,
+    this.signUpStore,
+  }) : super();
 
   @override
   State<EmailVerificationDialog> createState() =>
@@ -25,7 +29,6 @@ class _EmailVerificationDialogState extends State<EmailVerificationDialog> {
     (index) => FocusNode(),
   );
 
-  bool _isLoading = false;
   bool _isResending = false;
   int _resendCountdown = 0;
 
@@ -72,17 +75,22 @@ class _EmailVerificationDialogState extends State<EmailVerificationDialog> {
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    if (widget.signUpStore == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Store not available'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
 
-    try {
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 2));
+    final success = await widget.signUpStore!.verifyEmail(token: code);
 
-      if (!mounted) return;
+    if (!mounted) return;
 
-      // Show success message
+    if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Email verified successfully!'),
@@ -96,20 +104,15 @@ class _EmailVerificationDialogState extends State<EmailVerificationDialog> {
       if (mounted) {
         Navigator.of(context).pop();
       }
-    } catch (e) {
-      if (!mounted) return;
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Verification failed: $e'),
+          content: Text(
+            widget.signUpStore?.errorMessage ?? 'Verification failed',
+          ),
           backgroundColor: Colors.red,
         ),
       );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
     }
   }
 
@@ -122,7 +125,7 @@ class _EmailVerificationDialogState extends State<EmailVerificationDialog> {
     });
 
     try {
-      // Simulate API call
+      // Simulate API call to resend
       await Future.delayed(const Duration(seconds: 1));
 
       if (!mounted) return;
@@ -167,98 +170,101 @@ class _EmailVerificationDialogState extends State<EmailVerificationDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      title: const Text('Verify Your Email'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Description
-            Text(
-              'We sent a verification code to your email address. Enter it below to confirm.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[600],
-                  ),
-            ),
-            if (widget.emailAddress != null) ...[
-              const SizedBox(height: 8),
+    return Observer(
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        title: const Text('Verify Your Email'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Description
               Text(
-                widget.emailAddress!,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.bold,
+                'We sent a verification code to your email address. Enter it below to confirm.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.grey[600],
                     ),
               ),
-            ],
-            const SizedBox(height: 24),
-
-            // Verification Code Input (6 digits)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: List.generate(
-                6,
-                (index) => _buildCodeInput(index),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Verify Button
-            ElevatedButton(
-              onPressed: _isLoading ? null : _handleVerifyEmail,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-              child: _isLoading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : const Text('Verify Email'),
-            ),
-            const SizedBox(height: 16),
-
-            // Resend Code Link
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
+              if (widget.email != null) ...[
+                const SizedBox(height: 8),
                 Text(
-                  "Didn't receive the code? ",
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                GestureDetector(
-                  onTap:
-                      _isResending || _resendCountdown > 0
-                          ? null
-                          : _handleResendCode,
-                  child: Text(
-                    _resendCountdown > 0
-                        ? 'Resend in ${_resendCountdown}s'
-                        : 'Resend',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: _isResending || _resendCountdown > 0
-                              ? Colors.grey
-                              : Theme.of(context).primaryColor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
+                  widget.email!,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
               ],
-            ),
-          ],
+              const SizedBox(height: 24),
+
+              // Verification Code Input (6 digits)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: List.generate(
+                  6,
+                  (index) => _buildCodeInput(index),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Verify Button
+              ElevatedButton(
+                onPressed: (widget.signUpStore?.isLoading ?? false)
+                    ? null
+                    : _handleVerifyEmail,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: (widget.signUpStore?.isLoading ?? false)
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text('Verify Email'),
+              ),
+              const SizedBox(height: 16),
+
+              // Resend Code Link
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "Didn't receive the code? ",
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  GestureDetector(
+                    onTap: _isResending || _resendCountdown > 0
+                        ? null
+                        : _handleResendCode,
+                    child: Text(
+                      _resendCountdown > 0
+                          ? 'Resend in ${_resendCountdown}s'
+                          : 'Resend',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: _isResending || _resendCountdown > 0
+                                ? Colors.grey
+                                : Theme.of(context).primaryColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-      ],
     );
   }
 
@@ -273,6 +279,7 @@ class _EmailVerificationDialogState extends State<EmailVerificationDialog> {
         keyboardType: TextInputType.number,
         maxLength: 1,
         textAlign: TextAlign.center,
+        enabled: !(widget.signUpStore?.isLoading ?? false),
         inputFormatters: [
           // Only digits
         ],
@@ -288,3 +295,4 @@ class _EmailVerificationDialogState extends State<EmailVerificationDialog> {
     );
   }
 }
+

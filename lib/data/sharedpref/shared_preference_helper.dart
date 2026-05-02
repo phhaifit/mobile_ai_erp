@@ -54,6 +54,18 @@ class SharedPreferenceHelper {
     return _sharedPreference.remove(Preferences.tenant_id);
   }
 
+  /// Save subdomain to shared preferences
+  Future<void> saveSubdomain(String subdomain) async {
+    await sharedPreference.setString(Preferences.customer_subdomain, subdomain);
+  }
+
+  /// Get stored subdomain
+  String? get subdomain => sharedPreference.getString(Preferences.customer_subdomain);
+
+  Future<bool> removeSubdomain() async {
+    return _sharedPreference.remove(Preferences.customer_subdomain);
+  }
+
   // Login:---------------------------------------------------------------------
   bool get isLoggedIn {
     final authTokenValue = _sharedPreference.get(Preferences.auth_token);

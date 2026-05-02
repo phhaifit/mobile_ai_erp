@@ -9,6 +9,8 @@ class PasswordField extends StatefulWidget {
   final String? hintText;
   final EdgeInsets contentPadding;
   final TextInputAction textInputAction;
+  final bool enabled;
+  final Function(String)? onChanged;
 
   const PasswordField({
     Key? key,
@@ -21,6 +23,8 @@ class PasswordField extends StatefulWidget {
       vertical: 12,
     ),
     this.textInputAction = TextInputAction.next,
+    this.enabled = true,
+    this.onChanged,
   }) : super(key: key);
 
   @override
@@ -34,21 +38,25 @@ class _PasswordFieldState extends State<PasswordField> {
   Widget build(BuildContext context) {
     return TextFormField(
       controller: widget.controller,
+      enabled: widget.enabled,
       obscureText: !_isPasswordVisible,
       textInputAction: widget.textInputAction,
+      onChanged: widget.onChanged,
       decoration: InputDecoration(
         labelText: widget.labelText,
         hintText: widget.hintText,
         prefixIcon: const Icon(Icons.lock_outline),
         suffixIcon: GestureDetector(
-          onTap: () {
-            setState(() {
-              _isPasswordVisible = !_isPasswordVisible;
-            });
-          },
+          onTap: widget.enabled
+              ? () {
+                  setState(() {
+                    _isPasswordVisible = !_isPasswordVisible;
+                  });
+                }
+              : null,
           child: Icon(
             _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-            color: Colors.grey,
+            color: widget.enabled ? Colors.grey : Colors.grey[300],
           ),
         ),
         border: OutlineInputBorder(

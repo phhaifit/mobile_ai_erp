@@ -92,6 +92,9 @@ abstract class _LoginStore with Store {
       if (currentTenantId != null) {
         await _sharedPreferenceHelper.saveTenantId(currentTenantId!);
       }
+      if (result['subdomain'] != null) {
+        await _sharedPreferenceHelper.saveSubdomain(result['subdomain']);
+      }
       needsOnboarding = false;
       success = true;
     } catch (e) {
@@ -137,6 +140,9 @@ abstract class _LoginStore with Store {
       if (currentTenantId != null) {
         await _sharedPreferenceHelper.saveTenantId(currentTenantId!);
       }
+      if (authStatusResponse.subdomain != null) {
+        await _sharedPreferenceHelper.saveSubdomain(authStatusResponse.subdomain!);
+      }
 
       needsOnboarding = currentTenantId == null;
       isLoggedIn = true;
@@ -157,6 +163,7 @@ abstract class _LoginStore with Store {
     isLoggedIn = false;
     await _sharedPreferenceHelper.removeTenantId();
     await _sharedPreferenceHelper.removeAuthToken();
+    await _sharedPreferenceHelper.removeSubdomain();
   }
 
   @action
@@ -194,6 +201,9 @@ abstract class _LoginStore with Store {
     currentTenantId = authStatusResponse.user?.tenantId;
     if (currentTenantId != null) {
       await _sharedPreferenceHelper.saveTenantId(currentTenantId!);
+    }
+    if (authStatusResponse.subdomain != null) {
+      await _sharedPreferenceHelper.saveSubdomain(authStatusResponse.subdomain!);
     }
     
 

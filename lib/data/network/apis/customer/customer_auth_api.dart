@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:mobile_ai_erp/data/model/customer_auth/customer_auth_models.dart';
+import 'package:mobile_ai_erp/data/model/customer_auth/dtos/message_response_dto.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
 
 class CustomerAuthApi {
@@ -20,34 +21,49 @@ class CustomerAuthApi {
   }
 
   /// Sign Up with email and password
-  Future<TokenResponseModel> signUp({
+  Future<MessageResponseDto> signUp({
     required String email,
     required String password,
+    required String name,
   }) async {
     try {
       final response = await _dio.post(
-        '/sign-up',
+        Endpoints.customerSignUp,
         data: {
           'email': email,
           'password': password,
+          'name': name,
+          'isMobile': true,
         },
       );
-      return TokenResponseModel.fromJson(response.data);
+      final result = MessageResponseDto.fromJson(response.data);
+      if (response.statusCode == 201) {
+        return result;
+      } else {
+        throw result;
+      }
     } catch (e) {
       rethrow;
     }
   }
 
   /// Verify email with verification token
-  Future<CustomerModel> verifyEmail({
+  Future<TokenResponseDto> verifyEmail({
     required String token,
   }) async {
     try {
       final response = await _dio.post(
-        '/verify-email',
-        data: {'verificationToken': token},
+        Endpoints.customerVerifyEmail,
+        data: {
+          'token': token
+        },
       );
-      return CustomerModel.fromJson(response.data['data']);
+      if (response.statusCode == 200) {
+        return TokenResponseDto.fromJson(response.data);
+      } else {
+        final result = MessageResponseDto.fromJson(response.data);
+        throw result;
+      }
     } catch (e) {
       rethrow;
     }
@@ -132,7 +148,7 @@ class CustomerAuthApi {
   }
 
   /// Refresh access token using refresh token
-  Future<TokenResponseModel> refreshToken({
+  Future<TokenResponseDto> refreshToken({
     required String refreshToken,
   }) async {
     try {
@@ -143,7 +159,7 @@ class CustomerAuthApi {
           headers: {'Authorization': 'Bearer $refreshToken'},
         ),
       );
-      return TokenResponseModel.fromJson(response.data);
+      return TokenResponseDto.fromJson(response.data);
     } catch (e) {
       rethrow;
     }

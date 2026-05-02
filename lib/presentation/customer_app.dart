@@ -3,10 +3,13 @@ import 'package:mobile_ai_erp/constants/app_theme.dart';
 import 'package:mobile_ai_erp/constants/strings.dart';
 import 'package:mobile_ai_erp/presentation/customer/screens/login/login_screen.dart';
 import 'package:mobile_ai_erp/presentation/customer/screens/subdomain_screen.dart';
+import 'package:mobile_ai_erp/presentation/customer/store/auth_store.dart';
 import 'package:mobile_ai_erp/presentation/customer/store/subdomain_store.dart';
 import 'package:mobile_ai_erp/presentation/home/store/language/language_store.dart';
 import 'package:mobile_ai_erp/presentation/home/store/theme/theme_store.dart';
+import 'package:mobile_ai_erp/presentation/customer/screens/customer_home.dart';
 import 'package:mobile_ai_erp/utils/locale/app_localization.dart';
+import 'package:mobile_ai_erp/utils/routes/customer_routes.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
@@ -22,7 +25,8 @@ class CustomerApp extends StatefulWidget {
 class _CustomerAppState extends State<CustomerApp> {
   final ThemeStore _themeStore = getIt<ThemeStore>();
   final LanguageStore _languageStore = getIt<LanguageStore>();
-  final SubdomainStore _subdomainStore = getIt<SubdomainStore>();
+  final _subdomainStore = getIt<SubdomainStore>();
+  final _authStore = getIt<CustomerAuthStore>();
 
   bool _initialized = false;
 
@@ -64,9 +68,9 @@ class _CustomerAppState extends State<CustomerApp> {
           theme: _themeStore.darkMode
               ? AppThemeData.darkThemeData
               : AppThemeData.lightThemeData,
-          home: _subdomainStore.subdomain != null
-              ? const CustomerLoginScreen()
-              : SubdomainScreen(),
+          home: _buildHome(),
+          routes: CustomerRoutes.routes,
+          onGenerateRoute: CustomerRoutes.onGenerateRoute,
           locale: Locale(_languageStore.locale),
           supportedLocales: _languageStore.supportedLanguages
               .map((language) => Locale(language.locale, language.code))
@@ -80,5 +84,15 @@ class _CustomerAppState extends State<CustomerApp> {
         );
       },
     );
+  }
+
+  Widget _buildHome() {
+    if (_subdomainStore.subdomain == null) {
+      return SubdomainScreen();
+    }
+    if (_authStore.tokenPair == null) {
+      return const CustomerLoginScreen();
+    }
+    return const CustomerHomePage();
   }
 }

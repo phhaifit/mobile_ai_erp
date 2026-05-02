@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:mobile_ai_erp/di/service_locator.dart';
+import 'package:mobile_ai_erp/presentation/customer/store/signup_store.dart';
 import 'password_field.dart';
 import 'email_verification_dialog.dart';
 
 /// SignUpForm - Main sign-up form widget
 /// Handles email, password input and form validation
 class SignUpForm extends StatefulWidget {
-  const SignUpForm({Key? key}) : super(key: key);
+  const SignUpForm({super.key}) : super();
 
   @override
   State<SignUpForm> createState() => _SignUpFormState();
@@ -16,10 +19,8 @@ class _SignUpFormState extends State<SignUpForm> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _firstNameController = TextEditingController();
-  final _lastNameController = TextEditingController();
+  final _nameController = TextEditingController();
 
-  bool _isLoading = false;
   bool _agreeToTerms = false;
 
   @override
@@ -27,8 +28,7 @@ class _SignUpFormState extends State<SignUpForm> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _firstNameController.dispose();
-    _lastNameController.dispose();
+    _nameController.dispose();
     super.dispose();
   }
 
@@ -83,7 +83,7 @@ class _SignUpFormState extends State<SignUpForm> {
   }
 
   /// Handle form submission
-  Future<void> _handleSignUp() async {
+  Future<void> _handleSignUp(SignUpStore signUpStore) async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -98,220 +98,211 @@ class _SignUpFormState extends State<SignUpForm> {
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    // Call the sign up action from store
+    final success = await signUpStore.signUp(
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+      name: _nameController.text.trim(),
+    );
 
-    try {
-      // Simulate API call delay
-      await Future.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
 
-      if (!mounted) return;
-
+    if (success && signUpStore.isEmailVerificationPending) {
       // Show email verification dialog
       await showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const EmailVerificationDialog(),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Sign up failed: $e'),
-          backgroundColor: Colors.red,
+        builder: (context) => EmailVerificationDialog(
+          email: signUpStore.verificationEmail ?? _emailController.text,
+          signUpStore: signUpStore,
         ),
       );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final signUpStore = getIt<SignUpStore>();
+
     return Form(
       key: _formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Name Fields Row
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  controller: _firstNameController,
-                  decoration: InputDecoration(
-                    labelText: 'First Name',
-                    hintText: 'John',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Required';
-                    }
-                    return null;
-                  },
+      child: Observer(
+        builder: (_) => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TextFormField(
+              controller: _nameController,
+              enabled: !signUpStore.isLoading,
+              maxLength: 255,
+              decoration: InputDecoration(
+                labelText: 'Name',
+                hintText: 'John',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextFormField(
-                  controller: _lastNameController,
-                  decoration: InputDecoration(
-                    labelText: 'Last Name',
-                    hintText: 'Doe',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Required';
-                    }
-                    return null;
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Email Field
-          TextFormField(
-            controller: _emailController,
-            keyboardType: TextInputType.emailAddress,
-            decoration: InputDecoration(
-              labelText: 'Email Address',
-              hintText: 'john@example.com',
-              prefixIcon: const Icon(Icons.email_outlined),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
-              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Required';
+                }
+                return null;
+              },
             ),
-            validator: _validateEmail,
-          ),
-          const SizedBox(height: 16),
+            const SizedBox(height: 16),
 
-          // Password Field
-          PasswordField(
-            controller: _passwordController,
-            labelText: 'Password',
-            validator: _validatePassword,
-          ),
-          const SizedBox(height: 8),
-          _buildPasswordStrengthHint(),
-          const SizedBox(height: 16),
-
-          // Confirm Password Field
-          PasswordField(
-            controller: _confirmPasswordController,
-            labelText: 'Confirm Password',
-            validator: _validateConfirmPassword,
-          ),
-          const SizedBox(height: 16),
-
-          // Terms and Conditions Checkbox
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: 24,
-                height: 24,
-                child: Checkbox(
-                  value: _agreeToTerms,
-                  onChanged: (value) {
-                    setState(() {
-                      _agreeToTerms = value ?? false;
-                    });
-                  },
+            // Email Field
+            TextFormField(
+              controller: _emailController,
+              enabled: !signUpStore.isLoading,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(
+                labelText: 'Email Address',
+                hintText: 'john@example.com',
+                prefixIcon: const Icon(Icons.email_outlined),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _agreeToTerms = !_agreeToTerms;
-                    });
-                  },
-                  child: RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: 'I agree to the ',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                        TextSpan(
-                          text: 'Terms and Conditions',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).primaryColor,
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
-                        TextSpan(
-                          text: ' and ',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                        TextSpan(
-                          text: 'Privacy Policy',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).primaryColor,
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-
-          // Sign Up Button
-          ElevatedButton(
-            onPressed: _isLoading ? null : _handleSignUp,
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
+              validator: _validateEmail,
             ),
-            child: _isLoading
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                    ),
-                  )
-                : const Text(
-                    'Create Account',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+            const SizedBox(height: 16),
+
+            // Password Field
+            PasswordField(
+              controller: _passwordController,
+              labelText: 'Password',
+              enabled: !signUpStore.isLoading,
+              validator: _validatePassword,
+              onChanged: (_) => setState(() {}),
+            ),
+            const SizedBox(height: 8),
+            _buildPasswordStrengthHint(),
+            const SizedBox(height: 16),
+
+            // Confirm Password Field
+            PasswordField(
+              controller: _confirmPasswordController,
+              labelText: 'Confirm Password',
+              enabled: !signUpStore.isLoading,
+              validator: _validateConfirmPassword,
+            ),
+            const SizedBox(height: 16),
+
+            // Terms and Conditions Checkbox
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Checkbox(
+                    value: _agreeToTerms,
+                    onChanged: signUpStore.isLoading
+                        ? null
+                        : (value) {
+                            setState(() {
+                              _agreeToTerms = value ?? false;
+                            });
+                          },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: signUpStore.isLoading
+                        ? null
+                        : () {
+                            setState(() {
+                              _agreeToTerms = !_agreeToTerms;
+                            });
+                          },
+                    child: RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: 'I agree to the ',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                          TextSpan(
+                            text: 'Terms and Conditions',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Theme.of(context).primaryColor,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                          TextSpan(
+                            text: ' and ',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                          TextSpan(
+                            text: 'Privacy Policy',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Theme.of(context).primaryColor,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-          ),
-        ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // Sign Up Button
+            ElevatedButton(
+              onPressed: signUpStore.isLoading ? null : () => _handleSignUp(signUpStore),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: signUpStore.isLoading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Text(
+                      'Create Account',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+            ),
+
+            // Error Message Display
+            if (signUpStore.hasError)
+              Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red[100],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red[300]!),
+                  ),
+                  child: Text(
+                    signUpStore.errorMessage ?? 'An error occurred',
+                    style: TextStyle(color: Colors.red[900]),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -380,3 +371,4 @@ class _SignUpFormState extends State<SignUpForm> {
     );
   }
 }
+

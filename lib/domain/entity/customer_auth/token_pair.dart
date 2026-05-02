@@ -1,3 +1,8 @@
+import 'package:json_annotation/json_annotation.dart';
+
+part 'token_pair.g.dart';
+
+@JsonSerializable()
 class TokenPair {
   final String accessToken;
   final String refreshToken;
@@ -17,4 +22,9 @@ class TokenPair {
       expiresAt.isBefore(DateTime.now().add(const Duration(minutes: 2)));
 
   Duration get remainingDuration => expiresAt.difference(DateTime.now());
+
+  factory TokenPair.fromJson(Map<String, dynamic> json) =>
+      _$TokenPairFromJson(json);
+
+  Map<String, dynamic> toJson() => _$TokenPairToJson(this);
 }
