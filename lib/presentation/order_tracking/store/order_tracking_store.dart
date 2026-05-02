@@ -61,6 +61,15 @@ abstract class _OrderTrackingStore with Store {
       final String? secretKey = _resolveHeaderValue(Endpoints.erpSecretKey);
       final String? tenantId = _resolveHeaderValue(Endpoints.erpTenantId);
 
+      if (secretKey == null) {
+        if (!silent) {
+          errorMessage =
+              'Missing ERP secret key. Pass --dart-define=ERP_SECRET_KEY=...';
+          errorStore.setErrorMessage(errorMessage ?? 'Missing ERP secret key.');
+        }
+        return;
+      }
+
       final detail = await _ordersApi.getOrderDetail(
         orderId,
         secretKey: secretKey,
@@ -178,13 +187,15 @@ abstract class _OrderTrackingStore with Store {
 
   ShipmentStage _mapStatusToStage(String status) {
     switch (status.toLowerCase()) {
-      case 'confirmed':
+      case 'new':
       case 'pending':
         return ShipmentStage.confirmed;
+      case 'packing':
       case 'packed':
-        return ShipmentStage.packed;
-      case 'shipped':
       case 'shipping':
+        return ShipmentStage.packed;
+      case 'partially_shipped':
+      case 'shipped':
       case 'in_transit':
         return ShipmentStage.shipped;
       case 'delivered':
