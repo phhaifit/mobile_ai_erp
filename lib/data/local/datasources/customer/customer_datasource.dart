@@ -5,33 +5,37 @@ import 'package:mobile_ai_erp/domain/entity/customer/customer_validation_excepti
 
 class CustomerDataSource {
   final List<CustomerGroup> _groups = <CustomerGroup>[
-    const CustomerGroup(
+    CustomerGroup(
       id: 'group_vip',
       name: 'VIP',
       description: 'High-value customers with premium benefits.',
       colorHex: '#6A1B9A',
-      sortOrder: 10,
+      createdAt: DateTime(2023, 1, 1),
+      updatedAt: DateTime(2023, 1, 1),
     ),
-    const CustomerGroup(
+    CustomerGroup(
       id: 'group_wholesale',
       name: 'Wholesale',
       description: 'Business customers purchasing in bulk.',
       colorHex: '#1565C0',
-      sortOrder: 20,
+      createdAt: DateTime(2023, 1, 1),
+      updatedAt: DateTime(2023, 1, 1),
     ),
-    const CustomerGroup(
+    CustomerGroup(
       id: 'group_retail',
       name: 'Retail',
       description: 'Standard retail customers.',
       colorHex: '#2E7D32',
-      sortOrder: 30,
+      createdAt: DateTime(2023, 1, 1),
+      updatedAt: DateTime(2023, 1, 1),
     ),
-    const CustomerGroup(
+    CustomerGroup(
       id: 'group_new',
       name: 'New Customers',
       description: 'Customers who joined in the last 30 days.',
       colorHex: '#EF6C00',
-      sortOrder: 40,
+      createdAt: DateTime(2023, 1, 1),
+      updatedAt: DateTime(2023, 1, 1),
     ),
   ];
 
@@ -97,7 +101,7 @@ class CustomerDataSource {
       firstName: 'Mark',
       lastName: 'Brown',
       email: 'mark.brown@example.com',
-      status: CustomerStatus.inactive,
+      status: CustomerStatus.deactivated,
       type: CustomerType.individual,
       createdAt: DateTime(2023, 5, 5),
     ),
@@ -108,7 +112,7 @@ class CustomerDataSource {
       id: 'addr_alice_home',
       customerId: 'cust_alice',
       label: 'Home',
-      type: AddressType.both,
+      type: AddressType.home,
       street: '123 Maple Street',
       city: 'New York',
       state: 'NY',
@@ -120,7 +124,7 @@ class CustomerDataSource {
       id: 'addr_alice_office',
       customerId: 'cust_alice',
       label: 'Office',
-      type: AddressType.billing,
+      type: AddressType.office,
       street: '456 Fifth Ave, Suite 800',
       city: 'New York',
       state: 'NY',
@@ -131,7 +135,7 @@ class CustomerDataSource {
       id: 'addr_bob_hq',
       customerId: 'cust_bob',
       label: 'Headquarters',
-      type: AddressType.both,
+      type: AddressType.home,
       street: '789 Industrial Blvd',
       city: 'Chicago',
       state: 'IL',
@@ -143,7 +147,7 @@ class CustomerDataSource {
       id: 'addr_carol_home',
       customerId: 'cust_carol',
       label: 'Home',
-      type: AddressType.both,
+      type: AddressType.home,
       street: '22 Oak Lane',
       city: 'Austin',
       state: 'TX',
@@ -167,7 +171,7 @@ class CustomerDataSource {
       id: 'addr_enterprise_shipping',
       customerId: 'cust_enterprise',
       label: 'Warehouse',
-      type: AddressType.shipping,
+      type: AddressType.warehouse,
       street: '500 Commerce Way',
       city: 'Fremont',
       state: 'CA',
@@ -179,7 +183,8 @@ class CustomerDataSource {
   // ── Groups ────────────────────────────────────────────────────────────────
 
   Future<List<CustomerGroup>> getCustomerGroups() async =>
-      _sortByOrderThenName(_groups, (g) => g.name, (g) => g.sortOrder);
+      List<CustomerGroup>.from(_groups)
+        ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
 
   Future<CustomerGroup> saveCustomerGroup(CustomerGroup group) async {
     final name = group.name.trim();
@@ -219,10 +224,10 @@ class CustomerDataSource {
 
   // ── Customers ─────────────────────────────────────────────────────────────
 
-  Future<List<Customer>> getCustomers() async =>
-      List<Customer>.from(_customers)
-        ..sort((a, b) => a.fullName.toLowerCase()
-            .compareTo(b.fullName.toLowerCase()));
+  Future<List<Customer>> getCustomers() async => List<Customer>.from(_customers)
+    ..sort(
+      (a, b) => a.fullName.toLowerCase().compareTo(b.fullName.toLowerCase()),
+    );
 
   Future<Customer> saveCustomer(Customer customer) async {
     final firstName = customer.firstName.trim();
@@ -231,30 +236,29 @@ class CustomerDataSource {
 
     if (firstName.isEmpty && lastName.isEmpty) {
       throw const CustomerValidationException(
-          'First name or last name is required.');
+        'First name or last name is required.',
+      );
     }
     if (email.isEmpty) {
       throw const CustomerValidationException('Email is required.');
     }
     if (!_isValidEmail(email)) {
-      throw const CustomerValidationException(
-          'Enter a valid email address.');
+      throw const CustomerValidationException('Enter a valid email address.');
     }
 
     final customerId = customer.id.trim();
     final hasDuplicateEmail = _customers.any(
       (existing) =>
-          existing.id != customerId &&
-          existing.email.toLowerCase() == email,
+          existing.id != customerId && existing.email.toLowerCase() == email,
     );
     if (hasDuplicateEmail) {
       throw const CustomerValidationException(
-          'A customer with this email already exists.');
+        'A customer with this email already exists.',
+      );
     }
 
     if (customer.groupId != null) {
-      final groupExists =
-          _groups.any((g) => g.id == customer.groupId);
+      final groupExists = _groups.any((g) => g.id == customer.groupId);
       if (!groupExists) {
         throw const CustomerValidationException('Selected group not found.');
       }
@@ -282,9 +286,7 @@ class CustomerDataSource {
   // ── Addresses ─────────────────────────────────────────────────────────────
 
   Future<List<Address>> getAddresses(String customerId) async {
-    final list = _addresses
-        .where((a) => a.customerId == customerId)
-        .toList()
+    final list = _addresses.where((a) => a.customerId == customerId).toList()
       ..sort((a, b) {
         if (a.isDefault && !b.isDefault) return -1;
         if (!a.isDefault && b.isDefault) return 1;
@@ -312,8 +314,7 @@ class CustomerDataSource {
       throw const CustomerValidationException('Country is required.');
     }
 
-    final customerExists =
-        _customers.any((c) => c.id == address.customerId);
+    final customerExists = _customers.any((c) => c.id == address.customerId);
     if (!customerExists) {
       throw const CustomerValidationException('Customer not found.');
     }
@@ -327,7 +328,8 @@ class CustomerDataSource {
     );
     if (hasDuplicateLabel) {
       throw const CustomerValidationException(
-          'Address labels must be unique for this customer.');
+        'Address labels must be unique for this customer.',
+      );
     }
 
     final saved = address.copyWith(
@@ -347,8 +349,7 @@ class CustomerDataSource {
     _addresses.removeWhere((a) => a.id == addressId);
   }
 
-  Future<void> setDefaultAddress(
-      String customerId, String addressId) async {
+  Future<void> setDefaultAddress(String customerId, String addressId) async {
     for (var i = 0; i < _addresses.length; i++) {
       final addr = _addresses[i];
       if (addr.customerId != customerId) continue;
@@ -359,7 +360,8 @@ class CustomerDataSource {
   // ── Dashboard ─────────────────────────────────────────────────────────────
 
   Future<Map<String, int>> getCustomerCountsByGroup(
-      List<String> groupIds) async {
+    List<String> groupIds,
+  ) async {
     final counts = <String, int>{for (final id in groupIds) id: 0};
     for (final customer in _customers) {
       final gid = customer.groupId;
@@ -380,8 +382,9 @@ class CustomerDataSource {
   }
 
   bool _isValidEmail(String email) {
-    return RegExp(r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$')
-        .hasMatch(email);
+    return RegExp(
+      r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$',
+    ).hasMatch(email);
   }
 
   String _generateId(String prefix) =>
@@ -392,29 +395,13 @@ class CustomerDataSource {
     T value,
     String Function(T item) idSelector,
   ) {
-    final index =
-        items.indexWhere((item) => idSelector(item) == idSelector(value));
+    final index = items.indexWhere(
+      (item) => idSelector(item) == idSelector(value),
+    );
     if (index >= 0) {
       items[index] = value;
     } else {
       items.add(value);
     }
-  }
-
-  List<T> _sortByOrderThenName<T>(
-    List<T> source,
-    String Function(T item) nameSelector,
-    int Function(T item) sortOrderSelector,
-  ) {
-    final items = List<T>.from(source);
-    items.sort((left, right) {
-      final orderCompare =
-          sortOrderSelector(left).compareTo(sortOrderSelector(right));
-      if (orderCompare != 0) return orderCompare;
-      return nameSelector(left)
-          .toLowerCase()
-          .compareTo(nameSelector(right).toLowerCase());
-    });
-    return items;
   }
 }

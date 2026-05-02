@@ -21,8 +21,11 @@ class WarehouseDropdown extends StatelessWidget {
   Widget build(BuildContext context) {
     return DropdownButtonFormField<String>(
       initialValue: value,
+      isExpanded: true,
+      menuMaxHeight: 320,
       decoration: InputDecoration(
         labelText: label,
+        helperText: 'Choose the warehouse context for this operation.',
         border: const OutlineInputBorder(),
       ),
       items: warehouses
@@ -56,8 +59,11 @@ class ProductDropdown extends StatelessWidget {
   Widget build(BuildContext context) {
     return DropdownButtonFormField<String>(
       initialValue: value,
+      isExpanded: true,
+      menuMaxHeight: 320,
       decoration: InputDecoration(
         labelText: label,
+        helperText: 'Only products with available stock are listed.',
         border: const OutlineInputBorder(),
       ),
       items: products
@@ -90,6 +96,7 @@ class DashboardActionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      elevation: 0,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
@@ -102,9 +109,21 @@ class DashboardActionCard extends StatelessWidget {
               children: [
                 Icon(icon),
                 const SizedBox(height: 12),
-                Text(title, style: Theme.of(context).textTheme.titleMedium),
+                Text(
+                  title,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                ),
                 const SizedBox(height: 8),
-                Text(subtitle),
+                Text(
+                  subtitle,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurfaceVariant,
+                  ),
+                ),
               ],
             ),
           ),
@@ -159,6 +178,273 @@ class SummaryChip extends StatelessWidget {
   }
 }
 
+class FlowIntroCard extends StatelessWidget {
+  const FlowIntroCard({
+    super.key,
+    required this.title,
+    required this.message,
+    this.icon = Icons.tips_and_updates_outlined,
+  });
+
+  final String title;
+  final String message;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: colors.secondaryContainer.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colors.secondaryContainer),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: colors.primary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  message,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class FlowStepSection extends StatelessWidget {
+  const FlowStepSection({
+    super.key,
+    required this.step,
+    required this.title,
+    this.subtitle,
+    required this.child,
+  });
+
+  final int step;
+  final String title;
+  final String? subtitle;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colors.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: colors.primaryContainer,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '$step',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle!,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: colors.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class EmptyStatePanel extends StatelessWidget {
+  const EmptyStatePanel({
+    super.key,
+    required this.title,
+    required this.message,
+    this.icon = Icons.inbox_outlined,
+  });
+
+  final String title;
+  final String message;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
+    return Center(
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 420),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: colors.surfaceContainerHighest.withValues(alpha: 0.45),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: colors.outlineVariant),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 34, color: colors.primary),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: colors.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class WarehouseRouteSummary extends StatelessWidget {
+  const WarehouseRouteSummary({
+    super.key,
+    required this.operation,
+    this.compact = false,
+  });
+
+  final StockOperation operation;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final source = operation.sourceWarehouseName ?? '-';
+    final destination = operation.destinationWarehouseName;
+    final isTransfer = operation.type == StockOperationType.transfer;
+
+    if (compact) {
+      return Text(
+        isTransfer
+            ? '$source -> ${destination ?? '-'}'
+            : 'Removed from $source',
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          fontWeight: FontWeight.w600,
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(
+          context,
+        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            isTransfer ? 'Warehouse route' : 'Removal warehouse',
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          _RouteLine(label: isTransfer ? 'From' : 'Warehouse', value: source),
+          if (isTransfer)
+            _RouteLine(label: 'To', value: destination ?? 'Not assigned'),
+        ],
+      ),
+    );
+  }
+}
+
+class _RouteLine extends StatelessWidget {
+  const _RouteLine({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: RichText(
+        text: TextSpan(
+          style: Theme.of(context).textTheme.bodyMedium,
+          children: [
+            TextSpan(
+              text: '$label: ',
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            TextSpan(text: value),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class OperationTypeBadge extends StatelessWidget {
   const OperationTypeBadge({super.key, required this.type});
 
@@ -198,10 +484,60 @@ class OperationTypeBadge extends StatelessWidget {
   }
 }
 
+class OperationStatusBadge extends StatelessWidget {
+  const OperationStatusBadge({super.key, required this.status});
+
+  final StockOperationStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color color;
+    final String text;
+
+    switch (status) {
+      case StockOperationStatus.draft:
+        color = Colors.grey.shade300;
+        text = 'DRAFT';
+        break;
+      case StockOperationStatus.approved:
+        color = Colors.amber.shade200;
+        text = 'APPROVED';
+        break;
+      case StockOperationStatus.completed:
+        color = Colors.green.shade200;
+        text = 'COMPLETED';
+        break;
+      case StockOperationStatus.cancelled:
+        color = Colors.red.shade100;
+        text = 'CANCELLED';
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+      ),
+    );
+  }
+}
+
 String formatDateTime(DateTime dateTime) {
   final month = dateTime.month.toString().padLeft(2, '0');
   final day = dateTime.day.toString().padLeft(2, '0');
   final hour = dateTime.hour.toString().padLeft(2, '0');
   final minute = dateTime.minute.toString().padLeft(2, '0');
   return '${dateTime.year}-$month-$day $hour:$minute';
+}
+
+String formatNullableDateTime(DateTime? dateTime) {
+  if (dateTime == null) {
+    return '-';
+  }
+  return formatDateTime(dateTime);
 }

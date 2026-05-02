@@ -31,3 +31,9 @@ class CustomerGroupFormArgs {
 
   final String? groupId;
 }
+
+class CustomerTransactionsArgs {
+  const CustomerTransactionsArgs({required this.customerId});
+
+  final String customerId;
+}

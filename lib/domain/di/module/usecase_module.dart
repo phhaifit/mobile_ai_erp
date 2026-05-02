@@ -77,6 +77,22 @@ import 'package:mobile_ai_erp/domain/usecase/web_builder/get_web_theme_by_id_use
 import 'package:mobile_ai_erp/domain/usecase/web_builder/get_web_themes_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/save_cms_page_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/save_store_settings_usecase.dart';
+import 'package:mobile_ai_erp/domain/repository/customer/customer_repository.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/get_customers_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/get_customer_detail_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/save_customer_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/delete_customer_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/get_customer_groups_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/save_customer_group_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/delete_customer_group_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/get_customer_addresses_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/save_customer_address_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/delete_customer_address_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/set_default_address_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/get_customer_transactions_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/get_segment_members_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/add_segment_members_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/remove_segment_members_usecase.dart';
 
 import '../../../di/service_locator.dart';
 
@@ -353,6 +369,53 @@ class UseCaseModule {
     );
     getIt.registerSingleton<SearchProductsUseCase>(
       SearchProductsUseCase(getIt<SupplierRepository>()),
+    );
+
+    // customer:---------------------------------------------------------------
+    getIt.registerSingleton<GetCustomersUseCase>(
+      GetCustomersUseCase(getIt<CustomerRepository>()),
+    );
+    getIt.registerSingleton<GetCustomerDetailUseCase>(
+      GetCustomerDetailUseCase(getIt<CustomerRepository>()),
+    );
+    getIt.registerSingleton<SaveCustomerUseCase>(
+      SaveCustomerUseCase(getIt<CustomerRepository>()),
+    );
+    getIt.registerSingleton<DeleteCustomerUseCase>(
+      DeleteCustomerUseCase(getIt<CustomerRepository>()),
+    );
+    getIt.registerSingleton<GetCustomerGroupsUseCase>(
+      GetCustomerGroupsUseCase(getIt<CustomerRepository>()),
+    );
+    getIt.registerSingleton<SaveCustomerGroupUseCase>(
+      SaveCustomerGroupUseCase(getIt<CustomerRepository>()),
+    );
+    getIt.registerSingleton<DeleteCustomerGroupUseCase>(
+      DeleteCustomerGroupUseCase(getIt<CustomerRepository>()),
+    );
+    getIt.registerSingleton<GetCustomerAddressesUseCase>(
+      GetCustomerAddressesUseCase(getIt<CustomerRepository>()),
+    );
+    getIt.registerSingleton<SaveCustomerAddressUseCase>(
+      SaveCustomerAddressUseCase(getIt<CustomerRepository>()),
+    );
+    getIt.registerSingleton<DeleteCustomerAddressUseCase>(
+      DeleteCustomerAddressUseCase(getIt<CustomerRepository>()),
+    );
+    getIt.registerSingleton<SetDefaultAddressUseCase>(
+      SetDefaultAddressUseCase(getIt<CustomerRepository>()),
+    );
+    getIt.registerSingleton<GetCustomerTransactionsUseCase>(
+      GetCustomerTransactionsUseCase(getIt<CustomerRepository>()),
+    );
+    getIt.registerSingleton<GetSegmentMembersUseCase>(
+      GetSegmentMembersUseCase(getIt<CustomerRepository>()),
+    );
+    getIt.registerSingleton<AddSegmentMembersUseCase>(
+      AddSegmentMembersUseCase(getIt<CustomerRepository>()),
+    );
+    getIt.registerSingleton<RemoveSegmentMembersUseCase>(
+      RemoveSegmentMembersUseCase(getIt<CustomerRepository>()),
     );
   }
 }

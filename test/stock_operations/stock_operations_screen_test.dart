@@ -52,7 +52,9 @@ void main() {
 
     tester.view.physicalSize = const Size(599, 900);
     tester.view.devicePixelRatio = 1.0;
-    await tester.pumpWidget(MaterialApp(home: StockOperationsScreen(store: store)));
+    await tester.pumpWidget(
+      MaterialApp(home: StockOperationsScreen(store: store)),
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Internal Stock Transfer'));
@@ -63,7 +65,9 @@ void main() {
     await tester.pumpAndSettle();
 
     tester.view.physicalSize = const Size(1200, 800);
-    await tester.pumpWidget(MaterialApp(home: StockOperationsScreen(store: store)));
+    await tester.pumpWidget(
+      MaterialApp(home: StockOperationsScreen(store: store)),
+    );
     await tester.pumpAndSettle();
     store.setCurrentView(StockOperationsView.transfer);
     await tester.pumpAndSettle();
@@ -76,27 +80,35 @@ void main() {
     });
   });
 
-  testWidgets('history renders cards on mobile and table on desktop', (tester) async {
+  testWidgets('history renders cards on mobile and table on desktop', (
+    tester,
+  ) async {
     final store = StockOperationsStore(MockStockOperationsRepository());
 
     tester.view.physicalSize = const Size(599, 900);
     tester.view.devicePixelRatio = 1.0;
-    await tester.pumpWidget(MaterialApp(home: StockOperationsScreen(store: store)));
+    await tester.pumpWidget(
+      MaterialApp(home: StockOperationsScreen(store: store)),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text('Operation History'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Qty:'), findsWidgets);
+    expect(find.textContaining('Created by:'), findsWidgets);
 
     await tester.pageBack();
     await tester.pumpAndSettle();
 
     tester.view.physicalSize = const Size(1200, 800);
-    await tester.pumpWidget(MaterialApp(home: StockOperationsScreen(store: store)));
+    await tester.pumpWidget(
+      MaterialApp(home: StockOperationsScreen(store: store)),
+    );
     await tester.pumpAndSettle();
     store.setCurrentView(StockOperationsView.history);
     await tester.pumpAndSettle();
     expect(find.text('Warehouses'), findsOneWidget);
     expect(find.text('Time'), findsOneWidget);
+    expect(find.textContaining('Created by:'), findsWidgets);
 
     addTearDown(() {
       tester.view.resetPhysicalSize();
@@ -104,7 +116,9 @@ void main() {
     });
   });
 
-  testWidgets('desktop rail selection updates detail panel content', (tester) async {
+  testWidgets('desktop rail selection updates detail panel content', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(1200, 800);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() {
@@ -113,7 +127,9 @@ void main() {
     });
 
     final store = StockOperationsStore(MockStockOperationsRepository());
-    await tester.pumpWidget(MaterialApp(home: StockOperationsScreen(store: store)));
+    await tester.pumpWidget(
+      MaterialApp(home: StockOperationsScreen(store: store)),
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(
@@ -146,7 +162,9 @@ void main() {
       });
 
       final store = StockOperationsStore(MockStockOperationsRepository());
-      await tester.pumpWidget(MaterialApp(home: StockOperationsScreen(store: store)));
+      await tester.pumpWidget(
+        MaterialApp(home: StockOperationsScreen(store: store)),
+      );
       await tester.pumpAndSettle();
 
       store.setCurrentView(StockOperationsView.transfer);
@@ -156,13 +174,15 @@ void main() {
       store.setTransferSourceWarehouse('wh-02');
       await tester.pumpAndSettle();
 
-      final destinationDropdownAfterNorth = tester.widget<DropdownButton<String>>(
-        find.descendant(
-          of: find.byKey(const Key('transfer_destination_dropdown')),
-          matching: find.byType(DropdownButton<String>),
-        ),
-      );
-      final destinationValuesAfterNorth = destinationDropdownAfterNorth.items
+      final destinationDropdownAfterNorth = tester
+          .widget<DropdownButton<String>>(
+            find.descendant(
+              of: find.byKey(const Key('transfer_destination_dropdown')),
+              matching: find.byType(DropdownButton<String>),
+            ),
+          );
+      final destinationValuesAfterNorth =
+          destinationDropdownAfterNorth.items
               ?.map((e) => e.value)
               .whereType<String>()
               .toList(growable: false) ??
@@ -181,4 +201,40 @@ void main() {
       expect(store.transferDestinationWarehouseId, isNull);
     },
   );
+
+  testWidgets('history shows approve and complete actions by transfer status', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 800);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final store = StockOperationsStore(MockStockOperationsRepository());
+    await tester.pumpWidget(
+      MaterialApp(home: StockOperationsScreen(store: store)),
+    );
+    await tester.pumpAndSettle();
+
+    store.setCurrentView(StockOperationsView.transfer);
+    store.setTransferSourceWarehouse('wh-01');
+    store.setTransferDestinationWarehouse('wh-02');
+    store.setTransferProduct('p-01');
+    store.setTransferQuantity('2');
+    await store.createTransferDraft();
+    await tester.pumpAndSettle();
+
+    store.setCurrentView(StockOperationsView.history);
+    await tester.pumpAndSettle();
+    expect(find.text('Approve'), findsOneWidget);
+    expect(find.textContaining('Created by:'), findsWidgets);
+
+    await tester.tap(find.text('Approve'));
+    await tester.pumpAndSettle();
+    expect(find.text('Complete'), findsOneWidget);
+    expect(find.textContaining('Approved by:'), findsWidgets);
+    expect(find.textContaining('Approved at:'), findsWidgets);
+  });
 }
