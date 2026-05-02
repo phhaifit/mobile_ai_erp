@@ -36,6 +36,7 @@ abstract class SignInStoreBase with Store {
   Future<bool> signIn({
     required String email,
     required String password,
+    required bool remember,
   }) async {
     try {
       isLoading = true;
@@ -49,7 +50,7 @@ abstract class SignInStoreBase with Store {
       );
 
       // Store the token pair in the auth store
-      await _customerAuthStore.setTokenPair(tokenPair);
+      await _customerAuthStore.setTokenPair(tokenPair, remember);
 
       successMessage = 'Signed in successfully!';
       isLoading = false;

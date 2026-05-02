@@ -5,7 +5,7 @@ import '../../../widgets/auth_error_dialog.dart';
 
 /// Email/Password login tab widget
 class EmailPasswordTab extends StatefulWidget {
-  final Function(Map<String, String>)? onSubmit;
+  final Function(String email, String password, bool remember)? onSubmit;
   final bool isLoading;
   final String? errorMessage;
   final VoidCallback? onForgotPassword;
@@ -61,11 +61,11 @@ class _EmailPasswordTabState extends State<EmailPasswordTab> {
 
   void _handleSignIn() {
     if (_formKey.currentState!.validate()) {
-      widget.onSubmit?.call({
-        'email': _emailController.text.trim(),
-        'password': _passwordController.text,
-        'rememberMe': _rememberMe.toString(),
-      });
+      widget.onSubmit?.call(
+        _emailController.text.trim(),
+        _passwordController.text,
+        _rememberMe,
+      );
     }
   }
 

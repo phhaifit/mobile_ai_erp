@@ -83,7 +83,7 @@ abstract class SignUpStoreBase with Store {
       // Call API
       final tokenResponse = await _authRepository.verifyEmail(token: token);
 
-      await _customerAuthStore.setTokenPair(tokenResponse.toTokenPair());
+      await _customerAuthStore.setTokenPair(tokenResponse.toTokenPair(), false);
 
       // Store customer
       isEmailVerificationPending = false;

@@ -27,14 +27,18 @@ abstract class CustomerAuthStoreBase with Store {
   TokenPair? tokenPair;
 
   @action
-  Future<void> setTokenPair(TokenPair tokenPair) async {
-    await _sharedPreferenceHelper.saveTokenPair(tokenPair);
+  Future<void> setTokenPair(TokenPair tokenPair, bool remember) async {
+    if (remember) {
+      await _sharedPreferenceHelper.saveTokenPair(tokenPair);
+    }
     this.tokenPair = tokenPair;
   }
 
   Future<void> logout() async {
     try {
-      await _customerAuthRepository.signOut();
+      if (tokenPair != null) {
+        await _customerAuthRepository.signOut();
+      }
     } catch (e) {
       log("Exception when signing out in server $e");
     } finally {

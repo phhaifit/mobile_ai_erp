@@ -38,7 +38,10 @@ class _CustomerAppState extends State<CustomerApp> {
 
   Future<void> _checkSubdomain() async {
     // Validate the stored subdomain via the store
-    await _subdomainStore.validateStoredSubdomain();
+    final valid = await _subdomainStore.validateStoredSubdomain();
+    if (!valid) {
+      await _authStore.logout();
+    }
     
     if (!mounted) return;
     setState(() {

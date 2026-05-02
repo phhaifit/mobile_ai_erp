@@ -47,10 +47,11 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> with TickerPr
     super.dispose();
   }
 
-  void _handleEmailPasswordSignIn(Map<String, String> credentials) async {
+  void _handleEmailPasswordSignIn(String email, String password, bool rememeber) async {
     await _signInStore.signIn(
-      email: credentials['email'] ?? '',
-      password: credentials['password'] ?? '',
+      email: email,
+      password: password,
+      remember: rememeber,
     );
   }
 
