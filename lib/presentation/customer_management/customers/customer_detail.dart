@@ -154,8 +154,9 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Customer deactivated successfully')),
           );
-          // Pop back to customer list
-          Navigator.of(context).pop();
+          Future<void>.microtask(
+            () => CustomerNavigator.openCustomers(context),
+          );
         }
       } catch (e) {
         if (mounted) {

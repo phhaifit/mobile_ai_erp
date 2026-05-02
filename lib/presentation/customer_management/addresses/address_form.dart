@@ -30,11 +30,13 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
   AddressType _type = AddressType.home;
   bool _isDefault = false;
   bool _isSaving = false;
+  bool _isLoading = false;
   Address? _editingAddress;
 
   @override
   void initState() {
     super.initState();
+    _isLoading = widget.args.addressId != null;
     Future<void>.microtask(_initialize);
   }
 
@@ -58,7 +60,7 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
         _isDefault = _editingAddress!.isDefault;
       }
     }
-    if (mounted) setState(() {});
+    if (mounted) setState(() => _isLoading = false);
   }
 
   @override
@@ -74,11 +76,14 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isEditMode = widget.args.addressId != null;
     return Scaffold(
       appBar: AppBar(
-        title: Text(_editingAddress == null ? 'New address' : 'Edit address'),
+        title: Text(isEditMode ? 'Edit address' : 'New address'),
       ),
-      body: SafeArea(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SafeArea(
         child: Form(
           key: _formKey,
           child: ListView(

@@ -1,6 +1,7 @@
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/customer.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/customer_validation_exception.dart';
+import 'package:mobile_ai_erp/presentation/customer_management/navigation/customer_navigator.dart';
 import 'package:mobile_ai_erp/presentation/customer_management/navigation/customer_route_args.dart';
 import 'package:mobile_ai_erp/presentation/customer_management/store/customer_store.dart';
 import 'package:mobile_ai_erp/presentation/customer_management/widgets/customer_form_decoration.dart';
@@ -27,17 +28,27 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
   CustomerStatus _status = CustomerStatus.active;
   String? _selectedGroupId;
   bool _isSaving = false;
+  bool _isLoading = false;
   Customer? _editingCustomer;
 
   @override
   void initState() {
     super.initState();
+    _isLoading = widget.args?.customerId != null;
     Future<void>.microtask(_initialize);
   }
 
   Future<void> _initialize() async {
-    await Future.wait([_store.loadCustomers(), _store.loadGroups()]);
-    _editingCustomer = _store.findCustomerById(widget.args?.customerId);
+    final customerId = widget.args?.customerId;
+    if (customerId != null) {
+      await Future.wait([
+        _store.loadCustomerDetail(customerId),
+        _store.loadGroups(),
+      ]);
+    } else {
+      await _store.loadGroups();
+    }
+    _editingCustomer = _store.findCustomerById(customerId);
 
     if (_editingCustomer != null) {
       _firstNameController.text = _editingCustomer!.firstName;
@@ -49,7 +60,7 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
       _selectedGroupId = _editingCustomer!.groupId;
     }
 
-    if (mounted) setState(() {});
+    if (mounted) setState(() => _isLoading = false);
   }
 
   @override
@@ -64,13 +75,14 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isEditMode = widget.args?.customerId != null;
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          _editingCustomer == null ? 'New customer' : 'Edit customer',
-        ),
+        title: Text(isEditMode ? 'Edit customer' : 'New customer'),
       ),
-      body: SafeArea(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SafeArea(
         child: Form(
           key: _formKey,
           child: ListView(
@@ -223,8 +235,10 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
 
       if (!mounted) return;
 
-      // Navigate back to customer list
-      Navigator.of(context).pop();
+      Navigator.popUntil(
+        context,
+        (route) => route.settings.name == CustomerNavigator.customersRoute,
+      );
     } on CustomerValidationException catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(
