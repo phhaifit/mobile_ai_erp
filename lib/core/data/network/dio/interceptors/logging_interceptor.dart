@@ -189,7 +189,6 @@ class LoggingInterceptor extends Interceptor {
 
   void _prettyPrintJson(Object input) {
     final prettyString = encoder.convert(input);
-    logPrint('<-- Response payload');
     prettyString.split('\n').forEach((element) => logPrint(element));
   }
 }
