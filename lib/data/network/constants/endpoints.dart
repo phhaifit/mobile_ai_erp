@@ -49,6 +49,7 @@ class Endpoints {
   static String getTenantBySubdomain(String subdomain) => "/tenants/by-subdomain/$subdomain";
   static String customerSignUp = "/customer/auth/sign-up";
   static String customerSignIn = "/customer/auth/sign-in";
+  static String customerGetGoogleOAuthUrl = "/customer/auth/google";
   static String customerSignOut = "/customer/auth/sign-out";
   static String customerVerifyEmail = "/customer/auth/verify-email";
 }

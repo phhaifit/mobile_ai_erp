@@ -45,6 +45,7 @@ abstract class SignUpStoreBase with Store {
     required String password,
     required String name,
   }) async {
+    bool result = false;
     try {
       isLoading = true;
       errorMessage = null;
@@ -62,13 +63,13 @@ abstract class SignUpStoreBase with Store {
       isEmailVerificationPending = true;
       successMessage = 'Sign up successful! Please verify your email.';
 
-      isLoading = false;
-      return true;
+      result = true;
     } catch (e) {
       errorMessage = _parseErrorMessage(e.toString());
+    } finally {
       isLoading = false;
-      return false;
     }
+    return result;
   }
 
   /// Verify email with verification token
@@ -76,6 +77,7 @@ abstract class SignUpStoreBase with Store {
   Future<bool> verifyEmail({
     required String token,
   }) async {
+    bool result = false;
     try {
       isLoading = true;
       errorMessage = null;
@@ -89,13 +91,13 @@ abstract class SignUpStoreBase with Store {
       isEmailVerificationPending = false;
       successMessage = 'Email verified successfully!';
 
-      isLoading = false;
-      return true;
+      result = true;
     } catch (e) {
       errorMessage = _parseErrorMessage(e.toString());
+    } finally {
       isLoading = false;
-      return false;
     }
+    return result;
   }
 
   /// Clear sign up form state

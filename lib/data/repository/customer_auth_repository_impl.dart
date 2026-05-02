@@ -31,6 +31,19 @@ class CustomerAuthRepositoryImpl implements CustomerAuthRepository {
     }
   }
 
+  Future<Uri> getGoogleOAuthUri(String redirectUri) async {
+    try {
+      final url = await _api.getGoogleOAuthUrl(redirectUri);
+      final result = Uri.tryParse(url);
+      if (result == null) {
+        throw Exception("Invalid data response from Backend: $url");
+      }
+      return result;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   @override
   Future<MessageResponseDto> signUp({
     required String email,

@@ -10,14 +10,12 @@ import '../register/register_screen.dart';
 /// Main login screen with tabbed interface for different auth methods
 class CustomerLoginScreen extends StatefulWidget {
   final Function(String)? onMagicLinkRequest;
-  final Function()? onGoogleOAuthPressed;
   final VoidCallback? onForgotPasswordPressed;
   final VoidCallback? onSignUpPressed;
 
   const CustomerLoginScreen({
     super.key,
     this.onMagicLinkRequest,
-    this.onGoogleOAuthPressed,
     this.onForgotPasswordPressed,
     this.onSignUpPressed,
   }) : super();
@@ -30,7 +28,6 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> with TickerPr
   late TabController _tabController;
   late SignInStore _signInStore;
   bool _isMagicLinkLoading = false;
-  bool _isGoogleOAuthLoading = false;
   String? _magicLinkError;
   bool _isMagicLinkSent = false;
 
@@ -75,17 +72,8 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> with TickerPr
     });
   }
 
-  void _handleGoogleOAuthPressed() {
-    setState(() => _isGoogleOAuthLoading = true);
-
-    // TODO: Implement Google OAuth
-    // Simulate Google OAuth flow
-    Future.delayed(const Duration(seconds: 1), () {
-      if (mounted) {
-        setState(() => _isGoogleOAuthLoading = false);
-        widget.onGoogleOAuthPressed?.call();
-      }
-    });
+  void _handleGoogleOAuthPressed() async {
+    await _signInStore.signInWithGoogle();
   }
 
   void _handleSignUpPressed() {
@@ -217,7 +205,7 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> with TickerPr
 
                 // Google OAuth button
                 GoogleOAuthButton(
-                  isLoading: _isGoogleOAuthLoading,
+                  isLoading: _signInStore.isGoogleOAuthLoading,
                   onPressed: _handleGoogleOAuthPressed,
                 ),
                 const SizedBox(height: 12),

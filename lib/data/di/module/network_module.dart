@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/configs/dio_configs.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/auth_interceptor.dart';
@@ -21,6 +20,10 @@ import 'package:mobile_ai_erp/domain/repository/user/auth_repository.dart';
 
 import '../../../di/service_locator.dart';
 
+bool defaultValidateStatusIgnoreRedirect(int? status) {
+  return (status != null && status >= 200 && status < 300) || status == 302;
+}
+
 class NetworkModule {
   static const String erpDioClientName = 'erpDioClient';
 
@@ -34,6 +37,7 @@ class NetworkModule {
         baseUrl: Endpoints.erpBaseUrl,
         connectionTimeout: Endpoints.connectionTimeout,
         receiveTimeout: Endpoints.receiveTimeout,
+        validateStatus: defaultValidateStatusIgnoreRedirect,
       ),
     );
 

@@ -1,6 +1,11 @@
 import 'dart:developer';
 
+import 'package:flutter/rendering.dart';
+import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
+import 'package:mobile_ai_erp/data/model/customer_auth/customer_auth_models.dart';
+import 'package:mobile_ai_erp/domain/entity/customer_auth/token_pair.dart';
 import 'package:mobile_ai_erp/presentation/customer/store/auth_store.dart';
+import 'package:mobile_ai_erp/utils/oauth2_utils.dart';
 import 'package:mobx/mobx.dart';
 import 'package:mobile_ai_erp/domain/repository/customer_auth_repository.dart';
 
@@ -23,6 +28,9 @@ abstract class SignInStoreBase with Store {
   bool isLoading = false;
 
   @observable
+  bool isGoogleOAuthLoading = false;
+
+  @observable
   String? errorMessage;
 
   @observable
@@ -38,6 +46,7 @@ abstract class SignInStoreBase with Store {
     required String password,
     required bool remember,
   }) async {
+    bool result = false;
     try {
       isLoading = true;
       errorMessage = null;
@@ -53,14 +62,40 @@ abstract class SignInStoreBase with Store {
       await _customerAuthStore.setTokenPair(tokenPair, remember);
 
       successMessage = 'Signed in successfully!';
-      isLoading = false;
-      return true;
+      result = true;
     } catch (e) {
       log("SignIn error: $e");
       errorMessage = _parseErrorMessage(e.toString());
+    } finally {
       isLoading = false;
-      return false;
     }
+    return result;
+  }
+
+  /// Sign in with email and password
+  @action
+  Future<bool> signInWithGoogle() async {
+    bool result = false;
+    try {
+      isGoogleOAuthLoading = true;
+      errorMessage = null;
+      successMessage = null;
+
+      final (callbackUrlScheme, redirectUri) = OAuth2Utils.getRedirectUri();
+      final uri = await _authRepository.getGoogleOAuthUri(redirectUri);
+      final resultUriStr = await FlutterWebAuth2.authenticate(url: uri.toString(), callbackUrlScheme: callbackUrlScheme, options: const FlutterWebAuth2Options(useWebview: false));
+      final resultUri = Uri.parse(resultUriStr);
+      await _customerAuthStore.setTokenPair(TokenResponseDto.fromJson(resultUri.queryParameters).toTokenPair(), false);
+
+      successMessage = 'Signed in successfully!';
+      result = true;
+    } catch (e) {
+      log("SignIn error: $e");
+      errorMessage = _parseErrorMessage(e.toString());
+    } finally {
+      isGoogleOAuthLoading = false;
+    }
+    return result;
   }
 
   /// Clear error message

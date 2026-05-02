@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/rendering.dart';
 import 'package:mobile_ai_erp/data/model/customer_auth/customer_auth_models.dart';
-import 'package:mobile_ai_erp/data/model/customer_auth/dtos/message_response_dto.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
 
 class CustomerAuthApi {
@@ -88,6 +88,17 @@ class CustomerAuthApi {
     }
   }
 
+  /// Initiate Google OAuth flow
+  Future<String> getGoogleOAuthUrl(String redirectUri) async {
+    try {
+      final response = await _dio.get(Endpoints.customerGetGoogleOAuthUrl, queryParameters: {"redirectUri": redirectUri});
+      final location = response.headers['location'];
+      return location?.firstOrNull ?? '';
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   /// Request a magic link for passwordless authentication
   Future<void> requestMagicLink({
     required String email,
@@ -112,21 +123,6 @@ class CustomerAuthApi {
         queryParameters: {'token': token},
       );
       return SignInResponseModel.fromJson(response.data);
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  /// Initiate Google OAuth flow
-  Future<String> initiateGoogleOAuth({
-    required String redirectUri,
-  }) async {
-    try {
-      final response = await _dio.post(
-        '/google',
-        data: {'redirectUri': redirectUri},
-      );
-      return response.data['authorizationUrl'] as String;
     } catch (e) {
       rethrow;
     }

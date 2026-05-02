@@ -10,6 +10,9 @@ abstract class CustomerAuthRepository {
     required String password,
   });
 
+  /// Get gooogle OAuth URL
+  Future<Uri> getGoogleOAuthUri(String redirectUri);
+
   /// Sign up with email and password
   Future<MessageResponseDto> signUp({
     required String email,
