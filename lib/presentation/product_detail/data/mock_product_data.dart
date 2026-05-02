@@ -34,16 +34,18 @@ class MockProductData {
     var id = 1;
     for (final color in _colors) {
       for (final size in _sizes) {
-        variants.add(ProductVariant(
-          id: 'v${id}',
-          sku:
-              'NAM270-${color.name.substring(0, 2).toUpperCase()}-${size.replaceAll(' ', '')}',
-          color: color,
-          size: size,
-          price: 3200000,
-          salePrice: 2560000,
-          stockQuantity: _stockFor(color.name, size),
-        ));
+        variants.add(
+          ProductVariant(
+            id: 'v${id}',
+            sku:
+                'NAM270-${color.name.substring(0, 2).toUpperCase()}-${size.replaceAll(' ', '')}',
+            color: color,
+            size: size,
+            price: 3200000,
+            salePrice: 2560000,
+            stockQuantity: _stockFor(color.name, size),
+          ),
+        );
         id++;
       }
     }
@@ -55,6 +57,10 @@ class MockProductData {
     name: 'Nike Air Max 270 React ENG',
     brandName: 'Nike',
     categoryName: 'Running Shoes',
+    inStock: true,
+    isFlashSale: true,
+    flashSaleFrom: DateTime(2026, 5, 1, 9, 0),
+    flashSaleEndTime: DateTime(2026, 5, 1, 23, 59),
     media: const [
       ProductMedia(
         url: 'https://picsum.photos/seed/nike1/800/800',
@@ -145,9 +151,7 @@ class MockProductData {
         comment:
             'Decent shoes but expected more for the price. The comfort is good but the mesh upper started showing wear after just 2 months of regular use. The color also faded a bit.',
         date: DateTime(2026, 2, 20),
-        imageUrls: [
-          'https://picsum.photos/seed/rev4/400/400',
-        ],
+        imageUrls: ['https://picsum.photos/seed/rev4/400/400'],
       ),
       ProductReview(
         id: 'r5',
