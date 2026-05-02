@@ -78,7 +78,7 @@ class OrderItem {
   }
 }
 
-class Order {
+class StorefrontOrder {
   final String id;
   final OrderStatus status;
   final DateTime createdAt;
@@ -96,7 +96,7 @@ class Order {
   final List<dynamic> outboundReceipts;
   final List<dynamic> returnRequests;
 
-  Order({
+  StorefrontOrder({
     required this.id,
     required this.status,
     required this.createdAt,
@@ -113,7 +113,7 @@ class Order {
     this.returnRequests = const [],
   });
 
-  factory Order.fromJson(Map<String, dynamic> json) {
+  factory StorefrontOrder.fromJson(Map<String, dynamic> json) {
     // 1. Bulletproof parsing for the items list
     List<OrderItem> parsedItems = [];
     final itemsData = json['items'] ?? json['order_items'] ?? json['orderItems'];
@@ -127,7 +127,7 @@ class Order {
     }
 
     // 2. Return the safely parsed Order
-    return Order(
+    return StorefrontOrder(
       id: json['id'] ?? '',
       status: _parseOrderStatus(json['status']),
       createdAt: json['createdAt'] != null 

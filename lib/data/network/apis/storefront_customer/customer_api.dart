@@ -3,10 +3,10 @@ import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/customer.dart';
 
-class CustomerApi {
+class StorefrontCustomerApi {
   final DioClient _dioClient;
 
-  CustomerApi(this._dioClient);
+  StorefrontCustomerApi(this._dioClient);
 
   /// Login customer
   Future<Map<String, dynamic>> login(String email, String password) async {

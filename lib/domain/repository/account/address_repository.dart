@@ -1,9 +1,9 @@
-import '../../entity/address/address.dart';
+import '../../entity/storefront_address/storefront_address.dart';
 
-abstract class AddressRepository {
-  Future<List<Address>> getAddresses();
-  Future<void> addAddress(Address address);
-  Future<void> updateAddress(Address address);
+abstract class StorefrontAddressRepository {
+  Future<List<StorefrontAddress>> getAddresses();
+  Future<void> addAddress(StorefrontAddress address);
+  Future<void> updateAddress(StorefrontAddress address);
   Future<void> setDefault(String id);
   Future<void> deleteAddress(String id);
 }

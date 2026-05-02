@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import '../../../../domain/entity/order/order.dart';
+import '../../../domain/entity/storefront_order/order.dart';
 import '../../../../di/service_locator.dart';
 import '../../../../utils/routes/routes.dart';
 import '../store/order_store.dart';

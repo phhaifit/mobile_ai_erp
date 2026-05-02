@@ -1,4 +1,4 @@
-class Address {
+class StorefrontAddress {
   final String id;
   final String address;
   final String type;
@@ -7,7 +7,7 @@ class Address {
   final String? ward;
   final bool isDefault;
 
-  Address({
+  StorefrontAddress({
     required this.id,
     required this.address,
     required this.type,
@@ -17,7 +17,7 @@ class Address {
     this.isDefault = false,
   });
 
-  Address copyWith({
+  StorefrontAddress copyWith({
     String? id,
     String? address,
     String? type,
@@ -26,7 +26,7 @@ class Address {
     Object? ward,
     bool? isDefault,
   }) {
-    return Address(
+    return StorefrontAddress(
       id: id ?? this.id,
       address: address ?? this.address,
       type: type ?? this.type,
@@ -49,8 +49,8 @@ class Address {
     };
   }
 
-  factory Address.fromJson(Map<String, dynamic> json) {
-    return Address(
+  factory StorefrontAddress.fromJson(Map<String, dynamic> json) {
+    return StorefrontAddress(
       id: json['id']?.toString() ?? '',
       address: json['address']?.toString() ?? '',
       type: json['type']?.toString() ?? '',

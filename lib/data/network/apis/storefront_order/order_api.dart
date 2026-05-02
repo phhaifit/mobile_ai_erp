@@ -1,17 +1,17 @@
 import 'dart:async';
 import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
-import 'package:mobile_ai_erp/domain/entity/order/order.dart';
-import 'package:mobile_ai_erp/domain/entity/order/return_request.dart';
+import 'package:mobile_ai_erp/domain/entity/storefront_order/order.dart';
+import 'package:mobile_ai_erp/domain/entity/storefront_order/return_request.dart';
 
-class OrderApi {
+class StorefrontOrderApi {
   final DioClient _dioClient;
 
-  OrderApi(this._dioClient);
+  StorefrontOrderApi(this._dioClient);
 
   /// Get customer order history
   /// Get customer order history
-  Future<List<Order>> getOrderHistory({String? status, int? page, int? pageSize}) async {
+  Future<List<StorefrontOrder>> getOrderHistory({String? status, int? page, int? pageSize}) async {
     try {
       final res = await _dioClient.dio.get(
         Endpoints.customerOrders,
@@ -24,7 +24,7 @@ class OrderApi {
       
       // Unwrap the paginated 'data' key
       final List dataList = res.data['data'] ?? [];
-      return dataList.map((e) => Order.fromJson(e)).toList();
+      return dataList.map((e) => StorefrontOrder.fromJson(e)).toList();
     } catch (e) {
       print('❌ [OrderApi.getOrderHistory] Error: $e');
       rethrow;
@@ -32,10 +32,10 @@ class OrderApi {
   }
 
   /// Get order details (NOTE: Backend endpoint needed)
-  Future<Order> getOrderDetails(String orderId) async {
+  Future<StorefrontOrder> getOrderDetails(String orderId) async {
     try {
       final res = await _dioClient.dio.get('${Endpoints.customerOrders}/$orderId');
-      return Order.fromJson(res.data);
+      return StorefrontOrder.fromJson(res.data);
     } catch (e) {
       rethrow;
     }

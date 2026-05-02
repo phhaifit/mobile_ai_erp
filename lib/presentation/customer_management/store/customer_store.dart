@@ -1,5 +1,5 @@
 import 'package:mobile_ai_erp/core/stores/error/error_store.dart';
-import 'package:mobile_ai_erp/domain/entity/address/address.dart';
+import 'package:mobile_ai_erp/domain/entity/customer/address.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/customer.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/customer_group.dart';
 import 'package:mobile_ai_erp/domain/repository/customer/customer_repository.dart';

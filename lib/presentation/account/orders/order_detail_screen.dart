@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../utils/routes/cart_routes.dart';
-import '../../../../domain/entity/order/order.dart';
+import '../../../domain/entity/storefront_order/order.dart';
 import '../../../../di/service_locator.dart';
 import '../../../../utils/routes/routes.dart';
 import '../../../../utils/formatters/currency_utils.dart';
@@ -12,7 +12,7 @@ class OrderDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final order = ModalRoute.of(context)!.settings.arguments as Order;
+    final order = ModalRoute.of(context)!.settings.arguments as StorefrontOrder;
     final orderStore = getIt<OrderStore>();
 
     return Scaffold(

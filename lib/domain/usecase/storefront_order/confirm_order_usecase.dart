@@ -2,7 +2,7 @@ import '../../../core/domain/usecase/use_case.dart';
 import '../../repository/account/order_repository.dart';
 
 class ConfirmOrderUsecase extends UseCase<void, String> {
-  final OrderRepository _repository;
+  final StorefrontOrderRepository _repository;
 
   ConfirmOrderUsecase(this._repository);
 

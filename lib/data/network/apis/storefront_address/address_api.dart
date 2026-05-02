@@ -1,47 +1,48 @@
 import 'dart:async';
 import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
-import 'package:mobile_ai_erp/domain/entity/address/address.dart';
+import 'package:mobile_ai_erp/domain/entity/storefront_address/storefront_address.dart';
 
-class AddressApi {
+class StorefrontAddressApi {
   final DioClient _dioClient;
 
-  AddressApi(this._dioClient);
+  StorefrontAddressApi(this._dioClient);
 
   /// Get customer addresses (Securely fetches only the logged-in user's addresses)
-  Future<List<Address>> getAddresses() async {
+  Future<List<StorefrontAddress>> getAddresses() async {
     try {
       final res = await _dioClient.dio.get(Endpoints.customerAddresses);
       // Ensure we map the list properly
       final List data = res.data ?? [];
-      return data.map((e) => Address.fromJson(e)).toList();
+      return data.map((e) => StorefrontAddress.fromJson(e)).toList();
     } catch (e) {
-      print('❌ [AddressApi.getAddresses] Error: $e');
+      print('❌ [StorefrontAddressApi.getAddresses] Error: $e');
       rethrow;
     }
   }
 
   /// Create address
-  Future<Address> createAddress(Map<String, dynamic> data) async {
+  Future<StorefrontAddress> createAddress(Map<String, dynamic> data) async {
     try {
       final res = await _dioClient.dio.post(
         Endpoints.customerAddresses,
         data: data,
       );
-      return Address.fromJson(res.data);
+      return StorefrontAddress.fromJson(res.data);
     } catch (e) {
+      print('❌ [StorefrontAddressApi.createAddress] Error: $e');
       rethrow;
     }
   }
 
   /// Update address
-  Future<Address> updateAddress(String id, Map<String, dynamic> data) async {
+  Future<StorefrontAddress> updateAddress(String id, Map<String, dynamic> data) async {
     try {
       final res = await _dioClient.dio.patch(
         '${Endpoints.customerAddresses}/$id',
         data: data,
       );
-      return Address.fromJson(res.data);
+      return StorefrontAddress.fromJson(res.data);
     } catch (e) {
       rethrow;
     }
@@ -57,7 +58,7 @@ class AddressApi {
   }
 
   /// Set default address
-  Future<Address> setDefaultAddress(String id) async {
+  Future<StorefrontAddress> setDefaultAddress(String id) async {
     try {
       // Our backend is built to recognize isDefault in the standard update payload
       return await updateAddress(id, {'isDefault': true});

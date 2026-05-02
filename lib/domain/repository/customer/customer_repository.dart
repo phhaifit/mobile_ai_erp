@@ -1,4 +1,4 @@
-import 'package:mobile_ai_erp/domain/entity/address/address.dart';
+import 'package:mobile_ai_erp/domain/entity/customer/address.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/customer.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/customer_group.dart';
 

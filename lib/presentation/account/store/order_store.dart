@@ -1,12 +1,12 @@
 import 'package:mobx/mobx.dart';
-import '../../../../domain/entity/order/order.dart';
-import '../../../../domain/entity/order/return_request.dart';
-import '../../../../domain/usecase/order/get_order_history_usecase.dart';
-import '../../../../domain/usecase/order/get_order_details_usecase.dart';
-import '../../../../domain/usecase/order/cancel_order_usecase.dart';
-import '../../../../domain/usecase/order/submit_return_request_usecase.dart';
-import '../../../../domain/usecase/order/reorder_usecase.dart';
-import '../../../../domain/usecase/order/confirm_order_usecase.dart';
+import '../../../domain/entity/storefront_order/order.dart';
+import '../../../domain/entity/storefront_order/return_request.dart';
+import '../../../domain/usecase/storefront_order/get_order_history_usecase.dart';
+import '../../../domain/usecase/storefront_order/get_order_details_usecase.dart';
+import '../../../domain/usecase/storefront_order/cancel_order_usecase.dart';
+import '../../../domain/usecase/storefront_order/submit_return_request_usecase.dart';
+import '../../../domain/usecase/storefront_order/reorder_usecase.dart';
+import '../../../domain/usecase/storefront_order/confirm_order_usecase.dart';
 
 part 'order_store.g.dart';
 
@@ -30,10 +30,10 @@ abstract class _OrderStore with Store {
   );
 
   @observable
-  ObservableList<Order> orders = ObservableList<Order>();
+  ObservableList<StorefrontOrder> orders = ObservableList<StorefrontOrder>();
 
   @observable
-  Order? currentOrderDetails;
+  StorefrontOrder? currentOrderDetails;
 
   @observable
   bool isLoading = false;
@@ -63,7 +63,7 @@ abstract class _OrderStore with Store {
   }
 
   @action
-  Future<Order?> getOrderDetails(String orderId) async {
+  Future<StorefrontOrder?> getOrderDetails(String orderId) async {
     try {
       isLoading = true;
       final order = await _getOrderDetails.call(params: orderId);

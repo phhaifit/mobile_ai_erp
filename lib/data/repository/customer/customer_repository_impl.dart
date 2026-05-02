@@ -1,5 +1,5 @@
 import 'package:mobile_ai_erp/data/local/datasources/customer/customer_datasource.dart';
-import 'package:mobile_ai_erp/domain/entity/address/address.dart';
+import 'package:mobile_ai_erp/domain/entity/customer/address.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/customer.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/customer_group.dart';
 import 'package:mobile_ai_erp/domain/repository/customer/customer_repository.dart';

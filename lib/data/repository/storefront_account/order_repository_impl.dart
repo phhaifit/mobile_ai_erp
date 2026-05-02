@@ -1,19 +1,19 @@
-import '../../../domain/entity/order/order.dart';
-import '../../../domain/entity/order/return_request.dart';
+import '../../../domain/entity/storefront_order/order.dart';
+import '../../../domain/entity/storefront_order/return_request.dart';
 import '../../../domain/repository/account/order_repository.dart';
-import '../../local/datasources/order/order_api_datasource.dart';
+import '../../local/datasources/storefront_order/order_api_datasource.dart';
 
-class OrderRepositoryImpl implements OrderRepository {
+class OrderRepositoryImpl implements StorefrontOrderRepository {
   final OrderApiDataSource _dataSource;
 
   OrderRepositoryImpl(this._dataSource);
 
   @override
-  Future<List<Order>> getOrderHistory({String? status, int? page, int? pageSize}) =>
+  Future<List<StorefrontOrder>> getOrderHistory({String? status, int? page, int? pageSize}) =>
       _dataSource.getOrderHistory(status: status, page: page, pageSize: pageSize);
 
   @override
-  Future<Order> getOrderDetails(String orderId) => _dataSource.getOrderDetails(orderId);
+  Future<StorefrontOrder> getOrderDetails(String orderId) => _dataSource.getOrderDetails(orderId);
 
   @override
   Future<void> cancelOrder(String orderId) => _dataSource.cancelOrder(orderId);

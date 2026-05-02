@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../../../domain/entity/order/order.dart';
+import '../../../domain/entity/storefront_order/order.dart';
 import '../../../../utils/formatters/currency_utils.dart';
 import 'order_status_badge.dart';
 
 class OrderItemCardWidget extends StatelessWidget {
-  final Order order;
+  final StorefrontOrder order;
   final VoidCallback onTap;
 
   const OrderItemCardWidget({

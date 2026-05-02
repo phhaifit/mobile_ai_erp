@@ -1,6 +1,6 @@
 import '../../../domain/entity/customer/customer.dart';
 import '../../../domain/repository/account/customer_repository.dart';
-import '../../local/datasources/customer/customer_api_datasource.dart';
+import '../../local/datasources/storefront_customer/customer_api_datasource.dart';
 
 class AccountCustomerRepositoryImpl implements AccountCustomerRepository {
   final AccountCustomerApiDataSource _dataSource;

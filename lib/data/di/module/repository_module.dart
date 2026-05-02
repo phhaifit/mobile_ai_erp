@@ -6,17 +6,17 @@ import 'package:mobile_ai_erp/data/local/datasources/post/post_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/product_metadata/product_metadata_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/user/role_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/user/user_datasource.dart';
-import 'package:mobile_ai_erp/data/local/datasources/address/address_api_datasource.dart';
-import 'package:mobile_ai_erp/data/local/datasources/order/order_api_datasource.dart';
-import 'package:mobile_ai_erp/data/local/datasources/customer/customer_api_datasource.dart';
+import 'package:mobile_ai_erp/data/local/datasources/storefront_address/address_api_datasource.dart';
+import 'package:mobile_ai_erp/data/local/datasources/storefront_order/order_api_datasource.dart';
+import 'package:mobile_ai_erp/data/local/datasources/storefront_customer/customer_api_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/loyalty_ledgers/loyalty_ledger_api_datasource.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
-import 'package:mobile_ai_erp/data/network/apis/customer/customer_api.dart';
-import 'package:mobile_ai_erp/data/network/apis/address/address_api.dart';
-import 'package:mobile_ai_erp/data/network/apis/order/order_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/storefront_customer/customer_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/storefront_address/address_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/storefront_order/order_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/loyalty_ledgers/loyalty_ledger_api.dart';
 import 'package:mobile_ai_erp/data/repository/customer/customer_repository_impl.dart';
-import 'package:mobile_ai_erp/data/repository/account/customer_repository_impl.dart';
+import 'package:mobile_ai_erp/data/repository/storefront_account/customer_repository_impl.dart';
 import 'package:mobile_ai_erp/domain/repository/customer/customer_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/account/customer_repository.dart';
 import 'package:mobile_ai_erp/data/repository/fulfillment/fulfillment_repository_impl.dart';
@@ -46,9 +46,9 @@ import 'package:mobile_ai_erp/domain/repository/stock_operations/stock_operation
 import 'package:mobile_ai_erp/domain/repository/supplier/supplier_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/role_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/user_repository.dart';
-import 'package:mobile_ai_erp/data/repository/account/address_repository_impl.dart';
-import 'package:mobile_ai_erp/data/repository/account/order_repository_impl.dart';
-import 'package:mobile_ai_erp/data/repository/account/loyalty_repository_impl.dart';
+import 'package:mobile_ai_erp/data/repository/storefront_account/address_repository_impl.dart';
+import 'package:mobile_ai_erp/data/repository/storefront_account/order_repository_impl.dart';
+import 'package:mobile_ai_erp/data/repository/storefront_account/loyalty_repository_impl.dart';
 import 'package:mobile_ai_erp/domain/repository/web_builder/cms_page_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/web_builder/store_settings_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/web_builder/web_theme_repository.dart';
@@ -92,22 +92,22 @@ class RepositoryModule {
     ));
     
     getIt.registerLazySingleton<AccountCustomerApiDataSource>(
-        () => AccountCustomerApiDataSource(getIt<CustomerApi>(), getIt<SharedPreferenceHelper>()));
+        () => AccountCustomerApiDataSource(getIt<StorefrontCustomerApi>(), getIt<SharedPreferenceHelper>()));
 
     getIt.registerLazySingleton<AccountCustomerRepository>(
         () => AccountCustomerRepositoryImpl(getIt<AccountCustomerApiDataSource>()));
 
     getIt.registerLazySingleton<AddressApiDataSource>(
-        () => AddressApiDataSource(getIt<AddressApi>(), getIt<SharedPreferenceHelper>()));
+        () => AddressApiDataSource(getIt<StorefrontAddressApi>(), getIt<SharedPreferenceHelper>()));
     getIt.registerLazySingleton<OrderApiDataSource>(
-        () => OrderApiDataSource(getIt<OrderApi>(), getIt<SharedPreferenceHelper>()));
+        () => OrderApiDataSource(getIt<StorefrontOrderApi>(), getIt<SharedPreferenceHelper>()));
     getIt.registerLazySingleton<LoyaltyLedgerApiDataSource>(
         () => LoyaltyLedgerApiDataSource(getIt<LoyaltyLedgerApi>()));
 
-    getIt.registerLazySingleton<AddressRepository>(
+    getIt.registerLazySingleton<StorefrontAddressRepository>(
         () => AddressRepositoryImpl(getIt<AddressApiDataSource>()));
         
-    getIt.registerLazySingleton<OrderRepository>(
+    getIt.registerLazySingleton<StorefrontOrderRepository>(
         () => OrderRepositoryImpl(getIt<OrderApiDataSource>()));
         
     getIt.registerLazySingleton<LoyaltyLedgerRepository>(

@@ -44,17 +44,17 @@ import 'package:mobile_ai_erp/domain/usecase/web_builder/get_web_theme_by_id_use
 import 'package:mobile_ai_erp/domain/usecase/web_builder/get_web_themes_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/save_cms_page_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/save_store_settings_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/customer/customer_login_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/customer/customer_register_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/customer/customer_forgot_password_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/customer/get_profile_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/order/get_order_details_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/order/get_order_history_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/order/reorder_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/order/submit_return_request_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/order/cancel_order_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/order/confirm_order_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/customer/update_profile_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/storefront_customer/customer_login_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/storefront_customer/customer_register_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/storefront_customer/customer_forgot_password_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/storefront_customer/get_profile_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/storefront_order/get_order_details_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/storefront_order/get_order_history_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/storefront_order/reorder_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/storefront_order/submit_return_request_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/storefront_order/cancel_order_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/storefront_order/confirm_order_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/storefront_customer/update_profile_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/loyalty_ledgers/get_loyalty_balance_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/loyalty_ledgers/get_loyalty_history_usecase.dart';
 import 'package:mobile_ai_erp/domain/repository/account/order_repository.dart';
@@ -201,22 +201,22 @@ class UseCaseModule {
     // Customer order:-------------------------------------------------------
 
     getIt.registerSingleton<GetOrderHistoryUseCase>(
-      GetOrderHistoryUseCase(getIt<OrderRepository>()),
+      GetOrderHistoryUseCase(getIt<StorefrontOrderRepository>()),
     );
     getIt.registerSingleton<GetOrderDetailsUseCase>(
-      GetOrderDetailsUseCase(getIt<OrderRepository>()),
+      GetOrderDetailsUseCase(getIt<StorefrontOrderRepository>()),
     );
     getIt.registerSingleton<CancelOrderUseCase>(
-      CancelOrderUseCase(getIt<OrderRepository>()),
+      CancelOrderUseCase(getIt<StorefrontOrderRepository>()),
     );
     getIt.registerSingleton<SubmitReturnRequestUseCase>(
-      SubmitReturnRequestUseCase(getIt<OrderRepository>()),
+      SubmitReturnRequestUseCase(getIt<StorefrontOrderRepository>()),
     );
     getIt.registerSingleton<ReorderUseCase>(
-      ReorderUseCase(getIt<OrderRepository>()),
+      ReorderUseCase(getIt<StorefrontOrderRepository>()),
     );
     getIt.registerSingleton<ConfirmOrderUsecase>(
-      ConfirmOrderUsecase(getIt<OrderRepository>()),
+      ConfirmOrderUsecase(getIt<StorefrontOrderRepository>()),
     );
 
     // loyalty ledger:-------------------------------------------------------

@@ -1,9 +1,9 @@
 import 'package:mobile_ai_erp/core/stores/error/error_store.dart';
 import 'package:mobile_ai_erp/core/stores/form/form_store.dart';
 import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
-import 'package:mobile_ai_erp/domain/usecase/customer/customer_forgot_password_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/customer/customer_login_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/customer/customer_register_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/storefront_customer/customer_forgot_password_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/storefront_customer/customer_login_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/storefront_customer/customer_register_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/is_logged_in_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/save_login_in_status_usecase.dart';
 import 'package:dio/dio.dart';

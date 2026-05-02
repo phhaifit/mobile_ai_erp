@@ -2,8 +2,8 @@ import 'package:mobx/mobx.dart';
 import '../../../../di/service_locator.dart';
 import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
 import '../../../../domain/entity/customer/customer.dart';
-import '../../../../domain/usecase/customer/get_profile_usecase.dart';
-import '../../../../domain/usecase/customer/update_profile_usecase.dart';
+import '../../../domain/usecase/storefront_customer/get_profile_usecase.dart';
+import '../../../domain/usecase/storefront_customer/update_profile_usecase.dart';
 
 
 part 'profile_store.g.dart';

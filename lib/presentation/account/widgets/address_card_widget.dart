@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../../domain/entity/address/address.dart';
+import '../../../../domain/entity/storefront_address/storefront_address.dart';
 
 class AddressCardWidget extends StatelessWidget {
-  final Address address;
+  final StorefrontAddress address;
   final VoidCallback onSetDefault;
   final VoidCallback onEdit;
   final VoidCallback onDelete;

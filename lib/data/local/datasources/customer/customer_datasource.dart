@@ -1,4 +1,4 @@
-import 'package:mobile_ai_erp/domain/entity/address/address.dart';
+import 'package:mobile_ai_erp/domain/entity/customer/address.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/customer.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/customer_group.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/customer_validation_exception.dart';
@@ -86,56 +86,62 @@ class CustomerDataSource {
 
   final List<Address> _addresses = <Address>[
     Address(
-      id: 'addr_alice_home',
-      address: '123 Maple Street, New York, NY 10001',
-      type: 'Residential',
-      province: 'New York',
-      district: 'Manhattan',
-      ward: null,
-      isDefault: true,
-    ),
-    Address(
       id: 'addr_alice_office',
-      address: '456 Fifth Ave, Suite 800, New York, NY 10018',
-      type: 'Office',
-      province: 'New York',
-      district: 'Manhattan',
-      ward: null,
+      customerId: 'cust_alice',
+      label: 'Office',
+      type: AddressType.billing,
+      street: '456 Fifth Ave, Suite 800',
+      city: 'New York',
+      state: 'NY',
+      countryCode: 'US',
+      postalCode: '10018',
     ),
     Address(
       id: 'addr_bob_hq',
-      address: '789 Industrial Blvd, Chicago, IL 60601',
-      type: 'Business',
-      province: 'Illinois',
-      district: 'Cook County',
-      ward: null,
+      customerId: 'cust_bob',
+      label: 'Headquarters',
+      type: AddressType.both,
+      street: '789 Industrial Blvd',
+      city: 'Chicago',
+      state: 'IL',
+      countryCode: 'US',
+      postalCode: '60601',
       isDefault: true,
     ),
     Address(
       id: 'addr_carol_home',
-      address: '22 Oak Lane, Austin, TX 73301',
-      type: 'Residential',
-      province: 'Texas',
-      district: 'Travis',
-      ward: null,
+      customerId: 'cust_carol',
+      label: 'Home',
+      type: AddressType.both,
+      street: '22 Oak Lane',
+      city: 'Austin',
+      state: 'TX',
+      countryCode: 'US',
+      postalCode: '73301',
       isDefault: true,
     ),
     Address(
       id: 'addr_enterprise_billing',
-      address: '1 Tech Park Drive, San Jose, CA 95101',
-      type: 'Billing',
-      province: 'California',
-      district: 'Santa Clara',
-      ward: null,
+      customerId: 'cust_enterprise',
+      label: 'Billing',
+      type: AddressType.billing,
+      street: '1 Tech Park Drive',
+      city: 'San Jose',
+      state: 'CA',
+      countryCode: 'US',
+      postalCode: '95101',
       isDefault: true,
     ),
     Address(
       id: 'addr_enterprise_shipping',
-      address: '500 Commerce Way, Fremont, CA 94536',
-      type: 'Shipping',
-      province: 'California',
-      district: 'Alameda',
-      ward: null,
+      customerId: 'cust_enterprise',
+      label: 'Warehouse',
+      type: AddressType.shipping,
+      street: '500 Commerce Way',
+      city: 'Fremont',
+      state: 'CA',
+      countryCode: 'US',
+      postalCode: '94536',
     ),
   ];
 
@@ -227,12 +233,16 @@ class CustomerDataSource {
       ..sort((a, b) {
         if (a.isDefault && !b.isDefault) return -1;
         if (!a.isDefault && b.isDefault) return 1;
-        return a.address.toLowerCase().compareTo(b.address.toLowerCase());
+        return a.label.toLowerCase().compareTo(b.label.toLowerCase());
       });
   }
 
   Future<Address> saveAddress(Address address) async {
-    final addressStr = address.address.trim();
+    final label = address.label.trim();
+    final street = address.street.trim();
+    final city = address.city.trim();
+    final country = address.countryCode.trim().toUpperCase();
+    final addressStr = address.label.trim();
 
     if (addressStr.isEmpty) {
       throw const CustomerValidationException('Address is required.');
@@ -242,11 +252,12 @@ class CustomerDataSource {
 
     final saved = address.copyWith(
       id: addressId.isEmpty ? _generateId('addr') : addressId,
-      address: addressStr,
-      type: address.type.trim(),
-      province: _normalizeNullable(address.province),
-      district: _normalizeNullable(address.district),
-      ward: _normalizeNullable(address.ward),
+      label: label,
+      street: street,
+      city: city,
+      countryCode: country,
+      state: _normalizeNullable(address.state),
+      postalCode: _normalizeNullable(address.postalCode),
     );
     _upsertById(_addresses, saved, (a) => a.id);
     return saved;

@@ -1,5 +1,5 @@
 import 'package:mobile_ai_erp/di/service_locator.dart';
-import 'package:mobile_ai_erp/domain/entity/address/address.dart';
+import 'package:mobile_ai_erp/domain/entity/customer/address.dart';
 import 'package:mobile_ai_erp/presentation/customer_management/navigation/customer_navigator.dart';
 import 'package:mobile_ai_erp/presentation/customer_management/navigation/customer_route_args.dart';
 import 'package:mobile_ai_erp/presentation/customer_management/store/customer_store.dart';

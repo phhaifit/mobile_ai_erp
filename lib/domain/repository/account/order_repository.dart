@@ -1,8 +1,8 @@
-import '../../entity/order/order.dart';
+import '../../entity/storefront_order/order.dart';
 
-abstract class OrderRepository {
-  Future<List<Order>> getOrderHistory({String? status, int? page, int? pageSize});
-  Future<Order> getOrderDetails(String orderId);
+abstract class StorefrontOrderRepository {
+  Future<List<StorefrontOrder>> getOrderHistory({String? status, int? page, int? pageSize});
+  Future<StorefrontOrder> getOrderDetails(String orderId);
   Future<void> cancelOrder(String orderId);
   Future<void> submitReturnRequest(String orderId, Map<String, dynamic> data);
   Future<Map<String, dynamic>> reorder(String orderId);

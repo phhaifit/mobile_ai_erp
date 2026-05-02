@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../domain/entity/address/address.dart';
+import '../../../../domain/entity/storefront_address/storefront_address.dart';
 import '../../../../di/service_locator.dart';
 import '../store/address_store.dart';
 
@@ -22,14 +22,14 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
   bool _isLoading = false;
   bool _isInit = false;
 
-  Address? _existingAddress;
+  StorefrontAddress? _existingAddress;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_isInit) {
       final args = ModalRoute.of(context)?.settings.arguments;
-      if (args is Address) {
+      if (args is StorefrontAddress) {
         _existingAddress = args;
       }
 
@@ -81,7 +81,7 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
           return;
         }
 
-        final addressData = Address(
+        final addressData = StorefrontAddress(
           id: _existingAddress?.id ?? 'addr_${DateTime.now().millisecondsSinceEpoch}',
           address: _nameController.text.trim(),
           type: newPhone,

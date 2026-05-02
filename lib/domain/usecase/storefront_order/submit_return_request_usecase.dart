@@ -1,5 +1,5 @@
 import '../../../core/domain/usecase/use_case.dart';
-import '../../entity/order/return_request.dart';
+import '../../entity/storefront_order/return_request.dart';
 import '../../repository/account/order_repository.dart';
 
 class SubmitReturnParams {
@@ -10,7 +10,7 @@ class SubmitReturnParams {
 }
 
 class SubmitReturnRequestUseCase extends UseCase<void, SubmitReturnParams> {
-  final OrderRepository _repository;
+  final StorefrontOrderRepository _repository;
 
   SubmitReturnRequestUseCase(this._repository);
 

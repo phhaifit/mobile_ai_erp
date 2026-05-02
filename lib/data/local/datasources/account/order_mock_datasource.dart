@@ -1,9 +1,9 @@
 import 'package:decimal/decimal.dart';
-import '../../../../domain/entity/order/order.dart';
+import '../../../../domain/entity/storefront_order/order.dart';
 
 class OrderMockDataSource {
-  final List<Order> _mockOrders = [
-    Order(
+  final List<StorefrontOrder> _mockOrders = [
+    StorefrontOrder(
       id: 'ORD-2026-001',
       status: OrderStatus.delivered,
       createdAt: DateTime.now().subtract(const Duration(days: 5)),
@@ -25,7 +25,7 @@ class OrderMockDataSource {
             totalPrice: Decimal.parse('1250000')),
       ],
     ),
-    Order(
+    StorefrontOrder(
       id: 'ORD-2026-002',
       status: OrderStatus.pending,
       createdAt: DateTime.now().subtract(const Duration(hours: 2)),
@@ -49,7 +49,7 @@ class OrderMockDataSource {
     ),
   ];
 
-  Future<List<Order>> getOrderHistory() async {
+  Future<List<StorefrontOrder>> getOrderHistory() async {
     await Future.delayed(const Duration(milliseconds: 1000));
     return _mockOrders;
   }

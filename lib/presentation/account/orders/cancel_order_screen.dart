@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../domain/entity/order/order.dart';
+import '../../../domain/entity/storefront_order/order.dart';
 import '../../../../di/service_locator.dart';
 import '../store/order_store.dart';
 
@@ -35,7 +35,7 @@ class _CancelOrderScreenState extends State<CancelOrderScreen> {
   @override
   Widget build(BuildContext context) {
     final args = ModalRoute.of(context)?.settings.arguments;
-    if (args is! Order) {
+    if (args is! StorefrontOrder) {
       return Scaffold(
         appBar: AppBar(title: const Text('Error')),
         body: const Center(child: Text('Order details not found.')),

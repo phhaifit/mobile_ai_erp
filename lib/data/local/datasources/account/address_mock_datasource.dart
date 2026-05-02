@@ -1,8 +1,8 @@
-import '../../../../domain/entity/address/address.dart';
+import '../../../../domain/entity/storefront_address/storefront_address.dart';
 
 class AddressMockDataSource {
-  final List<Address> _mockAddresses = [
-    Address(
+  final List<StorefrontAddress> _mockAddresses = [
+    StorefrontAddress(
       id: 'addr_1',
       address: '227 Nguyen Van Cu',
       type: 'home',
@@ -11,7 +11,7 @@ class AddressMockDataSource {
       ward: 'Ward 1',
       isDefault: true,
     ),
-    Address(
+    StorefrontAddress(
       id: 'addr_2',
       address: '123 Le Loi, District 1',
       type: 'work',
@@ -22,18 +22,18 @@ class AddressMockDataSource {
     ),
   ];
 
-  Future<List<Address>> getAddresses() async {
+  Future<List<StorefrontAddress>> getAddresses() async {
     await Future.delayed(
         const Duration(milliseconds: 200)); // Simulate network delay
     return _mockAddresses;
   }
 
-  Future<void> addAddress(Address address) async {
+  Future<void> addAddress(StorefrontAddress address) async {
     await Future.delayed(const Duration(milliseconds: 200));
     _mockAddresses.add(address);
   }
 
-  Future<void> updateAddress(Address updatedAddress) async {
+  Future<void> updateAddress(StorefrontAddress updatedAddress) async {
     await Future.delayed(const Duration(milliseconds: 200));
     final index = _mockAddresses.indexWhere((a) => a.id == updatedAddress.id);
     if (index != -1) {
