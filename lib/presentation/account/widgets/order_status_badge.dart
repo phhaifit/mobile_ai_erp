@@ -18,23 +18,24 @@ class OrderStatusBadge extends StatelessWidget {
       case OrderStatus.delivered:
         bgColor = Colors.green.shade100;
         text = 'Delivered';
-        break;
       case OrderStatus.pending:
         bgColor = Colors.orange.shade100;
         text = 'Pending';
-        break;
+      case OrderStatus.processing:
+        bgColor = Colors.amber.shade100;
+        text = 'Processing';
+      case OrderStatus.confirmed:
+        bgColor = Colors.teal.shade100;
+        text = 'Confirmed';
       case OrderStatus.shipped:
         bgColor = Colors.blue.shade100;
         text = 'Shipped';
-        break;
       case OrderStatus.canceled:
         bgColor = Colors.red.shade100;
         text = 'Canceled';
-        break;
       case OrderStatus.returned:
         bgColor = Colors.purple.shade100;
         text = 'Returned';
-        break;
     }
 
     return Chip(
