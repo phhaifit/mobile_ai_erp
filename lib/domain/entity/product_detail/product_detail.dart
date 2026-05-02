@@ -17,8 +17,14 @@ class ProductMedia {
 class ProductDetail {
   final String id;
   final String name;
+  final String? brandId;
   final String brandName;
+  final String? categoryId;
   final String categoryName;
+  final bool inStock;
+  final bool isFlashSale;
+  final DateTime? flashSaleFrom;
+  final DateTime? flashSaleEndTime;
   final List<ProductMedia> media;
   final List<ProductVariant> variants;
   final String descriptionHtml;
@@ -30,8 +36,14 @@ class ProductDetail {
   const ProductDetail({
     required this.id,
     required this.name,
+    this.brandId,
     required this.brandName,
+    this.categoryId,
     required this.categoryName,
+    required this.inStock,
+    required this.isFlashSale,
+    this.flashSaleFrom,
+    this.flashSaleEndTime,
     required this.media,
     required this.variants,
     required this.descriptionHtml,
@@ -103,5 +115,75 @@ class ProductReview {
     required this.comment,
     required this.date,
     this.imageUrls,
+  });
+}
+
+class StorefrontProductSummary {
+  final String id;
+  final String name;
+  final String description;
+  final double price;
+  final double? originalPrice;
+  final List<String> imageUrls;
+  final double rating;
+  final String? brandName;
+  final String? categoryName;
+  final bool inStock;
+  final int availableStock;
+
+  const StorefrontProductSummary({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.price,
+    this.originalPrice,
+    required this.imageUrls,
+    required this.rating,
+    this.brandName,
+    this.categoryName,
+    required this.inStock,
+    required this.availableStock,
+  });
+}
+
+class StorefrontCategoryBreadcrumb {
+  final String id;
+  final String name;
+  final String slug;
+
+  const StorefrontCategoryBreadcrumb({
+    required this.id,
+    required this.name,
+    required this.slug,
+  });
+}
+
+class StorefrontCategoryDetail {
+  final String id;
+  final String name;
+  final String slug;
+  final String? description;
+  final List<StorefrontCategoryBreadcrumb> breadcrumb;
+
+  const StorefrontCategoryDetail({
+    required this.id,
+    required this.name,
+    required this.slug,
+    this.description,
+    required this.breadcrumb,
+  });
+}
+
+class ProductDetailPageData {
+  final ProductDetail product;
+  final List<StorefrontProductSummary> relatedProducts;
+  final List<StorefrontProductSummary> brandProducts;
+  final StorefrontCategoryDetail? categoryDetail;
+
+  const ProductDetailPageData({
+    required this.product,
+    required this.relatedProducts,
+    required this.brandProducts,
+    this.categoryDetail,
   });
 }

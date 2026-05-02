@@ -16,6 +16,14 @@ class Endpoints {
     defaultValue: '00000000-0000-0000-0000-000000000000',
   );
 
+  // Optional debug product id for direct PDP navigation.
+  // Override at build time:
+  //   --dart-define=PRODUCT_ID=<product-id>
+  static const String debugProductId = String.fromEnvironment(
+    'PRODUCT_ID',
+    defaultValue: '',
+  );
+
   // timeouts
   static const int receiveTimeout = 15000;
   static const int connectionTimeout = 30000;
@@ -30,7 +38,8 @@ class Endpoints {
 
   static const String stackAuthHost = 'api.stack-auth.com';
   static const String stackAuthAuthenticate = '/api/v1/auth/oauth/authorize/';
-  static const String stackAuthToken = 'https://$stackAuthHost/api/v1/auth/oauth/token';
+  static const String stackAuthToken =
+      'https://$stackAuthHost/api/v1/auth/oauth/token';
 
   static const String storefront = "$erpBaseUrl/storefront";
 
@@ -89,4 +98,12 @@ class Endpoints {
     String shipmentId,
     String printJobId,
   ) => "/orders/$orderId/shipments/$shipmentId/print-jobs/$printJobId/attempts";
+
+  // storefront - products
+  static const String storefrontProducts = "/storefront/products";
+  static String storefrontProductById(String id) => "/storefront/products/$id";
+  static String storefrontBrandProducts(String brandKey) =>
+      "/storefront/products/brands/$brandKey/products";
+  static String storefrontCategoryByKey(String categoryKey) =>
+      "/storefront/categories/$categoryKey";
 }
