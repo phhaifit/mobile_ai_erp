@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:mobile_ai_erp/presentation/customer/store/signup_store.dart';
+import 'package:mobile_ai_erp/presentation/customer/store/signin_store.dart';
 
 /// EmailVerificationDialog - Dialog for email verification flow
 /// Displays verification code input and resend options
+/// Supports both sign-up (verifyEmail) and sign-in (confirmMagicLink) flows
 class EmailVerificationDialog extends StatefulWidget {
   final String? email;
   final SignUpStore? signUpStore;
+  final SignInStore? signInStore;
 
   const EmailVerificationDialog({
     super.key,
     this.email,
     this.signUpStore,
+    this.signInStore,
   }) : super();
 
   @override
@@ -75,7 +79,18 @@ class _EmailVerificationDialogState extends State<EmailVerificationDialog> {
       return;
     }
 
-    if (widget.signUpStore == null) {
+    // Determine which store to use
+    bool success = false;
+    String? errorMsg;
+
+    if (widget.signUpStore != null) {
+      success = await widget.signUpStore!.verifyEmail(token: code);
+      errorMsg = widget.signUpStore?.errorMessage;
+    } else if (widget.signInStore != null) {
+      success = await widget.signInStore!.confirmMagicLink(token: code);
+      errorMsg = widget.signInStore?.errorMessage;
+    } else {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Store not available'),
@@ -85,8 +100,6 @@ class _EmailVerificationDialogState extends State<EmailVerificationDialog> {
       );
       return;
     }
-
-    final success = await widget.signUpStore!.verifyEmail(token: code);
 
     if (!mounted) return;
 
@@ -108,7 +121,7 @@ class _EmailVerificationDialogState extends State<EmailVerificationDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            widget.signUpStore?.errorMessage ?? 'Verification failed',
+            errorMsg ?? 'Verification failed',
           ),
           backgroundColor: Colors.red,
         ),
@@ -211,13 +224,13 @@ class _EmailVerificationDialogState extends State<EmailVerificationDialog> {
 
               // Verify Button
               ElevatedButton(
-                onPressed: (widget.signUpStore?.isLoading ?? false)
+                onPressed: (widget.signUpStore?.isLoading ?? widget.signInStore?.isMagicLinkLoading ?? false)
                     ? null
                     : _handleVerifyEmail,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
-                child: (widget.signUpStore?.isLoading ?? false)
+                child: (widget.signUpStore?.isLoading ?? widget.signInStore?.isMagicLinkLoading ?? false)
                     ? const SizedBox(
                         height: 20,
                         width: 20,
@@ -270,6 +283,7 @@ class _EmailVerificationDialogState extends State<EmailVerificationDialog> {
 
   /// Build individual code input field
   Widget _buildCodeInput(int index) {
+    final isLoading = widget.signUpStore?.isLoading ?? widget.signInStore?.isMagicLinkLoading ?? false;
     return SizedBox(
       width: 48,
       height: 56,
@@ -279,7 +293,7 @@ class _EmailVerificationDialogState extends State<EmailVerificationDialog> {
         keyboardType: TextInputType.number,
         maxLength: 1,
         textAlign: TextAlign.center,
-        enabled: !(widget.signUpStore?.isLoading ?? false),
+        enabled: !isLoading,
         inputFormatters: [
           // Only digits
         ],

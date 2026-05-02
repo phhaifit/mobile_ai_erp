@@ -51,5 +51,7 @@ class Endpoints {
   static String customerSignIn = "/customer/auth/sign-in";
   static String customerGetGoogleOAuthUrl = "/customer/auth/google";
   static String customerSignOut = "/customer/auth/sign-out";
+  static String customerSendMagicLink = "/customer/auth/magic-link";
+  static String customerConfirmMagicLink = "$erpBaseUrl/customer/auth/magic-link/confirm";
   static String customerVerifyEmail = "/customer/auth/verify-email";
 }

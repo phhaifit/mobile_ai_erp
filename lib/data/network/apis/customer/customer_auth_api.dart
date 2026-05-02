@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/rendering.dart';
 import 'package:mobile_ai_erp/data/model/customer_auth/customer_auth_models.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
 
@@ -33,7 +32,7 @@ class CustomerAuthApi {
           'email': email,
           'password': password,
           'name': name,
-          'isMobile': true,
+          'useCode': true,
         },
       );
       final result = MessageResponseDto.fromJson(response.data);
@@ -104,25 +103,31 @@ class CustomerAuthApi {
     required String email,
   }) async {
     try {
-      await _dio.post(
-        '/magic-link',
-        data: {'email': email},
+      final response = await _dio.post(
+        Endpoints.customerSendMagicLink,
+        data: {
+          'email': email,
+          'useCode': true,
+        },
       );
+      if (response.statusCode != 200) {
+        throw MessageResponseDto.fromJson(response.data).message;
+      }
     } catch (e) {
       rethrow;
     }
   }
 
   /// Confirm magic link and get tokens
-  Future<SignInResponseModel> confirmMagicLink({
+  Future<TokenResponseDto> confirmMagicLink({
     required String token,
   }) async {
     try {
-      final response = await _dio.post(
-        '/magic-link/confirm',
+      final response = await _dio.get(
+        Endpoints.customerConfirmMagicLink,
         queryParameters: {'token': token},
       );
-      return SignInResponseModel.fromJson(response.data);
+      return TokenResponseDto.fromJson(response.data);
     } catch (e) {
       rethrow;
     }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:mobile_ai_erp/presentation/customer/store/signin_store.dart';
 import 'package:mobile_ai_erp/utils/validators_utils.dart';
 import '../../../widgets/password_field.dart';
 import '../../../widgets/auth_error_dialog.dart';
@@ -6,19 +8,17 @@ import '../../../widgets/auth_error_dialog.dart';
 /// Email/Password login tab widget
 class EmailPasswordTab extends StatefulWidget {
   final Function(String email, String password, bool remember)? onSubmit;
-  final bool isLoading;
-  final String? errorMessage;
+  final SignInStore signInStore;
   final VoidCallback? onForgotPassword;
   final VoidCallback? onSignUp;
 
   const EmailPasswordTab({
-    Key? key,
+    super.key,
+    required this.signInStore,
     this.onSubmit,
-    this.isLoading = false,
-    this.errorMessage,
     this.onForgotPassword,
     this.onSignUp,
-  }) : super(key: key);
+  }) : super();
 
   @override
   State<EmailPasswordTab> createState() => _EmailPasswordTabState();
@@ -46,12 +46,12 @@ class _EmailPasswordTabState extends State<EmailPasswordTab> {
   @override
   void didUpdateWidget(EmailPasswordTab oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.errorMessage != null && widget.errorMessage!.isNotEmpty) {
+    if (widget.signInStore.errorMessage != null && widget.signInStore.errorMessage!.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           AuthErrorDialog.show(
             context,
-            message: widget.errorMessage!,
+            message: widget.signInStore.errorMessage!,
             title: 'Sign In Failed',
           );
         }
@@ -71,130 +71,135 @@ class _EmailPasswordTabState extends State<EmailPasswordTab> {
 
   @override
   Widget build(BuildContext context) {
-    return LoadingOverlay(
-      isLoading: widget.isLoading,
-      message: 'Signing in...',
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Welcome message
-              Text(
-                'Sign in to your account',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Enter your email and password to continue',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey.shade600,
-                ),
-              ),
-              const SizedBox(height: 32),
-
-              // Email field
-              TextFormField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                validator: ValidatorsUtils.validateEmail,
-                decoration: InputDecoration(
-                  labelText: 'Email Address',
-                  hintText: 'your.email@example.com',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+    return Observer(
+      builder: (_) => LoadingOverlay(
+        isLoading: widget.signInStore.isLoading,
+        message: 'Signing in...',
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Welcome message
+                Text(
+                  'Sign in to your account',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
                   ),
-                  prefixIcon: const Icon(Icons.email_outlined),
                 ),
-              ),
-              const SizedBox(height: 16),
+                const SizedBox(height: 8),
+                Text(
+                  'Enter your email and password to continue',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
+                ),
+                const SizedBox(height: 32),
 
-              // Password field
-              PasswordField(
-                controller: _passwordController,
-                label: 'Password',
-                hintText: 'Enter your password',
-                validator: (value) =>
-                    ValidatorsUtils.validateRequired(value, 'Password'),
-              ),
-              const SizedBox(height: 12),
+                // Email field
+                TextFormField(
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  validator: ValidatorsUtils.validateEmail,
+                  decoration: InputDecoration(
+                    labelText: 'Email Address',
+                    hintText: 'your.email@example.com',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    prefixIcon: const Icon(Icons.email_outlined),
+                  ),
+                ),
+                const SizedBox(height: 16),
 
-              // Remember me & Forgot password row
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Flexible(
-                    child: CheckboxListTile(
-                      value: _rememberMe,
-                      onChanged: (value) {
-                        setState(() {
-                          _rememberMe = value ?? false;
-                        });
-                      },
-                      title: const Text('Remember me'),
-                      contentPadding: EdgeInsets.zero,
-                      controlAffinity: ListTileControlAffinity.leading,
-                      dense: true,
+                // Password field
+                PasswordField(
+                  controller: _passwordController,
+                  label: 'Password',
+                  hintText: 'Enter your password',
+                  validator: (value) =>
+                      ValidatorsUtils.validateRequired(value, 'Password'),
+                ),
+                const SizedBox(height: 12),
+
+                // Remember me & Forgot password row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(
+                      child: CheckboxListTile(
+                        value: _rememberMe,
+                        onChanged: (value) {
+                          setState(() {
+                            _rememberMe = value ?? false;
+                          });
+                        },
+                        title: const Text('Remember me'),
+                        contentPadding: EdgeInsets.zero,
+                        controlAffinity: ListTileControlAffinity.leading,
+                        dense: true,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: widget.onForgotPassword,
+                      child: const Text('Forgot password?'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // Sign in button
+                ElevatedButton(
+                  onPressed: widget.signInStore.isLoading
+                      ? null
+                      : _handleSignIn,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  TextButton(
-                    onPressed: widget.onForgotPassword,
-                    child: const Text('Forgot password?'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              // Sign in button
-              ElevatedButton(
-                onPressed: widget.isLoading ? null : _handleSignIn,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: widget.isLoading
-                    ? const SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                  ),
-                )
-                    : const Text(
-                  'Sign In',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Sign up link
-              Center(
-                child: GestureDetector(
-                  onTap: widget.onSignUp,
-                  child: RichText(
-                    text: TextSpan(
-                      text: "Don't have an account? ",
-                      style: Theme.of(context).textTheme.bodyMedium,
-                      children: [
-                        TextSpan(
-                          text: 'Sign up',
+                  child: widget.signInStore.isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text(
+                          'Sign In',
                           style: TextStyle(
-                            color: Theme.of(context).primaryColor,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                      ],
+                ),
+                const SizedBox(height: 24),
+
+                // Sign up link
+                Center(
+                  child: GestureDetector(
+                    onTap: widget.onSignUp,
+                    child: RichText(
+                      text: TextSpan(
+                        text: "Don't have an account? ",
+                        style: Theme.of(context).textTheme.bodyMedium,
+                        children: [
+                          TextSpan(
+                            text: 'Sign up',
+                            style: TextStyle(
+                              color: Theme.of(context).primaryColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

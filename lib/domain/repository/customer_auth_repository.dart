@@ -27,4 +27,14 @@ abstract class CustomerAuthRepository {
   Future<TokenResponseDto> verifyEmail({
     required String token,
   });
+
+  /// Request magic link for passwordless sign in
+  Future<void> requestMagicLink({
+    required String email,
+  });
+
+  /// Confirm magic link and get tokens
+  Future<TokenResponseDto> confirmMagicLink({
+    required String token,
+  });
 }

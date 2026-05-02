@@ -78,4 +78,27 @@ class CustomerAuthRepositoryImpl implements CustomerAuthRepository {
       rethrow;
     }
   }
+
+  @override
+  Future<void> requestMagicLink({
+    required String email,
+  }) async {
+    try {
+      await _api.requestMagicLink(email: email);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<TokenResponseDto> confirmMagicLink({
+    required String token,
+  }) async {
+    try {
+      final result = await _api.confirmMagicLink(token: token);
+      return result;
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

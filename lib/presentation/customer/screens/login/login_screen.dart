@@ -27,9 +27,6 @@ class CustomerLoginScreen extends StatefulWidget {
 class _CustomerLoginScreenState extends State<CustomerLoginScreen> with TickerProviderStateMixin {
   late TabController _tabController;
   late SignInStore _signInStore;
-  bool _isMagicLinkLoading = false;
-  String? _magicLinkError;
-  bool _isMagicLinkSent = false;
 
   @override
   void initState() {
@@ -50,26 +47,6 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> with TickerPr
       password: password,
       remember: rememeber,
     );
-  }
-
-  void _handleMagicLinkRequest(String email) {
-    setState(() {
-      _isMagicLinkLoading = true;
-      _magicLinkError = null;
-    });
-
-    // TODO: Implement magic link sign in
-    // For now, simulate API call - in real app, this would call the use case
-    Future.delayed(const Duration(seconds: 1), () {
-      if (mounted) {
-        setState(() {
-          _isMagicLinkLoading = false;
-          _isMagicLinkSent = true;
-        });
-        // Call parent handler
-        widget.onMagicLinkRequest?.call(email);
-      }
-    });
   }
 
   void _handleGoogleOAuthPressed() async {
@@ -156,23 +133,17 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> with TickerPr
             child: TabBarView(
               controller: _tabController,
               children: [
-                // Email/Password Tab - wrapped with Observer to listen to store state
-                Observer(
-                  builder: (_) => EmailPasswordTab(
-                    isLoading: _signInStore.isLoading,
-                    errorMessage: _signInStore.errorMessage,
-                    onSubmit: _handleEmailPasswordSignIn,
-                    onForgotPassword: widget.onForgotPasswordPressed,
-                    onSignUp: _handleSignUpPressed,
-                  ),
+                // Email/Password Tab
+                EmailPasswordTab(
+                  signInStore: _signInStore,
+                  onSubmit: _handleEmailPasswordSignIn,
+                  onForgotPassword: widget.onForgotPasswordPressed,
+                  onSignUp: _handleSignUpPressed,
                 ),
 
                 // Magic Link Tab
                 MagicLinkTab(
-                  isLoading: _isMagicLinkLoading,
-                  errorMessage: _magicLinkError,
-                  isLinkSent: _isMagicLinkSent,
-                  onSubmit: _handleMagicLinkRequest,
+                  signInStore: _signInStore,
                 ),
               ],
             ),

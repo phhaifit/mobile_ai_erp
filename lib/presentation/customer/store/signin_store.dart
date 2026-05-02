@@ -1,9 +1,7 @@
 import 'dart:developer';
 
-import 'package:flutter/rendering.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:mobile_ai_erp/data/model/customer_auth/customer_auth_models.dart';
-import 'package:mobile_ai_erp/domain/entity/customer_auth/token_pair.dart';
 import 'package:mobile_ai_erp/presentation/customer/store/auth_store.dart';
 import 'package:mobile_ai_erp/utils/oauth2_utils.dart';
 import 'package:mobx/mobx.dart';
@@ -29,6 +27,15 @@ abstract class SignInStoreBase with Store {
 
   @observable
   bool isGoogleOAuthLoading = false;
+
+  @observable
+  bool isMagicLinkLoading = false;
+
+  @observable
+  bool isMagicLinkSent = false;
+
+  @observable
+  String? magicLinkEmail;
 
   @observable
   String? errorMessage;
@@ -85,6 +92,10 @@ abstract class SignInStoreBase with Store {
       final uri = await _authRepository.getGoogleOAuthUri(redirectUri);
       final resultUriStr = await FlutterWebAuth2.authenticate(url: uri.toString(), callbackUrlScheme: callbackUrlScheme, options: const FlutterWebAuth2Options(useWebview: false));
       final resultUri = Uri.parse(resultUriStr);
+      final error = resultUri.queryParameters['reason']?.toString();
+      if (error != null) {
+        throw error;
+      }
       await _customerAuthStore.setTokenPair(TokenResponseDto.fromJson(resultUri.queryParameters).toTokenPair(), false);
 
       successMessage = 'Signed in successfully!';
@@ -96,6 +107,71 @@ abstract class SignInStoreBase with Store {
       isGoogleOAuthLoading = false;
     }
     return result;
+  }
+
+  /// Request magic link for passwordless sign in
+  @action
+  Future<bool> requestMagicLink({
+    required String email,
+  }) async {
+    bool result = false;
+    try {
+      isMagicLinkLoading = true;
+      errorMessage = null;
+      successMessage = null;
+
+      // Call repository to request magic link
+      await _authRepository.requestMagicLink(email: email);
+
+      // Store email and mark as sent
+      magicLinkEmail = email;
+      isMagicLinkSent = true;
+      successMessage = 'Magic link sent successfully!';
+      result = true;
+    } catch (e) {
+      log("RequestMagicLink error: $e");
+      errorMessage = _parseErrorMessage(e.toString());
+    } finally {
+      isMagicLinkLoading = false;
+    }
+    return result;
+  }
+
+  /// Confirm magic link and sign in
+  @action
+  Future<bool> confirmMagicLink({
+    required String token,
+  }) async {
+    bool result = false;
+    try {
+      isMagicLinkLoading = true;
+      errorMessage = null;
+
+      // Call repository to confirm magic link
+      final tokenResponse = await _authRepository.confirmMagicLink(token: token);
+
+      // Store the token pair
+      await _customerAuthStore.setTokenPair(tokenResponse.toTokenPair(), false);
+
+      isMagicLinkSent = false;
+      successMessage = 'Signed in successfully!';
+      result = true;
+    } catch (e) {
+      log("ConfirmMagicLink error: $e");
+      errorMessage = _parseErrorMessage(e.toString());
+    } finally {
+      isMagicLinkLoading = false;
+    }
+    return result;
+  }
+
+  /// Reset magic link state
+  @action
+  void resetMagicLink() {
+    isMagicLinkSent = false;
+    magicLinkEmail = null;
+    errorMessage = null;
+    successMessage = null;
   }
 
   /// Clear error message
