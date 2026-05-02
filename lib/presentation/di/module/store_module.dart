@@ -4,8 +4,22 @@ import 'package:mobile_ai_erp/core/stores/error/error_store.dart';
 import 'package:mobile_ai_erp/core/stores/form/form_store.dart';
 import 'package:mobile_ai_erp/presentation/supplier/store/supplier_store.dart';
 import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/get_customers_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/get_customer_detail_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/save_customer_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/delete_customer_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/get_customer_groups_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/save_customer_group_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/delete_customer_group_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/get_customer_addresses_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/save_customer_address_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/delete_customer_address_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/set_default_address_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/get_customer_transactions_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/get_segment_members_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/add_segment_members_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/remove_segment_members_usecase.dart';
 import 'package:mobile_ai_erp/presentation/supplier/store/supplier_products_store.dart';
-import 'package:mobile_ai_erp/domain/repository/customer/customer_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/dashboard/dashboard_repository.dart';
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/brands/get_brands_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/brands/get_brand_by_id_usecase.dart';
@@ -33,6 +47,7 @@ import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/get
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/create_attribute_value_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/update_attribute_value_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/delete_attribute_value_usecase.dart';
+import 'package:mobile_ai_erp/domain/repository/product/product_detail_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/setting/setting_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/stock_operations/stock_operations_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/storefront/storefront_repository.dart';
@@ -137,7 +152,10 @@ import 'package:mobile_ai_erp/presentation/web_builder/store/web_theme_store.dar
 import 'package:mobile_ai_erp/presentation/post_purchase/store/post_purchase_store.dart';
 import 'package:mobile_ai_erp/presentation/storefront/store/product_listing_store.dart';
 import 'package:mobile_ai_erp/presentation/cart/store/cart_store.dart';
-
+import 'package:mobile_ai_erp/presentation/cart/store/wishlist_store.dart';
+import 'package:mobile_ai_erp/data/repository/cart/cart_repository.dart';
+import 'package:mobile_ai_erp/data/repository/wishlist/wishlist_repository.dart';
+import 'package:mobile_ai_erp/data/repository/coupon/coupon_repository.dart';
 import 'package:mobile_ai_erp/presentation/product/store/product_form_store.dart';
 import 'package:mobile_ai_erp/presentation/product/store/product_store.dart';
 import 'package:mobile_ai_erp/domain/repository/product/product_management_repository.dart';
@@ -246,7 +264,24 @@ class StoreModule {
     );
 
     getIt.registerSingleton<CustomerStore>(
-      CustomerStore(getIt<CustomerRepository>(), getIt<ErrorStore>()),
+      CustomerStore(
+        getIt<GetCustomersUseCase>(),
+        getIt<GetCustomerDetailUseCase>(),
+        getIt<SaveCustomerUseCase>(),
+        getIt<DeleteCustomerUseCase>(),
+        getIt<GetCustomerGroupsUseCase>(),
+        getIt<SaveCustomerGroupUseCase>(),
+        getIt<DeleteCustomerGroupUseCase>(),
+        getIt<GetCustomerAddressesUseCase>(),
+        getIt<SaveCustomerAddressUseCase>(),
+        getIt<DeleteCustomerAddressUseCase>(),
+        getIt<SetDefaultAddressUseCase>(),
+        getIt<GetCustomerTransactionsUseCase>(),
+        getIt<GetSegmentMembersUseCase>(),
+        getIt<AddSegmentMembersUseCase>(),
+        getIt<RemoveSegmentMembersUseCase>(),
+        getIt<ErrorStore>(),
+      ),
     );
 
     getIt.registerSingleton<OrderTrackingStore>(
@@ -375,7 +410,10 @@ class StoreModule {
     );
 
     getIt.registerFactory<ProductDetailStore>(
-      () => ProductDetailStore(getIt<StorefrontRepository>(), getIt<ErrorStore>()),
+      () => ProductDetailStore(
+        getIt<ProductDetailRepository>(),
+        getIt<ErrorStore>(),
+      ),
     );
 
     getIt.registerSingleton<FulfillmentStore>(
@@ -400,6 +438,20 @@ class StoreModule {
     getIt.registerSingleton<ListingFilters>(
       ListingFilters(getIt<StorefrontRepository>()),
     );
+
+    // Cart and Wishlist stores:------------------------------------------------
+    getIt.registerSingleton<WishlistStore>(
+      WishlistStore(wishlistRepository: getIt<WishlistRepository>()),
+    );
+
+    getIt.registerSingleton<CartStore>(
+      CartStore(
+        cartRepository: getIt<CartRepository>(),
+        couponRepository: getIt<CouponRepository>(),
+        wishlistStore: getIt<WishlistStore>(),
+      ),
+    );
+
     // checkout:---------------------------------------------------------------
     getIt.registerSingleton<CheckoutStore>(
       CheckoutStore(
@@ -413,7 +465,7 @@ class StoreModule {
         getIt<SaveAddressUseCase>(),
         getIt<DeleteAddressUseCase>(),
         getIt<ErrorStore>(),
-        getIt.isRegistered<CartStore>() ? getIt<CartStore>() : null,
+        getIt<CartStore>(),
       ),
     );
 
