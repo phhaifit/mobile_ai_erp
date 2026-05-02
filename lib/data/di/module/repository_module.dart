@@ -12,6 +12,7 @@ import 'package:mobile_ai_erp/data/network/datasources/role/role_remote_datasour
 import 'package:mobile_ai_erp/data/network/datasources/user/user_remote_datasource.dart';
 import 'package:mobile_ai_erp/data/network/apis/orders/order_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/storefront_products_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/suppliers/supplier_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/web_builder/web_builder_api.dart';
 import 'package:mobile_ai_erp/data/repository/checkout/checkout_repository_impl.dart';
@@ -66,7 +67,9 @@ import 'package:mobile_ai_erp/domain/repository/web_builder/store_settings_repos
 import 'package:mobile_ai_erp/domain/repository/web_builder/web_theme_repository.dart';
 
 import 'package:mobile_ai_erp/data/repository/product/product_management_repository_impl.dart';
+import 'package:mobile_ai_erp/data/repository/product/product_detail_repository_impl.dart';
 import 'package:mobile_ai_erp/domain/repository/product/product_management_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/product/product_detail_repository.dart';
 import 'package:mobile_ai_erp/data/local/datasources/product/mock_product_datasource.dart';
 import 'package:mobile_ai_erp/data/network/apis/storefront/storefront_api.dart';
 
@@ -138,9 +141,7 @@ class RepositoryModule {
     getIt.registerSingleton<RoleRepository>(
       RoleRepositoryImpl(getIt<RoleRemoteDataSource>()),
     );
-    getIt.registerSingleton<AuthRepository>(
-      AuthRepositoryImpl(getIt()),
-    );
+    getIt.registerSingleton<AuthRepository>(AuthRepositoryImpl(getIt()));
 
     // web_builder:--------------------------------------------------------------
     getIt.registerLazySingleton<CmsPageRepository>(
@@ -175,6 +176,10 @@ class RepositoryModule {
 
     getIt.registerSingleton<ProductManagementRepository>(
       ProductManagementRepositoryImpl(getIt<MockProductDataSource>()),
+    );
+
+    getIt.registerLazySingleton<ProductDetailRepository>(
+      () => ProductDetailRepositoryImpl(getIt<StorefrontProductsApi>()),
     );
   }
 }
