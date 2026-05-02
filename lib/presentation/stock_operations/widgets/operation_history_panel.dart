@@ -331,7 +331,10 @@ class _AuditTrailSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rows = <Widget>[
-      _AuditTrailLine(label: 'Created by', value: operation.createdBy ?? '-'),
+      _AuditTrailLine(
+        label: 'Created by',
+        value: operation.createdByName ?? operation.createdBy ?? '-',
+      ),
       _AuditTrailLine(
         label: 'Created at',
         value: formatNullableDateTime(operation.createdAt),
@@ -343,7 +346,7 @@ class _AuditTrailSummary extends StatelessWidget {
       rows.add(
         _AuditTrailLine(
           label: 'Approved by',
-          value: operation.approvedBy ?? '-',
+          value: operation.approvedByName ?? operation.approvedBy ?? '-',
         ),
       );
       rows.add(
@@ -358,7 +361,7 @@ class _AuditTrailSummary extends StatelessWidget {
       rows.add(
         _AuditTrailLine(
           label: 'Completed by',
-          value: operation.completedBy ?? '-',
+          value: operation.completedByName ?? operation.completedBy ?? '-',
         ),
       );
       rows.add(

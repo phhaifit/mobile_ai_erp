@@ -15,8 +15,11 @@ class StockOperation {
   final String? destinationWarehouseName;
   final DateTime createdAt;
   final String? createdBy;
+  final String? createdByName;
   final String? approvedBy;
+  final String? approvedByName;
   final String? completedBy;
+  final String? completedByName;
   final DateTime? approvedAt;
   final DateTime? completedAt;
   final String? note;
@@ -34,8 +37,11 @@ class StockOperation {
     this.destinationWarehouseId,
     this.destinationWarehouseName,
     this.createdBy,
+    this.createdByName,
     this.approvedBy,
+    this.approvedByName,
     this.completedBy,
+    this.completedByName,
     this.approvedAt,
     this.completedAt,
     this.note,
@@ -54,8 +60,11 @@ class StockOperation {
     String? destinationWarehouseName,
     DateTime? createdAt,
     String? createdBy,
+    String? createdByName,
     String? approvedBy,
+    String? approvedByName,
     String? completedBy,
+    String? completedByName,
     DateTime? approvedAt,
     DateTime? completedAt,
     String? note,
@@ -75,8 +84,11 @@ class StockOperation {
           destinationWarehouseName ?? this.destinationWarehouseName,
       createdAt: createdAt ?? this.createdAt,
       createdBy: createdBy ?? this.createdBy,
+      createdByName: createdByName ?? this.createdByName,
       approvedBy: approvedBy ?? this.approvedBy,
+      approvedByName: approvedByName ?? this.approvedByName,
       completedBy: completedBy ?? this.completedBy,
+      completedByName: completedByName ?? this.completedByName,
       approvedAt: approvedAt ?? this.approvedAt,
       completedAt: completedAt ?? this.completedAt,
       note: note ?? this.note,
