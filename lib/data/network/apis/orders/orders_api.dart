@@ -16,7 +16,7 @@ class OrdersApi {
     String? tenantId,
   }) async {
     try {
-      final url = '${Endpoints.backendBaseUrl}/internal/erp/orders';
+      final url = '${Endpoints.erpBaseUrl}/internal/erp/orders';
 
       final options = _buildOptions(
         secretKey: secretKey,
@@ -45,7 +45,7 @@ class OrdersApi {
     String? tenantId,
   }) async {
     try {
-      final url = '${Endpoints.backendBaseUrl}/internal/erp/orders/$orderId';
+      final url = '${Endpoints.erpBaseUrl}/internal/erp/orders/$orderId';
       final options = _buildOptions(
         secretKey: secretKey,
         tenantId: tenantId,

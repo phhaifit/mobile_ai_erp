@@ -58,8 +58,12 @@ abstract class _OrderTrackingStore with Store {
     }
 
     try {
-      final String? secretKey = _resolveHeaderValue(Endpoints.erpSecretKey);
-      final String? tenantId = _resolveHeaderValue(Endpoints.erpTenantId);
+      const String envSecretKey = String.fromEnvironment(
+        'ERP_SECRET_KEY',
+        defaultValue: '',
+      );
+      final String? secretKey = _resolveHeaderValue(envSecretKey);
+      final String? tenantId = _resolveHeaderValue(Endpoints.tenantId);
 
       if (secretKey == null) {
         if (!silent) {
@@ -79,9 +83,7 @@ abstract class _OrderTrackingStore with Store {
       if (detail.isEmpty) {
         if (!silent) {
           errorMessage = 'Order detail not found.';
-          errorStore.setErrorMessage(
-            errorMessage ?? 'Order detail not found.',
-          );
+          errorStore.setErrorMessage(errorMessage ?? 'Order detail not found.');
         }
         return;
       }
@@ -150,20 +152,25 @@ abstract class _OrderTrackingStore with Store {
     Map<String, dynamic> detail,
     String fallbackOrderId,
   ) {
-    final String orderId = (detail['id'] ?? detail['orderId'] ?? fallbackOrderId)
-        .toString();
+    final String orderId =
+        (detail['id'] ?? detail['orderId'] ?? fallbackOrderId).toString();
     final String code =
-        detail['code']?.toString() ?? detail['orderCode']?.toString() ?? orderId;
+        detail['code']?.toString() ??
+        detail['orderCode']?.toString() ??
+        orderId;
     final String status = detail['status']?.toString() ?? 'pending';
     final DateTime now = DateTime.now();
     final DateTime createdAt =
-      _parseDate(detail['createdAt'] ?? detail['created_at']) ?? now;
+        _parseDate(detail['createdAt'] ?? detail['created_at']) ?? now;
     final DateTime updatedAt =
-      _parseDate(detail['updatedAt'] ?? detail['updated_at']) ?? now;
+        _parseDate(detail['updatedAt'] ?? detail['updated_at']) ?? now;
 
     final ShipmentStage currentStage = _mapStatusToStage(status);
-    final List<TrackingTimelineStep> steps =
-        _buildTimelineSteps(currentStage, createdAt, updatedAt);
+    final List<TrackingTimelineStep> steps = _buildTimelineSteps(
+      currentStage,
+      createdAt,
+      updatedAt,
+    );
 
     return OrderTrackingScenario(
       scenarioName: code,
@@ -173,9 +180,8 @@ abstract class _OrderTrackingStore with Store {
       carrierTrackingUrl:
           detail['carrierTrackingUrl']?.toString() ?? 'https://example.com',
       estimatedDeliveryDate:
-          _parseDate(detail['estimatedDeliveryDate']) ?? now.add(
-            const Duration(days: 2),
-          ),
+          _parseDate(detail['estimatedDeliveryDate']) ??
+          now.add(const Duration(days: 2)),
       lastUpdatedAt: updatedAt,
       timelineSteps: steps,
       currentStage: currentStage,
@@ -211,7 +217,10 @@ abstract class _OrderTrackingStore with Store {
     DateTime updatedAt,
   ) {
     final List<TrackingTimelineStep> steps = [
-      TrackingTimelineStep(stage: ShipmentStage.confirmed, timestamp: createdAt),
+      TrackingTimelineStep(
+        stage: ShipmentStage.confirmed,
+        timestamp: createdAt,
+      ),
     ];
 
     if (currentStage.index >= ShipmentStage.packed.index) {
@@ -222,13 +231,19 @@ abstract class _OrderTrackingStore with Store {
 
     if (currentStage.index >= ShipmentStage.shipped.index) {
       steps.add(
-        TrackingTimelineStep(stage: ShipmentStage.shipped, timestamp: updatedAt),
+        TrackingTimelineStep(
+          stage: ShipmentStage.shipped,
+          timestamp: updatedAt,
+        ),
       );
     }
 
     if (currentStage.index >= ShipmentStage.delivered.index) {
       steps.add(
-        TrackingTimelineStep(stage: ShipmentStage.delivered, timestamp: updatedAt),
+        TrackingTimelineStep(
+          stage: ShipmentStage.delivered,
+          timestamp: updatedAt,
+        ),
       );
     }
 
@@ -280,17 +295,20 @@ abstract class _OrderTrackingStore with Store {
 
   String getTotalPrice(Map<String, dynamic>? detail) {
     if (detail == null) return '0';
-    final price = detail['totalPrice'] ?? detail['total'] ?? detail['totalAmount'];
+    final price =
+        detail['totalPrice'] ?? detail['total'] ?? detail['totalAmount'];
     return price?.toString() ?? '0';
   }
 
   int getItemsCount(Map<String, dynamic>? detail) {
     if (detail == null) return 0;
-    final dynamic items = detail['items'] ?? detail['orderItems'] ?? detail['products'];
+    final dynamic items =
+        detail['items'] ?? detail['orderItems'] ?? detail['products'];
     if (items is List) {
       return items.length;
     }
-    final dynamic count = detail['itemsCount'] ?? detail['items_count'] ?? detail['totalItems'];
+    final dynamic count =
+        detail['itemsCount'] ?? detail['items_count'] ?? detail['totalItems'];
     if (count is num) {
       return count.toInt();
     }
@@ -306,29 +324,35 @@ abstract class _OrderTrackingStore with Store {
     if (customer is Map<String, dynamic>) {
       return (customer['name'] ?? customer['fullName'] ?? 'Unknown').toString();
     }
-    return (detail['customerName'] ?? detail['customer'] ?? 'Unknown').toString();
+    return (detail['customerName'] ?? detail['customer'] ?? 'Unknown')
+        .toString();
   }
 
   String getDeliveryInfo(Map<String, dynamic>? detail) {
     if (detail == null) return '';
-    final dynamic shipping = detail['shippingAddress'] ?? detail['deliveryAddress'];
+    final dynamic shipping =
+        detail['shippingAddress'] ?? detail['deliveryAddress'];
     if (shipping is Map<String, dynamic>) {
-      final String line1 = (shipping['addressLine1'] ??
-              shipping['line1'] ??
-              shipping['address'] ??
-              '')
+      final String line1 =
+          (shipping['addressLine1'] ??
+                  shipping['line1'] ??
+                  shipping['address'] ??
+                  '')
+              .toString();
+      final String city = (shipping['city'] ?? shipping['province'] ?? '')
           .toString();
-      final String city = (shipping['city'] ?? shipping['province'] ?? '').toString();
       return [line1, city].where((e) => e.isNotEmpty).join(', ');
     }
     final String fallback =
-        (detail['shippingAddress'] ?? detail['deliveryAddress'] ?? '').toString();
+        (detail['shippingAddress'] ?? detail['deliveryAddress'] ?? '')
+            .toString();
     return fallback;
   }
 
   DateTime? getOrderCreatedAt(Map<String, dynamic>? detail) {
     if (detail == null) return null;
-    final raw = detail['createdAt'] ?? detail['created_at'] ?? detail['createdDate'];
+    final raw =
+        detail['createdAt'] ?? detail['created_at'] ?? detail['createdDate'];
     if (raw is String && raw.isNotEmpty) {
       return DateTime.tryParse(raw);
     }

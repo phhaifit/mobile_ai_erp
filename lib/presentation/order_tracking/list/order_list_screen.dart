@@ -3,6 +3,7 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/presentation/order_tracking/store/order_list_store.dart';
+import 'package:mobile_ai_erp/presentation/order_tracking/widgets/order_pagination_controls.dart';
 
 class OrderListScreen extends StatefulWidget {
   const OrderListScreen({super.key});
@@ -46,9 +47,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
       body: Observer(
         builder: (context) {
           if (_orderListStore.isLoading) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (_orderListStore.error != null) {
@@ -82,36 +81,59 @@ class _OrderListScreenState extends State<OrderListScreen> {
             );
           }
 
-          return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-            itemCount: _orderListStore.orders.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final order = _orderListStore.orders[index];
-              final orderId = _orderListStore.getOrderId(order);
-              final orderCode = _orderListStore.getOrderCode(order);
-              final status = _orderListStore.getOrderStatus(order);
-              final totalPrice = _orderListStore.getTotalPrice(order);
-              final customerName = _orderListStore.getCustomerName(order);
-              final createdAt = _orderListStore.getOrderCreatedAt(order);
-              final itemsCount = _orderListStore.getItemsCount(order);
-              final deliveryInfo = _orderListStore.getDeliveryInfo(order);
+          return Column(
+            children: [
+              Expanded(
+                child: ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                  itemCount: _orderListStore.orders.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final order = _orderListStore.orders[index];
+                    final orderId = _orderListStore.getOrderId(order);
+                    final orderCode = _orderListStore.getOrderCode(order);
+                    final status = _orderListStore.getOrderStatus(order);
+                    final totalPrice = _orderListStore.getTotalPrice(order);
+                    final customerName = _orderListStore.getCustomerName(order);
+                    final createdAt = _orderListStore.getOrderCreatedAt(order);
+                    final itemsCount = _orderListStore.getItemsCount(order);
+                    final deliveryInfo = _orderListStore.getDeliveryInfo(order);
 
-              return _buildOrderCard(
-                context: context,
-                colorScheme: colorScheme,
-                textTheme: textTheme,
-                currencyFormat: currencyFormat,
-                orderId: orderId,
-                orderCode: orderCode,
-                status: status,
-                customerName: customerName,
-                totalPrice: totalPrice,
-                createdAt: createdAt,
-                itemsCount: itemsCount,
-                deliveryInfo: deliveryInfo,
-              );
-            },
+                    return _buildOrderCard(
+                      context: context,
+                      colorScheme: colorScheme,
+                      textTheme: textTheme,
+                      currencyFormat: currencyFormat,
+                      orderId: orderId,
+                      orderCode: orderCode,
+                      status: status,
+                      customerName: customerName,
+                      totalPrice: totalPrice,
+                      createdAt: createdAt,
+                      itemsCount: itemsCount,
+                      deliveryInfo: deliveryInfo,
+                    );
+                  },
+                ),
+              ),
+              OrderPaginationControls(
+                currentPage: _orderListStore.currentPage,
+                totalPages: _orderListStore.totalPages,
+                isLoading: _orderListStore.isLoading,
+                onPrevious: _orderListStore.currentPage > 1
+                    ? () {
+                        _orderListStore.loadOrders(
+                          page: _orderListStore.currentPage - 1,
+                        );
+                      }
+                    : null,
+                onNext: _orderListStore.hasMoreOrders
+                    ? () {
+                        _orderListStore.loadMoreOrders();
+                      }
+                    : null,
+              ),
+            ],
           );
         },
       ),
@@ -150,10 +172,9 @@ class _OrderListScreenState extends State<OrderListScreen> {
                 _showSnackBar(context, 'Order ID is missing.');
               }
             : () {
-                Navigator.of(context).pushNamed(
-                  '/order-tracking',
-                  arguments: {'orderId': orderId},
-                );
+                Navigator.of(
+                  context,
+                ).pushNamed('/order-tracking', arguments: {'orderId': orderId});
               },
         child: Ink(
           padding: const EdgeInsets.all(16),
@@ -315,17 +336,14 @@ class _OrderListScreenState extends State<OrderListScreen> {
   }
 
   void _showSnackBar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }
 
 class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({
-    required this.label,
-    required this.background,
-  });
+  const _StatusBadge({required this.label, required this.background});
 
   final String label;
   final Color background;
@@ -368,14 +386,15 @@ class _InfoRow extends StatelessWidget {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
 
     return Column(
-      crossAxisAlignment:
-          alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      crossAxisAlignment: alignEnd
+          ? CrossAxisAlignment.end
+          : CrossAxisAlignment.start,
       children: [
         Text(
           label,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurface.withOpacity(0.6),
-              ),
+            color: colorScheme.onSurface.withOpacity(0.6),
+          ),
         ),
         const SizedBox(height: 4),
         Text(
