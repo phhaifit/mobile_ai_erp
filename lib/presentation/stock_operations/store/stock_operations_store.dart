@@ -106,7 +106,7 @@ abstract class _StockOperationsStore with Store {
     StockDashboardAction(
       view: StockOperationsView.history,
       title: 'History',
-      subtitle: 'Review all local operations',
+      subtitle: 'Review backend-synced stock operations',
       icon: Icons.history,
     ),
   ];
