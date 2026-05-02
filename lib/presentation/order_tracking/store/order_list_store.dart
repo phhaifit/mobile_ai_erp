@@ -67,6 +67,12 @@ abstract class _OrderListStore with Store {
       final String? secretKey = _resolveHeaderValue(Endpoints.erpSecretKey);
       final String? tenantId = _resolveHeaderValue(Endpoints.erpTenantId);
 
+      if (secretKey == null) {
+        error = 'Missing ERP secret key. Pass --dart-define=ERP_SECRET_KEY=...';
+        errorStore.setErrorMessage(error ?? 'Missing ERP secret key.');
+        return;
+      }
+
       final response = await _ordersApi.getOrders(
         pageSize: 20,
         page: 1,
