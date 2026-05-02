@@ -1,7 +1,10 @@
 enum AddressType {
-  shipping('Shipping'),
+  home('Home'),
+  office('Office'),
   billing('Billing'),
-  both('Shipping & Billing');
+  shipping('Shipping'),
+  warehouse('Warehouse'),
+  other('Other');
 
   const AddressType(this.label);
 
@@ -16,10 +19,12 @@ class Address {
     required this.street,
     required this.city,
     required this.countryCode,
-    this.type = AddressType.both,
+    this.type = AddressType.home,
     this.state,
     this.postalCode,
     this.isDefault = false,
+    this.updatedAt,
+    this.isValidated = false,
   });
 
   final String id;
@@ -32,6 +37,8 @@ class Address {
   final String countryCode;
   final String? postalCode;
   final bool isDefault;
+  final DateTime? updatedAt;
+  final bool isValidated;
 
   String get displayAddress {
     final parts = <String>[
@@ -45,6 +52,70 @@ class Address {
     return parts.join(', ');
   }
 
+  /// Validate address completeness and format
+  ValidationResult validate() {
+    final errors = <String>[];
+
+    // Validate label - can be derived from city, but ensure it has content
+    final labelValue = label.trim();
+    if (labelValue.isEmpty) {
+      errors.add('Address label is required');
+    } else if (labelValue.length < 2) {
+      errors.add('Address label must be at least 2 characters');
+    }
+
+    // Validate street address
+    final streetValue = street.trim();
+    if (streetValue.isEmpty) {
+      errors.add('Street address is required');
+    } else if (streetValue.length < 3) {
+      errors.add('Street address must be at least 3 characters');
+    }
+
+    // Validate city/province
+    final cityValue = city.trim();
+    if (cityValue.isEmpty) {
+      errors.add('City/Province is required');
+    } else if (cityValue.length < 2) {
+      errors.add('City/Province must be at least 2 characters');
+    }
+
+    // Validate country code - optional but if provided must be valid
+    final countryValue = countryCode.trim();
+    if (countryValue.isNotEmpty && countryValue.length < 2) {
+      errors.add('Invalid country code format');
+    }
+
+    // Validate postal code if provided
+    if (postalCode != null && postalCode!.trim().isNotEmpty) {
+      final postalValue = postalCode!.trim();
+      if (postalValue.isEmpty) {
+        errors.add('Postal code cannot be empty if provided');
+      }
+    }
+
+    // Validate state/district if provided
+    if (state != null && state!.trim().isNotEmpty) {
+      final stateValue = state!.trim();
+      if (stateValue.isEmpty) {
+        errors.add('State/District cannot be empty if provided');
+      }
+    }
+
+    return ValidationResult(isValid: errors.isEmpty, errors: errors);
+  }
+
+  /// Check if address data has changed
+  bool hasChanged(Address other) {
+    return label != other.label ||
+        street != other.street ||
+        city != other.city ||
+        state != other.state ||
+        countryCode != other.countryCode ||
+        postalCode != other.postalCode ||
+        type != other.type;
+  }
+
   Address copyWith({
     String? id,
     String? customerId,
@@ -56,6 +127,8 @@ class Address {
     String? countryCode,
     Object? postalCode = _sentinel,
     bool? isDefault,
+    DateTime? updatedAt,
+    bool? isValidated,
   }) {
     return Address(
       id: id ?? this.id,
@@ -70,8 +143,20 @@ class Address {
           ? this.postalCode
           : postalCode as String?,
       isDefault: isDefault ?? this.isDefault,
+      updatedAt: updatedAt ?? this.updatedAt ?? DateTime.now(),
+      isValidated: isValidated ?? this.isValidated,
     );
   }
+}
+
+/// Result of address validation
+class ValidationResult {
+  const ValidationResult({required this.isValid, required this.errors});
+
+  final bool isValid;
+  final List<String> errors;
+
+  String get errorMessage => errors.join(', ');
 }
 
 const Object _sentinel = Object();

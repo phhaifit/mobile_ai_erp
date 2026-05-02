@@ -18,12 +18,16 @@ class AddressFormScreen extends StatefulWidget {
 class _AddressFormScreenState extends State<AddressFormScreen> {
   final CustomerStore _store = getIt<CustomerStore>();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final TextEditingController _labelController = TextEditingController();
   final TextEditingController _streetController = TextEditingController();
   final TextEditingController _cityController = TextEditingController();
   final TextEditingController _districtController = TextEditingController();
   final TextEditingController _wardController = TextEditingController();
+  final TextEditingController _countryController = TextEditingController(
+    text: 'VN',
+  );
 
-  AddressType _type = AddressType.both;
+  AddressType _type = AddressType.home;
   bool _isDefault = false;
   bool _isSaving = false;
   Address? _editingAddress;
@@ -37,17 +41,19 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
   Future<void> _initialize() async {
     await _store.loadAddresses(widget.args.customerId);
     if (widget.args.addressId != null) {
-      _editingAddress = _store.activeAddresses
-          .cast<Address?>()
-          .firstWhere(
-            (a) => a?.id == widget.args.addressId,
-            orElse: () => null,
-          );
+      _editingAddress = _store.activeAddresses.cast<Address?>().firstWhere(
+        (a) => a?.id == widget.args.addressId,
+        orElse: () => null,
+      );
       if (_editingAddress != null) {
+        _labelController.text = _editingAddress!.label;
         _streetController.text = _editingAddress!.street;
         _cityController.text = _editingAddress!.city;
         _districtController.text = _editingAddress!.state ?? '';
         _wardController.text = _editingAddress!.postalCode ?? '';
+        _countryController.text = _editingAddress!.countryCode.isEmpty
+            ? 'VN'
+            : _editingAddress!.countryCode;
         _type = _editingAddress!.type;
         _isDefault = _editingAddress!.isDefault;
       }
@@ -57,10 +63,12 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
 
   @override
   void dispose() {
+    _labelController.dispose();
     _streetController.dispose();
     _cityController.dispose();
     _districtController.dispose();
     _wardController.dispose();
+    _countryController.dispose();
     super.dispose();
   }
 
@@ -68,8 +76,7 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-            _editingAddress == null ? 'New address' : 'Edit address'),
+        title: Text(_editingAddress == null ? 'New address' : 'Edit address'),
       ),
       body: SafeArea(
         child: Form(
@@ -112,8 +119,9 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
                     flex: 2,
                     child: TextFormField(
                       controller: _cityController,
-                      decoration:
-                          customerFormDecoration(labelText: 'Province / City'),
+                      decoration: customerFormDecoration(
+                        labelText: 'Province / City',
+                      ),
                       textCapitalization: TextCapitalization.words,
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
@@ -127,8 +135,7 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
                   Expanded(
                     child: TextFormField(
                       controller: _districtController,
-                      decoration:
-                          customerFormDecoration(labelText: 'District'),
+                      decoration: customerFormDecoration(labelText: 'District'),
                       textCapitalization: TextCapitalization.words,
                     ),
                   ),
@@ -137,8 +144,9 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _wardController,
-                decoration:
-                    customerFormDecoration(labelText: 'Ward (optional)'),
+                decoration: customerFormDecoration(
+                  labelText: 'Ward (optional)',
+                ),
                 textCapitalization: TextCapitalization.words,
               ),
               const SizedBox(height: 8),
@@ -158,9 +166,9 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.save_outlined),
-                label: Text(_editingAddress == null
-                    ? 'Add address'
-                    : 'Save changes'),
+                label: Text(
+                  _editingAddress == null ? 'Add address' : 'Save changes',
+                ),
               ),
             ],
           ),
@@ -175,32 +183,67 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
     setState(() => _isSaving = true);
 
     try {
-      await _store.saveAddress(
-        Address(
-          id: _editingAddress?.id ?? '',
-          customerId: widget.args.customerId,
-          label: _cityController.text.trim(),
-          type: _type,
-          street: _streetController.text.trim(),
-          city: _cityController.text.trim(),
-          state: _trimOrNull(_districtController.text),
-          countryCode: '',
-          postalCode: _trimOrNull(_wardController.text),
-          isDefault: _isDefault,
-        ),
+      final newAddress = Address(
+        id: _editingAddress?.id ?? '',
+        customerId: widget.args.customerId,
+        label: _cityController.text.trim(),
+        type: _type,
+        street: _streetController.text.trim(),
+        city: _cityController.text.trim(),
+        state: _trimOrNull(_districtController.text),
+        countryCode: '',
+        postalCode: _trimOrNull(_wardController.text),
+        isDefault: _isDefault,
       );
 
+      // Perform validation before saving
+      final validation = newAddress.validate();
+      if (!validation.isValid) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Address validation error: ${validation.errorMessage}',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+        setState(() => _isSaving = false);
+        return;
+      }
+
+      // Save address (store will re-validate and refresh data)
+      await _store.saveAddress(newAddress);
+
       if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _editingAddress == null
+                ? 'Address added successfully'
+                : 'Address updated successfully',
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
       Navigator.of(context).pop();
     } on CustomerValidationException catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
+        SnackBar(content: Text(error.message), backgroundColor: Colors.red),
       );
-    } catch (_) {
+    } on ArgumentError catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Couldn\'t save address. Try again.')),
+        SnackBar(
+          content: Text(error.message ?? 'Invalid address data'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $error'), backgroundColor: Colors.red),
       );
     } finally {
       if (mounted) setState(() => _isSaving = false);

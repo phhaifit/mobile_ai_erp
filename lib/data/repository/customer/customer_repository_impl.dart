@@ -348,12 +348,19 @@ class CustomerRepositoryImpl extends CustomerRepository {
 
   AddressType _parseAddressType(String? value) {
     switch (value) {
-      case 'shipping':
-        return AddressType.shipping;
+      case 'home':
+        return AddressType.home;
+      case 'office':
+        return AddressType.office;
       case 'billing':
         return AddressType.billing;
+      case 'shipping':
+        return AddressType.shipping;
+      case 'warehouse':
+        return AddressType.warehouse;
+      case 'other':
       default:
-        return AddressType.both;
+        return AddressType.other;
     }
   }
 
