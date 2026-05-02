@@ -4,6 +4,7 @@
 *.log
 *.pyc
 *.swp
+.env.json
 .buildlog/
 .history
 
@@ -138,3 +139,5 @@ app.*.symbols
 !.idea/runConfigurations
 
 CLAUDE.md
+
+.env

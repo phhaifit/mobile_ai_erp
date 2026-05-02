@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_ai_erp/presentation/cart/models/cart_ui_model.dart';
+import 'package:mobile_ai_erp/core/utils/price_formatter.dart';
+import 'package:mobile_ai_erp/domain/entity/cart/cart_item.dart';
 import 'stock_warning_badge.dart';
 import 'quantity_selector.dart';
 
-/// Card widget displaying individual cart item
 class CartItemCard extends StatelessWidget {
-  final CartItemUIModel item;
+  final CartItem item;
   final VoidCallback onRemove;
   final Function(int) onQuantityChanged;
   final VoidCallback? onTap;
@@ -148,9 +148,6 @@ class CartItemCard extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-
-        /// Bottom action row on mobile:
-        /// price on left, quantity on right
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
@@ -177,6 +174,8 @@ class CartItemCard extends StatelessWidget {
   }
 
   Widget _buildImage(double size) {
+    final imageUrl = item.thumbnailUrl ?? '';
+
     return Container(
       width: size,
       height: size,
@@ -184,11 +183,11 @@ class CartItemCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         color: Colors.grey[100],
       ),
-      child: item.imageUrl.isNotEmpty
+      child: imageUrl.isNotEmpty
           ? ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Image.network(
-                item.imageUrl,
+                imageUrl,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) =>
                     _buildImagePlaceholder(),
@@ -203,18 +202,18 @@ class CartItemCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          item.displayName,
+          item.productName,
           style: TextStyle(
             fontSize: compact ? 13 : 14,
             fontWeight: FontWeight.w600,
           ),
-          maxLines: compact ? 2 : 2,
+          maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: 4),
-        if (item.hasCustomization)
+        if ((item.variantSummary ?? '').isNotEmpty)
           Text(
-            item.customizationLabel,
+            item.variantSummary!,
             style: TextStyle(
               fontSize: compact ? 11.5 : 12,
               color: Colors.grey[600],
@@ -222,11 +221,27 @@ class CartItemCard extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
+        if (item.attributes.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            children: item.attributes.map((attr) {
+              return Text(
+                '${attr.label}: ${attr.value}',
+                style: TextStyle(
+                  fontSize: compact ? 11 : 12,
+                  color: Colors.grey[600],
+                ),
+              );
+            }).toList(),
+          ),
+        ],
         const SizedBox(height: 8),
         if (showStockWarning)
           StockWarningBadge(
-            isOutOfStock: item.isOutOfStock,
-            isLowStock: item.isLowStock,
+            isOutOfStock: !item.isAvailable,
+            isLowStock: item.stockWarning && item.isAvailable,
             availableStock: item.availableStock,
             size: compact ? 11 : 12,
           ),
@@ -239,11 +254,19 @@ class CartItemCard extends StatelessWidget {
   }
 
   Widget _buildPriceSection({required bool compact}) {
+    final lineTotal = PriceFormatter.formatPrice(
+      double.tryParse(item.lineTotal) ?? 0,
+    );
+    final hasOriginalPrice =
+        item.originalPrice != null &&
+        item.originalPrice != item.unitPrice &&
+        item.originalPrice!.isNotEmpty;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          item.formattedTotalPrice,
+          lineTotal,
           style: TextStyle(
             fontSize: compact ? 13 : 14,
             fontWeight: FontWeight.bold,
@@ -252,13 +275,13 @@ class CartItemCard extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        if (item.itemDiscount != null && item.itemDiscount! > 0)
+        if (hasOriginalPrice)
           Text(
-            'Saved ${item.formattedDiscountAmount}',
+            'Original: ${PriceFormatter.formatPrice(double.tryParse(item.originalPrice!) ?? 0)}',
             style: TextStyle(
               fontSize: compact ? 11 : 12,
-              color: Colors.green[600],
-              fontWeight: FontWeight.w600,
+              color: Colors.grey[600],
+              decoration: TextDecoration.lineThrough,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -315,9 +338,8 @@ class CartItemCard extends StatelessWidget {
   }
 }
 
-/// Compact cart item card (minimal design)
 class CompactCartItemCard extends StatelessWidget {
-  final CartItemUIModel item;
+  final CartItem item;
   final VoidCallback onRemove;
   final Function(int) onQuantityChanged;
 
@@ -332,6 +354,8 @@ class CompactCartItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final imageUrl = item.thumbnailUrl ?? '';
+
     return ListTile(
       leading: Container(
         width: 50,
@@ -340,20 +364,20 @@ class CompactCartItemCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(4),
           color: Colors.grey[100],
         ),
-        child: item.imageUrl.isNotEmpty
+        child: imageUrl.isNotEmpty
             ? ClipRRect(
                 borderRadius: BorderRadius.circular(4),
-                child: Image.network(item.imageUrl, fit: BoxFit.cover),
+                child: Image.network(imageUrl, fit: BoxFit.cover),
               )
             : Icon(Icons.image, color: Colors.grey[400]),
       ),
       title: Text(
-        item.displayName,
+        item.productName,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
       subtitle: Text(
-        item.formattedTotalPrice,
+        PriceFormatter.formatPrice(double.tryParse(item.lineTotal) ?? 0),
         style: const TextStyle(fontWeight: FontWeight.w600),
       ),
       trailing: Row(

@@ -1,22 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:mobile_ai_erp/core/stores/supplier/supplier_store.dart';
-import 'package:mobile_ai_erp/data/sharedpref/constants/preferences.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/presentation/customer_management/navigation/customer_navigator.dart';
 import 'package:mobile_ai_erp/presentation/home/store/language/language_store.dart';
 import 'package:mobile_ai_erp/presentation/home/store/theme/theme_store.dart';
+import 'package:mobile_ai_erp/presentation/login/store/login_store.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_navigator.dart';
-import 'package:mobile_ai_erp/presentation/supplier/supplier_list/supplier_list_screen.dart';
 import 'package:mobile_ai_erp/presentation/cart/store/cart_store.dart';
 import 'package:mobile_ai_erp/presentation/cart/widgets/mini_cart_drawer.dart';
 import 'package:mobile_ai_erp/presentation/cart/store/wishlist_store.dart';
 import 'package:mobile_ai_erp/presentation/cart/screens/wishlist_page.dart';
+import 'package:mobile_ai_erp/presentation/cart/models/cart_ui_model.dart';
 import 'package:mobile_ai_erp/utils/routes/cart_routes.dart';
 import 'package:mobile_ai_erp/utils/locale/app_localization.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
 import 'package:mobile_ai_erp/constants/strings.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -26,6 +24,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final ThemeStore _themeStore = getIt<ThemeStore>();
   final LanguageStore _languageStore = getIt<LanguageStore>();
+  final LoginStore _loginStore = getIt<LoginStore>();
   late final CartStore _cartStore;
   late final WishlistStore _wishlistStore;
 
@@ -37,6 +36,97 @@ class _HomeScreenState extends State<HomeScreen> {
 
     _cartStore.loadCart();
     _wishlistStore.loadWishlist();
+  }
+
+  Future<void> _openMiniCart() async {
+    await _cartStore.loadCartSummary();
+    await _cartStore.loadCart();
+
+    if (!mounted) return;
+
+    MiniCartDrawer buildMiniCartDrawer() {
+      final cartUIModel = CartUIModel(
+        cart: _cartStore.cart,
+        calculation: _cartStore.calculation,
+      );
+
+      return MiniCartDrawer(
+        cartData: cartUIModel,
+        onViewFullCart: () {
+          Navigator.pop(context);
+          CartRoutes.navigateToCart(context);
+        },
+        onCheckout: () {
+          Navigator.pop(context);
+          CartRoutes.navigateToCart(context);
+        },
+        onRemoveItem: (itemId) async {
+          await _cartStore.removeItemFromCart(itemId);
+        },
+        onQuantityChanged: (itemId, quantity) async {
+          await _cartStore.updateItemQuantity(itemId, quantity);
+        },
+        isLoading: _cartStore.isLoading,
+        onDrawerToggle: () {},
+      );
+    }
+
+    await showGeneralDialog(
+      context: context,
+      barrierLabel: 'Mini cart',
+      barrierDismissible: true,
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 250),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        final screenSize = MediaQuery.of(context).size;
+        final sheetHeight = screenSize.height * 0.85;
+        final isMobile = screenSize.width < 600;
+
+        if (isMobile) {
+          return SafeArea(
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: SizedBox(
+                height: sheetHeight,
+                width: double.infinity,
+                child: Observer(builder: (_) => buildMiniCartDrawer()),
+              ),
+            ),
+          );
+        }
+
+        return SafeArea(
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 16, top: 16, bottom: 16),
+              child: SizedBox(
+                width: 420,
+                height: sheetHeight,
+                child: Observer(builder: (_) => buildMiniCartDrawer()),
+              ),
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+        );
+
+        return FadeTransition(
+          opacity: curved,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0.15, 0),
+              end: Offset.zero,
+            ).animate(curved),
+            child: child,
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -71,9 +161,9 @@ class _HomeScreenState extends State<HomeScreen> {
     return Observer(
       builder: (context) {
         return MiniCartBadge(
-          itemCount: _cartStore.itemCount,
-          onTap: () {
-            CartRoutes.navigateToCart(context);
+          itemCount: _cartStore.cartBadgeCount,
+          onTap: () async {
+            await _openMiniCart();
           },
           hasDiscount: _cartStore.hasCoupon,
         );
@@ -84,7 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildWishlistButton() {
     return Observer(
       builder: (context) {
-        final count = _wishlistStore.itemCount;
+        final count = _wishlistStore.wishlistBadgeCount;
 
         return Stack(
           clipBehavior: Clip.none,
@@ -101,18 +191,19 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             if (count > 0)
               Positioned(
-                right: 6,
-                top: 6,
+                right: 2,
+                top: 2,
                 child: Container(
-                  padding: const EdgeInsets.all(4),
                   constraints: const BoxConstraints(
-                    minWidth: 18,
-                    minHeight: 18,
+                    minWidth: 16,
+                    minHeight: 16,
                   ),
-                  decoration: const BoxDecoration(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(
                     color: Colors.red,
                     shape: BoxShape.circle,
                   ),
+                  alignment: Alignment.center,
                   child: Text(
                     count > 99 ? '99+' : '$count',
                     textAlign: TextAlign.center,
@@ -120,6 +211,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       color: Colors.white,
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
+                      height: 1,
                     ),
                   ),
                 ),
@@ -232,15 +324,7 @@ class _HomeScreenState extends State<HomeScreen> {
           leading: Icon(Icons.store),
           title: Text("Suppliers"),
           trailing: Icon(Icons.chevron_right),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) =>
-                    SupplierListScreen(store: getIt<SupplierStore>()),
-              ),
-            );
-          },
+          onTap: () => Navigator.of(context).pushNamed(Routes.suppliers),
         ),
       ),
     );
@@ -353,8 +437,7 @@ class _HomeScreenState extends State<HomeScreen> {
               contentPadding: EdgeInsets.zero,
             ),
           ),
-        if (compact)
-          const PopupMenuDivider(),
+        if (compact) const PopupMenuDivider(),
         const PopupMenuItem(
           value: 'dashboard',
           child: ListTile(
@@ -454,9 +537,10 @@ class _HomeScreenState extends State<HomeScreen> {
         _themeStore.changeBrightnessToDark(!_themeStore.darkMode);
         break;
       case 'logout':
-        SharedPreferences.getInstance().then((preference) {
-          preference.setBool(Preferences.is_logged_in, false);
-          Navigator.of(context).pushReplacementNamed(Routes.login);
+        _loginStore.logout().then((_) {
+          if (mounted) {
+            Navigator.of(context).pushReplacementNamed(Routes.login);
+          }
         });
         break;
     }
@@ -520,9 +604,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildLogoutButton() {
     return IconButton(
       onPressed: () {
-        SharedPreferences.getInstance().then((preference) {
-          preference.setBool(Preferences.is_logged_in, false);
-          Navigator.of(context).pushReplacementNamed(Routes.login);
+        _loginStore.logout().then((_) {
+          if (mounted) {
+            Navigator.of(context).pushReplacementNamed(Routes.login);
+          }
         });
       },
       icon: const Icon(Icons.power_settings_new),

@@ -58,6 +58,7 @@ abstract class _OrderTrackingStore with Store {
     }
 
     try {
+<<<<<<< HEAD
       final String? secretKey = _resolveHeaderValue(Endpoints.erpSecretKey);
       final String? tenantId = _resolveHeaderValue(Endpoints.erpTenantId);
 
@@ -82,6 +83,14 @@ abstract class _OrderTrackingStore with Store {
           errorStore.setErrorMessage(
             errorMessage ?? 'Order detail not found.',
           );
+=======
+      final detail = await _ordersApi.getOrderDetail(orderId);
+
+      if (detail.isEmpty) {
+        if (!silent) {
+          errorMessage = 'Order detail not found.';
+          errorStore.setErrorMessage(errorMessage ?? 'Order detail not found.');
+>>>>>>> b0b620a2c4c97ddc3ba48344fa11bc1924107178
         }
         return;
       }
@@ -150,6 +159,7 @@ abstract class _OrderTrackingStore with Store {
     Map<String, dynamic> detail,
     String fallbackOrderId,
   ) {
+<<<<<<< HEAD
     final String orderId = (detail['id'] ?? detail['orderId'] ?? fallbackOrderId)
         .toString();
     final String code =
@@ -164,6 +174,27 @@ abstract class _OrderTrackingStore with Store {
     final ShipmentStage currentStage = _mapStatusToStage(status);
     final List<TrackingTimelineStep> steps =
         _buildTimelineSteps(currentStage, createdAt, updatedAt);
+=======
+    final String orderId =
+        (detail['id'] ?? detail['orderId'] ?? fallbackOrderId).toString();
+    final String code =
+        detail['code']?.toString() ??
+        detail['orderCode']?.toString() ??
+        orderId;
+    final String status = detail['status']?.toString() ?? 'pending';
+    final DateTime now = DateTime.now();
+    final DateTime createdAt =
+        _parseDate(detail['createdAt'] ?? detail['created_at']) ?? now;
+    final DateTime updatedAt =
+        _parseDate(detail['updatedAt'] ?? detail['updated_at']) ?? now;
+
+    final ShipmentStage currentStage = _mapStatusToStage(status);
+    final List<TrackingTimelineStep> steps = _buildTimelineSteps(
+      currentStage,
+      createdAt,
+      updatedAt,
+    );
+>>>>>>> b0b620a2c4c97ddc3ba48344fa11bc1924107178
 
     return OrderTrackingScenario(
       scenarioName: code,
@@ -173,9 +204,14 @@ abstract class _OrderTrackingStore with Store {
       carrierTrackingUrl:
           detail['carrierTrackingUrl']?.toString() ?? 'https://example.com',
       estimatedDeliveryDate:
+<<<<<<< HEAD
           _parseDate(detail['estimatedDeliveryDate']) ?? now.add(
             const Duration(days: 2),
           ),
+=======
+          _parseDate(detail['estimatedDeliveryDate']) ??
+          now.add(const Duration(days: 2)),
+>>>>>>> b0b620a2c4c97ddc3ba48344fa11bc1924107178
       lastUpdatedAt: updatedAt,
       timelineSteps: steps,
       currentStage: currentStage,
@@ -187,6 +223,7 @@ abstract class _OrderTrackingStore with Store {
 
   ShipmentStage _mapStatusToStage(String status) {
     switch (status.toLowerCase()) {
+<<<<<<< HEAD
       case 'new':
       case 'pending':
         return ShipmentStage.confirmed;
@@ -196,6 +233,15 @@ abstract class _OrderTrackingStore with Store {
         return ShipmentStage.packed;
       case 'partially_shipped':
       case 'shipped':
+=======
+      case 'confirmed':
+      case 'pending':
+        return ShipmentStage.confirmed;
+      case 'packed':
+        return ShipmentStage.packed;
+      case 'shipped':
+      case 'shipping':
+>>>>>>> b0b620a2c4c97ddc3ba48344fa11bc1924107178
       case 'in_transit':
         return ShipmentStage.shipped;
       case 'delivered':
@@ -211,7 +257,14 @@ abstract class _OrderTrackingStore with Store {
     DateTime updatedAt,
   ) {
     final List<TrackingTimelineStep> steps = [
+<<<<<<< HEAD
       TrackingTimelineStep(stage: ShipmentStage.confirmed, timestamp: createdAt),
+=======
+      TrackingTimelineStep(
+        stage: ShipmentStage.confirmed,
+        timestamp: createdAt,
+      ),
+>>>>>>> b0b620a2c4c97ddc3ba48344fa11bc1924107178
     ];
 
     if (currentStage.index >= ShipmentStage.packed.index) {
@@ -222,13 +275,27 @@ abstract class _OrderTrackingStore with Store {
 
     if (currentStage.index >= ShipmentStage.shipped.index) {
       steps.add(
+<<<<<<< HEAD
         TrackingTimelineStep(stage: ShipmentStage.shipped, timestamp: updatedAt),
+=======
+        TrackingTimelineStep(
+          stage: ShipmentStage.shipped,
+          timestamp: updatedAt,
+        ),
+>>>>>>> b0b620a2c4c97ddc3ba48344fa11bc1924107178
       );
     }
 
     if (currentStage.index >= ShipmentStage.delivered.index) {
       steps.add(
+<<<<<<< HEAD
         TrackingTimelineStep(stage: ShipmentStage.delivered, timestamp: updatedAt),
+=======
+        TrackingTimelineStep(
+          stage: ShipmentStage.delivered,
+          timestamp: updatedAt,
+        ),
+>>>>>>> b0b620a2c4c97ddc3ba48344fa11bc1924107178
       );
     }
 
@@ -280,17 +347,32 @@ abstract class _OrderTrackingStore with Store {
 
   String getTotalPrice(Map<String, dynamic>? detail) {
     if (detail == null) return '0';
+<<<<<<< HEAD
     final price = detail['totalPrice'] ?? detail['total'] ?? detail['totalAmount'];
+=======
+    final price =
+        detail['totalPrice'] ?? detail['total'] ?? detail['totalAmount'];
+>>>>>>> b0b620a2c4c97ddc3ba48344fa11bc1924107178
     return price?.toString() ?? '0';
   }
 
   int getItemsCount(Map<String, dynamic>? detail) {
     if (detail == null) return 0;
+<<<<<<< HEAD
     final dynamic items = detail['items'] ?? detail['orderItems'] ?? detail['products'];
     if (items is List) {
       return items.length;
     }
     final dynamic count = detail['itemsCount'] ?? detail['items_count'] ?? detail['totalItems'];
+=======
+    final dynamic items =
+        detail['items'] ?? detail['orderItems'] ?? detail['products'];
+    if (items is List) {
+      return items.length;
+    }
+    final dynamic count =
+        detail['itemsCount'] ?? detail['items_count'] ?? detail['totalItems'];
+>>>>>>> b0b620a2c4c97ddc3ba48344fa11bc1924107178
     if (count is num) {
       return count.toInt();
     }
@@ -306,11 +388,17 @@ abstract class _OrderTrackingStore with Store {
     if (customer is Map<String, dynamic>) {
       return (customer['name'] ?? customer['fullName'] ?? 'Unknown').toString();
     }
+<<<<<<< HEAD
     return (detail['customerName'] ?? detail['customer'] ?? 'Unknown').toString();
+=======
+    return (detail['customerName'] ?? detail['customer'] ?? 'Unknown')
+        .toString();
+>>>>>>> b0b620a2c4c97ddc3ba48344fa11bc1924107178
   }
 
   String getDeliveryInfo(Map<String, dynamic>? detail) {
     if (detail == null) return '';
+<<<<<<< HEAD
     final dynamic shipping = detail['shippingAddress'] ?? detail['deliveryAddress'];
     if (shipping is Map<String, dynamic>) {
       final String line1 = (shipping['addressLine1'] ??
@@ -323,12 +411,35 @@ abstract class _OrderTrackingStore with Store {
     }
     final String fallback =
         (detail['shippingAddress'] ?? detail['deliveryAddress'] ?? '').toString();
+=======
+    final dynamic shipping =
+        detail['shippingAddress'] ?? detail['deliveryAddress'];
+    if (shipping is Map<String, dynamic>) {
+      final String line1 =
+          (shipping['addressLine1'] ??
+                  shipping['line1'] ??
+                  shipping['address'] ??
+                  '')
+              .toString();
+      final String city = (shipping['city'] ?? shipping['province'] ?? '')
+          .toString();
+      return [line1, city].where((e) => e.isNotEmpty).join(', ');
+    }
+    final String fallback =
+        (detail['shippingAddress'] ?? detail['deliveryAddress'] ?? '')
+            .toString();
+>>>>>>> b0b620a2c4c97ddc3ba48344fa11bc1924107178
     return fallback;
   }
 
   DateTime? getOrderCreatedAt(Map<String, dynamic>? detail) {
     if (detail == null) return null;
+<<<<<<< HEAD
     final raw = detail['createdAt'] ?? detail['created_at'] ?? detail['createdDate'];
+=======
+    final raw =
+        detail['createdAt'] ?? detail['created_at'] ?? detail['createdDate'];
+>>>>>>> b0b620a2c4c97ddc3ba48344fa11bc1924107178
     if (raw is String && raw.isNotEmpty) {
       return DateTime.tryParse(raw);
     }

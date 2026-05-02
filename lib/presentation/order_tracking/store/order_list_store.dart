@@ -8,10 +8,14 @@ part 'order_list_store.g.dart';
 class OrderListStore = _OrderListStore with _$OrderListStore;
 
 abstract class _OrderListStore with Store {
+<<<<<<< HEAD
   _OrderListStore(
     this._ordersApi,
     this.errorStore,
   );
+=======
+  _OrderListStore(this._ordersApi, this.errorStore);
+>>>>>>> b0b620a2c4c97ddc3ba48344fa11bc1924107178
 
   final OrdersApi _ordersApi;
   final ErrorStore errorStore;
@@ -64,6 +68,7 @@ abstract class _OrderListStore with Store {
     }
 
     try {
+<<<<<<< HEAD
       final String? secretKey = _resolveHeaderValue(Endpoints.erpSecretKey);
       final String? tenantId = _resolveHeaderValue(Endpoints.erpTenantId);
 
@@ -79,6 +84,9 @@ abstract class _OrderListStore with Store {
         secretKey: secretKey,
         tenantId: tenantId,
       );
+=======
+      final response = await _ordersApi.getOrders(pageSize: 20, page: 1);
+>>>>>>> b0b620a2c4c97ddc3ba48344fa11bc1924107178
 
       final List<dynamic> parsed = _extractOrders(response);
       orders = ObservableList<dynamic>.of(parsed);
@@ -174,6 +182,7 @@ abstract class _OrderListStore with Store {
       final dynamic shipping =
           order['shippingAddress'] ?? order['deliveryAddress'];
       if (shipping is Map<String, dynamic>) {
+<<<<<<< HEAD
         final String line1 = (shipping['addressLine1'] ??
                 shipping['line1'] ??
                 shipping['address'] ??
@@ -184,6 +193,20 @@ abstract class _OrderListStore with Store {
         final String combined = [line1, city].where((e) => e.isNotEmpty).join(
               ', ',
             );
+=======
+        final String line1 =
+            (shipping['addressLine1'] ??
+                    shipping['line1'] ??
+                    shipping['address'] ??
+                    '')
+                .toString();
+        final String city = (shipping['city'] ?? shipping['province'] ?? '')
+            .toString();
+        final String combined = [
+          line1,
+          city,
+        ].where((e) => e.isNotEmpty).join(', ');
+>>>>>>> b0b620a2c4c97ddc3ba48344fa11bc1924107178
         if (combined.isNotEmpty) {
           return combined;
         }
@@ -202,9 +225,14 @@ abstract class _OrderListStore with Store {
 
   DateTime? getOrderCreatedAt(dynamic order) {
     if (order is Map<String, dynamic>) {
+<<<<<<< HEAD
       final raw = order['createdAt'] ??
           order['created_at'] ??
           order['createdDate'];
+=======
+      final raw =
+          order['createdAt'] ?? order['created_at'] ?? order['createdDate'];
+>>>>>>> b0b620a2c4c97ddc3ba48344fa11bc1924107178
       if (raw is String && raw.isNotEmpty) {
         return DateTime.tryParse(raw);
       }
