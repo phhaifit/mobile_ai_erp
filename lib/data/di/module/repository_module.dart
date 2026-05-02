@@ -11,6 +11,7 @@ import 'package:mobile_ai_erp/data/network/datasources/user/user_remote_datasour
 import 'package:mobile_ai_erp/data/network/datasources/role/role_remote_datasource.dart';
 import 'package:mobile_ai_erp/data/network/apis/orders/order_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/storefront_products_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/web_builder/web_builder_api.dart';
 import 'package:mobile_ai_erp/data/repository/checkout/checkout_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/customer/customer_repository_impl.dart';
@@ -65,7 +66,9 @@ import 'package:mobile_ai_erp/domain/repository/web_builder/store_settings_repos
 import 'package:mobile_ai_erp/domain/repository/web_builder/web_theme_repository.dart';
 
 import 'package:mobile_ai_erp/data/repository/product/product_management_repository_impl.dart';
+import 'package:mobile_ai_erp/data/repository/product/product_detail_repository_impl.dart';
 import 'package:mobile_ai_erp/domain/repository/product/product_management_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/product/product_detail_repository.dart';
 import 'package:mobile_ai_erp/data/local/datasources/product/mock_product_datasource.dart';
 import 'package:mobile_ai_erp/data/network/apis/storefront/storefront_api.dart';
 
@@ -78,9 +81,7 @@ class RepositoryModule {
       CustomerRepositoryImpl(getIt<CustomerDataSource>()),
     );
 
-    getIt.registerSingleton<DashboardRepository>(
-      MockDashboardRepository(),
-    );
+    getIt.registerSingleton<DashboardRepository>(MockDashboardRepository());
 
     getIt.registerSingleton<SettingRepository>(
       SettingRepositoryImpl(getIt<SharedPreferenceHelper>()),
@@ -111,20 +112,19 @@ class RepositoryModule {
       ProductMetadataDataSource(),
     );
     getIt.registerSingleton<ProductMetadataRepository>(
-        ProductMetadataRepositoryImpl(
-      getIt<ProductMetadataDataSource>(),
-    ));
-    
+      ProductMetadataRepositoryImpl(getIt<ProductMetadataDataSource>()),
+    );
+
     getIt.registerLazySingleton<AddressRepository>(
-        () => AddressRepositoryImpl(getIt<AddressMockDataSource>()));
-        
+      () => AddressRepositoryImpl(getIt<AddressMockDataSource>()),
+    );
+
     getIt.registerLazySingleton<OrderRepository>(
-        () => OrderRepositoryImpl(getIt<OrderMockDataSource>()));
+      () => OrderRepositoryImpl(getIt<OrderMockDataSource>()),
+    );
 
     // post_purchase:----------------------------------------------------------
-    getIt.registerSingleton<PostPurchaseDataSource>(
-      PostPurchaseDataSource(),
-    );
+    getIt.registerSingleton<PostPurchaseDataSource>(PostPurchaseDataSource());
     getIt.registerSingleton<PostPurchaseRepository>(
       PostPurchaseRepositoryImpl(getIt<PostPurchaseDataSource>()),
     );
@@ -137,9 +137,7 @@ class RepositoryModule {
     getIt.registerSingleton<RoleRepository>(
       RoleRepositoryImpl(getIt<RoleRemoteDataSource>()),
     );
-    getIt.registerSingleton<AuthRepository>(
-      AuthRepositoryImpl(getIt()),
-    );
+    getIt.registerSingleton<AuthRepository>(AuthRepositoryImpl(getIt()));
 
     // web_builder:--------------------------------------------------------------
     getIt.registerLazySingleton<CmsPageRepository>(
@@ -176,5 +174,8 @@ class RepositoryModule {
       ProductManagementRepositoryImpl(getIt<MockProductDataSource>()),
     );
 
+    getIt.registerLazySingleton<ProductDetailRepository>(
+      () => ProductDetailRepositoryImpl(getIt<StorefrontProductsApi>()),
+    );
   }
 }

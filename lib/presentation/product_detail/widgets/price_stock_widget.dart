@@ -7,6 +7,9 @@ class PriceStockWidget extends StatelessWidget {
   final double? originalPrice;
   final int discountPercentage;
   final ProductVariant? selectedVariant;
+  final bool? isFlashSale;
+  final DateTime? flashSaleFrom;
+  final DateTime? flashSaleEndTime;
 
   const PriceStockWidget({
     super.key,
@@ -14,6 +17,9 @@ class PriceStockWidget extends StatelessWidget {
     this.originalPrice,
     required this.discountPercentage,
     this.selectedVariant,
+    this.isFlashSale,
+    this.flashSaleFrom,
+    this.flashSaleEndTime,
   });
 
   static final _currencyFormat = NumberFormat.currency(
@@ -26,10 +32,16 @@ class PriceStockWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final showFlashSale = isFlashSale == true;
+    final flashRange = _formatFlashSaleRange();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (showFlashSale) ...[
+          _FlashSaleBanner(rangeText: flashRange),
+          const SizedBox(height: 10),
+        ],
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
@@ -49,8 +61,9 @@ class PriceStockWidget extends StatelessWidget {
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurface.withValues(alpha: 0.45),
                     decoration: TextDecoration.lineThrough,
-                    decorationColor:
-                        colorScheme.onSurface.withValues(alpha: 0.45),
+                    decorationColor: colorScheme.onSurface.withValues(
+                      alpha: 0.45,
+                    ),
                   ),
                 ),
               ),
@@ -66,6 +79,62 @@ class PriceStockWidget extends StatelessWidget {
           _StockIndicator(variant: selectedVariant!),
         ],
       ],
+    );
+  }
+
+  String? _formatFlashSaleRange() {
+    if (flashSaleFrom == null && flashSaleEndTime == null) return null;
+    final format = DateFormat('dd MMM, HH:mm');
+    final from = flashSaleFrom != null ? format.format(flashSaleFrom!) : null;
+    final to = flashSaleEndTime != null
+        ? format.format(flashSaleEndTime!)
+        : null;
+    if (from != null && to != null) return '$from - $to';
+    return from ?? to;
+  }
+}
+
+class _FlashSaleBanner extends StatelessWidget {
+  final String? rangeText;
+
+  const _FlashSaleBanner({this.rangeText});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.red.shade50,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: Colors.red.shade200),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.flash_on, size: 16, color: Colors.red.shade700),
+          const SizedBox(width: 6),
+          Text(
+            'Flash Sale',
+            style: TextStyle(
+              color: Colors.red.shade700,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            ),
+          ),
+          if (rangeText != null) ...[
+            const SizedBox(width: 8),
+            Text(
+              rangeText!,
+              style: TextStyle(
+                color: colorScheme.onSurface.withValues(alpha: 0.7),
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
