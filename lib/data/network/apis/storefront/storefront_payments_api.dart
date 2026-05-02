@@ -1,0 +1,54 @@
+import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
+import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
+import 'package:mobile_ai_erp/domain/entity/payment/payment.dart';
+
+class StorefrontPaymentsApi {
+  final DioClient _dioClient;
+
+  StorefrontPaymentsApi(this._dioClient);
+
+  /// GET /storefront/payments?page=1&pageSize=10
+  Future<StorefrontPaymentsResult> getPayments({
+    int page = 1,
+    int pageSize = 10,
+  }) async {
+    final res = await _dioClient.dio.get(
+      Endpoints.storefrontPayments,
+      queryParameters: {'page': page, 'pageSize': pageSize},
+    );
+    final data = res.data as Map<String, dynamic>;
+    final paymentsList = (data['data'] as List<dynamic>?)
+            ?.whereType<Map<String, dynamic>>()
+            .map(Payment.fromJson)
+            .toList() ??
+        [];
+    final meta = data['meta'] as Map<String, dynamic>?;
+    return StorefrontPaymentsResult(
+      payments: paymentsList,
+      total: meta?['total'] as int? ?? paymentsList.length,
+      page: meta?['page'] as int? ?? page,
+      pageSize: meta?['pageSize'] as int? ?? pageSize,
+    );
+  }
+
+  /// GET /storefront/payments/:id
+  Future<Payment> getPaymentById(String id) async {
+    final res =
+        await _dioClient.dio.get(Endpoints.storefrontPaymentById(id));
+    return Payment.fromJson(res.data as Map<String, dynamic>);
+  }
+}
+
+class StorefrontPaymentsResult {
+  final List<Payment> payments;
+  final int total;
+  final int page;
+  final int pageSize;
+
+  StorefrontPaymentsResult({
+    required this.payments,
+    required this.total,
+    required this.page,
+    required this.pageSize,
+  });
+}
