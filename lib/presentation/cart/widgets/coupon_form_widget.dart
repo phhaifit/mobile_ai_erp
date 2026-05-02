@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_ai_erp/domain/entity/coupon/coupon.dart';
 
-/// Widget for entering and applying coupon codes
 class CouponFormWidget extends StatefulWidget {
+  final List<Coupon> coupons;
   final ValueChanged<String> onApplyCoupon;
   final VoidCallback? onRemoveCoupon;
   final String? appliedCouponCode;
@@ -11,6 +12,7 @@ class CouponFormWidget extends StatefulWidget {
 
   const CouponFormWidget({
     Key? key,
+    required this.coupons,
     required this.onApplyCoupon,
     this.onRemoveCoupon,
     this.appliedCouponCode,
@@ -24,30 +26,34 @@ class CouponFormWidget extends StatefulWidget {
 }
 
 class _CouponFormWidgetState extends State<CouponFormWidget> {
-  late TextEditingController _controller;
   bool _isExpanded = false;
+  String? _selectedCode;
 
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: widget.appliedCouponCode ?? '');
+    _selectedCode = widget.appliedCouponCode;
   }
 
   @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+  void didUpdateWidget(covariant CouponFormWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.appliedCouponCode != oldWidget.appliedCouponCode) {
+      _selectedCode = widget.appliedCouponCode;
+    }
   }
 
   void _handleApply() {
-    final code = _controller.text.trim().toUpperCase();
-    if (code.isNotEmpty) {
+    final code = _selectedCode?.trim();
+    if (code != null && code.isNotEmpty) {
       widget.onApplyCoupon(code);
     }
   }
 
   void _handleRemove() {
-    _controller.clear();
+    setState(() {
+      _selectedCode = null;
+    });
     widget.onRemoveCoupon?.call();
   }
 
@@ -57,13 +63,17 @@ class _CouponFormWidgetState extends State<CouponFormWidget> {
         widget.appliedCouponCode != null &&
         widget.appliedCouponCode!.isNotEmpty;
 
+    final selectedCoupon = widget.coupons
+        .where((coupon) => coupon.code == _selectedCode)
+        .cast<Coupon?>()
+        .firstWhere((coupon) => coupon != null, orElse: () => null);
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
             GestureDetector(
               onTap: () => setState(() => _isExpanded = !_isExpanded),
               child: Row(
@@ -106,18 +116,39 @@ class _CouponFormWidgetState extends State<CouponFormWidget> {
                 ],
               ),
             ),
-            // Expanded content
             if (_isExpanded) ...[
               const SizedBox(height: 16),
               Divider(color: Colors.grey[200]),
               const SizedBox(height: 16),
-              // Input field
-              TextField(
-                controller: _controller,
-                enabled: !hasAppliedCoupon,
-                textCapitalization: TextCapitalization.characters,
+
+              DropdownButtonFormField<String>(
+                initialValue: hasAppliedCoupon
+                    ? widget.appliedCouponCode
+                    : _selectedCode,
+                items: widget.coupons.map((coupon) {
+                  return DropdownMenuItem<String>(
+                    value: coupon.code,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          coupon.code,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                onChanged: hasAppliedCoupon || widget.isLoading
+                    ? null
+                    : (value) {
+                        setState(() {
+                          _selectedCode = value;
+                        });
+                      },
                 decoration: InputDecoration(
-                  hintText: 'Enter coupon code',
+                  hintText: 'Select coupon',
                   filled: true,
                   fillColor: Colors.grey[50],
                   border: OutlineInputBorder(
@@ -130,8 +161,42 @@ class _CouponFormWidgetState extends State<CouponFormWidget> {
                   ),
                 ),
               ),
+
+              if (selectedCoupon != null && !hasAppliedCoupon) ...[
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    border: Border.all(color: Colors.grey[200]!),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (selectedCoupon.name.isNotEmpty)
+                        Text(
+                          selectedCoupon.name,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      if ((selectedCoupon.description ?? '').isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          selectedCoupon.description!,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+
               const SizedBox(height: 12),
-              // Error message
+
               if (widget.error != null)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
@@ -159,7 +224,7 @@ class _CouponFormWidgetState extends State<CouponFormWidget> {
                     ),
                   ),
                 ),
-              // Success message
+
               if (widget.success != null)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
@@ -190,11 +255,16 @@ class _CouponFormWidgetState extends State<CouponFormWidget> {
                     ),
                   ),
                 ),
-              // Apply button
+
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: widget.isLoading ? null : _handleApply,
+                  onPressed:
+                      widget.isLoading ||
+                          hasAppliedCoupon ||
+                          _selectedCode == null
+                      ? null
+                      : _handleApply,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue[600],
                     disabledBackgroundColor: Colors.grey[300],
@@ -224,9 +294,8 @@ class _CouponFormWidgetState extends State<CouponFormWidget> {
   }
 }
 
-/// Available coupons list widget
 class AvailableCouponsWidget extends StatelessWidget {
-  final List<Map<String, dynamic>> coupons;
+  final List<Coupon> coupons;
   final ValueChanged<String> onSelectCoupon;
   final bool isLoading;
 
@@ -240,7 +309,7 @@ class AvailableCouponsWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (coupons.isEmpty) {
-      return SizedBox.shrink();
+      return const SizedBox.shrink();
     }
 
     return Column(
@@ -255,7 +324,7 @@ class AvailableCouponsWidget extends StatelessWidget {
         ),
         ...coupons.map((coupon) {
           return GestureDetector(
-            onTap: isLoading ? null : () => onSelectCoupon(coupon['code']),
+            onTap: isLoading ? null : () => onSelectCoupon(coupon.code),
             child: Card(
               child: Padding(
                 padding: const EdgeInsets.all(12),
@@ -266,16 +335,17 @@ class AvailableCouponsWidget extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            coupon['code'],
+                            coupon.code,
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
-                          Text(
-                            coupon['description'] ?? '',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
+                          if ((coupon.description ?? '').isNotEmpty)
+                            Text(
+                              coupon.description!,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
                             ),
-                          ),
                         ],
                       ),
                     ),
@@ -289,7 +359,7 @@ class AvailableCouponsWidget extends StatelessWidget {
               ),
             ),
           );
-        }).toList(),
+        }),
       ],
     );
   }

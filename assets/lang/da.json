@@ -36,6 +36,14 @@
   "tracking_return_received": "Modtaget",
   "tracking_return_refunded": "Refunderet",
   "tracking_return_exchanged": "Ombyttet",
-  "home_end": "-------------------------------------------------------------------------------------"
+  "home_end": "-------------------------------------------------------------------------------------",
 
+  "supplier_screen_title": "Leverandorer",
+  "supplier_fab_tooltip": "Tilfoej leverandor",
+  "supplier_empty_title": "Ingen leverandorer endnu",
+  "supplier_empty_no_match_title": "Ingen matchende leverandorer",
+  "supplier_empty_subtitle": "Tryk + for at tilfoeje din forste leverandor",
+  "supplier_empty_no_match_subtitle": "Proev at aendre din sogning eller filter.",
+  "supplier_delete_success": "Leverandor slettet",
+  "supplier_delete_error": "Kunne ikke slette leverandoren"
 }
