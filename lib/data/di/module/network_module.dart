@@ -4,6 +4,8 @@ import 'package:mobile_ai_erp/core/data/network/dio/interceptors/auth_intercepto
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/logging_interceptor.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/tenant_header_interceptor.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/token_refresh_interceptor.dart';
+import 'package:mobile_ai_erp/data/network/apis/customer/customer_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/customer/customer_segment_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/orders/order_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/storefront_products_api.dart';
@@ -175,6 +177,14 @@ class NetworkModule {
       StorefrontApi(getIt<DioClient>(instanceName: 'storefront')),
     );
     getIt.registerSingleton(PostApi(getIt<DioClient>(), getIt<RestClient>()));
+
+    // customer apis:----------------------------------------------------------
+    getIt.registerSingleton<CustomerSegmentApi>(
+      CustomerSegmentApi(getIt<DioClient>(instanceName: erpDioClientName)),
+    );
+    getIt.registerSingleton<CustomerApi>(
+      CustomerApi(getIt<DioClient>(instanceName: erpDioClientName)),
+    );
 
     // datasources:-----------------------------------------------------------
     getIt.registerSingleton<RoleRemoteDataSource>(
