@@ -18,7 +18,7 @@ void main() {
       store.errorStore.dispose();
     });
 
-    test('loads mock dashboard data', () async {
+    test('loads dashboard data from repository', () async {
       await store.loadDashboard();
 
       expect(store.kpis, isNotEmpty);
@@ -27,6 +27,8 @@ void main() {
       expect(store.insights, isNotEmpty);
       expect(store.quickNavItems, isNotEmpty);
       expect(store.generatedAt, isNotNull);
+      expect(store.isLoading, isFalse);
+      expect(store.errorMessage, isEmpty);
     });
 
     test('changes period and refreshes trend data', () async {
@@ -51,9 +53,20 @@ void main() {
 
       expect(failingStore.errorMessage, 'Unable to load dashboard');
       expect(failingStore.hasData, isFalse);
+      expect(failingStore.isLoading, isFalse);
     });
 
-    test('dashboard and suppliers routes are registered', () {
+    test('refreshDashboard delegates to loadDashboard', () async {
+      await store.loadDashboard();
+
+      // After load, call refresh — should reload without errors.
+      await store.refreshDashboard();
+
+      expect(store.errorMessage, isEmpty);
+      expect(store.hasData, isTrue);
+    });
+
+    test('dashboard route is registered', () {
       expect(Routes.routes.containsKey(Routes.dashboard), isTrue);
       expect(Routes.routes.containsKey(Routes.suppliers), isTrue);
     });
