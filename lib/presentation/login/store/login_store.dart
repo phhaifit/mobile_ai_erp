@@ -1,46 +1,44 @@
+import 'package:mobile_ai_erp/constants/env.dart';
 import 'package:mobile_ai_erp/core/stores/error/error_store.dart';
 import 'package:mobile_ai_erp/core/stores/form/form_store.dart';
-import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
-import 'package:mobile_ai_erp/domain/usecase/storefront_customer/customer_forgot_password_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/storefront_customer/customer_login_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/storefront_customer/customer_register_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/user/is_logged_in_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/user/save_login_in_status_usecase.dart';
-import 'package:dio/dio.dart';
+import 'package:mobile_ai_erp/domain/usecase/auth/create_tenant_usecase.dart';
 import 'package:mobx/mobx.dart';
-import 'dart:convert';
+import 'dart:developer' as developer;
+
+import '../../../domain/entity/user/user.dart';
+import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
+import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
+import 'package:mobile_ai_erp/domain/repository/user/auth_repository.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:math';
+import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 
 part 'login_store.g.dart';
 
+enum OAuthProvider { google, github }
+
+// ignore: library_private_types_in_public_api
 class LoginStore = _LoginStore with _$LoginStore;
 
 abstract class _LoginStore with Store {
   // constructor:---------------------------------------------------------------
   _LoginStore(
-    this._isLoggedInUseCase,
-    this._saveLoginStatusUseCase,
-    this._customerLoginUseCase,
-    this._customerRegisterUseCase,
-    this._customerForgotPasswordUseCase,
+    this._createTenantUseCase,
+    this._authRepository,
     this._sharedPreferenceHelper,
     this.formErrorStore,
     this.errorStore,
   ) {
     // setting up disposers
     _setupDisposers();
-
-    // checking if user is logged in
-    // _isLoggedInUseCase.call(params: null).then((value) async {
-    //   isLoggedIn = value;
-    // });
+    isLoggedIn = _sharedPreferenceHelper.isLoggedIn;
   }
 
   // use cases:-----------------------------------------------------------------
-  final IsLoggedInUseCase _isLoggedInUseCase;
-  final SaveLoginStatusUseCase _saveLoginStatusUseCase;
-  final CustomerLoginUseCase _customerLoginUseCase;
-  final CustomerRegisterUseCase _customerRegisterUseCase;
-  final CustomerForgotPasswordUseCase _customerForgotPasswordUseCase;
+  final CreateTenantUseCase _createTenantUseCase;
+
+  // repositories:---------------------------------------------------------------
+  final AuthRepository _authRepository;
   final SharedPreferenceHelper _sharedPreferenceHelper;
 
   // stores:--------------------------------------------------------------------
@@ -54,173 +52,224 @@ abstract class _LoginStore with Store {
   late List<ReactionDisposer> _disposers;
 
   void _setupDisposers() {
-    _disposers = [
-      reaction((_) => success, (_) => success = false, delay: 200),
-    ];
+    _disposers = [reaction((_) => success, (_) => success = false, delay: 200)];
   }
 
-  // empty responses:-----------------------------------------------------------
-  static ObservableFuture<Map<String, dynamic>?> emptyLoginResponse =
-      ObservableFuture.value(null);
-
-  static ObservableFuture<Map<String, dynamic>?> emptyRegisterResponse =
-      ObservableFuture.value(null);
-
-  static ObservableFuture<void> emptyForgotPasswordResponse =
-      ObservableFuture.value(null);
-
   // store variables:-----------------------------------------------------------
+  @observable
   bool isLoggedIn = false;
 
   @observable
   bool success = false;
 
   @observable
-  ObservableFuture<Map<String, dynamic>?> loginFuture = emptyLoginResponse;
+  AuthResponseUser? currentUser;
 
   @observable
-  ObservableFuture<Map<String, dynamic>?> registerFuture = emptyRegisterResponse;
+  String? currentTenantId;
 
   @observable
-  ObservableFuture<void> forgotPasswordFuture = emptyForgotPasswordResponse;
+  bool needsOnboarding = false;
 
-  @computed
-  bool get isLoading => loginFuture.status == FutureStatus.pending ||
-                        registerFuture.status == FutureStatus.pending ||
-                        forgotPasswordFuture.status == FutureStatus.pending;
+  @observable
+  String? errorMessage;
 
-  // actions:-------------------------------------------------------------------
+  @observable
+  bool isLoading = false;
+
   @action
-  Future login(String email, String password) async {
-    print('🔵 [LoginStore.login] Starting login for email: $email');
-    final CustomerLoginParams loginParams =
-        CustomerLoginParams(email: email, password: password);
-    final future = _customerLoginUseCase.call(params: loginParams);
-    loginFuture = ObservableFuture(future);
-
-    await future.then((value) async {
-      if (value != null && value['accessToken'] != null) {
-        print('✅ [LoginStore.login] Login successful, got accessToken');
-        final accessToken = value['accessToken'];
-        
-        // Save the auth token
-        await _sharedPreferenceHelper.saveAuthToken(accessToken);
-        print('✅ [LoginStore.login] Access token saved to SharedPreferences');
-        
-        // Extract customer ID from JWT token
-        final customerId = _extractCustomerIdFromJwt(accessToken);
-        if (customerId != null && customerId.isNotEmpty) {
-          print('🔑 [LoginStore.login] Extracted customer ID from JWT: $customerId');
-          await _sharedPreferenceHelper.saveCustomerId(customerId);
-          print('✅ [LoginStore.login] Customer ID saved to SharedPreferences');
-        } else {
-          print('⚠️ [LoginStore.login] Failed to extract customer ID from JWT');
-        }
-        
-        await _saveLoginStatusUseCase.call(params: true);
-        this.isLoggedIn = true;
-        this.success = true;
-        print('✅ [LoginStore.login] Login completed successfully');
-      }
-    }).catchError((e) {
-      print('❌ [LoginStore.login] Login error: $e');
-      this.isLoggedIn = false;
-      this.success = false;
-      errorStore.errorMessage = _parseError(e);
-      throw e;
-    });
-  }
-
-  /// Extract customer ID from JWT token
-  /// JWT format: header.payload.signature
-  /// Payload contains: {"sub": "customer-id", "email": "...", "tid": "...", ...}
-  String? _extractCustomerIdFromJwt(String token) {
+  Future<void> createTenant(String name, String subdomain) async {
     try {
-      print('🔵 [LoginStore._extractCustomerIdFromJwt] Extracting customer ID from JWT');
-      final parts = token.split('.');
-      if (parts.length != 3) {
-        print('❌ [LoginStore._extractCustomerIdFromJwt] Invalid JWT format (not 3 parts)');
-        return null;
+      errorMessage = null;
+      final result = await _createTenantUseCase.call(
+        params: CreateTenantParams(name: name, subdomain: subdomain),
+      );
+      currentTenantId = result['id'] ?? result['tenantId'];
+      if (currentTenantId != null) {
+        await _sharedPreferenceHelper.saveTenantId(currentTenantId!);
       }
-
-      // Decode the payload (second part)
-      String payload = parts[1];
-      
-      // Add padding if needed
-      final padLength = 4 - (payload.length % 4);
-      if (padLength != 4) {
-        payload += '=' * padLength;
-      }
-
-      final decodedBytes = base64.decode(payload);
-      final decodedString = utf8.decode(decodedBytes);
-      final jsonPayload = jsonDecode(decodedString) as Map<String, dynamic>;
-
-      print('📦 [LoginStore._extractCustomerIdFromJwt] Decoded JWT payload: $jsonPayload');
-
-      // Extract the 'sub' claim which contains the customer ID
-      final customerId = jsonPayload['sub'] as String?;
-      
-      if (customerId != null && customerId.isNotEmpty) {
-        print('✅ [LoginStore._extractCustomerIdFromJwt] Found customer ID: $customerId');
-        return customerId;
-      } else {
-        print('⚠️ [LoginStore._extractCustomerIdFromJwt] "sub" claim not found in JWT payload');
-        return null;
-      }
+      needsOnboarding = false;
+      success = true;
     } catch (e) {
-      print('❌ [LoginStore._extractCustomerIdFromJwt] Error decoding JWT: $e');
-      return null;
+      errorMessage = e.toString();
+      rethrow;
     }
   }
 
   @action
-  Future register(String firstName, String lastName, String email, String password) async {
-    final name = '$firstName $lastName'.trim();
-    final CustomerRegisterParams registerParams =
-        CustomerRegisterParams(
-          name: name,
-          email: email,
-          password: password,
-        );
-    final future = _customerRegisterUseCase.call(params: registerParams);
-    registerFuture = ObservableFuture(future);
-
-    await future.then((value) async {
-      if (value != null) {
-        // Handle registration success, perhaps auto login or show message
-        this.success = true;
+  Future<void> logout() async {
+    try {
+      final accessToken = await _sharedPreferenceHelper.accessToken;
+      if (accessToken != null &&
+          currentUser != null &&
+          currentTenantId != null) {
+        await _authRepository.signOut(accessToken, currentTenantId!);
       }
-    }).catchError((e) {
-      this.success = false;
-      errorStore.errorMessage = _parseError(e);
-      throw e;
-    });
+    } catch (e) {
+      // Sign out should not fail the operation
+      developer.log('Sign out error: $e');
+    } finally {
+      // Clear local state
+      await _clearSession();
+    }
   }
 
   @action
-  Future forgotPassword(String email) async {
-    final CustomerForgotPasswordParams forgotParams =
-        CustomerForgotPasswordParams(email: email);
-    final future = _customerForgotPasswordUseCase.call(params: forgotParams);
-    forgotPasswordFuture = ObservableFuture(future);
+  Future<bool> validateStoredSession() async {
+    // Dev-only fallback for local testing with --dart-define-from-file=.env
+    // This does not affect normal login flow when env values are absent
+    const envAccessToken = String.fromEnvironment('ACCESS_TOKEN');
+    const envRefreshToken = String.fromEnvironment('REFRESH_TOKEN');
+    const envTenantId = String.fromEnvironment('TENANT_ID');
 
-    await future.then((value) {
-      this.success = true;
-    }).catchError((e) {
-      this.success = false;
-      errorStore.errorMessage = _parseError(e);
-      throw e;
-    });
+    if (envAccessToken.isNotEmpty && envTenantId.isNotEmpty) {
+      await _sharedPreferenceHelper.saveAuthToken(
+        accessToken: envAccessToken,
+        refreshToken: envRefreshToken,
+      );
+      await _sharedPreferenceHelper.saveTenantId(envTenantId);
+
+      currentTenantId = envTenantId;
+      needsOnboarding = false;
+      isLoggedIn = true;
+      errorMessage = null;
+      return true;
+    }
+
+    final accessToken = await _sharedPreferenceHelper.accessToken;
+    if (accessToken == null || accessToken.isEmpty) {
+      await _clearSession();
+      return false;
+    }
+
+    try {
+      final authStatusResponse = await _authRepository.getAuthStatus(
+        accessToken,
+      );
+      if (!authStatusResponse.hasTenant ||
+          authStatusResponse.user?.tenantId == null) {
+        await _clearSession();
+        return false;
+      }
+
+      currentUser = authStatusResponse.user;
+      currentTenantId = authStatusResponse.user!.tenantId;
+      needsOnboarding = false;
+      isLoggedIn = true;
+
+      if (currentTenantId != null) {
+        await _sharedPreferenceHelper.saveTenantId(currentTenantId!);
+      }
+
+      return true;
+    } catch (e) {
+      await _clearSession();
+      return false;
+    }
   }
 
-  logout() async {
-    print('🔵 [LoginStore.logout] Starting logout');
-    this.isLoggedIn = false;
+  Future<void> _clearSession() async {
+    currentUser = null;
+    currentTenantId = null;
+    needsOnboarding = false;
+    success = false;
+    errorMessage = null;
+    isLoggedIn = false;
+    await _sharedPreferenceHelper.removeTenantId();
     await _sharedPreferenceHelper.removeAuthToken();
-    await _sharedPreferenceHelper.removeCustomerId();
-    await _saveLoginStatusUseCase.call(params: false);
-    print('✅ [LoginStore.logout] Logout completed, tokens and customer ID cleared');
+  }
+
+  @action
+  Future<void> authenticate(OAuthProvider provider) async {
+    final (callbackUrlScheme, redirectUri) = _getRedirectUri();
+    final (codeChallenge, codeVerifier) = _generateCodeChallenge();
+    final authProviderId = provider.name;
+    final state = _randomState(32);
+    final stackAuthUrl = Uri.https(
+      Endpoints.stackAuthHost,
+      "${Endpoints.stackAuthAuthenticate}/$authProviderId",
+      {
+        'client_id': Env.stackAuthClientId,
+        'client_secret': Env.stackAuthClientSecret,
+        'redirect_uri': redirectUri,
+        'scope': 'legacy',
+        'grant_type': 'authorization_code',
+        'response_type': 'code',
+        'code_challenge_method': "S256",
+        'code_challenge': codeChallenge,
+        'state': state,
+      },
+    );
+    final resultUriStr = await FlutterWebAuth2.authenticate(
+      url: stackAuthUrl.toString(),
+      callbackUrlScheme: callbackUrlScheme,
+      options: const FlutterWebAuth2Options(useWebview: false),
+    );
+    final resultUri = Uri.parse(resultUriStr);
+
+    if (state != (resultUri.queryParameters['state'] ?? '')) {
+      throw Exception('invalid state received back');
+    }
+    final authorizationCode = resultUri.queryParameters['code'] ?? '';
+    final tokens = await _authRepository.getAccessToken(
+      authorizationCode,
+      codeVerifier,
+      redirectUri,
+    );
+
+    final authStatusResponse = await _authRepository.getAuthStatus(
+      tokens.accessToken,
+    );
+    bool needsOnboarding = false;
+    if (!authStatusResponse.hasTenant) {
+      needsOnboarding = true;
+    }
+    currentUser = authStatusResponse.user;
+    currentTenantId = authStatusResponse.user?.tenantId;
+    if (currentTenantId != null) {
+      await _sharedPreferenceHelper.saveTenantId(currentTenantId!);
+    }
+
+    this.needsOnboarding = needsOnboarding;
+    await _sharedPreferenceHelper.saveAuthToken(
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    );
+    isLoggedIn = true;
+  }
+
+  (String, String) _getRedirectUri() {
+    if (kIsWeb) {
+      final callbackUri = Uri(
+        scheme: Uri.base.scheme,
+        host: Uri.base.host,
+        port: Uri.base.port,
+        path: '/auth.html',
+      );
+      return (Uri.base.scheme, callbackUri.toString());
+    } else if (defaultTargetPlatform == TargetPlatform.windows ||
+        defaultTargetPlatform == TargetPlatform.linux ||
+        defaultTargetPlatform == TargetPlatform.macOS) {
+      // TODO: dynamic port
+      return ('http://localhost:13123', 'http://localhost:13123/');
+    } else if (defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS) {
+      return ('mobile-ai-erp', 'mobile-ai-erp://');
+    }
+    throw UnimplementedError();
+  }
+
+  (String, String) _generateCodeChallenge() {
+    const codeChallenge = "xf6HY7PIgoaCf_eMniSt-45brYE2J_05C9BnfIbueik";
+    const codeVerifier = "W2LPAD4M4ES-3wBjzU6J5ApykmuxQy5VTs3oSmtboDM";
+    return (codeChallenge, codeVerifier);
+  }
+
+  String _randomState(int len) {
+    var r = Random();
+    return String.fromCharCodes(
+      List.generate(len, (index) => r.nextInt(33) + 89),
+    );
   }
 
   // general methods:-----------------------------------------------------------

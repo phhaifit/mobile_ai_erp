@@ -1,55 +1,29 @@
 import 'package:another_flushbar/flushbar_helper.dart';
 import 'package:mobile_ai_erp/constants/assets.dart';
-import 'package:mobile_ai_erp/core/stores/form/form_store.dart';
 import 'package:mobile_ai_erp/core/widgets/app_icon_widget.dart';
 import 'package:mobile_ai_erp/core/widgets/empty_app_bar_widget.dart';
 import 'package:mobile_ai_erp/core/widgets/progress_indicator_widget.dart';
 import 'package:mobile_ai_erp/core/widgets/rounded_button_widget.dart';
-import 'package:mobile_ai_erp/core/widgets/textfield_widget.dart';
-import 'package:mobile_ai_erp/data/sharedpref/constants/preferences.dart';
-import 'package:mobile_ai_erp/presentation/home/store/theme/theme_store.dart';
 import 'package:mobile_ai_erp/presentation/login/store/login_store.dart';
 import 'package:mobile_ai_erp/utils/device/device_utils.dart';
 import 'package:mobile_ai_erp/utils/locale/app_localization.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
+import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
-import '../../di/service_locator.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
   _LoginScreenState createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin {
-  //text controllers:-----------------------------------------------------------
-  TextEditingController _userEmailController = TextEditingController();
-  TextEditingController _passwordController = TextEditingController();
-  TextEditingController _firstNameController = TextEditingController();
-  TextEditingController _lastNameController = TextEditingController();
-  TextEditingController _registerEmailController = TextEditingController();
-  TextEditingController _registerPasswordController = TextEditingController();
-
+class _LoginScreenState extends State<LoginScreen> {
   //stores:---------------------------------------------------------------------
-  final ThemeStore _themeStore = getIt<ThemeStore>();
-  final FormStore _formStore = getIt<FormStore>();
   final LoginStore _loginStore = getIt<LoginStore>();
-
-  //focus node:-----------------------------------------------------------------
-  late FocusNode _passwordFocusNode;
-  late FocusNode _registerPasswordFocusNode;
-
-  //tab controller:-------------------------------------------------------------
-  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    _passwordFocusNode = FocusNode();
-    _registerPasswordFocusNode = FocusNode();
-    _tabController = TabController(length: 2, vsync: this);
   }
 
   @override
@@ -79,6 +53,15 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                 ],
               )
             : Center(child: _buildRightSide()),
+        Observer(
+          builder: (context) {
+            return _loginStore.isLoggedIn && !_loginStore.needsOnboarding
+                ? navigateToHome(context)
+                : _loginStore.needsOnboarding
+                    ? navigateToOnboarding(context)
+                    : _showErrorMessage(_loginStore.errorMessage ?? '');
+          },
+        ),
         Observer(
           builder: (context) {
             return Visibility(
@@ -111,271 +94,60 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
           children: <Widget>[
             AppIconWidget(image: 'assets/icons/ic_appicon.png'),
             SizedBox(height: 24.0),
-            _buildTabBar(),
-            SizedBox(height: 16.0),
-            _buildTabBarView(),
+            _buildSignInButtons()
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTabBar() {
-    return TabBar(
-      controller: _tabController,
-      tabs: [
-        Tab(text: AppLocalizations.of(context).translate('login_tab_login')),
-        Tab(text: AppLocalizations.of(context).translate('login_tab_register')),
-      ],
-      labelColor: Colors.orangeAccent,
-      unselectedLabelColor: _themeStore.darkMode ? Colors.white70 : Colors.black54,
-      indicatorColor: Colors.orangeAccent,
-    );
-  }
-
-  Widget _buildTabBarView() {
-    return SizedBox(
-      height: 400, // Adjust height as needed
-      child: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildLoginTab(),
-          _buildRegisterTab(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLoginTab() {
+  Widget _buildSignInButtons() {
     return Column(
-      children: <Widget>[
-        _buildUserIdField(),
-        _buildPasswordField(),
-        _buildForgotPasswordButton(),
-        _buildSignInButton()
+      children: [
+        _buildSignInButton(OAuthProvider.google),
+        SizedBox(height: 16),
+        _buildSignInButton(OAuthProvider.github),
       ],
     );
   }
 
-  Widget _buildRegisterTab() {
-    return Column(
-      children: <Widget>[
-        _buildFirstNameField(),
-        _buildLastNameField(),
-        _buildRegisterEmailField(),
-        _buildRegisterPasswordField(),
-        _buildRegisterButton()
-      ],
-    );
-  }
-
-  Widget _buildUserIdField() {
-    return Observer(
-      builder: (context) {
-        return TextFieldWidget(
-          hint: AppLocalizations.of(context).translate('login_et_user_email'),
-          inputType: TextInputType.emailAddress,
-          icon: Icons.person,
-          iconColor: _themeStore.darkMode ? Colors.white70 : Colors.black54,
-          textController: _userEmailController,
-          inputAction: TextInputAction.next,
-          autoFocus: false,
-          onChanged: (value) {
-            _formStore.setUserId(_userEmailController.text);
-          },
-          onFieldSubmitted: (value) {
-            FocusScope.of(context).requestFocus(_passwordFocusNode);
-          },
-          errorText: _formStore.formErrorStore.userEmail,
-        );
-      },
-    );
-  }
-
-  Widget _buildPasswordField() {
-    return Observer(
-      builder: (context) {
-        return TextFieldWidget(
-          hint:
-              AppLocalizations.of(context).translate('login_et_user_password'),
-          isObscure: true,
-          padding: EdgeInsets.only(top: 16.0),
-          icon: Icons.lock,
-          iconColor: _themeStore.darkMode ? Colors.white70 : Colors.black54,
-          textController: _passwordController,
-          focusNode: _passwordFocusNode,
-          errorText: _formStore.formErrorStore.password,
-          onChanged: (value) {
-            _formStore.setPassword(_passwordController.text);
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildForgotPasswordButton() {
-    return Align(
-      alignment: FractionalOffset.centerRight,
-      child: MaterialButton(
-        padding: EdgeInsets.all(0.0),
-        child: Text(
-          AppLocalizations.of(context).translate('login_btn_forgot_password'),
-          style: Theme.of(context)
-              .textTheme
-              .bodySmall
-              ?.copyWith(color: Colors.orangeAccent),
-        ),
-        onPressed: () {
-          _showForgotPasswordDialog();
-        },
-      ),
-    );
-  }
-
-  Widget _buildFirstNameField() {
-    return Observer(
-      builder: (context) {
-        return TextFieldWidget(
-          hint: AppLocalizations.of(context).translate('register_first_name'),
-          inputType: TextInputType.text,
-          icon: Icons.person,
-          iconColor: _themeStore.darkMode ? Colors.white70 : Colors.black54,
-          textController: _firstNameController,
-          inputAction: TextInputAction.next,
-          autoFocus: false,
-          errorText: null,
-          onChanged: (value) {
-            // Update form store if needed
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildLastNameField() {
-    return Observer(
-      builder: (context) {
-        return TextFieldWidget(
-          hint: AppLocalizations.of(context).translate('register_last_name'),
-          inputType: TextInputType.text,
-          icon: Icons.person,
-          iconColor: _themeStore.darkMode ? Colors.white70 : Colors.black54,
-          textController: _lastNameController,
-          inputAction: TextInputAction.next,
-          autoFocus: false,
-          errorText: null,
-          onChanged: (value) {
-            // Update form store if needed
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildRegisterEmailField() {
-    return Observer(
-      builder: (context) {
-        return TextFieldWidget(
-          hint: AppLocalizations.of(context).translate('register_email'),
-          inputType: TextInputType.emailAddress,
-          icon: Icons.email,
-          iconColor: _themeStore.darkMode ? Colors.white70 : Colors.black54,
-          textController: _registerEmailController,
-          inputAction: TextInputAction.next,
-          autoFocus: false,
-          errorText: null,
-          onChanged: (value) {
-            // Update form store if needed
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildRegisterPasswordField() {
-    return Observer(
-      builder: (context) {
-        return TextFieldWidget(
-          hint: AppLocalizations.of(context).translate('register_password'),
-          isObscure: true,
-          padding: EdgeInsets.only(top: 16.0),
-          icon: Icons.lock,
-          iconColor: _themeStore.darkMode ? Colors.white70 : Colors.black54,
-          textController: _registerPasswordController,
-          focusNode: _registerPasswordFocusNode,
-          errorText: null,
-          onChanged: (value) {
-            // Update form store if needed
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildRegisterButton() {
+  Widget _buildSignInButton(OAuthProvider provider) {
+    String text = provider == OAuthProvider.google ? 'Sign In with Google' : 'Sign In with GitHub';
+    Color buttonColor = provider == OAuthProvider.google ? Colors.red : Colors.black;
     return RoundedButtonWidget(
-      buttonText: AppLocalizations.of(context).translate('register_btn_sign_up'),
-      buttonColor: Colors.orangeAccent,
+      buttonText: text,
+      buttonColor: buttonColor,
       textColor: Colors.white,
       onPressed: () async {
-        if (_firstNameController.text.isNotEmpty &&
-            _lastNameController.text.isNotEmpty &&
-            _registerEmailController.text.isNotEmpty &&
-            _registerPasswordController.text.isNotEmpty) {
-          DeviceUtils.hideKeyboard(context);
-          try {
-            await _loginStore.register(
-              _firstNameController.text,
-              _lastNameController.text,
-              _registerEmailController.text,
-              _registerPasswordController.text,
-            );
-            if (_loginStore.success) {
-              _showSuccessMessage('Registration successful! Please login.');
-              _tabController.animateTo(0); // Switch to login tab
-            }
-          } catch (e) {
-            _showErrorMessage(_loginStore.errorStore.errorMessage);
-          }
-        } else {
-          _showErrorMessage('Please fill in all fields');
+        DeviceUtils.hideKeyboard(context);
+        try {
+          _loginStore.isLoading = true;
+          await _loginStore.authenticate(provider);
+        } catch (e) {
+          debugPrint(e.toString());
+          _showErrorMessage("Failed to authenticate");
+        } finally {
+          _loginStore.isLoading = false;
         }
       },
     );
   }
 
-  Widget _buildSignInButton() {
-    return RoundedButtonWidget(
-      buttonText: AppLocalizations.of(context).translate('login_btn_sign_in'),
-      buttonColor: Colors.orangeAccent,
-      textColor: Colors.white,
-      onPressed: () async {
-        if (_formStore.canLogin) {
-          DeviceUtils.hideKeyboard(context);
-          try {
-            await _loginStore.login(_userEmailController.text, _passwordController.text);
-            if (_loginStore.success) {
-              _showSuccessMessage('Login successful!');
-              navigate(context);
-            }
-          } catch (e) {
-            _showErrorMessage(_loginStore.errorStore.errorMessage);
-          }
-        } else {
-          _showErrorMessage('Please fill in all fields');
-        }
-      },
-    );
-  }
-
-  Widget navigate(BuildContext context) {
-    SharedPreferences.getInstance().then((prefs) {
-      prefs.setBool(Preferences.is_logged_in, true);
+  Widget navigateToHome(BuildContext context) {
+    Future.delayed(Duration(milliseconds: 0), () {
+      if (context.mounted) {
+        Navigator.of(context).pushNamedAndRemoveUntil(Routes.home, (Route<dynamic> route) => false);
+      }
     });
 
+    return Container();
+  }
+
+  Widget navigateToOnboarding(BuildContext context) {
     Future.delayed(Duration(milliseconds: 0), () {
-      Navigator.of(context).pushNamedAndRemoveUntil(
-          Routes.profileDashboard, (Route<dynamic> route) => false);
+      if (context.mounted) {
+        Navigator.of(context).pushNamedAndRemoveUntil(Routes.onboarding, (Route<dynamic> route) => false);
+      }
     });
 
     return Container();
@@ -452,16 +224,6 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
   // dispose:-------------------------------------------------------------------
   @override
   void dispose() {
-    // Clean up the controller when the Widget is removed from the Widget tree
-    _userEmailController.dispose();
-    _passwordController.dispose();
-    _firstNameController.dispose();
-    _lastNameController.dispose();
-    _registerEmailController.dispose();
-    _registerPasswordController.dispose();
-    _passwordFocusNode.dispose();
-    _registerPasswordFocusNode.dispose();
-    _tabController.dispose();
     super.dispose();
   }
 }

@@ -44,6 +44,14 @@
   "tracking_return_received": "Received",
   "tracking_return_refunded": "Refunded",
   "tracking_return_exchanged": "Exchanged",
-  "home_end": "-------------------------------------------------------------------------------------"
+  "home_end": "-------------------------------------------------------------------------------------",
 
+  "supplier_screen_title": "Suppliers",
+  "supplier_fab_tooltip": "Add Supplier",
+  "supplier_empty_title": "No suppliers yet",
+  "supplier_empty_no_match_title": "No matching suppliers",
+  "supplier_empty_subtitle": "Tap + to add your first supplier",
+  "supplier_empty_no_match_subtitle": "Try changing your search or filter.",
+  "supplier_delete_success": "Deleted supplier",
+  "supplier_delete_error": "Failed to delete supplier"
 }

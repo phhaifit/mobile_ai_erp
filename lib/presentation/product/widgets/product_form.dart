@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:flutter/services.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
-import 'package:mobile_ai_erp/domain/entity/product/product.dart';
 import 'package:mobile_ai_erp/domain/entity/product/product_status.dart';
 import 'package:mobile_ai_erp/presentation/product/store/product_form_store.dart';
 import 'package:mobile_ai_erp/presentation/product/store/product_store.dart';
@@ -120,6 +120,7 @@ class _ProductFormState extends State<ProductForm> {
                           : widget.formStore.skuError,
                     ),
                     onChanged: widget.formStore.setSku,
+                    maxLength: 50,
                   );
                 },
               ),
@@ -138,7 +139,12 @@ class _ProductFormState extends State<ProductForm> {
                           ? null
                           : widget.formStore.priceError,
                     ),
-                    keyboardType: TextInputType.number,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(
+                        RegExp(r'^\d*\.?\d{0,2}'),
+                      ),
+                    ],
                     onChanged: widget.formStore.setPrice,
                   );
                 },
@@ -155,6 +161,7 @@ class _ProductFormState extends State<ProductForm> {
                 ),
                 maxLines: 4,
                 onChanged: widget.formStore.setDescription,
+                maxLength: 300,
               ),
               SizedBox(height: 16),
 

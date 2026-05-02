@@ -1,19 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_ai_erp/presentation/supplier/store/supplier_store.dart';
+import 'package:mobile_ai_erp/presentation/supplier/store/supplier_products_store.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
+import 'package:mobile_ai_erp/domain/entity/product/product.dart';
+import 'package:mobile_ai_erp/presentation/account/address/address_book_screen.dart';
+import 'package:mobile_ai_erp/presentation/account/address/address_form_screen.dart';
+import 'package:mobile_ai_erp/presentation/account/orders/order_detail_screen.dart';
+import 'package:mobile_ai_erp/presentation/account/orders/order_history_screen.dart';
+import 'package:mobile_ai_erp/presentation/account/orders/return_request_screen.dart';
+import 'package:mobile_ai_erp/presentation/account/profile/profile_dashboard_screen.dart';
+import 'package:mobile_ai_erp/presentation/auth/onboarding_screen.dart';
+import 'package:mobile_ai_erp/presentation/checkout/screens/checkout_screen.dart';
+import 'package:mobile_ai_erp/presentation/checkout/screens/checkout_test_screen.dart';
+import 'package:mobile_ai_erp/presentation/dashboard/dashboard_screen.dart';
 import 'package:mobile_ai_erp/presentation/home/home.dart';
 import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/inventory_audit_screen.dart';
 import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/inventory_audit_summary_screen.dart';
 import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/inventory_outbound_history_screen.dart';
 import 'package:mobile_ai_erp/presentation/inventory_audit_outbound/inventory_outbound_screen.dart';
 import 'package:mobile_ai_erp/presentation/login/login.dart';
-import 'package:mobile_ai_erp/presentation/stock_operations/stock_operations_screen.dart';
-import 'package:mobile_ai_erp/presentation/web_builder/web_builder_dashboard.dart';
-import 'package:mobile_ai_erp/presentation/web_builder/store_settings/store_settings_screen.dart';
-import 'package:mobile_ai_erp/presentation/web_builder/theme_engine/theme_list_screen.dart';
-import 'package:mobile_ai_erp/presentation/web_builder/theme_engine/theme_detail_screen.dart';
-import 'package:mobile_ai_erp/presentation/web_builder/cms_pages/cms_page_list_screen.dart';
-import 'package:mobile_ai_erp/presentation/web_builder/cms_pages/cms_page_editor_screen.dart';
-import 'package:mobile_ai_erp/presentation/product_detail/product_detail_screen.dart';
 import 'package:mobile_ai_erp/presentation/order_tracking/order_tracking.dart';
 import 'package:mobile_ai_erp/presentation/reports/reports_analytics.dart';
 import 'package:mobile_ai_erp/presentation/account/profile/profile_dashboard_screen.dart';
@@ -39,14 +44,33 @@ import 'package:mobile_ai_erp/presentation/user/store/role_store.dart';
 import 'package:mobile_ai_erp/presentation/user/store/user_store.dart';
 import 'package:mobile_ai_erp/presentation/user/home/user_home.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/cms_pages/cms_page_editor_screen.dart';
+import 'package:mobile_ai_erp/presentation/product/screens/product_create_edit_screen.dart';
+import 'package:mobile_ai_erp/presentation/product/screens/product_filter_screen.dart';
+import 'package:mobile_ai_erp/presentation/product/screens/product_info_screen.dart';
+import 'package:mobile_ai_erp/presentation/product/screens/product_list_screen.dart';
+import 'package:mobile_ai_erp/presentation/product_detail/product_detail_screen.dart';
+import 'package:mobile_ai_erp/presentation/post_purchase/exchange_detail_screen.dart';
+import 'package:mobile_ai_erp/presentation/post_purchase/issue_detail_screen.dart';
+import 'package:mobile_ai_erp/presentation/post_purchase/post_purchase_dashboard.dart';
+import 'package:mobile_ai_erp/presentation/post_purchase/refund_detail_screen.dart';
+import 'package:mobile_ai_erp/presentation/reports/reports_analytics.dart';
+import 'package:mobile_ai_erp/presentation/stock_operations/stock_operations_screen.dart';
+import 'package:mobile_ai_erp/presentation/storefront/brands_landing_page.dart';
+import 'package:mobile_ai_erp/presentation/storefront/categories_landing_page.dart';
+import 'package:mobile_ai_erp/presentation/storefront/collections_landing_page.dart';
+import 'package:mobile_ai_erp/presentation/storefront/product_listing_page.dart';
+import 'package:mobile_ai_erp/presentation/storefront/storefront_home_page.dart';
+import 'package:mobile_ai_erp/presentation/supplier/supplier_list/supplier_list_screen.dart';
+import 'package:mobile_ai_erp/presentation/user/home/user_home.dart';
+import 'package:mobile_ai_erp/presentation/user/store/role_store.dart';
+import 'package:mobile_ai_erp/presentation/user/store/user_store.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/cms_pages/cms_page_list_screen.dart';
+import 'package:mobile_ai_erp/presentation/web_builder/cms_pages/cms_page_editor_screen.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/store_settings/store_settings_screen.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/theme_engine/theme_detail_screen.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/theme_engine/theme_list_screen.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/web_builder_dashboard.dart';
 import 'cart_routes.dart';
-import 'package:mobile_ai_erp/presentation/product/screens/product_list_page.dart';
-
 
 class Routes {
   Routes._();
@@ -54,7 +78,11 @@ class Routes {
   // static variables
   static const String splash = '/splash';
   static const String login = '/login';
+  static const String onboarding = '/onboarding';
   static const String home = '/post';
+  static const String dashboard = '/dashboard';
+  static const String suppliers = '/suppliers';
+  static const String supplierDetail = '/supplier-detail';
   static const String stockOperations = '/stock-operations';
   static const String inventoryAudit = '/inventory-audit';
   static const String inventoryAuditSummary = '/inventory-audit-summary';
@@ -76,9 +104,22 @@ class Routes {
   static const String fulfillmentTracking = '/fulfillment/tracking';
   static const String fulfillmentPackaging = '/fulfillment/packaging';
   static const String fulfillmentPrintLabel = '/fulfillment/print-label';
+  static const String postPurchase = '/post-purchase';
+  static const String postPurchaseIssueDetail = '/post-purchase/issue';
+  static const String postPurchaseExchangeDetail = '/post-purchase/exchange';
+  static const String postPurchaseRefundDetail = '/post-purchase/refund';
+  static const String storeHome = '/storefront';
+  static const String storefrontLegacyHome = '/stockfront';
+  static const String storefrontProductListing = '/storefront/product-listing';
+  static const String categoriesLanding = '/storefront/categories';
+  static const String brandsLanding = '/storefront/brands';
+  static const String collectionsLanding = '/storefront/collections';
+  static const String checkout = '/checkout';
+  static const String checkoutTest = '/checkout-test';
   static const String productManagementList = '/products-management';
   static const String productManagementInfo = '/products-management/info';
-  static const String productManagementCreateEdit = '/products-management/create-edit';
+  static const String productManagementCreateEdit =
+      '/products-management/create-edit';
   static const String productManagementFilter = '/products-management/filter';
 
   static const String profileDashboard = '/profile';
@@ -93,12 +134,15 @@ class Routes {
 
   static final routes = <String, WidgetBuilder>{
     login: (BuildContext context) => LoginScreen(),
+    onboarding: (BuildContext context) => OnboardingScreen(),
     home: (BuildContext context) => HomeScreen(),
+    dashboard: (BuildContext context) => const DashboardScreen(),
     stockOperations: (BuildContext context) => const StockOperationsScreen(),
     inventoryAudit: (BuildContext context) => const InventoryAuditScreen(),
     inventoryAuditSummary: (BuildContext context) =>
         const InventoryAuditSummaryScreen(),
-    inventoryOutbound: (BuildContext context) => const InventoryOutboundScreen(),
+    inventoryOutbound: (BuildContext context) =>
+        const InventoryOutboundScreen(),
     inventoryOutboundHistory: (BuildContext context) =>
         const InventoryOutboundHistoryScreen(),
     webBuilder: (BuildContext context) => const WebBuilderDashboard(),
@@ -110,6 +154,10 @@ class Routes {
     orderTracking: OrderTrackingNavigation.buildScreen,
     ...CartRoutes.getRoutes(),
     reports: (BuildContext context) => ReportsAnalyticsScreen(),
+    suppliers: (BuildContext context) => SupplierListScreen(
+      store: getIt<SupplierStore>(),
+      productsStore: getIt<SupplierProductsStore>(),
+    ),
     profileDashboard: (BuildContext context) => ProfileDashboardScreen(),
     profileEdit: (BuildContext context) => ProfileFormScreen(),
     addressBook: (BuildContext context) => const AddressBookScreen(),
@@ -122,7 +170,6 @@ class Routes {
       userStore: getIt<UserStore>(),
       roleStore: getIt<RoleStore>(),
     ),
-    productList: (BuildContext context) => ProductListPage(),
     productDetail: (BuildContext context) => const ProductDetailScreen(),
     loyaltyHistory: (BuildContext context) => const LoyaltyHistoryScreen(),
     fulfillment: (BuildContext context) => FulfillmentListScreen(),
@@ -130,9 +177,38 @@ class Routes {
     fulfillmentTracking: (BuildContext context) => FulfillmentTrackingScreen(),
     fulfillmentPackaging: (BuildContext context) => PackagingScreen(),
     fulfillmentPrintLabel: (BuildContext context) => PrintLabelScreen(),
+    postPurchase: (BuildContext context) => const PostPurchaseDashboardScreen(),
+    postPurchaseIssueDetail: (BuildContext context) =>
+        const IssueDetailScreen(),
+    postPurchaseExchangeDetail: (BuildContext context) =>
+        const ExchangeDetailScreen(),
+    postPurchaseRefundDetail: (BuildContext context) =>
+        const RefundDetailScreen(),
+    storeHome: (BuildContext context) => StorefrontHomePage(),
+    storefrontLegacyHome: (BuildContext context) => StorefrontHomePage(),
+    storefrontProductListing: (BuildContext context) => ProductListingScreen(),
+    categoriesLanding: (BuildContext context) => const CategoriesLandingPage(),
+    brandsLanding: (BuildContext context) => const BrandsLandingPage(),
+    collectionsLanding: (BuildContext context) =>
+        const CollectionsLandingPage(),
+    checkoutTest: (BuildContext context) => const CheckoutTestScreen(),
     productManagementList: (BuildContext context) => ProductListScreen(),
     productManagementFilter: (BuildContext context) => ProductFilterScreen(),
   };
+
+  /// Navigate to checkout screen with items
+  static void navigateToCheckout(
+    BuildContext context, {
+    required dynamic items,
+    String? customerId,
+  }) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) =>
+            CheckoutScreen(items: items, customerId: customerId),
+      ),
+    );
+  }
 
   // Handle dynamic routes
   static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
@@ -140,9 +216,8 @@ class Routes {
       case productManagementInfo:
         if (settings.arguments is int) {
           return MaterialPageRoute(
-            builder: (context) => ProductInfoScreen(
-              productId: settings.arguments as int,
-            ),
+            builder: (context) =>
+                ProductInfoScreen(productId: settings.arguments as int),
           );
         }
         return null;
@@ -150,9 +225,8 @@ class Routes {
         // Handle optional product argument for editing
         final args = settings.arguments;
         return MaterialPageRoute(
-          builder: (context) => ProductCreateEditScreen(
-            product: args is Product ? args : null,
-          ),
+          builder: (context) =>
+              ProductCreateEditScreen(product: args is Product ? args : null),
         );
       default:
         return null;

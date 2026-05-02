@@ -5,7 +5,7 @@ import 'package:mobile_ai_erp/domain/entity/product/product.dart' as domain;
 import 'package:mobile_ai_erp/presentation/product/store/product_store.dart';
 import 'package:mobile_ai_erp/presentation/product/widgets/status_badge.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
-import 'package:mobile_ai_erp/data/datasources/product/mock_product_datasource.dart';
+import 'package:mobile_ai_erp/data/local/datasources/product/mock_product_datasource.dart';
 import 'package:mobile_ai_erp/constants/strings.dart';
 
 class ProductInfoScreen extends StatefulWidget {

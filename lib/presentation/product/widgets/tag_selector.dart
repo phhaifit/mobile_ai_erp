@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_ai_erp/data/datasources/product/mock_product_datasource.dart';
+import 'package:mobile_ai_erp/data/local/datasources/product/mock_product_datasource.dart';
 import 'package:mobile_ai_erp/constants/strings.dart';
 
 class TagSelector extends StatefulWidget {

@@ -124,6 +124,8 @@ abstract class _ProductFormStore with Store {
         priceError = 'Price cannot be negative';
       } else if (parsedPrice == 0) {
         priceError = 'Price must be greater than 0';
+      } else if (!RegExp(r'^\d+(\.(\d{1,2})?)?$').hasMatch(price)) {
+        priceError = 'Only up to 2 decimal places allowed';
       } else {
         priceError = "";
       }
@@ -296,6 +298,8 @@ abstract class _ProductFormStore with Store {
         name: name,
         sku: sku,
         price: parsedPrice,
+        currency: 'USD', // placeholder,
+        rating: editingProduct?.rating ?? 0.0, // keep existing rating if editing
         description: description,
         status: status,
         categoryId: categoryId,

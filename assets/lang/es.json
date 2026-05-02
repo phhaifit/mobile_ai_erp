@@ -44,5 +44,14 @@
   "tracking_return_received": "Recibido",
   "tracking_return_refunded": "Reembolsado",
   "tracking_return_exchanged": "Cambiado",
-  "home_end": "-------------------------------------------------------------------------------------"
+  "home_end": "-------------------------------------------------------------------------------------",
+
+  "supplier_screen_title": "Proveedores",
+  "supplier_fab_tooltip": "Agregar proveedor",
+  "supplier_empty_title": "Aún no hay proveedores",
+  "supplier_empty_no_match_title": "Sin proveedores coincidentes",
+  "supplier_empty_subtitle": "Toca + para agregar tu primer proveedor",
+  "supplier_empty_no_match_subtitle": "Intenta cambiar tu búsqueda o filtro.",
+  "supplier_delete_success": "Proveedor eliminado",
+  "supplier_delete_error": "Error al eliminar el proveedor"
 }

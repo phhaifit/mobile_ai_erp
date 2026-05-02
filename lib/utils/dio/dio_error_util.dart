@@ -19,7 +19,7 @@ class DioExceptionUtil {
           break;
         case DioExceptionType.badResponse:
           errorDescription =
-          "Received invalid status code: ${error.response?.statusCode}";
+              "Received invalid status code: ${error.response?.statusCode}";
           break;
         case DioExceptionType.sendTimeout:
           errorDescription = "Send timeout in connection with API server";

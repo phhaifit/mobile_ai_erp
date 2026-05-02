@@ -7,6 +7,7 @@ import 'package:mobile_ai_erp/presentation/customer_management/groups/customer_g
 import 'package:mobile_ai_erp/presentation/customer_management/groups/customer_groups_screen.dart';
 import 'package:mobile_ai_erp/presentation/customer_management/home/customer_management_home.dart';
 import 'package:mobile_ai_erp/presentation/customer_management/navigation/customer_route_args.dart';
+import 'package:mobile_ai_erp/presentation/customer_management/transactions/transactions_screen.dart';
 import 'package:flutter/material.dart';
 
 class CustomerNavigator {
@@ -20,6 +21,7 @@ class CustomerNavigator {
   static const String addressFormRoute = '/customers/addresses/form';
   static const String groupsRoute = '/customers/groups';
   static const String groupFormRoute = '/customers/groups/form';
+  static const String transactionsRoute = '/customers/transactions';
 
   static Future<T?> openHome<T>(BuildContext context) {
     return _push<T>(
@@ -78,6 +80,17 @@ class CustomerNavigator {
       context,
       AddressFormScreen(args: args),
       routeName: addressFormRoute,
+    );
+  }
+
+  static Future<T?> openTransactions<T>(
+    BuildContext context, {
+    required CustomerTransactionsArgs args,
+  }) {
+    return _push<T>(
+      context,
+      CustomerTransactionsScreen(args: args),
+      routeName: transactionsRoute,
     );
   }
 

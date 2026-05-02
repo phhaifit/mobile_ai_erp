@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:mobile_ai_erp/data/datasources/product/mock_product_datasource.dart';
+import 'package:mobile_ai_erp/data/local/datasources/product/mock_product_datasource.dart';
 import 'package:mobile_ai_erp/domain/entity/product/product.dart';
 import 'package:mobile_ai_erp/domain/entity/product/product_filter.dart';
 import 'package:mobile_ai_erp/domain/repository/product/product_management_repository.dart';
