@@ -56,8 +56,10 @@ class TransferForm extends StatelessWidget {
   Widget build(BuildContext context) {
     return Observer(
       builder: (_) {
+        final canChooseProducts = store.transferSourceWarehouseId != null;
+
         return Card(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -68,63 +70,102 @@ class TransferForm extends StatelessWidget {
                       : 'Step 1: Transfer Details',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
+                const SizedBox(height: 8),
+                const FlowIntroCard(
+                  title: 'Move stock with fewer mistakes',
+                  message:
+                      'Choose the source first, then the destination and product. The preview updates with live available stock before you create the transfer.',
+                ),
+                const SizedBox(height: 16),
+                FlowStepSection(
+                  step: 1,
+                  title: 'Choose the warehouse route',
+                  subtitle:
+                      'The destination list excludes the source warehouse automatically.',
+                  child: Column(
+                    children: [
+                      KeyedSubtree(
+                        key: const Key('transfer_source_dropdown'),
+                        child: WarehouseDropdown(
+                          key: Key(
+                            'transfer_source_${store.transferSourceWarehouseId ?? 'none'}',
+                          ),
+                          label: 'Source Warehouse',
+                          value: store.transferSourceWarehouseId,
+                          warehouses: store.warehouses.toList(growable: false),
+                          onChanged: store.setTransferSourceWarehouse,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      KeyedSubtree(
+                        key: const Key('transfer_destination_dropdown'),
+                        child: WarehouseDropdown(
+                          key: Key(
+                            'transfer_destination_${store.transferSourceWarehouseId ?? 'none'}_${store.transferDestinationWarehouseId ?? 'none'}',
+                          ),
+                          label: 'Destination Warehouse',
+                          value: store.transferDestinationWarehouseId,
+                          warehouses: store.warehouses
+                              .where(
+                                (warehouse) =>
+                                    warehouse.id !=
+                                    store.transferSourceWarehouseId,
+                              )
+                              .toList(growable: false),
+                          onChanged: store.setTransferDestinationWarehouse,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 const SizedBox(height: 12),
-                KeyedSubtree(
-                  key: const Key('transfer_source_dropdown'),
-                  child: WarehouseDropdown(
+                FlowStepSection(
+                  step: 2,
+                  title: 'Choose a product',
+                  subtitle: canChooseProducts
+                      ? 'Only products with available stock in the source warehouse are shown.'
+                      : 'Select a source warehouse first to unlock available products.',
+                  child: ProductDropdown(
                     key: Key(
-                      'transfer_source_${store.transferSourceWarehouseId ?? 'none'}',
+                      'transfer_product_${store.transferSourceWarehouseId ?? 'none'}_${store.transferProductId ?? 'none'}',
                     ),
-                    label: 'Source Warehouse',
-                    value: store.transferSourceWarehouseId,
-                    warehouses: store.warehouses.toList(growable: false),
-                    onChanged: store.setTransferSourceWarehouse,
+                    label: isDesktop ? 'Product' : 'Step 2: Product',
+                    value: store.transferProductId,
+                    products: store.availableTransferProducts,
+                    onChanged: store.setTransferProduct,
                   ),
                 ),
                 const SizedBox(height: 12),
-                KeyedSubtree(
-                  key: const Key('transfer_destination_dropdown'),
-                  child: WarehouseDropdown(
-                    key: Key(
-                      'transfer_destination_${store.transferSourceWarehouseId ?? 'none'}_${store.transferDestinationWarehouseId ?? 'none'}',
+                FlowStepSection(
+                  step: 3,
+                  title: 'Set the quantity',
+                  subtitle:
+                      'Stay within the available stock shown in the preview.',
+                  child: TextFormField(
+                    key: const Key('transfer_quantity_field'),
+                    keyboardType: TextInputType.number,
+                    initialValue: store.transferQuantityInput,
+                    onChanged: store.setTransferQuantity,
+                    decoration: const InputDecoration(
+                      labelText: 'Step 3: Quantity',
+                      border: OutlineInputBorder(),
                     ),
-                    label: 'Destination Warehouse',
-                    value: store.transferDestinationWarehouseId,
-                    warehouses: store.warehouses
-                        .where(
-                          (warehouse) =>
-                              warehouse.id != store.transferSourceWarehouseId,
-                        )
-                        .toList(growable: false),
-                    onChanged: store.setTransferDestinationWarehouse,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                ProductDropdown(
-                  key: Key(
-                    'transfer_product_${store.transferSourceWarehouseId ?? 'none'}_${store.transferProductId ?? 'none'}',
-                  ),
-                  label: isDesktop ? 'Product' : 'Step 2: Product',
-                  value: store.transferProductId,
-                  products: store.availableTransferProducts,
-                  onChanged: store.setTransferProduct,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  key: const Key('transfer_quantity_field'),
-                  keyboardType: TextInputType.number,
-                  initialValue: store.transferQuantityInput,
-                  onChanged: store.setTransferQuantity,
-                  decoration: const InputDecoration(
-                    labelText: 'Step 3: Quantity',
-                    border: OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 12),
                 if (store.errorMessage.isNotEmpty)
-                  Text(
-                    store.errorMessage,
-                    style: const TextStyle(color: Colors.red),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.red.shade200),
+                    ),
+                    child: Text(
+                      store.errorMessage,
+                      style: const TextStyle(color: Colors.red),
+                    ),
                   ),
                 const SizedBox(height: 12),
                 FilledButton.icon(
@@ -165,6 +206,8 @@ class TransferPreview extends StatelessWidget {
     return Observer(
       builder: (_) {
         final selected = store.selectedTransferStock;
+        final hasRoute = store.transferSourceWarehouseId != null &&
+            store.transferDestinationWarehouseId != null;
 
         return Card(
           child: Padding(
@@ -176,18 +219,83 @@ class TransferPreview extends StatelessWidget {
                   'Stock Preview',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
-                const SizedBox(height: 8),
-                if (selected == null)
-                  const Text(
-                    'Select source warehouse and product to view available stock.',
+                const SizedBox(height: 12),
+                if (!hasRoute)
+                  const EmptyStatePanel(
+                    title: 'Choose a route first',
+                    message:
+                        'Start with the source and destination warehouses. The stock preview becomes useful once the route is clear.',
+                    icon: Icons.alt_route,
+                  )
+                else if (selected == null)
+                  const EmptyStatePanel(
+                    title: 'Select a product to continue',
+                    message:
+                        'Pick one product from the source warehouse to see live available stock before creating the transfer.',
+                    icon: Icons.inventory_2_outlined,
                   )
                 else ...[
-                  Text('Product: ${selected.productName}'),
-                  Text(
-                    'Warehouse: ${store.getWarehouseName(selected.warehouseId)}',
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.45),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Transfer route',
+                          style: Theme.of(context).textTheme.labelMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'From: ${store.getWarehouseName(store.transferSourceWarehouseId)}',
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'To: ${store.getWarehouseName(store.transferDestinationWarehouseId)}',
+                        ),
+                      ],
+                    ),
                   ),
-                  Text(
-                    'Available: ${selected.availableQuantity} ${selected.unit}',
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primaryContainer
+                          .withValues(alpha: 0.45),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          selected.productName,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Available now',
+                          style: Theme.of(context).textTheme.labelLarge,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${selected.availableQuantity} ${selected.unit}',
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Source warehouse: ${store.getWarehouseName(selected.warehouseId)}',
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ],
