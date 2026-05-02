@@ -16,10 +16,30 @@ class Endpoints {
     defaultValue: '00000000-0000-0000-0000-000000000000',
   );
 
+  // base url for mock API
+  static const String baseUrl = "http://jsonplaceholder.typicode.com";
+
+  // base url for backend API
+  static const String backendBaseUrl = String.fromEnvironment(
+    'BACKEND_BASE_URL',
+    defaultValue: "http://127.0.0.1:5002",
+  );
+
+  static const String erpSecretKey = String.fromEnvironment(
+    'ERP_SECRET_KEY',
+    defaultValue: '',
+  );
+
+  static const String erpTenantId = String.fromEnvironment(
+    'ERP_TENANT_ID',
+    defaultValue: '',
+  );
+
   // timeouts
   static const int receiveTimeout = 15000;
   static const int connectionTimeout = 30000;
 
+<<<<<<< HEAD
   static const String getPosts = "/posts";
 
   // auth endpoints
@@ -89,4 +109,7 @@ class Endpoints {
     String shipmentId,
     String printJobId,
   ) => "/orders/$orderId/shipments/$shipmentId/print-jobs/$printJobId/attempts";
+
+  // booking endpoints
+  static const String getPosts = baseUrl + "/posts";
 }

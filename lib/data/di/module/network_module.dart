@@ -11,6 +11,7 @@ import 'package:mobile_ai_erp/data/network/apis/cart/cart_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/wishlist/wishlist_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/coupon/coupon_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/suppliers/supplier_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/orders/orders_api.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
 import 'package:mobile_ai_erp/data/network/constants/storefront_endpoints.dart';
 import 'package:mobile_ai_erp/data/network/datasources/role/role_remote_datasource.dart';
@@ -176,6 +177,7 @@ class NetworkModule {
       StorefrontApi(getIt<DioClient>(instanceName: 'storefront')),
     );
     getIt.registerSingleton(PostApi(getIt<DioClient>(), getIt<RestClient>()));
+<<<<<<< HEAD
 
     // datasources:-----------------------------------------------------------
     getIt.registerSingleton<RoleRemoteDataSource>(
@@ -191,5 +193,8 @@ class NetworkModule {
     getIt.registerSingleton(
       OrderApi(getIt<DioClient>(instanceName: erpDioClientName)),
     );
+=======
+    getIt.registerSingleton(OrdersApi(getIt<DioClient>()));
+>>>>>>> 7dcccb6 (feat-16: order lists and order tracking get real data)
   }
 }
