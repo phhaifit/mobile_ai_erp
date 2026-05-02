@@ -70,8 +70,10 @@ import 'package:mobile_ai_erp/data/repository/account/address_repository_impl.da
 import 'package:mobile_ai_erp/data/repository/account/order_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/account/payment_repository_impl.dart';
 import 'package:mobile_ai_erp/data/network/apis/storefront/addresses_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/storefront/checkout_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/storefront/storefront_orders_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/storefront/storefront_payments_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/coupon/coupon_api.dart';
 import 'package:mobile_ai_erp/domain/repository/web_builder/cms_page_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/web_builder/store_settings_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/web_builder/web_theme_repository.dart';
@@ -190,7 +192,12 @@ class RepositoryModule {
     // checkout:--------------------------------------------------------------
     getIt.registerSingleton<CheckoutDataSource>(CheckoutLocalDataSourceImpl());
     getIt.registerSingleton<CheckoutRepository>(
-      CheckoutRepositoryImpl(getIt<CheckoutDataSource>()),
+      CheckoutRepositoryImpl(
+        getIt<CheckoutDataSource>(),
+        getIt<CheckoutApi>(),
+        getIt<AddressesApi>(),
+        getIt<CouponApi>(),
+      ),
     );
 
     getIt.registerSingleton<ProductManagementRepository>(
