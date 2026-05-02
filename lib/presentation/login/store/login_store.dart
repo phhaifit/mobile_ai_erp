@@ -119,6 +119,26 @@ abstract class _LoginStore with Store {
 
   @action
   Future<bool> validateStoredSession() async {
+    // Dev-only fallback for local testing with --dart-define-from-file=.env
+    // This does not affect normal login flow when env values are absent
+    const envAccessToken = String.fromEnvironment('ACCESS_TOKEN');
+    const envRefreshToken = String.fromEnvironment('REFRESH_TOKEN');
+    const envTenantId = String.fromEnvironment('TENANT_ID');
+
+    if (envAccessToken.isNotEmpty && envTenantId.isNotEmpty) {
+      await _sharedPreferenceHelper.saveAuthToken(
+        accessToken: envAccessToken,
+        refreshToken: envRefreshToken,
+      );
+      await _sharedPreferenceHelper.saveTenantId(envTenantId);
+
+      currentTenantId = envTenantId;
+      needsOnboarding = false;
+      isLoggedIn = true;
+      errorMessage = null;
+      return true;
+    }
+
     final accessToken = await _sharedPreferenceHelper.accessToken;
     if (accessToken == null || accessToken.isEmpty) {
       await _clearSession();
