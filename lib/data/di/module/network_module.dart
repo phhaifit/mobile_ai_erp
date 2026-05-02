@@ -177,7 +177,6 @@ class NetworkModule {
       StorefrontApi(getIt<DioClient>(instanceName: 'storefront')),
     );
     getIt.registerSingleton(PostApi(getIt<DioClient>(), getIt<RestClient>()));
-<<<<<<< HEAD
 
     // datasources:-----------------------------------------------------------
     getIt.registerSingleton<RoleRemoteDataSource>(
@@ -193,8 +192,6 @@ class NetworkModule {
     getIt.registerSingleton(
       OrderApi(getIt<DioClient>(instanceName: erpDioClientName)),
     );
-=======
     getIt.registerSingleton(OrdersApi(getIt<DioClient>()));
->>>>>>> 7dcccb6 (feat-16: order lists and order tracking get real data)
   }
 }

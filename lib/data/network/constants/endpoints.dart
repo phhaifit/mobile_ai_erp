@@ -39,7 +39,6 @@ class Endpoints {
   static const int receiveTimeout = 15000;
   static const int connectionTimeout = 30000;
 
-<<<<<<< HEAD
   static const String getPosts = "/posts";
 
   // auth endpoints
@@ -109,7 +108,4 @@ class Endpoints {
     String shipmentId,
     String printJobId,
   ) => "/orders/$orderId/shipments/$shipmentId/print-jobs/$printJobId/attempts";
-
-  // booking endpoints
-  static const String getPosts = baseUrl + "/posts";
 }
