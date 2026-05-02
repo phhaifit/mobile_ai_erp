@@ -1,8 +1,6 @@
 class Endpoints {
   Endpoints._();
 
-<<<<<<< HEAD
-=======
   // ERP backend base url - override at build time:
   //   --dart-define=ERP_BASE_URL=https://erp-api.jarvis.cx/api
   static const String erpBaseUrl = String.fromEnvironment(
@@ -18,7 +16,14 @@ class Endpoints {
     defaultValue: '00000000-0000-0000-0000-000000000000',
   );
 
->>>>>>> b0b620a2c4c97ddc3ba48344fa11bc1924107178
+  // Optional debug product id for direct PDP navigation.
+  // Override at build time:
+  //   --dart-define=PRODUCT_ID=<product-id>
+  static const String debugProductId = String.fromEnvironment(
+    'PRODUCT_ID',
+    defaultValue: '',
+  );
+
   // base url for mock API
   static const String baseUrl = "http://jsonplaceholder.typicode.com";
 
@@ -27,7 +32,6 @@ class Endpoints {
     'BACKEND_BASE_URL',
     defaultValue: "http://127.0.0.1:5002",
   );
-<<<<<<< HEAD
 
   static const String erpSecretKey = String.fromEnvironment(
     'ERP_SECRET_KEY',
@@ -41,8 +45,6 @@ class Endpoints {
 
   // receiveTimeout
   static const int receiveTimeout = 15000;
-=======
->>>>>>> b0b620a2c4c97ddc3ba48344fa11bc1924107178
 
   static const String erpSecretKey = String.fromEnvironment(
     'ERP_SECRET_KEY',
@@ -73,6 +75,7 @@ class Endpoints {
   static const String stackAuthHost = 'api.stack-auth.com';
   static const String stackAuthAuthenticate = '/api/v1/auth/oauth/authorize/';
   static const String stackAuthToken =
+
       'https://$stackAuthHost/api/v1/auth/oauth/token';
 
   static const String storefront = "$erpBaseUrl/storefront";
@@ -114,6 +117,24 @@ class Endpoints {
   static const String themes = "/themes";
   static const String activeTheme = "/themes/active";
 
+  // customer segments
+  static const String customerSegments = '/erp/customer-segments';
+  static String customerSegmentById(String id) => '/erp/customer-segments/$id';
+  static String customerSegmentMembers(String id) =>
+      '/erp/customer-segments/$id/members';
+
+  // customers
+  static const String customers = '/erp/customers';
+  static String customerById(String id) => '/erp/customers/$id';
+  static String customerStatus(String id) => '/erp/customers/$id/status';
+  static String customerAddresses(String id) => '/erp/customers/$id/addresses';
+  static String customerAddressById(String customerId, String addressId) =>
+      '/erp/customers/$customerId/addresses/$addressId';
+  static String customerAddressDefault(String customerId, String addressId) =>
+      '/erp/customers/$customerId/addresses/$addressId/default';
+  static String customerTransactions(String id) =>
+      '/erp/customers/$id/transactions';
+
   // order endpoints
   static const String orders = "/erp/orders";
   static String orderDetail(String id) => "/erp/orders/$id";
@@ -141,5 +162,4 @@ class Endpoints {
     String shipmentId,
     String printJobId,
   ) => "/orders/$orderId/shipments/$shipmentId/print-jobs/$printJobId/attempts";
->>>>>>> b0b620a2c4c97ddc3ba48344fa11bc1924107178
 }

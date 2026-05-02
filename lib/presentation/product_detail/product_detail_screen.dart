@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:intl/intl.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
+import 'package:mobile_ai_erp/domain/entity/product_detail/product_detail.dart';
 import 'package:mobile_ai_erp/presentation/cart/store/cart_store.dart';
 import 'package:mobile_ai_erp/presentation/product_detail/store/product_detail_store.dart';
 import 'package:mobile_ai_erp/presentation/product_detail/widgets/attributes_table_widget.dart';
@@ -10,6 +12,8 @@ import 'package:mobile_ai_erp/presentation/product_detail/widgets/product_descri
 import 'package:mobile_ai_erp/presentation/product_detail/widgets/product_image_gallery.dart';
 import 'package:mobile_ai_erp/presentation/product_detail/widgets/reviews_section_widget.dart';
 import 'package:mobile_ai_erp/presentation/product_detail/widgets/variant_selector_widget.dart';
+import 'package:mobile_ai_erp/utils/routes/routes.dart';
+import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
 
 const double _kWideBreakpoint = 720;
 
@@ -25,11 +29,40 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   final CartStore _cartStore = getIt<CartStore>();
 
   int _quantity = 1;
-  bool _hasLoadedInitialProduct = false;
+  bool _didLoad = false;
 
   @override
   void initState() {
     super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_didLoad) return;
+    _didLoad = true;
+
+    final productId = _productIdFromRoute();
+    if (productId == null || productId.isEmpty) {
+      _store.setLoadError('Product id is missing.');
+      return;
+    }
+
+    _store.loadProduct(productId);
+  }
+
+  String? _productIdFromRoute() {
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is String) return args;
+    if (args is int) return args.toString();
+    if (args is Map) {
+      final id = args['productId'] ?? args['id'];
+      return id?.toString();
+    }
+    if (Endpoints.debugProductId.isNotEmpty) {
+      return Endpoints.debugProductId;
+    }
+    return null;
   }
 
   void _onShare() {
@@ -113,54 +146,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Observer(
       builder: (_) {
         final product = _store.product;
-        final routeProductId =
-            ModalRoute.of(context)?.settings.arguments as String?;
-        if (!_hasLoadedInitialProduct && routeProductId != null) {
-          _hasLoadedInitialProduct = true;
-          _store.loadProduct(routeProductId);
-        }
-
-        if (routeProductId == null && product == null) {
-          return const Scaffold(
-            body: Center(
-              child: Text('Please open a product from the storefront listing.'),
-            ),
-          );
-        }
-
         if (_store.isLoading) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
+          return _buildLoadingScaffold();
         }
-
+        if (_store.errorMessage != null) {
+          return _buildErrorScaffold(_store.errorMessage!);
+        }
         if (product == null) {
-          return Scaffold(
-            appBar: AppBar(),
-            body: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.cloud_off, size: 40),
-                    const SizedBox(height: 12),
-                    Text(
-                      _store.errorStore.errorMessage.isEmpty
-                          ? 'Unable to load product detail from the storefront API.'
-                          : _store.errorStore.errorMessage,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    FilledButton(
-                      onPressed: () => _store.loadProduct(routeProductId!),
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
+          return _buildEmptyScaffold();
         }
 
         return LayoutBuilder(
@@ -174,6 +167,45 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           },
         );
       },
+    );
+  }
+
+  Widget _buildLoadingScaffold() {
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
+  }
+
+  Widget _buildErrorScaffold(String message) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Product detail')),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, size: 48),
+              const SizedBox(height: 12),
+              Text(
+                'Unable to load product',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyScaffold() {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Product detail')),
+      body: const Center(child: Text('Product not found.')),
     );
   }
 
@@ -231,6 +263,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               _buildDivider(),
               const SizedBox(height: 16),
               _buildReviews(),
+              const SizedBox(height: 24),
+              _buildDivider(),
+              const SizedBox(height: 16),
+              _buildSupportingSections(),
               const SizedBox(height: 32),
             ]),
           ),
@@ -269,6 +305,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     _buildDivider(),
                     const SizedBox(height: 16),
                     _buildReviews(),
+                    const SizedBox(height: 24),
+                    _buildDivider(),
+                    const SizedBox(height: 16),
+                    _buildSupportingSections(),
                   ],
                 ),
               ),
@@ -396,6 +436,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         originalPrice: _store.originalPrice,
         discountPercentage: _store.discountPercentage,
         selectedVariant: _store.selectedVariant,
+        isFlashSale: _store.product?.isFlashSale,
+        flashSaleFrom: _store.product?.flashSaleFrom,
+        flashSaleEndTime: _store.product?.flashSaleEndTime,
       ),
     );
   }
@@ -446,6 +489,114 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       reviews: _store.product!.reviews,
       averageRating: _store.product!.averageRating,
       reviewCount: _store.product!.reviewCount,
+    );
+  }
+
+  Widget _buildSupportingSections() {
+    return Observer(
+      builder: (_) {
+        final hasCategory = _store.categoryDetail != null;
+        final hasRelated = _store.relatedProducts.isNotEmpty;
+        final hasBrandProducts = _store.brandProducts.isNotEmpty;
+
+        if (!hasCategory && !hasRelated && !hasBrandProducts) {
+          return const SizedBox.shrink();
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (hasCategory) ...[
+              _buildCategoryBreadcrumb(_store.categoryDetail!),
+              const SizedBox(height: 20),
+            ],
+            if (hasRelated) ...[
+              _buildProductSummarySection(
+                title: 'Related products',
+                products: _store.relatedProducts,
+              ),
+              const SizedBox(height: 20),
+            ],
+            if (hasBrandProducts) ...[
+              _buildProductSummarySection(
+                title: 'More from ${_store.product!.brandName}',
+                products: _store.brandProducts,
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildCategoryBreadcrumb(StorefrontCategoryDetail category) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final items = category.breadcrumb.isNotEmpty
+        ? category.breadcrumb
+        : [
+            StorefrontCategoryBreadcrumb(
+              id: category.id,
+              name: category.name,
+              slug: category.slug,
+            ),
+          ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Category',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final item in items)
+              Chip(
+                label: Text(item.name),
+                backgroundColor: colorScheme.primary.withValues(alpha: 0.08),
+                side: BorderSide(
+                  color: colorScheme.primary.withValues(alpha: 0.18),
+                ),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProductSummarySection({
+    required String title,
+    required List<StorefrontProductSummary> products,
+  }) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 238,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: products.length,
+            separatorBuilder: (context, index) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              return _ProductSummaryCard(product: products[index]);
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -655,6 +806,103 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ],
       ),
       child: _buildAddToCartButton(),
+    );
+  }
+}
+
+// =========================================================================
+// Product summary card
+// =========================================================================
+
+class _ProductSummaryCard extends StatelessWidget {
+  final StorefrontProductSummary product;
+
+  const _ProductSummaryCard({required this.product});
+
+  static final _currencyFormat = NumberFormat.currency(
+    locale: 'vi_VN',
+    symbol: '₫',
+    decimalDigits: 0,
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final imageUrl = product.imageUrls.isNotEmpty
+        ? product.imageUrls.first
+        : null;
+
+    return SizedBox(
+      width: 170,
+      height: 224,
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () {
+            Navigator.of(
+              context,
+            ).pushReplacementNamed(Routes.productDetail, arguments: product.id);
+          },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: SizedBox.expand(
+                  child: imageUrl == null
+                      ? Container(
+                          color: colorScheme.surfaceContainerHighest,
+                          alignment: Alignment.center,
+                          child: const Icon(Icons.image_not_supported_outlined),
+                        )
+                      : Image.network(
+                          imageUrl,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: double.infinity,
+                        ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      product.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      product.brandName ?? product.categoryName ?? '',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      _currencyFormat.format(product.price),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

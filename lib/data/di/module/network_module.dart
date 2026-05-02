@@ -4,16 +4,16 @@ import 'package:mobile_ai_erp/core/data/network/dio/interceptors/auth_intercepto
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/logging_interceptor.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/tenant_header_interceptor.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/token_refresh_interceptor.dart';
+import 'package:mobile_ai_erp/data/network/apis/customer/customer_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/customer/customer_segment_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/orders/order_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
-<<<<<<< HEAD
-=======
+import 'package:mobile_ai_erp/data/network/apis/storefront_products_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/web_builder/web_builder_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/cart/cart_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/wishlist/wishlist_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/coupon/coupon_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/suppliers/supplier_api.dart';
->>>>>>> b0b620a2c4c97ddc3ba48344fa11bc1924107178
 import 'package:mobile_ai_erp/data/network/apis/orders/orders_api.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
 import 'package:mobile_ai_erp/data/network/constants/storefront_endpoints.dart';
@@ -50,7 +50,6 @@ class NetworkModule {
     getIt.registerSingleton<ErrorInterceptor>(ErrorInterceptor(getIt()));
     getIt.registerSingleton<AuthInterceptor>(
       AuthInterceptor(
-        // accessToken: () async => await getIt<SharedPreferenceHelper>().authToken,
         accessToken: () async {
           const envToken = String.fromEnvironment('ACCESS_TOKEN');
 
@@ -142,22 +141,21 @@ class NetworkModule {
     );
     getIt.registerSingleton<DioClient>(erpDioClient);
 
-    // storefront dio:---------------------------------------------------------------------
-    getIt.registerSingleton<DioConfigs>(
-      const DioConfigs(
-        baseUrl: StorefrontEndpoints.baseUrl,
-        connectionTimeout: StorefrontEndpoints.connectionTimeout,
-        receiveTimeout: StorefrontEndpoints.receiveTimeout,
-      ),
-      instanceName: 'storefront',
-    );
-    getIt.registerSingleton<DioClient>(
-      DioClient(dioConfigs: getIt<DioConfigs>(instanceName: 'storefront'))
-        ..addInterceptors([
+    // dio (storefront backend - separate base URL + storefront tenant):--------
+    final storefrontDioClient =
+        DioClient(
+          dioConfigs: const DioConfigs(
+            baseUrl: StorefrontEndpoints.baseUrl,
+            connectionTimeout: StorefrontEndpoints.connectionTimeout,
+            receiveTimeout: StorefrontEndpoints.receiveTimeout,
+          ),
+        )..addInterceptors([
           getIt<TenantInterceptor>(instanceName: 'storefront'),
           getIt<ErrorInterceptor>(),
           getIt<LoggingInterceptor>(),
-        ]),
+        ]);
+    getIt.registerSingleton<DioClient>(
+      storefrontDioClient,
       instanceName: 'storefront',
     );
 
@@ -180,8 +178,6 @@ class NetworkModule {
       StorefrontApi(getIt<DioClient>(instanceName: 'storefront')),
     );
     getIt.registerSingleton(PostApi(getIt<DioClient>(), getIt<RestClient>()));
-<<<<<<< HEAD
-=======
 
     // datasources:-----------------------------------------------------------
     getIt.registerSingleton<RoleRemoteDataSource>(
@@ -197,7 +193,5 @@ class NetworkModule {
     getIt.registerSingleton(
       OrderApi(getIt<DioClient>(instanceName: erpDioClientName)),
     );
->>>>>>> b0b620a2c4c97ddc3ba48344fa11bc1924107178
-    getIt.registerSingleton(OrdersApi(getIt<DioClient>()));
   }
 }

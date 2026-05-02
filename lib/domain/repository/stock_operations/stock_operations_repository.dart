@@ -9,12 +9,16 @@ abstract class StockOperationsRepository {
 
   Future<List<StockOperation>> getOperations();
 
-  Future<StockOperation> submitTransfer({
+  Future<StockOperation> createTransfer({
     required String sourceWarehouseId,
     required String destinationWarehouseId,
     required String productId,
     required int quantity,
   });
+
+  Future<StockOperation> approveTransfer({required String transferId});
+
+  Future<StockOperation> completeTransfer({required String transferId});
 
   Future<StockOperation> submitDamagedOrExpired({
     required String warehouseId,

@@ -1,3 +1,7 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/customer_group.dart';
 import 'package:mobile_ai_erp/presentation/customer_management/navigation/customer_navigator.dart';
@@ -7,24 +11,6 @@ import 'package:mobile_ai_erp/presentation/customer_management/widgets/customer_
 import 'package:mobile_ai_erp/presentation/customer_management/widgets/customer_list_controls.dart';
 import 'package:mobile_ai_erp/presentation/customer_management/widgets/customer_pagination_controls.dart';
 import 'package:mobile_ai_erp/presentation/customer_management/widgets/customer_status_chip.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_mobx/flutter_mobx.dart';
-
-enum _GroupSortOption {
-  sortOrder('Sort order'),
-  nameAsc('Name A-Z'),
-  nameDesc('Name Z-A');
-
-  const _GroupSortOption(this.label);
-
-  final String label;
-}
-
-class _GroupFilterResult {
-  const _GroupFilterResult({this.status});
-
-  final CustomerGroupStatus? status;
-}
 
 class CustomerGroupsScreen extends StatefulWidget {
   const CustomerGroupsScreen({super.key});
@@ -34,25 +20,27 @@ class CustomerGroupsScreen extends StatefulWidget {
 }
 
 class _CustomerGroupsScreenState extends State<CustomerGroupsScreen> {
-  static const int _pageSize = 10;
-
   final CustomerStore _store = getIt<CustomerStore>();
   final TextEditingController _searchController = TextEditingController();
+
+  Timer? _debounce;
   String _query = '';
-  CustomerGroupStatus? _statusFilter;
-  _GroupSortOption _sortOption = _GroupSortOption.sortOrder;
-  int _currentPage = 1;
 
   @override
   void initState() {
     super.initState();
-    Future<void>.microtask(() => _store.loadDashboard());
+    Future.microtask(() => _reload());
   }
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _reload({int page = 1}) {
+    _store.loadGroups(page: page, search: _query.isEmpty ? null : _query);
   }
 
   @override
@@ -75,58 +63,63 @@ class _CustomerGroupsScreenState extends State<CustomerGroupsScreen> {
       ),
       body: Observer(
         builder: (context) {
-          if (_store.isLoading && !_store.hasLoadedDashboard) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final filtered = _applyFilters(_store.groups.toList());
-          final totalPages = _totalPages(filtered.length);
-          final currentPage =
-              totalPages == 0 ? 1 : _currentPage.clamp(1, totalPages);
-          final visible = _pageItems(filtered, currentPage, _pageSize);
+          final groups = _store.groups.toList();
+          final totalPages = _store.groupTotalPages;
+          final currentPage = _store.groupCurrentPage;
+          final totalItems = _store.groupTotalItems;
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
             children: <Widget>[
               CustomerListControls(
                 searchController: _searchController,
-                onSearchChanged: (value) => setState(() {
-                  _query = value.trim();
-                  _currentPage = 1;
-                }),
+                onSearchChanged: (value) {
+                  _debounce?.cancel();
+
+                  _debounce = Timer(const Duration(milliseconds: 400), () {
+                    setState(() {
+                      _query = value.trim();
+                    });
+
+                    _reload();
+                  });
+                },
                 searchHint: 'Search by group name',
-                resultLabel:
-                    'Showing ${visible.length} of ${filtered.length} groups',
-                hasActiveFilter: _statusFilter != null,
-                hasCustomSort:
-                    _sortOption != _GroupSortOption.sortOrder,
-                onOpenFilter: _openFilterSheet,
-                onOpenSort: _openSortSheet,
+                resultLabel: 'Showing ${groups.length} of $totalItems groups',
+                hasActiveFilter: false,
+                hasCustomSort: false,
+                onOpenFilter: null,
+                onOpenSort: null,
               ),
               const SizedBox(height: 16),
-              if (filtered.isEmpty)
+              if (_store.isLoading)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(32),
+                    child: CircularProgressIndicator(),
+                  ),
+                )
+              else if (groups.isEmpty)
                 CustomerEmptyState(
                   icon: Icons.group_work_outlined,
-                  title: _query.isNotEmpty || _statusFilter != null
+                  title: _query.isNotEmpty
                       ? 'No matching groups'
                       : 'No groups yet',
-                  message: _query.isNotEmpty || _statusFilter != null
-                      ? 'Try changing your search or filter.'
+                  message: _query.isNotEmpty
+                      ? 'Try changing your search.'
                       : 'Add the first customer group to start segmenting.',
                 )
               else ...<Widget>[
-                ...visible.map(_buildGroupCard),
+                ...groups.map(_buildGroupCard),
                 if (totalPages > 1)
                   CustomerPaginationControls(
                     currentPage: currentPage,
                     totalPages: totalPages,
                     onPrevious: currentPage > 1
-                        ? () =>
-                            setState(() => _currentPage = currentPage - 1)
+                        ? () => _reload(page: currentPage - 1)
                         : null,
                     onNext: currentPage < totalPages
-                        ? () =>
-                            setState(() => _currentPage = currentPage + 1)
+                        ? () => _reload(page: currentPage + 1)
                         : null,
                   ),
               ],
@@ -135,31 +128,6 @@ class _CustomerGroupsScreenState extends State<CustomerGroupsScreen> {
         },
       ),
     );
-  }
-
-  List<CustomerGroup> _applyFilters(List<CustomerGroup> source) {
-    final query = _query.toLowerCase();
-    final filtered = source.where((g) {
-      if (_statusFilter != null && g.status != _statusFilter) return false;
-      if (query.isEmpty) return true;
-      return g.name.toLowerCase().contains(query) ||
-          (g.description?.toLowerCase().contains(query) ?? false);
-    }).toList();
-
-    filtered.sort((a, b) {
-      switch (_sortOption) {
-        case _GroupSortOption.sortOrder:
-          final orderCompare = a.sortOrder.compareTo(b.sortOrder);
-          if (orderCompare != 0) return orderCompare;
-          return a.name.toLowerCase().compareTo(b.name.toLowerCase());
-        case _GroupSortOption.nameAsc:
-          return a.name.toLowerCase().compareTo(b.name.toLowerCase());
-        case _GroupSortOption.nameDesc:
-          return b.name.toLowerCase().compareTo(a.name.toLowerCase());
-      }
-    });
-
-    return filtered;
   }
 
   Widget _buildGroupCard(CustomerGroup group) {
@@ -175,8 +143,7 @@ class _CustomerGroupsScreenState extends State<CustomerGroupsScreen> {
             args: CustomerGroupFormArgs(groupId: group.id),
           ),
           child: Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             child: Row(
               children: <Widget>[
                 _GroupColorDot(colorHex: group.colorHex),
@@ -189,9 +156,7 @@ class _CustomerGroupsScreenState extends State<CustomerGroupsScreen> {
                         group.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleMedium
+                        style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(fontWeight: FontWeight.w600),
                       ),
                       if (group.description != null &&
@@ -201,12 +166,12 @@ class _CustomerGroupsScreenState extends State<CustomerGroupsScreen> {
                           group.description!,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
-                                  ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
                         ),
                       ],
                       const SizedBox(height: 6),
@@ -216,7 +181,8 @@ class _CustomerGroupsScreenState extends State<CustomerGroupsScreen> {
                         children: <Widget>[
                           CustomerStatusChip(label: group.status.label),
                           CustomerStatusChip(
-                              label: '$count customer${count != 1 ? 's' : ''}'),
+                            label: '$count customer${count != 1 ? 's' : ''}',
+                          ),
                         ],
                       ),
                     ],
@@ -231,6 +197,7 @@ class _CustomerGroupsScreenState extends State<CustomerGroupsScreen> {
                           args: CustomerGroupFormArgs(groupId: group.id),
                         );
                         return;
+
                       case _GroupMenuAction.delete:
                         _confirmDelete(group);
                         return;
@@ -245,119 +212,17 @@ class _CustomerGroupsScreenState extends State<CustomerGroupsScreen> {
     );
   }
 
-  Future<void> _openFilterSheet() async {
-    final result = await showModalBottomSheet<_GroupFilterResult>(
-      context: context,
-      builder: (context) {
-        CustomerGroupStatus? tempStatus = _statusFilter;
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text('Filter groups',
-                        style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 16),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('All statuses'),
-                      trailing: tempStatus == null
-                          ? const Icon(Icons.check)
-                          : null,
-                      onTap: () =>
-                          setModalState(() => tempStatus = null),
-                    ),
-                    for (final s in CustomerGroupStatus.values)
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(s.label),
-                        trailing: tempStatus == s
-                            ? const Icon(Icons.check)
-                            : null,
-                        onTap: () =>
-                            setModalState(() => tempStatus = s),
-                      ),
-                    const SizedBox(height: 8),
-                    FilledButton(
-                      onPressed: () => Navigator.of(context)
-                          .pop(_GroupFilterResult(status: tempStatus)),
-                      child: const Text('Apply'),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-
-    if (result == null || !mounted) return;
-    setState(() {
-      _statusFilter = result.status;
-      _currentPage = 1;
-    });
-  }
-
-  Future<void> _openSortSheet() async {
-    final selected = await showModalBottomSheet<_GroupSortOption>(
-      context: context,
-      builder: (context) {
-        _GroupSortOption temp = _sortOption;
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text('Sort groups',
-                        style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 16),
-                    for (final option in _GroupSortOption.values)
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(option.label),
-                        trailing:
-                            temp == option ? const Icon(Icons.check) : null,
-                        onTap: () => setModalState(() => temp = option),
-                      ),
-                    const SizedBox(height: 8),
-                    FilledButton(
-                      onPressed: () => Navigator.of(context).pop(temp),
-                      child: const Text('Apply'),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-
-    if (selected == null || !mounted) return;
-    setState(() {
-      _sortOption = selected;
-      _currentPage = 1;
-    });
-  }
-
   Future<void> _confirmDelete(CustomerGroup group) async {
     final count = _store.customerCountForGroup(group.id);
+
     if (count > 0) {
       await showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Can\'t delete group'),
           content: Text(
-              '"${group.name}" has $count customer${count != 1 ? 's' : ''}. Reassign them first.'),
+            '"${group.name}" has $count customer${count != 1 ? 's' : ''}. Reassign them first.',
+          ),
           actions: <Widget>[
             FilledButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -369,12 +234,12 @@ class _CustomerGroupsScreenState extends State<CustomerGroupsScreen> {
       return;
     }
 
-    final confirmed = await showDialog<bool>(
+    final confirmed =
+        await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('Delete group?'),
-            content:
-                Text('Delete "${group.name}"? This can\'t be undone.'),
+            content: Text('Delete "${group.name}"? This can\'t be undone.'),
             actions: <Widget>[
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
@@ -393,34 +258,28 @@ class _CustomerGroupsScreenState extends State<CustomerGroupsScreen> {
 
     try {
       await _store.deleteCustomerGroup(group.id);
+
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Deleted "${group.name}".')),
-      );
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Deleted "${group.name}".')));
+
+      _reload();
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.toString())),
-      );
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
     }
   }
 
   void _goToHome() {
     Navigator.of(context).popUntil(
       (route) =>
-          route.settings.name == CustomerNavigator.homeRoute ||
-          route.isFirst,
+          route.settings.name == CustomerNavigator.homeRoute || route.isFirst,
     );
-  }
-
-  int _totalPages(int count) =>
-      count == 0 ? 0 : ((count - 1) ~/ _pageSize) + 1;
-
-  List<CustomerGroup> _pageItems(
-      List<CustomerGroup> items, int page, int pageSize) {
-    final start = (page - 1) * pageSize;
-    if (start >= items.length) return const <CustomerGroup>[];
-    return items.sublist(start, (start + pageSize).clamp(0, items.length));
   }
 }
 
@@ -438,21 +297,25 @@ class _GroupActionsMenu extends StatelessWidget {
       padding: EdgeInsets.zero,
       iconSize: 20,
       onSelected: onSelected,
-      itemBuilder: (context) => const <PopupMenuEntry<_GroupMenuAction>>[
-        PopupMenuItem<_GroupMenuAction>(
+      itemBuilder: (context) => <PopupMenuEntry<_GroupMenuAction>>[
+        const PopupMenuItem<_GroupMenuAction>(
           value: _GroupMenuAction.edit,
-          child: ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: Icon(Icons.edit_outlined),
-            title: Text('Edit'),
+          child: Row(
+            children: [
+              Icon(Icons.edit_outlined),
+              SizedBox(width: 12),
+              Text('Edit'),
+            ],
           ),
         ),
-        PopupMenuItem<_GroupMenuAction>(
+        const PopupMenuItem<_GroupMenuAction>(
           value: _GroupMenuAction.delete,
-          child: ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: Icon(Icons.delete_outline),
-            title: Text('Delete'),
+          child: Row(
+            children: [
+              Icon(Icons.delete_outline),
+              SizedBox(width: 12),
+              Text('Delete'),
+            ],
           ),
         ),
       ],
@@ -469,6 +332,7 @@ class _GroupColorDot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Color color;
+
     try {
       color = colorHex != null
           ? Color(int.parse(colorHex!.replaceFirst('#', '0xFF')))
@@ -480,10 +344,7 @@ class _GroupColorDot extends StatelessWidget {
     return Container(
       width: 14,
       height: 14,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     );
   }
 }
