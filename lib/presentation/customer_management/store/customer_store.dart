@@ -232,9 +232,25 @@ abstract class CustomerStoreBase with Store {
 
   @action
   Future<void> saveAddress(Address address) async {
+    // Validate address before saving
+    final validationResult = address.validate();
+    if (!validationResult.isValid) {
+      errorStore.errorMessage =
+          'Address validation failed: ${validationResult.errorMessage}';
+      throw ArgumentError(validationResult.errorMessage);
+    }
+
+    // Save address
     final saved = await _saveCustomerAddressUseCase.call(params: address);
+
+    // Re-validate the saved address and mark it as validated
+    final savedWithValidation = saved.copyWith(isValidated: true);
+
     if (activeCustomerId == saved.customerId) {
-      _upsertAddress(saved);
+      _upsertAddress(savedWithValidation);
+
+      // Refresh address list to ensure we have the newest data
+      await loadAddresses(saved.customerId);
     }
   }
 
