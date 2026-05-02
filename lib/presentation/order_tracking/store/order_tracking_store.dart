@@ -89,6 +89,10 @@ abstract class _OrderTrackingStore with Store {
       }
 
       orderDetail = detail;
+      // Clear any previous error state when we successfully load detail,
+      // even for silent polling, so the UI can recover from earlier failures.
+      errorMessage = null;
+      errorStore.setErrorMessage('');
       lastUpdatedAt = DateTime.now();
       final scenario = _mapOrderDetailToScenario(detail, orderId);
       scenarios = ObservableList<OrderTrackingScenario>.of([scenario]);
@@ -112,6 +116,11 @@ abstract class _OrderTrackingStore with Store {
     }
 
     if (_currentOrderId == orderId && isPolling) {
+      // If we're already polling this order but previously encountered an error,
+      // allow an immediate retry so the user-triggered retry isn't ignored.
+      if (errorMessage != null && errorMessage!.isNotEmpty) {
+        loadOrderDetail(orderId);
+      }
       return;
     }
 
