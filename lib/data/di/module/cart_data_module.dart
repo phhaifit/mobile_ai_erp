@@ -10,6 +10,7 @@ import 'package:mobile_ai_erp/data/repository/product/product_repository.dart';
 import 'package:mobile_ai_erp/data/repository/product/product_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/coupon/coupon_repository.dart';
 import 'package:mobile_ai_erp/data/repository/coupon/coupon_repository_impl.dart';
+import 'package:mobile_ai_erp/domain/repository/product/product_detail_repository.dart';
 
 class CartDataModule {
   CartDataModule._();
@@ -38,7 +39,9 @@ class CartDataModule {
     }
 
     if (!getIt.isRegistered<ProductRepository>()) {
-      getIt.registerSingleton<ProductRepository>(ProductRepositoryImpl());
+      getIt.registerSingleton<ProductRepository>(
+        ProductRepositoryImpl(getIt<ProductDetailRepository>()),
+      );
     }
   }
 
