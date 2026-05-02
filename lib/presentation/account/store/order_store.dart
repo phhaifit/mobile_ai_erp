@@ -20,8 +20,8 @@ abstract class _OrderStore with Store {
   @action
   Future<void> fetchOrders() async {
     isLoading = true;
-    final data = await _repository.getOrderHistory(); // Use _repository here
-    orders = ObservableList.of(data);
+    final result = await _repository.getOrderHistory();
+    orders = ObservableList.of(result.orders);
     isLoading = false;
   }
 
@@ -45,21 +45,10 @@ abstract class _OrderStore with Store {
     isLoading = true;
     await Future.delayed(const Duration(seconds: 1)); // Mock API delay
 
-    // Find the order and update its status locally for the mock UI
+    // Find the order and update its status locally
     final index = orders.indexWhere((o) => o.id == orderId);
     if (index != -1) {
-      final oldOrder = orders[index];
-      // Create a new order object with the canceled status
-      orders[index] = Order(
-        id: oldOrder.id,
-        status: OrderStatus.canceled,
-        date: oldOrder.date,
-        totalAmount: oldOrder.totalAmount,
-        shippingFee: oldOrder.shippingFee,
-        shippingAddress: oldOrder.shippingAddress,
-        paymentMethod: oldOrder.paymentMethod,
-        items: oldOrder.items,
-      );
+      orders[index] = orders[index].copyWith(status: OrderStatus.canceled);
     }
     isLoading = false;
   }

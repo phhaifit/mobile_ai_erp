@@ -20,6 +20,10 @@ import 'package:mobile_ai_erp/data/network/apis/cart/cart_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/wishlist/wishlist_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/coupon/coupon_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/suppliers/supplier_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/storefront/addresses_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/storefront/checkout_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/storefront/storefront_orders_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/storefront/storefront_payments_api.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
 import 'package:mobile_ai_erp/data/network/constants/storefront_endpoints.dart';
 import 'package:mobile_ai_erp/data/network/datasources/role/role_remote_datasource.dart';
@@ -213,10 +217,25 @@ class NetworkModule {
     );
 
     // dashboard:---------------------------------------------------------------
-    getIt.registerSingleton(
+    getIt.registerSingleton<DashboardApi>(
       DashboardApi(getIt<DioClient>(instanceName: erpDioClientName)),
+    );
     getIt.registerSingleton<StorefrontProductsApi>(
       StorefrontProductsApi(getIt<DioClient>(instanceName: erpDioClientName)),
+    );
+
+    // storefront: addresses, checkout, orders, payments
+    getIt.registerSingleton<AddressesApi>(
+      AddressesApi(getIt<DioClient>(instanceName: erpDioClientName)),
+    );
+    getIt.registerSingleton<CheckoutApi>(
+      CheckoutApi(getIt<DioClient>(instanceName: erpDioClientName)),
+    );
+    getIt.registerSingleton<StorefrontOrdersApi>(
+      StorefrontOrdersApi(getIt<DioClient>(instanceName: erpDioClientName)),
+    );
+    getIt.registerSingleton<StorefrontPaymentsApi>(
+      StorefrontPaymentsApi(getIt<DioClient>(instanceName: erpDioClientName)),
     );
   }
 }

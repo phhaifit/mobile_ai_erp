@@ -65,10 +65,13 @@ import 'package:mobile_ai_erp/data/repository/user/auth_repository_impl.dart';
 import 'package:mobile_ai_erp/domain/repository/user/auth_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/account/address_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/account/order_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/account/payment_repository.dart';
 import 'package:mobile_ai_erp/data/repository/account/address_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/account/order_repository_impl.dart';
-import 'package:mobile_ai_erp/data/local/datasources/account/address_mock_datasource.dart';
-import 'package:mobile_ai_erp/data/local/datasources/account/order_mock_datasource.dart';
+import 'package:mobile_ai_erp/data/repository/account/payment_repository_impl.dart';
+import 'package:mobile_ai_erp/data/network/apis/storefront/addresses_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/storefront/storefront_orders_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/storefront/storefront_payments_api.dart';
 import 'package:mobile_ai_erp/domain/repository/web_builder/cms_page_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/web_builder/store_settings_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/web_builder/web_theme_repository.dart';
@@ -135,12 +138,13 @@ class RepositoryModule {
     );
 
     getIt.registerLazySingleton<AddressRepository>(
-      () => AddressRepositoryImpl(getIt<AddressMockDataSource>()),
-    );
+        () => AddressRepositoryImpl(getIt<AddressesApi>()));
 
     getIt.registerLazySingleton<OrderRepository>(
-      () => OrderRepositoryImpl(getIt<OrderMockDataSource>()),
-    );
+        () => OrderRepositoryImpl(getIt<StorefrontOrdersApi>()));
+
+    getIt.registerLazySingleton<PaymentRepository>(
+        () => PaymentRepositoryImpl(getIt<StorefrontPaymentsApi>()));
 
     // post_purchase:----------------------------------------------------------
     getIt.registerSingleton<PostPurchaseDataSource>(PostPurchaseDataSource());
