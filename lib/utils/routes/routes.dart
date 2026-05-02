@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_ai_erp/core/stores/supplier/supplier_store.dart';
+import 'package:mobile_ai_erp/presentation/supplier/store/supplier_store.dart';
+import 'package:mobile_ai_erp/presentation/supplier/store/supplier_products_store.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/entity/product/product.dart';
 import 'package:mobile_ai_erp/presentation/account/address/address_book_screen.dart';
@@ -27,7 +28,6 @@ import 'package:mobile_ai_erp/presentation/order_fulfillment/print_label.dart';
 import 'package:mobile_ai_erp/presentation/product/screens/product_create_edit_screen.dart';
 import 'package:mobile_ai_erp/presentation/product/screens/product_filter_screen.dart';
 import 'package:mobile_ai_erp/presentation/product/screens/product_info_screen.dart';
-import 'package:mobile_ai_erp/presentation/product/screens/product_list_page.dart';
 import 'package:mobile_ai_erp/presentation/product/screens/product_list_screen.dart';
 import 'package:mobile_ai_erp/presentation/product_detail/product_detail_screen.dart';
 import 'package:mobile_ai_erp/presentation/post_purchase/exchange_detail_screen.dart';
@@ -63,6 +63,7 @@ class Routes {
   static const String home = '/post';
   static const String dashboard = '/dashboard';
   static const String suppliers = '/suppliers';
+  static const String supplierDetail = '/supplier-detail';
   static const String stockOperations = '/stock-operations';
   static const String inventoryAudit = '/inventory-audit';
   static const String inventoryAuditSummary = '/inventory-audit-summary';
@@ -131,8 +132,10 @@ class Routes {
     orderTracking: OrderTrackingNavigation.buildScreen,
     ...CartRoutes.getRoutes(),
     reports: (BuildContext context) => ReportsAnalyticsScreen(),
-    suppliers: (BuildContext context) =>
-        SupplierListScreen(store: getIt<SupplierStore>()),
+    suppliers: (BuildContext context) => SupplierListScreen(
+      store: getIt<SupplierStore>(),
+      productsStore: getIt<SupplierProductsStore>(),
+    ),
     profileDashboard: (BuildContext context) => ProfileDashboardScreen(),
     addressBook: (BuildContext context) => const AddressBookScreen(),
     addressForm: (BuildContext context) => const AddressFormScreen(),
@@ -143,7 +146,6 @@ class Routes {
       userStore: getIt<UserStore>(),
       roleStore: getIt<RoleStore>(),
     ),
-    productList: (BuildContext context) => ProductListPage(),
     productDetail: (BuildContext context) => const ProductDetailScreen(),
     fulfillment: (BuildContext context) => FulfillmentListScreen(),
     fulfillmentDetail: (BuildContext context) => FulfillmentDetailScreen(),

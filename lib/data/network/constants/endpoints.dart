@@ -5,7 +5,7 @@ class Endpoints {
   //   --dart-define=ERP_BASE_URL=https://erp-api.jarvis.cx/api
   static const String erpBaseUrl = String.fromEnvironment(
     'ERP_BASE_URL',
-    defaultValue: 'https://erp-api.jarvis.cx/api',
+    defaultValue: 'https://erp-api.jarvis.cx',
   );
 
   // Tenant id sent via X-Tenant-Id header to ERP backend.
@@ -31,6 +31,33 @@ class Endpoints {
   static const String stackAuthHost = 'api.stack-auth.com';
   static const String stackAuthAuthenticate = '/api/v1/auth/oauth/authorize/';
   static const String stackAuthToken = 'https://$stackAuthHost/api/v1/auth/oauth/token';
+
+  static const String storefront = "$erpBaseUrl/storefront";
+
+  // cart
+  static const String storefrontCart = "$storefront/cart";
+  static const String storefrontCartSummary = "$storefront/cart/summary";
+  static const String storefrontCartItems = "$storefront/cart/items";
+  static const String storefrontCartCalculate = "$storefront/cart/calculate";
+  static const String storefrontCartMerge = "$storefront/cart/merge";
+
+  static String storefrontCartItemById(String cartItemId) =>
+      "$storefrontCartItems/$cartItemId";
+
+  // wishlist
+  static const String storefrontWishlist = "$storefront/wishlist";
+  static const String storefrontWishlistSummary =
+      "$storefront/wishlist/summary";
+  static const String storefrontWishlistItems = "$storefront/wishlist/items";
+  static const String storefrontWishlistMerge = "$storefront/wishlist/merge";
+
+  static String storefrontWishlistItemById(String wishlistItemId) =>
+      "$storefrontWishlistItems/$wishlistItemId";
+
+  // coupon
+  static const String storefrontCoupons = "$storefront/coupons";
+  static const String storefrontCouponsValidate =
+      "$storefront/coupons/validate";
 
   // web builder - store settings
   static const String storeSettings = "/store-settings";
@@ -61,4 +88,23 @@ class Endpoints {
       '/erp/customers/$customerId/addresses/$addressId/default';
   static String customerTransactions(String id) =>
       '/erp/customers/$id/transactions';
+
+  // order endpoints
+  static const String orders = "/erp/orders";
+  static String orderDetail(String id) => "/erp/orders/$id";
+  static String orderStatus(String id) => "/erp/orders/$id/status";
+  static String orderShipment(String id) => "/orders/$id/shipment";
+  static String orderShipmentTracking(String id) =>
+      "/orders/$id/shipment/tracking";
+  static String orderShipmentsTracking(String id) =>
+      "/orders/$id/shipments/tracking";
+  static String orderShipmentLabels(String orderId, String shipmentId) =>
+      "/orders/$orderId/shipments/$shipmentId/labels";
+  static String orderShipmentPrintJobs(String orderId, String shipmentId) =>
+      "/orders/$orderId/shipments/$shipmentId/print-jobs";
+  static String orderShipmentPrintAttempts(
+    String orderId,
+    String shipmentId,
+    String printJobId,
+  ) => "/orders/$orderId/shipments/$shipmentId/print-jobs/$printJobId/attempts";
 }

@@ -8,6 +8,8 @@ import 'package:mobile_ai_erp/utils/routes/routes.dart';
 import 'package:intl/intl.dart';
 
 class FulfillmentListScreen extends StatefulWidget {
+  const FulfillmentListScreen({super.key});
+
   @override
   State<FulfillmentListScreen> createState() => _FulfillmentListScreenState();
 }
@@ -64,7 +66,9 @@ class _FulfillmentListScreenState extends State<FulfillmentListScreen> {
         label: Text(label),
         selected: isSelected,
         onSelected: (_) => _store.setStatusFilter(status),
-        selectedColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+        selectedColor: Theme.of(context).colorScheme.primary.withValues(
+          alpha: 0.2,
+        ),
         checkmarkColor: Theme.of(context).colorScheme.primary,
       ),
     );
@@ -97,12 +101,20 @@ class _FulfillmentListScreenState extends State<FulfillmentListScreen> {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
-        onTap: () {
-          _store.getOrderDetail(order.id);
-          Navigator.of(context).pushNamed(
+        onTap: () async {
+          final navigator = Navigator.of(context);
+
+          await _store.getOrderDetail(order.id);
+          await navigator.pushNamed(
             Routes.fulfillmentDetail,
             arguments: order.id,
           );
+
+          if (!mounted) {
+            return;
+          }
+
+          await _store.getOrders();
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
@@ -114,7 +126,7 @@ class _FulfillmentListScreenState extends State<FulfillmentListScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    order.id,
+                    order.code,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -138,7 +150,7 @@ class _FulfillmentListScreenState extends State<FulfillmentListScreen> {
                   Icon(Icons.storefront,
                       size: 16, color: Theme.of(context).hintColor),
                   const SizedBox(width: 4),
-                  Text(order.channel,
+                  Text(order.source,
                       style: Theme.of(context).textTheme.bodySmall),
                   const Spacer(),
                   Text(
@@ -177,7 +189,7 @@ class _FulfillmentListScreenState extends State<FulfillmentListScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: _getStatusColor(status).withOpacity(0.15),
+        color: _getStatusColor(status).withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
@@ -193,22 +205,26 @@ class _FulfillmentListScreenState extends State<FulfillmentListScreen> {
 
   Color _getStatusColor(FulfillmentStatus status) {
     switch (status) {
+      case FulfillmentStatus.newOrder:
+        return Colors.grey.shade500;
       case FulfillmentStatus.pending:
         return Colors.orange;
-      case FulfillmentStatus.picking:
-        return Colors.blue;
-      case FulfillmentStatus.packing:
+      case FulfillmentStatus.confirmed:
         return Colors.indigo;
-      case FulfillmentStatus.packed:
-        return Colors.purple;
-      case FulfillmentStatus.shipped:
+      case FulfillmentStatus.packing:
+        return Colors.deepOrange;
+      case FulfillmentStatus.shipping:
         return Colors.teal;
-      case FulfillmentStatus.partiallyDelivered:
-        return Colors.amber.shade800;
+      case FulfillmentStatus.partiallyShipped:
+        return Colors.cyan;
       case FulfillmentStatus.delivered:
         return Colors.green;
+      case FulfillmentStatus.success:
+        return Colors.green.shade700;
       case FulfillmentStatus.cancelled:
         return Colors.red;
+      case FulfillmentStatus.returned:
+        return Colors.grey;
     }
   }
 }
