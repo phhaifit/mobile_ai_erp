@@ -49,7 +49,8 @@ class Endpoints {
 
   static const String stackAuthHost = 'api.stack-auth.com';
   static const String stackAuthAuthenticate = '/api/v1/auth/oauth/authorize/';
-  static const String stackAuthToken = 'https://$stackAuthHost/api/v1/auth/oauth/token';
+  static const String stackAuthToken =
+      'https://$stackAuthHost/api/v1/auth/oauth/token';
 
   static const String storefront = "$erpBaseUrl/storefront";
 
@@ -93,6 +94,15 @@ class Endpoints {
   // order endpoints
   static const String orders = "/erp/orders";
   static String orderDetail(String id) => "/erp/orders/$id";
+
+  /// Full backend internal orders base URL, optionally for a specific order id.
+  static String backendOrders([String? id]) {
+    if (id == null || id.isEmpty) {
+      return '${backendBaseUrl}/internal${orders}';
+    }
+    return '${backendBaseUrl}/internal${orders}/$id';
+  }
+
   static String orderStatus(String id) => "/erp/orders/$id/status";
   static String orderShipment(String id) => "/orders/$id/shipment";
   static String orderShipmentTracking(String id) =>
