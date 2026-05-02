@@ -138,14 +138,7 @@ class DesktopHistoryTable extends StatelessWidget {
                 Expanded(
                   flex: 3,
                   child: Text(
-                    'Product',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    'Quantity',
+                    'Product / Details',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -202,14 +195,6 @@ class DesktopHistoryTable extends StatelessWidget {
                             flex: 3,
                             child: _DesktopOperationSummary(
                               operation: operation,
-                            ),
-                          ),
-                          Expanded(
-                            flex: 2,
-                            child: Text(
-                              '${operation.quantity}',
-                              style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(fontWeight: FontWeight.w700),
                             ),
                           ),
                           Expanded(
@@ -321,51 +306,55 @@ class _TransferActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (operation.type != StockOperationType.transfer) {
-      return const SizedBox.shrink();
-    }
+    return Observer(
+      builder: (_) {
+        if (operation.type != StockOperationType.transfer) {
+          return const SizedBox.shrink();
+        }
 
-    if (operation.status == StockOperationStatus.draft) {
-      return TextButton(
-        key: Key('approve_transfer_${operation.id}'),
-        onPressed: store.isSubmitting
-            ? null
-            : () async {
-                final success = await store.approveSelectedTransfer(
-                  operation.id,
-                );
-                if (!context.mounted || !success) {
-                  return;
-                }
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Transfer approved.')),
-                );
-              },
-        child: const Text('Approve'),
-      );
-    }
+        if (operation.status == StockOperationStatus.draft) {
+          return TextButton(
+            key: Key('approve_transfer_${operation.id}'),
+            onPressed: store.isSubmitting
+                ? null
+                : () async {
+                    final success = await store.approveSelectedTransfer(
+                      operation.id,
+                    );
+                    if (!context.mounted || !success) {
+                      return;
+                    }
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Transfer approved.')),
+                    );
+                  },
+            child: const Text('Approve'),
+          );
+        }
 
-    if (operation.status == StockOperationStatus.approved) {
-      return TextButton(
-        key: Key('complete_transfer_${operation.id}'),
-        onPressed: store.isSubmitting
-            ? null
-            : () async {
-                final success = await store.completeSelectedTransfer(
-                  operation.id,
-                );
-                if (!context.mounted || !success) {
-                  return;
-                }
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Transfer completed.')),
-                );
-              },
-        child: const Text('Complete'),
-      );
-    }
+        if (operation.status == StockOperationStatus.approved) {
+          return TextButton(
+            key: Key('complete_transfer_${operation.id}'),
+            onPressed: store.isSubmitting
+                ? null
+                : () async {
+                    final success = await store.completeSelectedTransfer(
+                      operation.id,
+                    );
+                    if (!context.mounted || !success) {
+                      return;
+                    }
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Transfer completed.')),
+                    );
+                  },
+            child: const Text('Complete'),
+          );
+        }
 
-    return const SizedBox.shrink();
+        return const SizedBox.shrink();
+      },
+    );
   }
 }
 

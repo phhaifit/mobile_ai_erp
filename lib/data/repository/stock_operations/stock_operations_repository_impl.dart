@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
+import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
 import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
 import 'package:mobile_ai_erp/domain/entity/stock_operations/product_stock.dart';
 import 'package:mobile_ai_erp/domain/entity/stock_operations/stock_operation.dart';
@@ -11,10 +12,6 @@ import 'package:mobile_ai_erp/domain/repository/stock_operations/stock_operation
 class StockOperationsRepositoryImpl extends StockOperationsRepository {
   StockOperationsRepositoryImpl(this._dioClient, this._sharedPrefsHelper);
 
-  static const String _defaultBaseUrl = String.fromEnvironment(
-    'ERP_API_BASE_URL',
-    defaultValue: 'http://localhost:5000',
-  );
   static const String _defaultTenantId = String.fromEnvironment(
     'ERP_TENANT_ID',
     defaultValue: '',
@@ -138,30 +135,32 @@ class StockOperationsRepositoryImpl extends StockOperationsRepository {
     var page = 1;
     var totalPages = 1;
 
-    do {
-      final response = await _dioClient.dio.getUri(
-        _buildUri(
+    try {
+      do {
+        final response = await _dioClient.dio.get(
           path,
-          queryParameters: <String, String>{
-            'page': page.toString(),
-            'pageSize': pageSize.toString(),
+          queryParameters: <String, dynamic>{
+            'page': page,
+            'pageSize': pageSize,
           },
-        ),
-        options: Options(headers: _headersForTenant(tenantId)),
-      );
+          options: Options(headers: _headersForTenant(tenantId)),
+        );
 
-      final data = _asMap(response.data);
-      final items = (data['data'] as List<dynamic>? ?? const <dynamic>[])
-          .map((item) => _asMap(item))
-          .toList(growable: false);
-      final meta = _asMap(data['meta']);
+        final data = _asMap(response.data);
+        final items = (data['data'] as List<dynamic>? ?? const <dynamic>[])
+            .map((item) => _asMap(item))
+            .toList(growable: false);
+        final meta = _asMap(data['meta']);
 
-      allItems.addAll(items);
-      totalPages = (meta['totalPages'] as num?)?.toInt() ?? 1;
-      page++;
-    } while (page <= totalPages);
+        allItems.addAll(items);
+        totalPages = (meta['totalPages'] as num?)?.toInt() ?? 1;
+        page++;
+      } while (page <= totalPages);
 
-    return allItems;
+      return allItems;
+    } on DioException catch (error) {
+      throw Exception(_extractErrorMessage(error));
+    }
   }
 
   Future<Map<String, dynamic>> _post(
@@ -171,8 +170,8 @@ class StockOperationsRepositoryImpl extends StockOperationsRepository {
     final tenantId = await _resolveTenantId();
 
     try {
-      final response = await _dioClient.dio.postUri(
-        _buildUri(path),
+      final response = await _dioClient.dio.post(
+        path,
         data: data,
         options: Options(headers: _headersForTenant(tenantId)),
       );
@@ -183,28 +182,28 @@ class StockOperationsRepositoryImpl extends StockOperationsRepository {
     }
   }
 
-  Uri _buildUri(String path, {Map<String, String>? queryParameters}) {
-    final normalizedBase = _defaultBaseUrl.endsWith('/')
-        ? _defaultBaseUrl.substring(0, _defaultBaseUrl.length - 1)
-        : _defaultBaseUrl;
-    final normalizedPath = path.startsWith('/') ? path : '/$path';
-    return Uri.parse(
-      '$normalizedBase$normalizedPath',
-    ).replace(queryParameters: queryParameters);
-  }
-
   Future<String> _resolveTenantId() async {
-    final tenantId = await _sharedPrefsHelper.currentTenantId;
+    final tenantId = await _sharedPrefsHelper.tenantId;
     final resolved = (tenantId ?? _defaultTenantId).trim();
+    final envTenantId = Endpoints.tenantId.trim();
+
+    if (resolved.isNotEmpty) {
+      return resolved;
+    }
+
+    if (envTenantId.isNotEmpty &&
+        envTenantId != '00000000-0000-0000-0000-000000000000') {
+      return envTenantId;
+    }
 
     if (resolved.isEmpty) {
       throw StateError(
-        'Missing tenant context. Set SharedPreferenceHelper.currentTenantId '
-        'or provide --dart-define=ERP_TENANT_ID=<tenant-id>.',
+        'Missing tenant context. Save SharedPreferenceHelper.tenantId or '
+        'provide --dart-define=TENANT_ID=<tenant-id>.',
       );
     }
 
-    return resolved;
+    throw StateError('Unreachable tenant resolution state.');
   }
 
   Map<String, String> _headersForTenant(String tenantId) {
@@ -223,61 +222,39 @@ class StockOperationsRepositoryImpl extends StockOperationsRepository {
     return <String, dynamic>{};
   }
 
-  StockOperation _mapTransferResponse(Map<String, dynamic> item) {
-    return StockOperation(
-      id: item['id'] as String,
-      type: StockOperationType.transfer,
-      status: _parseStatus(item['status'] as String?),
-      productId: item['productId'] as String,
-      productName: item['productName'] as String? ?? '-',
-      quantity: (item['quantity'] as num).toInt(),
-      sourceWarehouseId: item['sourceWarehouseId'] as String?,
-      sourceWarehouseName: item['sourceWarehouseName'] as String?,
-      destinationWarehouseId: item['destinationWarehouseId'] as String?,
-      destinationWarehouseName: item['destinationWarehouseName'] as String?,
-      createdAt: DateTime.parse(item['createdAt'] as String),
-      createdBy: item['createdBy'] as String?,
-      createdByName: item['createdByName'] as String?,
-      approvedBy: item['approvedBy'] as String?,
-      approvedByName: item['approvedByName'] as String?,
-      completedBy: item['completedBy'] as String?,
-      completedByName: item['completedByName'] as String?,
-      approvedAt: _parseDate(item['approvedAt']),
-      completedAt: _parseDate(item['completedAt']),
-      note: item['note'] as String?,
-    );
-  }
-
   StockOperation _mapDisposalResponse(Map<String, dynamic> item) {
-    return StockOperation(
-      id: item['id'] as String,
-      type: _parseType(item['type'] as String?),
-      status: StockOperationStatus.completed,
-      productId: item['productId'] as String,
-      productName: item['productName'] as String? ?? '-',
-      quantity: (item['quantity'] as num).toInt(),
-      sourceWarehouseId: item['warehouseId'] as String?,
-      sourceWarehouseName: item['warehouseName'] as String?,
-      createdAt: DateTime.parse(item['createdAt'] as String),
-      createdBy: item['createdBy'] as String?,
-      createdByName: item['createdByName'] as String?,
-      completedBy: item['completedBy'] as String?,
-      completedByName: item['completedByName'] as String?,
-      completedAt: _parseDate(item['completedAt']),
-      note: item['note'] as String?,
+    return _mapOperation(
+      item,
+      statusOverride: StockOperationStatus.completed,
+      sourceWarehouseIdKey: 'warehouseId',
+      sourceWarehouseNameKey: 'warehouseName',
     );
   }
 
   StockOperation _mapStockOperation(Map<String, dynamic> item) {
+    return _mapOperation(item);
+  }
+
+  StockOperation _mapTransferResponse(Map<String, dynamic> item) {
+    return _mapOperation(item, typeOverride: StockOperationType.transfer);
+  }
+
+  StockOperation _mapOperation(
+    Map<String, dynamic> item, {
+    StockOperationType? typeOverride,
+    StockOperationStatus? statusOverride,
+    String sourceWarehouseIdKey = 'sourceWarehouseId',
+    String sourceWarehouseNameKey = 'sourceWarehouseName',
+  }) {
     return StockOperation(
       id: item['id'] as String,
-      type: _parseType(item['type'] as String?),
-      status: _parseStatus(item['status'] as String?),
+      type: typeOverride ?? _parseType(item['type'] as String?),
+      status: statusOverride ?? _parseStatus(item['status'] as String?),
       productId: item['productId'] as String,
       productName: item['productName'] as String? ?? '-',
       quantity: (item['quantity'] as num).toInt(),
-      sourceWarehouseId: item['sourceWarehouseId'] as String?,
-      sourceWarehouseName: item['sourceWarehouseName'] as String?,
+      sourceWarehouseId: item[sourceWarehouseIdKey] as String?,
+      sourceWarehouseName: item[sourceWarehouseNameKey] as String?,
       destinationWarehouseId: item['destinationWarehouseId'] as String?,
       destinationWarehouseName: item['destinationWarehouseName'] as String?,
       createdAt: DateTime.parse(item['createdAt'] as String),

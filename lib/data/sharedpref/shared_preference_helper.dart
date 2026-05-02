@@ -31,18 +31,6 @@ class SharedPreferenceHelper {
     return _sharedPreference.remove(Preferences.auth_token);
   }
 
-  Future<String?> get currentTenantId async {
-    return tenantId;
-  }
-
-  Future<bool> saveCurrentTenantId(String currentTenantId) async {
-    return saveTenantId(currentTenantId);
-  }
-
-  Future<bool> removeCurrentTenantId() async {
-    return removeTenantId();
-  }
-
   Future<String?> get refreshToken async {
     final authTokenValue = _sharedPreference.get(Preferences.auth_token);
     if (authTokenValue is List<dynamic> && authTokenValue.length > 1) {
