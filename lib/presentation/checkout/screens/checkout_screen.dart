@@ -6,7 +6,7 @@ import 'package:mobile_ai_erp/domain/entity/checkout/delivery_address.dart';
 import 'package:mobile_ai_erp/presentation/checkout/store/checkout_store.dart';
 import 'package:mobile_ai_erp/presentation/checkout/widgets/order_summary_widget.dart';
 import 'package:mobile_ai_erp/presentation/checkout/widgets/coupon_input_widget.dart';
-import 'package:mobile_ai_erp/presentation/cart/widgets/payment_methods_widget.dart';
+import 'package:mobile_ai_erp/presentation/checkout/widgets/payment_methods_widget.dart';
 
 /// Main checkout screen with single-page layout
 /// All sections (address, shipping, payment, summary) are visible on one page
@@ -42,10 +42,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Checkout'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Checkout'), centerTitle: true),
       body: Observer(
         builder: (context) {
           if (_store.currentStep == CheckoutStep.confirmation) {
@@ -178,7 +175,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Icon(Icons.email_outlined, size: 14, color: Colors.grey[500]),
+                        Icon(
+                          Icons.email_outlined,
+                          size: 14,
+                          color: Colors.grey[500],
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           address.email!,
@@ -193,10 +194,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   const SizedBox(height: 6),
                   Text(
                     address.formattedAddress,
-                    style: TextStyle(
-                      color: Colors.grey[700],
-                      fontSize: 13,
-                    ),
+                    style: TextStyle(color: Colors.grey[700], fontSize: 13),
                   ),
                 ],
               ),
@@ -216,7 +214,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.add_location_outlined, color: Theme.of(context).primaryColor),
+            Icon(
+              Icons.add_location_outlined,
+              color: Theme.of(context).primaryColor,
+            ),
             const SizedBox(width: 8),
             Text(
               'Add Delivery Address',
@@ -282,7 +283,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.location_off, size: 48, color: Colors.grey[400]),
+                                Icon(
+                                  Icons.location_off,
+                                  size: 48,
+                                  color: Colors.grey[400],
+                                ),
                                 const SizedBox(height: 12),
                                 Text(
                                   'No saved addresses',
@@ -297,7 +302,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             itemCount: _store.savedAddresses.length,
                             itemBuilder: (context, index) {
                               final address = _store.savedAddresses[index];
-                              final isSelected = _store.selectedDeliveryAddress?.id == address.id;
+                              final isSelected =
+                                  _store.selectedDeliveryAddress?.id ==
+                                  address.id;
                               return _buildAddressOption(address, isSelected);
                             },
                           ),
@@ -322,7 +329,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           border: Border.all(
-            color: isSelected ? Theme.of(context).primaryColor : Colors.grey[300]!,
+            color: isSelected
+                ? Theme.of(context).primaryColor
+                : Colors.grey[300]!,
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(8),
@@ -396,7 +405,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ? const Text('No shipping methods available')
               : Column(
                   children: _store.shippingMethods.map((method) {
-                    final isSelected = _store.selectedShippingMethod?.id == method.id;
+                    final isSelected =
+                        _store.selectedShippingMethod?.id == method.id;
                     return _buildShippingOption(method, isSelected);
                   }).toList(),
                 ),
@@ -412,9 +422,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isSelected ? Theme.of(context).primaryColor.withOpacity(0.05) : null,
+          color: isSelected
+              ? Theme.of(context).primaryColor.withOpacity(0.05)
+              : null,
           border: Border.all(
-            color: isSelected ? Theme.of(context).primaryColor : Colors.grey[300]!,
+            color: isSelected
+                ? Theme.of(context).primaryColor
+                : Colors.grey[300]!,
           ),
           borderRadius: BorderRadius.circular(8),
         ),
@@ -422,7 +436,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           children: [
             Icon(
               _getShippingIcon(method.name),
-              color: isSelected ? Theme.of(context).primaryColor : Colors.grey[600],
+              color: isSelected
+                  ? Theme.of(context).primaryColor
+                  : Colors.grey[600],
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -455,7 +471,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final lowerName = name.toLowerCase();
     if (lowerName.contains('express') || lowerName.contains('fast')) {
       return Icons.bolt;
-    } else if (lowerName.contains('standard') || lowerName.contains('regular')) {
+    } else if (lowerName.contains('standard') ||
+        lowerName.contains('regular')) {
       return Icons.local_shipping;
     } else if (lowerName.contains('economy') || lowerName.contains('saver')) {
       return Icons.savings_outlined;
@@ -522,7 +539,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             discount: _store.couponDiscount,
             grandTotal: _store.grandTotal,
             couponCode: _store.appliedCoupon?.code,
-            onRemoveCoupon: _store.appliedCoupon != null ? _store.removeCoupon : null,
+            onRemoveCoupon: _store.appliedCoupon != null
+                ? _store.removeCoupon
+                : null,
           ),
         );
       },
@@ -553,10 +572,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Total',
-                        style: TextStyle(fontSize: 12),
-                      ),
+                      const Text('Total', style: TextStyle(fontSize: 12)),
                       Text(
                         _store.formattedGrandTotal,
                         style: TextStyle(
@@ -569,7 +585,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
                 ),
                 ElevatedButton(
-                  onPressed: _canPlaceOrder() ? () => _placeOrder(context) : null,
+                  onPressed: _canPlaceOrder()
+                      ? () => _placeOrder(context)
+                      : null,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 32,
@@ -637,8 +655,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 Navigator.of(context).popUntil((route) {
                   // Stop at cart route or products route, or if can't pop anymore
                   return route.settings.name == '/cart' ||
-                         route.settings.name == '/products' ||
-                         !Navigator.of(context).canPop();
+                      route.settings.name == '/products' ||
+                      !Navigator.of(context).canPop();
                 });
               },
               child: const Text('Done'),
@@ -771,10 +789,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Add Address'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Add Address'), centerTitle: true),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -795,7 +810,11 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.auto_awesome, size: 18, color: Colors.blue[700]),
+                        Icon(
+                          Icons.auto_awesome,
+                          size: 18,
+                          color: Colors.blue[700],
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           'Smart Address Input',
@@ -818,7 +837,8 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
                           child: TextField(
                             controller: _smartAddressController,
                             decoration: const InputDecoration(
-                              hintText: 'e.g., "John Doe, 0901234567, 123 Main St, District 1, HCMC"',
+                              hintText:
+                                  'e.g., "John Doe, 0901234567, 123 Main St, District 1, HCMC"',
                               border: OutlineInputBorder(),
                               contentPadding: EdgeInsets.all(12),
                             ),
@@ -832,7 +852,9 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
                               ? const SizedBox(
                                   width: 20,
                                   height: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
                                 )
                               : const Icon(Icons.auto_fix_high),
                           tooltip: 'Parse Address',
@@ -893,7 +915,8 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
                 ),
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
-                  if (value == null || value.isEmpty) return null; // Optional field
+                  if (value == null || value.isEmpty)
+                    return null; // Optional field
                   if (!value.contains('@') || !value.contains('.')) {
                     return 'Please enter a valid email';
                   }
@@ -995,7 +1018,9 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Address parsed! Please verify and save.')),
+        const SnackBar(
+          content: Text('Address parsed! Please verify and save.'),
+        ),
       );
     }
   }
@@ -1010,7 +1035,9 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
         street: _addressController.text,
         city: _cityController.text,
         countryCode: 'VN',
-        postalCode: _postalCodeController.text.isNotEmpty ? _postalCodeController.text : null,
+        postalCode: _postalCodeController.text.isNotEmpty
+            ? _postalCodeController.text
+            : null,
         country: 'Vietnam',
         isDefault: false,
       );

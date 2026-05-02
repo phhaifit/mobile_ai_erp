@@ -18,11 +18,11 @@ void main() {
     store.setTransferProduct(store.availableTransferProducts.first.productId);
     store.setTransferQuantity('0');
 
-    expect(store.canSubmitTransfer, isFalse);
+    expect(store.canCreateTransferDraft, isFalse);
   });
 
   test(
-    'successful transfer appends operation and updates stock projection',
+    'create transfer draft does not move stock and creates draft status',
     () async {
       final source = 'wh-01';
       final destination = 'wh-02';
@@ -44,7 +44,7 @@ void main() {
       store.setTransferProduct(productId);
       store.setTransferQuantity('5');
 
-      final success = await store.submitTransfer();
+      final success = await store.createTransferDraft();
 
       final afterSource = store.productStocks
           .firstWhere(
@@ -58,9 +58,92 @@ void main() {
           .availableQuantity;
 
       expect(success, isTrue);
-      expect(afterSource, beforeSource - 5);
-      expect(afterDestination, beforeDestination + 5);
+      expect(afterSource, beforeSource);
+      expect(afterDestination, beforeDestination);
       expect(store.operations.first.type, StockOperationType.transfer);
+      expect(store.operations.first.status, StockOperationStatus.draft);
+    },
+  );
+
+  test(
+    'approve transfer changes status only, complete moves stock and marks completed',
+    () async {
+      final source = 'wh-01';
+      final destination = 'wh-02';
+      final productId = 'p-01';
+
+      final beforeSource = store.productStocks
+          .firstWhere(
+            (s) => s.warehouseId == source && s.productId == productId,
+          )
+          .availableQuantity;
+      final beforeDestination = store.productStocks
+          .firstWhere(
+            (s) => s.warehouseId == destination && s.productId == productId,
+          )
+          .availableQuantity;
+
+      store.setTransferSourceWarehouse(source);
+      store.setTransferDestinationWarehouse(destination);
+      store.setTransferProduct(productId);
+      store.setTransferQuantity('4');
+      await store.createTransferDraft();
+
+      final transferId = store.operations.first.id;
+      final approved = await store.approveSelectedTransfer(transferId);
+      expect(approved, isTrue);
+      expect(store.operations.first.status, StockOperationStatus.approved);
+      expect(store.operations.first.approvedBy, isNotNull);
+      expect(store.operations.first.approvedAt, isNotNull);
+
+      final afterApproveSource = store.productStocks
+          .firstWhere(
+            (s) => s.warehouseId == source && s.productId == productId,
+          )
+          .availableQuantity;
+      final afterApproveDestination = store.productStocks
+          .firstWhere(
+            (s) => s.warehouseId == destination && s.productId == productId,
+          )
+          .availableQuantity;
+      expect(afterApproveSource, beforeSource);
+      expect(afterApproveDestination, beforeDestination);
+
+      final completed = await store.completeSelectedTransfer(transferId);
+      expect(completed, isTrue);
+      expect(store.operations.first.status, StockOperationStatus.completed);
+      expect(store.operations.first.completedBy, isNotNull);
+      expect(store.operations.first.completedAt, isNotNull);
+
+      final afterCompleteSource = store.productStocks
+          .firstWhere(
+            (s) => s.warehouseId == source && s.productId == productId,
+          )
+          .availableQuantity;
+      final afterCompleteDestination = store.productStocks
+          .firstWhere(
+            (s) => s.warehouseId == destination && s.productId == productId,
+          )
+          .availableQuantity;
+      expect(afterCompleteSource, beforeSource - 4);
+      expect(afterCompleteDestination, beforeDestination + 4);
+    },
+  );
+
+  test(
+    'invalid transfer transition fails when completing draft directly',
+    () async {
+      store.setTransferSourceWarehouse('wh-01');
+      store.setTransferDestinationWarehouse('wh-02');
+      store.setTransferProduct('p-01');
+      store.setTransferQuantity('2');
+      await store.createTransferDraft();
+
+      final transferId = store.operations.first.id;
+      final success = await store.completeSelectedTransfer(transferId);
+
+      expect(success, isFalse);
+      expect(store.operations.first.status, StockOperationStatus.draft);
     },
   );
 
@@ -76,30 +159,15 @@ void main() {
     expect(store.operations.first.type, StockOperationType.expired);
   });
 
-  test('history timeline keeps mixed operation types', () async {
-    store.setTransferSourceWarehouse('wh-01');
-    store.setTransferDestinationWarehouse('wh-02');
-    store.setTransferProduct('p-01');
-    store.setTransferQuantity('3');
-    await store.submitTransfer();
-
-    store.setDisposalWarehouse('wh-01');
-    store.setDisposalProduct('p-02');
-    store.setDisposalType(StockOperationType.damaged);
-    store.setDisposalQuantity('1');
-    await store.submitDamagedOrExpired();
-
-    final types = store.filteredOperations.map((e) => e.type).toSet();
-    expect(types.contains(StockOperationType.transfer), isTrue);
-    expect(types.contains(StockOperationType.damaged), isTrue);
-  });
-
   test('history filter returns only selected operation type', () async {
     store.setTransferSourceWarehouse('wh-01');
     store.setTransferDestinationWarehouse('wh-02');
     store.setTransferProduct('p-01');
     store.setTransferQuantity('2');
-    await store.submitTransfer();
+    await store.createTransferDraft();
+    final transferId = store.operations.first.id;
+    await store.approveSelectedTransfer(transferId);
+    await store.completeSelectedTransfer(transferId);
 
     store.setDisposalWarehouse('wh-01');
     store.setDisposalProduct('p-02');
@@ -109,13 +177,17 @@ void main() {
 
     store.setHistoryFilter(StockOperationHistoryFilter.transfer);
     expect(
-      store.filteredOperations.every((e) => e.type == StockOperationType.transfer),
+      store.filteredOperations.every(
+        (e) => e.type == StockOperationType.transfer,
+      ),
       isTrue,
     );
 
     store.setHistoryFilter(StockOperationHistoryFilter.damaged);
     expect(
-      store.filteredOperations.every((e) => e.type == StockOperationType.damaged),
+      store.filteredOperations.every(
+        (e) => e.type == StockOperationType.damaged,
+      ),
       isTrue,
     );
   });

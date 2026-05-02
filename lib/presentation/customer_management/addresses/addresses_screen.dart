@@ -56,9 +56,7 @@ class _CustomerAddressesScreenState extends State<CustomerAddressesScreen> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final addresses = _store.activeAddresses
-              .where((a) => a.customerId == widget.args.customerId)
-              .toList();
+          final addresses = _store.activeAddresses.toList();
 
           if (addresses.isEmpty) {
             return const CustomerEmptyState(
@@ -134,7 +132,7 @@ class _CustomerAddressesScreenState extends State<CustomerAddressesScreen> {
     if (!confirmed || !mounted) return;
 
     try {
-      await _store.deleteAddress(address.id);
+      await _store.deleteAddress(widget.args.customerId, address.id);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Deleted "${address.label}".')),

@@ -7,10 +7,13 @@ import 'package:mobile_ai_erp/domain/repository/post_purchase/post_purchase_repo
 import 'package:mobile_ai_erp/domain/repository/user/role_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/order_tracking/order_tracking_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/user_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/user/auth_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/inventory_audit_outbound/inventory_audit_outbound_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/web_builder/cms_page_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/web_builder/store_settings_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/web_builder/web_theme_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/supplier/supplier_repository.dart';
+import 'package:mobile_ai_erp/domain/usecase/supplier/supplier_usecases.dart';
 import 'package:mobile_ai_erp/domain/usecase/checkout/checkout_usecases.dart';
 import 'package:mobile_ai_erp/domain/usecase/checkout/get_payment_methods_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/checkout/get_shipping_methods_usecase.dart';
@@ -23,12 +26,18 @@ import 'package:mobile_ai_erp/domain/usecase/inventory_audit_outbound/save_inven
 import 'package:mobile_ai_erp/domain/usecase/inventory_audit_outbound/submit_inventory_outbound_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/order_tracking/find_order_tracking_scenario_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/order_tracking/get_order_tracking_scenarios_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/fulfillment/add_package_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/create_or_link_shipment_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/apply_order_routing_recommendation_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/create_shipment_print_attempt_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/create_shipment_print_job_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_fulfillment_order_detail_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_fulfillment_orders_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_order_routing_recommendation_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_shipment_label_artifacts_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_order_shipments_tracking_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_shipment_print_jobs_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/fulfillment/get_shipment_tracking_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/fulfillment/update_fulfillment_status_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/fulfillment/update_package_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/fulfillment/update_picked_quantity_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/post/delete_post_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/post/find_post_by_id_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/post/get_post_usecase.dart';
@@ -52,12 +61,15 @@ import 'package:mobile_ai_erp/domain/usecase/post_purchase/update_exchange_notes
 import 'package:mobile_ai_erp/domain/usecase/post_purchase/update_refund_notes_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/assign_role_to_user_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/create_role_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/user/is_logged_in_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/delete_role_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/get_all_roles_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/get_role_by_id_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/login_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/user/save_login_in_status_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/update_role_usercase.dart';
+import 'package:mobile_ai_erp/domain/usecase/auth/create_tenant_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/apply_web_theme_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/delete_cms_page_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/web_builder/publish_cms_page_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/get_cms_page_by_id_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/get_cms_pages_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/get_store_settings_usecase.dart';
@@ -65,18 +77,28 @@ import 'package:mobile_ai_erp/domain/usecase/web_builder/get_web_theme_by_id_use
 import 'package:mobile_ai_erp/domain/usecase/web_builder/get_web_themes_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/save_cms_page_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/save_store_settings_usecase.dart';
+import 'package:mobile_ai_erp/domain/repository/customer/customer_repository.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/get_customers_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/get_customer_detail_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/save_customer_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/delete_customer_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/get_customer_groups_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/save_customer_group_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/delete_customer_group_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/get_customer_addresses_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/save_customer_address_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/delete_customer_address_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/set_default_address_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/get_customer_transactions_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/get_segment_members_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/add_segment_members_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/customer/remove_segment_members_usecase.dart';
 
 import '../../../di/service_locator.dart';
 
 class UseCaseModule {
   static Future<void> configureUseCaseModuleInjection() async {
     // user:--------------------------------------------------------------------
-    getIt.registerSingleton<IsLoggedInUseCase>(
-      IsLoggedInUseCase(getIt<UserRepository>()),
-    );
-    getIt.registerSingleton<SaveLoginStatusUseCase>(
-      SaveLoginStatusUseCase(getIt<UserRepository>()),
-    );
     getIt.registerSingleton<LoginUseCase>(
       LoginUseCase(getIt<UserRepository>()),
     );
@@ -91,6 +113,22 @@ class UseCaseModule {
 
     getIt.registerSingleton<UpdateRoleUseCase>(
       UpdateRoleUseCase(getIt<RoleRepository>()),
+    );
+
+    getIt.registerSingleton<DeleteRoleUseCase>(
+      DeleteRoleUseCase(getIt<RoleRepository>()),
+    );
+
+    getIt.registerSingleton<GetAllRolesUseCase>(
+      GetAllRolesUseCase(getIt<RoleRepository>()),
+    );
+
+    getIt.registerSingleton<GetRoleByIdUseCase>(
+      GetRoleByIdUseCase(getIt<RoleRepository>()),
+    );
+    // auth:--------------------------------------------------------------------
+    getIt.registerSingleton<CreateTenantUseCase>(
+      CreateTenantUseCase(getIt<AuthRepository>()),
     );
 
     // post:--------------------------------------------------------------------
@@ -173,6 +211,9 @@ class UseCaseModule {
     getIt.registerSingleton<DeleteCmsPageUseCase>(
       DeleteCmsPageUseCase(getIt<CmsPageRepository>()),
     );
+    getIt.registerSingleton<PublishCmsPageUseCase>(
+      PublishCmsPageUseCase(getIt<CmsPageRepository>()),
+    );
     getIt.registerSingleton<GetWebThemesUseCase>(
       GetWebThemesUseCase(getIt<WebThemeRepository>()),
     );
@@ -198,14 +239,32 @@ class UseCaseModule {
     getIt.registerSingleton<UpdateFulfillmentStatusUseCase>(
       UpdateFulfillmentStatusUseCase(getIt<FulfillmentRepository>()),
     );
-    getIt.registerSingleton<UpdatePickedQuantityUseCase>(
-      UpdatePickedQuantityUseCase(getIt<FulfillmentRepository>()),
+    getIt.registerSingleton<CreateOrLinkShipmentUseCase>(
+      CreateOrLinkShipmentUseCase(getIt<FulfillmentRepository>()),
     );
-    getIt.registerSingleton<AddPackageUseCase>(
-      AddPackageUseCase(getIt<FulfillmentRepository>()),
+    getIt.registerSingleton<GetOrderRoutingRecommendationUseCase>(
+      GetOrderRoutingRecommendationUseCase(getIt<FulfillmentRepository>()),
     );
-    getIt.registerSingleton<UpdatePackageUseCase>(
-      UpdatePackageUseCase(getIt<FulfillmentRepository>()),
+    getIt.registerSingleton<ApplyOrderRoutingRecommendationUseCase>(
+      ApplyOrderRoutingRecommendationUseCase(getIt<FulfillmentRepository>()),
+    );
+    getIt.registerSingleton<GetShipmentTrackingUseCase>(
+      GetShipmentTrackingUseCase(getIt<FulfillmentRepository>()),
+    );
+    getIt.registerSingleton<GetOrderShipmentsTrackingUseCase>(
+      GetOrderShipmentsTrackingUseCase(getIt<FulfillmentRepository>()),
+    );
+    getIt.registerSingleton<GetShipmentLabelArtifactsUseCase>(
+      GetShipmentLabelArtifactsUseCase(getIt<FulfillmentRepository>()),
+    );
+    getIt.registerSingleton<GetShipmentPrintJobsUseCase>(
+      GetShipmentPrintJobsUseCase(getIt<FulfillmentRepository>()),
+    );
+    getIt.registerSingleton<CreateShipmentPrintJobUseCase>(
+      CreateShipmentPrintJobUseCase(getIt<FulfillmentRepository>()),
+    );
+    getIt.registerSingleton<CreateShipmentPrintAttemptUseCase>(
+      CreateShipmentPrintAttemptUseCase(getIt<FulfillmentRepository>()),
     );
 
     // order tracking:----------------------------------------------------------
@@ -262,16 +321,101 @@ class UseCaseModule {
       GetInventoryByWarehouseUseCase(getIt<InventoryAuditOutboundRepository>()),
     );
     getIt.registerSingleton<SaveInventoryAuditSessionUseCase>(
-      SaveInventoryAuditSessionUseCase(getIt<InventoryAuditOutboundRepository>()),
+      SaveInventoryAuditSessionUseCase(
+        getIt<InventoryAuditOutboundRepository>(),
+      ),
     );
     getIt.registerSingleton<GetInventoryAuditRecordsUseCase>(
-      GetInventoryAuditRecordsUseCase(getIt<InventoryAuditOutboundRepository>()),
+      GetInventoryAuditRecordsUseCase(
+        getIt<InventoryAuditOutboundRepository>(),
+      ),
     );
     getIt.registerSingleton<SubmitInventoryOutboundUseCase>(
       SubmitInventoryOutboundUseCase(getIt<InventoryAuditOutboundRepository>()),
     );
     getIt.registerSingleton<GetInventoryOutboundRecordsUseCase>(
-      GetInventoryOutboundRecordsUseCase(getIt<InventoryAuditOutboundRepository>()),
+      GetInventoryOutboundRecordsUseCase(
+        getIt<InventoryAuditOutboundRepository>(),
+      ),
+    );
+
+    // supplier:-------------------------------------------------------------
+    getIt.registerSingleton<GetSuppliersUseCase>(
+      GetSuppliersUseCase(getIt<SupplierRepository>()),
+    );
+    getIt.registerSingleton<GetSupplierByIdUseCase>(
+      GetSupplierByIdUseCase(getIt<SupplierRepository>()),
+    );
+    getIt.registerSingleton<CreateSupplierUseCase>(
+      CreateSupplierUseCase(getIt<SupplierRepository>()),
+    );
+    getIt.registerSingleton<UpdateSupplierUseCase>(
+      UpdateSupplierUseCase(getIt<SupplierRepository>()),
+    );
+    getIt.registerSingleton<DeleteSupplierUseCase>(
+      DeleteSupplierUseCase(getIt<SupplierRepository>()),
+    );
+    getIt.registerSingleton<GetSupplierProductsUseCase>(
+      GetSupplierProductsUseCase(getIt<SupplierRepository>()),
+    );
+    getIt.registerSingleton<AddProductToSupplierUseCase>(
+      AddProductToSupplierUseCase(getIt<SupplierRepository>()),
+    );
+    getIt.registerSingleton<UpdateProductSupplierLinkUseCase>(
+      UpdateProductSupplierLinkUseCase(getIt<SupplierRepository>()),
+    );
+    getIt.registerSingleton<RemoveProductFromSupplierUseCase>(
+      RemoveProductFromSupplierUseCase(getIt<SupplierRepository>()),
+    );
+    getIt.registerSingleton<SearchProductsUseCase>(
+      SearchProductsUseCase(getIt<SupplierRepository>()),
+    );
+
+    // customer:---------------------------------------------------------------
+    getIt.registerSingleton<GetCustomersUseCase>(
+      GetCustomersUseCase(getIt<CustomerRepository>()),
+    );
+    getIt.registerSingleton<GetCustomerDetailUseCase>(
+      GetCustomerDetailUseCase(getIt<CustomerRepository>()),
+    );
+    getIt.registerSingleton<SaveCustomerUseCase>(
+      SaveCustomerUseCase(getIt<CustomerRepository>()),
+    );
+    getIt.registerSingleton<DeleteCustomerUseCase>(
+      DeleteCustomerUseCase(getIt<CustomerRepository>()),
+    );
+    getIt.registerSingleton<GetCustomerGroupsUseCase>(
+      GetCustomerGroupsUseCase(getIt<CustomerRepository>()),
+    );
+    getIt.registerSingleton<SaveCustomerGroupUseCase>(
+      SaveCustomerGroupUseCase(getIt<CustomerRepository>()),
+    );
+    getIt.registerSingleton<DeleteCustomerGroupUseCase>(
+      DeleteCustomerGroupUseCase(getIt<CustomerRepository>()),
+    );
+    getIt.registerSingleton<GetCustomerAddressesUseCase>(
+      GetCustomerAddressesUseCase(getIt<CustomerRepository>()),
+    );
+    getIt.registerSingleton<SaveCustomerAddressUseCase>(
+      SaveCustomerAddressUseCase(getIt<CustomerRepository>()),
+    );
+    getIt.registerSingleton<DeleteCustomerAddressUseCase>(
+      DeleteCustomerAddressUseCase(getIt<CustomerRepository>()),
+    );
+    getIt.registerSingleton<SetDefaultAddressUseCase>(
+      SetDefaultAddressUseCase(getIt<CustomerRepository>()),
+    );
+    getIt.registerSingleton<GetCustomerTransactionsUseCase>(
+      GetCustomerTransactionsUseCase(getIt<CustomerRepository>()),
+    );
+    getIt.registerSingleton<GetSegmentMembersUseCase>(
+      GetSegmentMembersUseCase(getIt<CustomerRepository>()),
+    );
+    getIt.registerSingleton<AddSegmentMembersUseCase>(
+      AddSegmentMembersUseCase(getIt<CustomerRepository>()),
+    );
+    getIt.registerSingleton<RemoveSegmentMembersUseCase>(
+      RemoveSegmentMembersUseCase(getIt<CustomerRepository>()),
     );
   }
 }

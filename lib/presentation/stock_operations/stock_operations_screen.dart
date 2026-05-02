@@ -216,7 +216,7 @@ class _StockOperationsScreenState extends State<StockOperationsScreen> {
       case StockOperationsView.damagedGoods:
         return 'Record damaged and expired goods.';
       case StockOperationsView.history:
-        return 'Read-only local operation logs.';
+        return 'Review synced stock movement and disposal history.';
     }
   }
 
