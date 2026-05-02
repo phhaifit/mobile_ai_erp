@@ -37,17 +37,11 @@ class TokenResponseDto {
 @JsonSerializable()
 class SignInResponseModel extends TokenResponseDto {
   SignInResponseModel({
-    required String accessToken,
-    required String refreshToken,
-    String? expiresIn,
-    CustomerModel? customer,
-    String? sessionId,
-  }) : super(
-    accessToken: accessToken,
-    refreshToken: refreshToken,
-    expiresIn: expiresIn,
-    sessionId: sessionId,
-  );
+    required super.accessToken,
+    required super.refreshToken,
+    super.expiresIn,
+    super.sessionId,
+  });
 
   factory SignInResponseModel.fromJson(Map<String, dynamic> json) =>
       _$SignInResponseModelFromJson(json);

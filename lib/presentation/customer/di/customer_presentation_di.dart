@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'package:mobile_ai_erp/domain/repository/customer_auth_repository.dart';
 import 'package:mobile_ai_erp/presentation/customer/store/auth_store.dart';
+import 'package:mobile_ai_erp/presentation/customer/store/signin_store.dart';
 import 'package:mobile_ai_erp/presentation/customer/store/signup_store.dart';
 import 'package:mobile_ai_erp/presentation/customer/store/subdomain_store.dart';
 
@@ -26,7 +27,10 @@ class CustomerPresentationDi {
       ),
     );
     getIt.registerSingleton<CustomerAuthStore>(
-      CustomerAuthStore(sharedPreferenceHelper: getIt())
+      CustomerAuthStore(
+        sharedPreferenceHelper: getIt(),
+        customerAuthRepository: getIt(),
+      )
     );
 
     // Register SignUpStore with preferences
@@ -34,6 +38,14 @@ class CustomerPresentationDi {
       SignUpStore(
         customerAuthStore: getIt(),
         authRepository: getIt<CustomerAuthRepository>(),
+      ),
+    );
+
+    // Register SignInStore
+    getIt.registerSingleton<SignInStore>(
+      SignInStore(
+        authRepository: getIt<CustomerAuthRepository>(),
+        customerAuthStore: getIt(),
       ),
     );
   }

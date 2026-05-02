@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:mobile_ai_erp/di/service_locator.dart';
+import 'package:mobile_ai_erp/presentation/customer/store/signin_store.dart';
 import 'widgets/email_password_tab.dart';
 import 'widgets/magic_link_tab.dart';
 import 'package:mobile_ai_erp/presentation/customer/screens/login/widgets/oauth_buttons.dart';
@@ -6,7 +9,6 @@ import '../register/register_screen.dart';
 
 /// Main login screen with tabbed interface for different auth methods
 class CustomerLoginScreen extends StatefulWidget {
-  final Function(Map<String, String>)? onEmailPasswordSignIn;
   final Function(String)? onMagicLinkRequest;
   final Function()? onGoogleOAuthPressed;
   final VoidCallback? onForgotPasswordPressed;
@@ -14,7 +16,6 @@ class CustomerLoginScreen extends StatefulWidget {
 
   const CustomerLoginScreen({
     super.key,
-    this.onEmailPasswordSignIn,
     this.onMagicLinkRequest,
     this.onGoogleOAuthPressed,
     this.onForgotPasswordPressed,
@@ -27,10 +28,9 @@ class CustomerLoginScreen extends StatefulWidget {
 
 class _CustomerLoginScreenState extends State<CustomerLoginScreen> with TickerProviderStateMixin {
   late TabController _tabController;
-  bool _isEmailPasswordLoading = false;
+  late SignInStore _signInStore;
   bool _isMagicLinkLoading = false;
   bool _isGoogleOAuthLoading = false;
-  String? _emailPasswordError;
   String? _magicLinkError;
   bool _isMagicLinkSent = false;
 
@@ -38,6 +38,7 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> with TickerPr
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _signInStore = getIt<SignInStore>();
   }
 
   @override
@@ -46,20 +47,11 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> with TickerPr
     super.dispose();
   }
 
-  void _handleEmailPasswordSignIn(Map<String, String> credentials) {
-    setState(() {
-      _isEmailPasswordLoading = true;
-      _emailPasswordError = null;
-    });
-
-    // Simulate API call - in real app, this would call the use case
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        setState(() => _isEmailPasswordLoading = false);
-        // Call parent handler
-        widget.onEmailPasswordSignIn?.call(credentials);
-      }
-    });
+  void _handleEmailPasswordSignIn(Map<String, String> credentials) async {
+    await _signInStore.signIn(
+      email: credentials['email'] ?? '',
+      password: credentials['password'] ?? '',
+    );
   }
 
   void _handleMagicLinkRequest(String email) {
@@ -68,7 +60,8 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> with TickerPr
       _magicLinkError = null;
     });
 
-    // Simulate API call - in real app, this would call the use case
+    // TODO: Implement magic link sign in
+    // For now, simulate API call - in real app, this would call the use case
     Future.delayed(const Duration(seconds: 1), () {
       if (mounted) {
         setState(() {
@@ -84,6 +77,7 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> with TickerPr
   void _handleGoogleOAuthPressed() {
     setState(() => _isGoogleOAuthLoading = true);
 
+    // TODO: Implement Google OAuth
     // Simulate Google OAuth flow
     Future.delayed(const Duration(seconds: 1), () {
       if (mounted) {
@@ -173,13 +167,15 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> with TickerPr
             child: TabBarView(
               controller: _tabController,
               children: [
-                // Email/Password Tab
-                EmailPasswordTab(
-                  isLoading: _isEmailPasswordLoading,
-                  errorMessage: _emailPasswordError,
-                  onSubmit: _handleEmailPasswordSignIn,
-                  onForgotPassword: widget.onForgotPasswordPressed,
-                  onSignUp: _handleSignUpPressed,
+                // Email/Password Tab - wrapped with Observer to listen to store state
+                Observer(
+                  builder: (_) => EmailPasswordTab(
+                    isLoading: _signInStore.isLoading,
+                    errorMessage: _signInStore.errorMessage,
+                    onSubmit: _handleEmailPasswordSignIn,
+                    onForgotPassword: widget.onForgotPasswordPressed,
+                    onSignUp: _handleSignUpPressed,
+                  ),
                 ),
 
                 // Magic Link Tab

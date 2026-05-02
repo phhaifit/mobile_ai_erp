@@ -1,5 +1,6 @@
 import 'package:mobile_ai_erp/data/network/apis/customer/customer_auth_api.dart';
 import 'package:mobile_ai_erp/data/model/customer_auth/customer_auth_models.dart';
+import 'package:mobile_ai_erp/domain/entity/customer_auth/customer_auth_entities.dart';
 import 'package:mobile_ai_erp/domain/repository/customer_auth_repository.dart';
 
 class CustomerAuthRepositoryImpl implements CustomerAuthRepository {
@@ -11,6 +12,20 @@ class CustomerAuthRepositoryImpl implements CustomerAuthRepository {
     try {
       final result = await _api.getTenant(subdomain: subdomain);
       return result.id;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<TokenPair> signIn({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final result = await _api.signIn(email: email, password: password);
+      // Create a default customer object with basic info
+      return result.toTokenPair();
     } catch (e) {
       rethrow;
     }
@@ -37,6 +52,15 @@ class CustomerAuthRepositoryImpl implements CustomerAuthRepository {
     try {
       final result = await _api.verifyEmail(token: token);
       return result;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> signOut() async {
+    try {
+      await _api.signOut();
     } catch (e) {
       rethrow;
     }

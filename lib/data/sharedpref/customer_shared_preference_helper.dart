@@ -29,6 +29,11 @@ class CustomerSharedPreferenceHelper extends SharedPreferenceHelper {
     );
   }
 
+  Future<void> removeTokenPair() async {
+    await sharedPreference.remove(Preferences.token_pair);
+    await removeAuthToken();
+  }
+
   /// Clear subdomain and tenant ID data
   Future<void> clearSubdomainData() async {
     await removeSubdomain();

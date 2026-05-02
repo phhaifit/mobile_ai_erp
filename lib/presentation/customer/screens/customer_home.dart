@@ -4,6 +4,7 @@ import 'package:mobile_ai_erp/presentation/cart/store/cart_store.dart';
 import 'package:mobile_ai_erp/presentation/cart/store/wishlist_store.dart';
 import 'package:mobile_ai_erp/presentation/cart/widgets/mini_cart_drawer.dart';
 import 'package:mobile_ai_erp/presentation/cart/screens/wishlist_page.dart';
+import 'package:mobile_ai_erp/presentation/customer/store/auth_store.dart';
 import 'package:mobile_ai_erp/presentation/home/store/language/language_store.dart';
 import 'package:mobile_ai_erp/presentation/home/store/theme/theme_store.dart';
 import 'package:mobile_ai_erp/presentation/storefront/storefront_home_page.dart';
@@ -22,6 +23,7 @@ class CustomerHomePage extends StatefulWidget {
 class _CustomerHomePageState extends State<CustomerHomePage> {
   final ThemeStore _themeStore = getIt<ThemeStore>();
   final LanguageStore _languageStore = getIt<LanguageStore>();
+  final CustomerAuthStore _authStore = getIt<CustomerAuthStore>();
   late final CartStore _cartStore;
   late final WishlistStore _wishlistStore;
 
@@ -98,6 +100,15 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
             ),
           ),
         ),
+        const PopupMenuDivider(),
+        const PopupMenuItem(
+          value: 'logout',
+          child: ListTile(
+            leading: Icon(Icons.power_settings_new),
+            title: Text('Logout'),
+            contentPadding: EdgeInsets.zero,
+          ),
+        ),
       ],
     );
   }
@@ -109,6 +120,13 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
         break;
       case 'theme':
         _themeStore.changeBrightnessToDark(!_themeStore.darkMode);
+        break;
+      case 'logout':
+        _authStore.logout().then((_) {
+          if (mounted) {
+            Navigator.of(context).pushReplacementNamed('/');
+          }
+        });
         break;
     }
   }

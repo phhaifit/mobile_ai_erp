@@ -76,7 +76,7 @@ class CustomerAuthApi {
   }) async {
     try {
       final response = await _dio.post(
-        '/sign-in',
+        Endpoints.customerSignIn,
         data: {
           'email': email,
           'password': password,
@@ -166,16 +166,9 @@ class CustomerAuthApi {
   }
 
   /// Sign out current session
-  Future<void> signOut({
-    required String accessToken,
-  }) async {
+  Future<void> signOut() async {
     try {
-      await _dio.post(
-        '/sign-out',
-        options: Options(
-          headers: {'Authorization': 'Bearer $accessToken'},
-        ),
-      );
+      await _dio.post(Endpoints.customerSignOut);
     } catch (e) {
       rethrow;
     }
