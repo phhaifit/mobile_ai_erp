@@ -11,6 +11,9 @@ class SharedPreferenceHelper {
   // constructor
   SharedPreferenceHelper(this._sharedPreference);
 
+  // Protected getter for subclasses
+  SharedPreferences get sharedPreference => _sharedPreference;
+
   // General Methods: ----------------------------------------------------------
   Future<String?> get accessToken async {
     final authTokenValue = _sharedPreference.get(Preferences.auth_token);
@@ -39,7 +42,7 @@ class SharedPreferenceHelper {
     return null;
   }
 
-  Future<String?> get tenantId async {
+  String? get tenantId {
     return _sharedPreference.getString(Preferences.tenant_id);
   }
 

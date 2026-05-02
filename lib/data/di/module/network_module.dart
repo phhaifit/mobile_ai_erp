@@ -47,7 +47,7 @@ class NetworkModule {
     );
     getIt.registerSingleton<TenantHeaderInterceptor>(
       TenantHeaderInterceptor(
-        tenantId: () async => await getIt<SharedPreferenceHelper>().tenantId,
+        tenantId: () async => getIt<SharedPreferenceHelper>().tenantId,
       ),
     );
     getIt.registerSingleton<TokenRefreshInterceptor>(

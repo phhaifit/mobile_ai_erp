@@ -34,7 +34,6 @@ abstract class _LoginStore with Store {
   ) {
     // setting up disposers
     _setupDisposers();
-    isLoggedIn = _sharedPreferenceHelper.isLoggedIn;
   }
 
   // use cases:-----------------------------------------------------------------
@@ -134,12 +133,13 @@ abstract class _LoginStore with Store {
 
       currentUser = authStatusResponse.user;
       currentTenantId = authStatusResponse.user!.tenantId;
-      needsOnboarding = false;
-      isLoggedIn = true;
 
       if (currentTenantId != null) {
         await _sharedPreferenceHelper.saveTenantId(currentTenantId!);
       }
+
+      needsOnboarding = currentTenantId == null;
+      isLoggedIn = true;
 
       return true;
     } catch (e) {

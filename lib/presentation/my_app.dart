@@ -23,9 +23,9 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   final ThemeStore _themeStore = getIt<ThemeStore>();
   final LanguageStore _languageStore = getIt<LanguageStore>();
+  final _loginStore = getIt<LoginStore>();
   
   bool _initialized = false;
-  bool _hasSession = false;
 
   @override
   void initState() {
@@ -34,12 +34,10 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> _validateStoredSession() async {
-    final loginStore = getIt<LoginStore>();
-    final validSession = await loginStore.validateStoredSession();
+    await _loginStore.validateStoredSession();
     if (!mounted) return;
     setState(() {
       _initialized = true;
-      _hasSession = validSession;
     });
   }
 
@@ -105,7 +103,7 @@ class _MyAppState extends State<MyApp> {
                 routeName.startsWith(Routes.storefrontLegacyHome);
 
             // If the route is protected and there is no session, force login
-            if (!isPublic && !_hasSession) {
+            if (!isPublic && !_loginStore.isLoggedIn) {
               return MaterialPageRoute(
                 builder: (context) => LoginScreen(),
                 settings: settings,
@@ -115,7 +113,7 @@ class _MyAppState extends State<MyApp> {
             // Resolve static routes
             WidgetBuilder? builder;
             if (routeName == '/') {
-              builder = (context) => _hasSession ? HomeScreen() : LoginScreen();
+              builder = (context) => _loginStore.isLoggedIn ? HomeScreen() : LoginScreen();
             } else {
               builder = Routes.routes[routeName];
             }

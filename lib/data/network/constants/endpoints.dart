@@ -43,4 +43,8 @@ class Endpoints {
   // web builder - themes
   static const String themes = "/themes";
   static const String activeTheme = "/themes/active";
+
+
+  // Customer auth endpoints
+  static String getTenantBySubdomain(String subdomain) => "/tenants/by-subdomain/$subdomain";
 }
