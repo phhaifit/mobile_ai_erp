@@ -8,6 +8,7 @@ import 'package:mobile_ai_erp/presentation/supplier/store/supplier_products_stor
 import 'package:mobile_ai_erp/domain/repository/customer/customer_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/dashboard/dashboard_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadata_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/product/product_detail_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/setting/setting_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/stock_operations/stock_operations_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/storefront/storefront_repository.dart';
@@ -295,7 +296,7 @@ class StoreModule {
 
     getIt.registerFactory<ProductDetailStore>(
       () => ProductDetailStore(
-        getIt<StorefrontRepository>(),
+        getIt<ProductDetailRepository>(),
         getIt<ErrorStore>(),
       ),
     );
