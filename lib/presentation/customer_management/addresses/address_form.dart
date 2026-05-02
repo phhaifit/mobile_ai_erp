@@ -1,5 +1,6 @@
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/entity/customer/address.dart';
+import 'package:mobile_ai_erp/domain/entity/customer/customer_validation_exception.dart';
 import 'package:mobile_ai_erp/presentation/customer_management/navigation/customer_route_args.dart';
 import 'package:mobile_ai_erp/presentation/customer_management/store/customer_store.dart';
 import 'package:mobile_ai_erp/presentation/customer_management/widgets/customer_form_decoration.dart';
@@ -33,7 +34,6 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
   Address? _editingAddress;
 
   @override
-
   void initState() {
     super.initState();
     _isLoading = widget.args.addressId != null;
@@ -154,12 +154,12 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
                 ),
                 textCapitalization: TextCapitalization.words,
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _wardController,
-                decoration:
-                    customerFormDecoration(labelText: 'Ward/Subdivision (optional)'),
-                textCapitalization: TextCapitalization.words,
+              const SizedBox(height: 8),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Set as default address'),
+                value: _isDefault,
+                onChanged: (value) => setState(() => _isDefault = value),
               ),
               const SizedBox(height: 24),
               FilledButton.icon(

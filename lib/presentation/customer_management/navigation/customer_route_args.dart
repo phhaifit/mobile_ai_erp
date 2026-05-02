@@ -11,16 +11,18 @@ class CustomerFormArgs {
 }
 
 class CustomerAddressesArgs {
-  const CustomerAddressesArgs({this.customerId});
+  const CustomerAddressesArgs({required this.customerId});
 
-  final String? customerId;
+  final String customerId;
 }
 
 class AddressFormArgs {
   const AddressFormArgs({
+    required this.customerId,
     this.addressId,
   });
 
+  final String customerId;
   final String? addressId;
 }
 
@@ -28,4 +30,10 @@ class CustomerGroupFormArgs {
   const CustomerGroupFormArgs({this.groupId});
 
   final String? groupId;
+}
+
+class CustomerTransactionsArgs {
+  const CustomerTransactionsArgs({required this.customerId});
+
+  final String customerId;
 }

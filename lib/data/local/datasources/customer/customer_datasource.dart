@@ -5,102 +5,137 @@ import 'package:mobile_ai_erp/domain/entity/customer/customer_validation_excepti
 
 class CustomerDataSource {
   final List<CustomerGroup> _groups = <CustomerGroup>[
-    const CustomerGroup(
+    CustomerGroup(
       id: 'group_vip',
       name: 'VIP',
       description: 'High-value customers with premium benefits.',
       colorHex: '#6A1B9A',
-      sortOrder: 10,
+      createdAt: DateTime(2023, 1, 1),
+      updatedAt: DateTime(2023, 1, 1),
     ),
-    const CustomerGroup(
+    CustomerGroup(
       id: 'group_wholesale',
       name: 'Wholesale',
       description: 'Business customers purchasing in bulk.',
       colorHex: '#1565C0',
-      sortOrder: 20,
+      createdAt: DateTime(2023, 1, 1),
+      updatedAt: DateTime(2023, 1, 1),
     ),
-    const CustomerGroup(
+    CustomerGroup(
       id: 'group_retail',
       name: 'Retail',
       description: 'Standard retail customers.',
       colorHex: '#2E7D32',
-      sortOrder: 30,
+      createdAt: DateTime(2023, 1, 1),
+      updatedAt: DateTime(2023, 1, 1),
     ),
-    const CustomerGroup(
+    CustomerGroup(
       id: 'group_new',
       name: 'New Customers',
       description: 'Customers who joined in the last 30 days.',
       colorHex: '#EF6C00',
-      sortOrder: 40,
+      createdAt: DateTime(2023, 1, 1),
+      updatedAt: DateTime(2023, 1, 1),
     ),
   ];
 
   final List<Customer> _customers = <Customer>[
     Customer(
       id: 'cust_alice',
-      name: 'Alice Johnson',
+      firstName: 'Alice',
+      lastName: 'Johnson',
       email: 'alice.johnson@example.com',
       phone: '+1-555-0101',
+      groupId: 'group_vip',
       status: CustomerStatus.active,
+      type: CustomerType.individual,
       createdAt: DateTime(2024, 1, 15),
     ),
     Customer(
       id: 'cust_bob',
-      name: 'Bob Smith',
+      firstName: 'Bob',
+      lastName: 'Smith',
       email: 'bob.smith@example.com',
       phone: '+1-555-0102',
+      groupId: 'group_wholesale',
       status: CustomerStatus.active,
+      type: CustomerType.business,
+      notes: 'Prefers invoice payment. Contact via email only.',
       createdAt: DateTime(2024, 2, 3),
     ),
     Customer(
       id: 'cust_carol',
-      name: 'Carol Williams',
+      firstName: 'Carol',
+      lastName: 'Williams',
       email: 'carol.w@example.com',
       phone: '+1-555-0103',
+      groupId: 'group_retail',
       status: CustomerStatus.active,
+      type: CustomerType.individual,
       createdAt: DateTime(2024, 3, 20),
     ),
     Customer(
       id: 'cust_david',
-      name: 'David Lee',
+      firstName: 'David',
+      lastName: 'Lee',
       email: 'david.lee@example.com',
+      groupId: 'group_new',
       status: CustomerStatus.active,
+      type: CustomerType.individual,
       createdAt: DateTime(2025, 11, 1),
     ),
     Customer(
       id: 'cust_enterprise',
-      name: 'Tech Corp Ltd',
+      firstName: 'Tech',
+      lastName: 'Corp Ltd',
       email: 'procurement@techcorp.example.com',
       phone: '+1-555-0200',
+      groupId: 'group_wholesale',
       status: CustomerStatus.active,
+      type: CustomerType.business,
+      notes: 'Net-30 payment terms. Main contact: Jane Doe.',
       createdAt: DateTime(2023, 8, 10),
     ),
     Customer(
       id: 'cust_inactive',
-      name: 'Mark Brown',
+      firstName: 'Mark',
+      lastName: 'Brown',
       email: 'mark.brown@example.com',
-      status: CustomerStatus.pending_verification,
+      status: CustomerStatus.deactivated,
+      type: CustomerType.individual,
       createdAt: DateTime(2023, 5, 5),
     ),
   ];
 
   final List<Address> _addresses = <Address>[
-    Address(
+    const Address(
+      id: 'addr_alice_home',
+      customerId: 'cust_alice',
+      label: 'Home',
+      type: AddressType.home,
+      street: '123 Maple Street',
+      city: 'New York',
+      state: 'NY',
+      countryCode: 'US',
+      postalCode: '10001',
+      isDefault: true,
+    ),
+    const Address(
       id: 'addr_alice_office',
       customerId: 'cust_alice',
       label: 'Office',
-      type: AddressType.billing,
+      type: AddressType.office,
       street: '456 Fifth Ave, Suite 800',
       city: 'New York',
       state: 'NY',
       countryCode: 'US',
       postalCode: '10018',
     ),
-    Address(
+    const Address(
       id: 'addr_bob_hq',
       customerId: 'cust_bob',
       label: 'Headquarters',
-      type: AddressType.both,
+      type: AddressType.home,
       street: '789 Industrial Blvd',
       city: 'Chicago',
       state: 'IL',
@@ -108,11 +143,11 @@ class CustomerDataSource {
       postalCode: '60601',
       isDefault: true,
     ),
-    Address(
+    const Address(
       id: 'addr_carol_home',
       customerId: 'cust_carol',
       label: 'Home',
-      type: AddressType.both,
+      type: AddressType.home,
       street: '22 Oak Lane',
       city: 'Austin',
       state: 'TX',
@@ -120,7 +155,7 @@ class CustomerDataSource {
       postalCode: '73301',
       isDefault: true,
     ),
-    Address(
+    const Address(
       id: 'addr_enterprise_billing',
       customerId: 'cust_enterprise',
       label: 'Billing',
@@ -132,11 +167,11 @@ class CustomerDataSource {
       postalCode: '95101',
       isDefault: true,
     ),
-    Address(
+    const Address(
       id: 'addr_enterprise_shipping',
       customerId: 'cust_enterprise',
       label: 'Warehouse',
-      type: AddressType.shipping,
+      type: AddressType.warehouse,
       street: '500 Commerce Way',
       city: 'Fremont',
       state: 'CA',
@@ -148,7 +183,8 @@ class CustomerDataSource {
   // ── Groups ────────────────────────────────────────────────────────────────
 
   Future<List<CustomerGroup>> getCustomerGroups() async =>
-      _sortByOrderThenName(_groups, (g) => g.name, (g) => g.sortOrder);
+      List<CustomerGroup>.from(_groups)
+        ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
 
   Future<CustomerGroup> saveCustomerGroup(CustomerGroup group) async {
     final name = group.name.trim();
@@ -177,21 +213,31 @@ class CustomerDataSource {
   }
 
   Future<void> deleteCustomerGroup(String groupId) async {
+    final hasMembers = _customers.any((c) => c.groupId == groupId);
+    if (hasMembers) {
+      throw const CustomerValidationException(
+        'Reassign or remove customers from this group first.',
+      );
+    }
     _groups.removeWhere((g) => g.id == groupId);
   }
 
   // ── Customers ─────────────────────────────────────────────────────────────
 
-  Future<List<Customer>> getCustomers() async =>
-      List<Customer>.from(_customers)
-        ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+  Future<List<Customer>> getCustomers() async => List<Customer>.from(_customers)
+    ..sort(
+      (a, b) => a.fullName.toLowerCase().compareTo(b.fullName.toLowerCase()),
+    );
 
   Future<Customer> saveCustomer(Customer customer) async {
-    final name = customer.name.trim();
+    final firstName = customer.firstName.trim();
+    final lastName = customer.lastName.trim();
     final email = customer.email.trim().toLowerCase();
 
-    if (name.isEmpty) {
-      throw const CustomerValidationException('Customer name is required.');
+    if (firstName.isEmpty && lastName.isEmpty) {
+      throw const CustomerValidationException(
+        'First name or last name is required.',
+      );
     }
     if (email.isEmpty) {
       throw const CustomerValidationException('Email is required.');
@@ -203,38 +249,50 @@ class CustomerDataSource {
     final customerId = customer.id.trim();
     final hasDuplicateEmail = _customers.any(
       (existing) =>
-          existing.id != customerId &&
-          existing.email.toLowerCase() == email,
+          existing.id != customerId && existing.email.toLowerCase() == email,
     );
     if (hasDuplicateEmail) {
       throw const CustomerValidationException(
-          'A customer with this email already exists.');
+        'A customer with this email already exists.',
+      );
+    }
+
+    if (customer.groupId != null) {
+      final groupExists = _groups.any((g) => g.id == customer.groupId);
+      if (!groupExists) {
+        throw const CustomerValidationException('Selected group not found.');
+      }
     }
 
     final saved = customer.copyWith(
       id: customerId.isEmpty ? _generateId('cust') : customerId,
-      name: name,
+      firstName: firstName,
+      lastName: lastName,
       email: email,
       phone: _normalizeNullable(customer.phone),
       avatarUrl: _normalizeNullable(customer.avatarUrl),
+      groupId: _normalizeNullable(customer.groupId),
+      notes: _normalizeNullable(customer.notes),
     );
     _upsertById(_customers, saved, (c) => c.id);
     return saved;
   }
 
   Future<void> deleteCustomer(String customerId) async {
+    _addresses.removeWhere((a) => a.customerId == customerId);
     _customers.removeWhere((c) => c.id == customerId);
   }
 
   // ── Addresses ─────────────────────────────────────────────────────────────
 
-  Future<List<Address>> getAddresses() async {
-    return List<Address>.from(_addresses)
+  Future<List<Address>> getAddresses(String customerId) async {
+    final list = _addresses.where((a) => a.customerId == customerId).toList()
       ..sort((a, b) {
         if (a.isDefault && !b.isDefault) return -1;
         if (!a.isDefault && b.isDefault) return 1;
         return a.label.toLowerCase().compareTo(b.label.toLowerCase());
       });
+    return list;
   }
 
   Future<Address> saveAddress(Address address) async {
@@ -242,13 +300,37 @@ class CustomerDataSource {
     final street = address.street.trim();
     final city = address.city.trim();
     final country = address.countryCode.trim().toUpperCase();
-    final addressStr = address.label.trim();
 
-    if (addressStr.isEmpty) {
-      throw const CustomerValidationException('Address is required.');
+    if (label.isEmpty) {
+      throw const CustomerValidationException('Address label is required.');
+    }
+    if (street.isEmpty) {
+      throw const CustomerValidationException('Street is required.');
+    }
+    if (city.isEmpty) {
+      throw const CustomerValidationException('City is required.');
+    }
+    if (country.isEmpty) {
+      throw const CustomerValidationException('Country is required.');
+    }
+
+    final customerExists = _customers.any((c) => c.id == address.customerId);
+    if (!customerExists) {
+      throw const CustomerValidationException('Customer not found.');
     }
 
     final addressId = address.id.trim();
+    final hasDuplicateLabel = _addresses.any(
+      (existing) =>
+          existing.id != addressId &&
+          existing.customerId == address.customerId &&
+          _normalize(existing.label) == _normalize(label),
+    );
+    if (hasDuplicateLabel) {
+      throw const CustomerValidationException(
+        'Address labels must be unique for this customer.',
+      );
+    }
 
     final saved = address.copyWith(
       id: addressId.isEmpty ? _generateId('addr') : addressId,
@@ -267,10 +349,27 @@ class CustomerDataSource {
     _addresses.removeWhere((a) => a.id == addressId);
   }
 
-  Future<void> setDefaultAddress(String addressId) async {
+  Future<void> setDefaultAddress(String customerId, String addressId) async {
     for (var i = 0; i < _addresses.length; i++) {
-      _addresses[i] = _addresses[i].copyWith(isDefault: _addresses[i].id == addressId);
+      final addr = _addresses[i];
+      if (addr.customerId != customerId) continue;
+      _addresses[i] = addr.copyWith(isDefault: addr.id == addressId);
     }
+  }
+
+  // ── Dashboard ─────────────────────────────────────────────────────────────
+
+  Future<Map<String, int>> getCustomerCountsByGroup(
+    List<String> groupIds,
+  ) async {
+    final counts = <String, int>{for (final id in groupIds) id: 0};
+    for (final customer in _customers) {
+      final gid = customer.groupId;
+      if (gid != null && counts.containsKey(gid)) {
+        counts[gid] = (counts[gid] ?? 0) + 1;
+      }
+    }
+    return counts;
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
@@ -283,8 +382,9 @@ class CustomerDataSource {
   }
 
   bool _isValidEmail(String email) {
-    return RegExp(r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$')
-        .hasMatch(email);
+    return RegExp(
+      r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$',
+    ).hasMatch(email);
   }
 
   String _generateId(String prefix) =>
@@ -295,66 +395,13 @@ class CustomerDataSource {
     T value,
     String Function(T item) idSelector,
   ) {
-    final index =
-        items.indexWhere((item) => idSelector(item) == idSelector(value));
+    final index = items.indexWhere(
+      (item) => idSelector(item) == idSelector(value),
+    );
     if (index >= 0) {
       items[index] = value;
     } else {
       items.add(value);
     }
   }
-
-  List<T> _sortByOrderThenName<T>(
-    List<T> source,
-    String Function(T item) nameSelector,
-    int Function(T item) sortOrderSelector,
-  ) {
-    final items = List<T>.from(source);
-    items.sort((left, right) {
-      final orderCompare =
-          sortOrderSelector(left).compareTo(sortOrderSelector(right));
-      if (orderCompare != 0) return orderCompare;
-      return nameSelector(left)
-          .toLowerCase()
-          .compareTo(nameSelector(right).toLowerCase());
-    });
-    return items;
-  }
-
-  Future<Map<String, int>> getCustomerCountsByGroup(List<String> groupIds) async {
-    final result = <String, int>{};
-    for (final groupId in groupIds) {
-      // Since Customer model doesn't have a groupId field,
-      // return 0 for all groups
-      result[groupId] = 0;
-    }
-    return result;
-  }
-
-  CustomerGroup? findGroupById(String? groupId) {
-    if (groupId == null) return null;
-    try {
-      return _groups.firstWhere((g) => g.id == groupId);
-    } catch (e) {
-      return null;
-    }
-  }
-
-  Customer? findCustomerById(String customerId) {
-    try {
-      return _customers.firstWhere((c) => c.id == customerId);
-    } catch (e) {
-      return null;
-    }
-  }
-
-  Address? findAddressById(String addressId) {
-    try {
-      return _addresses.firstWhere((a) => a.id == addressId);
-    } catch (e) {
-      return null;
-    }
-  }
 }
-
-const _sentinel = Object();

@@ -25,7 +25,7 @@ class _CustomerAddressesScreenState extends State<CustomerAddressesScreen> {
   void initState() {
     super.initState();
     Future<void>.microtask(
-        () => _store.loadDashboard());
+        () => _store.loadAddresses(widget.args.customerId));
   }
 
   @override
@@ -37,7 +37,7 @@ class _CustomerAddressesScreenState extends State<CustomerAddressesScreen> {
             final customer =
                 _store.findCustomerById(widget.args.customerId);
             return Text(customer != null
-                ? '${customer.name}\'s Addresses'
+                ? '${customer.firstName}\'s Addresses'
                 : 'Addresses');
           },
         ),
@@ -45,7 +45,7 @@ class _CustomerAddressesScreenState extends State<CustomerAddressesScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => CustomerNavigator.openAddressForm(
           context,
-          args: AddressFormArgs(),
+          args: AddressFormArgs(customerId: widget.args.customerId),
         ),
         icon: const Icon(Icons.add_location_outlined),
         label: const Text('Add address'),
@@ -76,6 +76,7 @@ class _CustomerAddressesScreenState extends State<CustomerAddressesScreen> {
               onEdit: () => CustomerNavigator.openAddressForm(
                 context,
                 args: AddressFormArgs(
+                  customerId: widget.args.customerId,
                   addressId: addresses[index].id,
                 ),
               ),
@@ -92,11 +93,12 @@ class _CustomerAddressesScreenState extends State<CustomerAddressesScreen> {
 
   Future<void> _setDefault(Address address) async {
     try {
-      await _store.setDefaultAddress(address.id);
+      await _store.setDefaultAddress(
+          widget.args.customerId, address.id);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text('Address set as default.')),
+            content: Text('"${address.label}" set as default address.')),
       );
     } catch (_) {
       if (!mounted) return;
@@ -111,7 +113,8 @@ class _CustomerAddressesScreenState extends State<CustomerAddressesScreen> {
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('Delete address?'),
-            content: Text('Delete this address? This can\'t be undone.'),
+            content:
+                Text('Delete "${address.label}"? This can\'t be undone.'),
             actions: <Widget>[
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
@@ -129,10 +132,10 @@ class _CustomerAddressesScreenState extends State<CustomerAddressesScreen> {
     if (!confirmed || !mounted) return;
 
     try {
-      await _store.deleteAddress(address.id);
+      await _store.deleteAddress(widget.args.customerId, address.id);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Address deleted.')),
+        SnackBar(content: Text('Deleted "${address.label}".')),
       );
     } catch (_) {
       if (!mounted) return;
@@ -175,7 +178,7 @@ class _AddressCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    address.type,
+                    address.label,
                     style: Theme.of(context)
                         .textTheme
                         .titleMedium
@@ -233,7 +236,7 @@ class _AddressCard extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              address.address,
+              address.displayAddress,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -243,8 +246,9 @@ class _AddressCard extends StatelessWidget {
               spacing: 6,
               runSpacing: 6,
               children: <Widget>[
+                CustomerStatusChip(label: address.type.label),
                 if (address.isDefault)
-                  const Chip(label: Text('Default')),
+                  const CustomerStatusChip(label: 'Default'),
               ],
             ),
           ],
