@@ -68,6 +68,26 @@ class Endpoints {
   static const String storefrontCouponsValidate =
       "$storefront/coupons/validate";
 
+  // addresses
+  static const String storefrontAddresses = "$storefront/addresses";
+  static String storefrontAddressById(String id) =>
+      "$storefront/addresses/$id";
+  static String storefrontAddressSetDefault(String id) =>
+      "$storefront/addresses/$id/default";
+
+  // checkout
+  static const String storefrontCheckout = "$storefront/checkout";
+
+  // storefront orders
+  static const String storefrontOrders = "$storefront/orders";
+  static String storefrontOrderById(String id) =>
+      "$storefront/orders/$id";
+
+  // storefront payments
+  static const String storefrontPayments = "$storefront/payments";
+  static String storefrontPaymentById(String id) =>
+      "$storefront/payments/$id";
+
   // web builder - store settings
   static const String storeSettings = "/store-settings";
 
