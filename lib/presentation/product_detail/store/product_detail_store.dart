@@ -96,20 +96,20 @@ abstract class _ProductDetailStore with Store {
 
   @computed
   double get displayPrice {
-    final v = selectedVariant ?? product?.variants.first;
+    final v = selectedVariant ?? (product?.variants.isNotEmpty == true ? product!.variants.first : null);
     return v?.effectivePrice ?? 0;
   }
 
   @computed
   double? get originalPrice {
-    final v = selectedVariant ?? product?.variants.first;
+    final v = selectedVariant ?? (product?.variants.isNotEmpty == true ? product!.variants.first : null);
     if (v == null || !v.hasDiscount) return null;
     return v.price;
   }
 
   @computed
   int get discountPercentage {
-    final v = selectedVariant ?? product?.variants.first;
+    final v = selectedVariant ?? (product?.variants.isNotEmpty == true ? product!.variants.first : null);
     return v?.discountPercentage ?? 0;
   }
 

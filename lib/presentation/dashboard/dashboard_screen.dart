@@ -196,7 +196,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildSalesChart() {
     return _DashboardSectionCard(
-      title: 'Real-Time Sales (Mocked)',
+      title: 'Real-Time Sales',
       subtitle: 'Trend preview for ${_periodLabel(_store.period).toLowerCase()}',
       icon: Icons.show_chart,
       child: Column(

@@ -1,13 +1,13 @@
-import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
+import 'package:dio/dio.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
 
 class StorefrontProductsApi {
-  final DioClient _dioClient;
+  final Dio _dio;
 
-  StorefrontProductsApi(this._dioClient);
+  StorefrontProductsApi(this._dio);
 
   Future<Map<String, dynamic>> getProductDetail(String id) async {
-    final res = await _dioClient.dio.get(Endpoints.storefrontProductById(id));
+    final res = await _dio.get(Endpoints.storefrontProductById(id));
     return Map<String, dynamic>.from(res.data as Map);
   }
 
@@ -18,7 +18,7 @@ class StorefrontProductsApi {
     String? brandId,
     String? sortBy,
   }) async {
-    final res = await _dioClient.dio.get(
+    final res = await _dio.get(
       Endpoints.storefrontProducts,
       queryParameters: {
         'page': page,
@@ -37,7 +37,7 @@ class StorefrontProductsApi {
     int page = 1,
     int pageSize = 10,
   }) async {
-    final res = await _dioClient.dio.get(
+    final res = await _dio.get(
       Endpoints.storefrontBrandProducts(brandKey),
       queryParameters: {'page': page, 'pageSize': pageSize},
     );
@@ -45,7 +45,7 @@ class StorefrontProductsApi {
   }
 
   Future<Map<String, dynamic>> getCategoryDetail(String categoryKey) async {
-    final res = await _dioClient.dio.get(
+    final res = await _dio.get(
       Endpoints.storefrontCategoryByKey(categoryKey),
     );
     return Map<String, dynamic>.from(res.data as Map);

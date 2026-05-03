@@ -36,6 +36,9 @@ class Endpoints {
   static const String authSignOut = "/auth/sign-out";
   static const String tenantsCreate = "/tenants";
 
+  // customer auth endpoints
+  static const String customerAuthRefresh = "/customer/auth/refresh";
+
   static const String stackAuthHost = 'api.stack-auth.com';
   static const String stackAuthAuthenticate = '/api/v1/auth/oauth/authorize/';
   static const String stackAuthToken =
@@ -67,6 +70,26 @@ class Endpoints {
   static const String storefrontCoupons = "$storefront/coupons";
   static const String storefrontCouponsValidate =
       "$storefront/coupons/validate";
+
+  // addresses
+  static const String storefrontAddresses = "$storefront/addresses";
+  static String storefrontAddressById(String id) =>
+      "$storefront/addresses/$id";
+  static String storefrontAddressSetDefault(String id) =>
+      "$storefront/addresses/$id/default";
+
+  // checkout
+  static const String storefrontCheckout = "$storefront/checkout";
+
+  // storefront orders
+  static const String storefrontOrders = "$storefront/orders";
+  static String storefrontOrderById(String id) =>
+      "$storefront/orders/$id";
+
+  // storefront payments
+  static const String storefrontPayments = "$storefront/payments";
+  static String storefrontPaymentById(String id) =>
+      "$storefront/payments/$id";
 
   // web builder - store settings
   static const String storeSettings = "/store-settings";

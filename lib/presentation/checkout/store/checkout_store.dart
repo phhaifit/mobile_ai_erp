@@ -463,6 +463,10 @@ abstract class _CheckoutStore with Store {
 
       final createdOrder = await _createOrderUseCase.call(params: orderToCreate);
 
+      // Save item IDs from the original order before confirmation
+      // (confirmOrder returns a stub with empty items)
+      final purchasedItemIds = orderToCreate.items.map((item) => item.id).toList();
+
       // Confirm the order
       final confirmedOrder = await _confirmOrderUseCase.call(
         params: createdOrder.id,
@@ -472,8 +476,7 @@ abstract class _CheckoutStore with Store {
       currentStep = CheckoutStep.confirmation;
       
       // Clear purchased items from cart after successful order
-      if (_cartStore != null && currentOrder!.items.isNotEmpty) {
-        final purchasedItemIds = currentOrder!.items.map((item) => item.id).toList();
+      if (_cartStore != null && purchasedItemIds.isNotEmpty) {
         await _cartStore.removeMultipleItemsFromCart(purchasedItemIds);
       }
       

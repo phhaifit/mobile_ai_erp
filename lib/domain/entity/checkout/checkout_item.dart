@@ -121,9 +121,12 @@ class CheckoutItem {
       selectedSize: null,
       selectedColorName: cartItem.variantSummary,
       selectedColorValue: null,
-      price: double.tryParse(cartItem.unitPrice) ?? 0,
+      // price = list price (original), salePrice = discounted price the customer pays
+      price: cartItem.originalPrice != null
+          ? double.tryParse(cartItem.originalPrice!) ?? 0
+          : double.tryParse(cartItem.unitPrice) ?? 0,
       salePrice: cartItem.originalPrice != null
-          ? double.tryParse(cartItem.originalPrice!)
+          ? double.tryParse(cartItem.unitPrice)
           : null,
       stockAvailable: cartItem.availableStock,
       quantity: cartItem.quantity,
