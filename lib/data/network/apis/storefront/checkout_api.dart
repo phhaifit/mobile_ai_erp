@@ -1,10 +1,10 @@
-import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
+import 'package:dio/dio.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
 
 class CheckoutApi {
-  final DioClient _dioClient;
+  final Dio _dio;
 
-  CheckoutApi(this._dioClient);
+  CheckoutApi(this._dio);
 
   /// POST /storefront/checkout
   ///
@@ -32,7 +32,7 @@ class CheckoutApi {
       if (customerNote != null) 'customerNote': customerNote,
     };
 
-    final res = await _dioClient.dio.post(
+    final res = await _dio.post(
       Endpoints.storefrontCheckout,
       data: body,
     );

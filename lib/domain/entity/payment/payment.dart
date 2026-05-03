@@ -1,3 +1,4 @@
+import 'package:mobile_ai_erp/core/utils/parse_utils.dart';
 import '../order/order.dart' show PaymentStatus;
 
 class Payment {
@@ -29,7 +30,7 @@ class Payment {
     return Payment(
       id: json['id'] as String,
       orderId: json['orderId'] as String,
-      amount: _parseDouble(json['amount']),
+      amount: parseDouble(json['amount']),
       paymentMethod: json['paymentMethod'] as String? ?? '',
       provider: json['provider'] as String?,
       transactionId: json['transactionId'] as String?,
@@ -71,10 +72,3 @@ class Payment {
   }
 }
 
-double _parseDouble(dynamic value) {
-  if (value == null) return 0.0;
-  if (value is double) return value;
-  if (value is int) return value.toDouble();
-  if (value is String) return double.tryParse(value) ?? 0.0;
-  return 0.0;
-}

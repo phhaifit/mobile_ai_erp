@@ -54,7 +54,10 @@ class Address {
 
   Map<String, dynamic> toJson() => {
         'type': type ?? 'home',
+        'fullName': fullName,
+        'phone': phone,
         'address': street,
+        'city': city,
         if (province != null) 'province': province,
         if (district != null) 'district': district,
         if (ward != null) 'ward': ward,

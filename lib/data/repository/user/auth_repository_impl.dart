@@ -9,8 +9,9 @@ import 'package:mobile_ai_erp/domain/repository/user/auth_repository.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final DioClient dioClient;
+  final Dio _refreshDio;
 
-  AuthRepositoryImpl(this.dioClient);
+  AuthRepositoryImpl(this.dioClient, this._refreshDio);
 
   @override
   Future<AuthStatusResponse> getAuthStatus(String accessToken) async {
@@ -37,35 +38,46 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<(String?, String?, String?)> refreshToken(String refreshToken, {String? sessionId}) async {
     try {
-      // Use a clean Dio without interceptors to avoid infinite loop
-      final cleanDio = Dio(BaseOptions(
-        baseUrl: Endpoints.erpBaseUrl,
-        connectTimeout: const Duration(milliseconds: 30000),
-        receiveTimeout: const Duration(milliseconds: 15000),
-      ));
-
-      final body = <String, dynamic>{
-        'refreshToken': refreshToken,
-      };
+      // Use the injected Dio instance (configured without auth interceptors to avoid infinite loop)
       if (sessionId != null && sessionId.isNotEmpty) {
-        body['sessionId'] = sessionId;
-      }
-
-      final response = await cleanDio.post(
-        Endpoints.customerAuthRefresh,
-        data: body,
-        options: Options(
-          headers: {
-            'X-Tenant-Id': Endpoints.tenantId,
+        // Customer auth flow: POST /customer/auth/refresh
+        final response = await _refreshDio.post(
+          Endpoints.customerAuthRefresh,
+          data: {
+            'refreshToken': refreshToken,
+            'sessionId': sessionId,
           },
-        ),
-      );
+          options: Options(
+            headers: {
+              'X-Tenant-Id': Endpoints.tenantId,
+            },
+          ),
+        );
 
-      if (response.statusCode == 200 && response.data != null) {
-        final accessToken = response.data['accessToken'] as String?;
-        final newRefreshToken = response.data['refreshToken'] as String?;
-        final newSessionId = response.data['sessionId'] as String?;
-        return (accessToken, newRefreshToken, newSessionId);
+        if (response.statusCode == 200 && response.data != null) {
+          final accessToken = response.data['accessToken'] as String?;
+          final newRefreshToken = response.data['refreshToken'] as String?;
+          final newSessionId = response.data['sessionId'] as String?;
+          return (accessToken, newRefreshToken, newSessionId);
+        }
+      } else {
+        // ERP/admin auth flow: GET /auth/refresh
+        final response = await _refreshDio.get(
+          Endpoints.authRefresh,
+          options: Options(
+            headers: {
+              'Authorization': 'Bearer $refreshToken',
+            },
+          ),
+        );
+
+        if (response.statusCode == 200 && response.data != null) {
+          return (
+            response.data['token']?['accessToken'] as String?,
+            response.data['token']?['refreshToken'] as String?,
+            null,
+          );
+        }
       }
     } catch (e) {
       throw Exception('Refresh token request failed: $e');

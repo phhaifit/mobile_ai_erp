@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/configs/dio_configs.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/auth_interceptor.dart';
@@ -144,6 +145,16 @@ class NetworkModule {
     // rest client:-------------------------------------------------------------
     getIt.registerSingleton(RestClient());
 
+    // Clean Dio for token refresh (no auth interceptors to avoid infinite loop)
+    getIt.registerSingleton<Dio>(
+      Dio(BaseOptions(
+        baseUrl: Endpoints.erpBaseUrl,
+        connectTimeout: const Duration(milliseconds: 30000),
+        receiveTimeout: const Duration(milliseconds: 15000),
+      )),
+      instanceName: 'refreshDio',
+    );
+
     // dio (ERP backend - separate base URL + tenant header):-------------------
     final erpDioClient = DioClient(dioConfigs: getIt())
       ..addInterceptors([
@@ -230,21 +241,21 @@ class NetworkModule {
       DashboardApi(getIt<DioClient>(instanceName: erpDioClientName)),
     );
     getIt.registerSingleton<StorefrontProductsApi>(
-      StorefrontProductsApi(getIt<DioClient>(instanceName: erpDioClientName)),
+      StorefrontProductsApi(getIt<DioClient>(instanceName: erpDioClientName).dio),
     );
 
     // storefront: addresses, checkout, orders, payments
     getIt.registerSingleton<AddressesApi>(
-      AddressesApi(getIt<DioClient>(instanceName: erpDioClientName)),
+      AddressesApi(getIt<DioClient>(instanceName: erpDioClientName).dio),
     );
     getIt.registerSingleton<CheckoutApi>(
-      CheckoutApi(getIt<DioClient>(instanceName: erpDioClientName)),
+      CheckoutApi(getIt<DioClient>(instanceName: erpDioClientName).dio),
     );
     getIt.registerSingleton<StorefrontOrdersApi>(
-      StorefrontOrdersApi(getIt<DioClient>(instanceName: erpDioClientName)),
+      StorefrontOrdersApi(getIt<DioClient>(instanceName: erpDioClientName).dio),
     );
     getIt.registerSingleton<StorefrontPaymentsApi>(
-      StorefrontPaymentsApi(getIt<DioClient>(instanceName: erpDioClientName)),
+      StorefrontPaymentsApi(getIt<DioClient>(instanceName: erpDioClientName).dio),
     );
   }
 }

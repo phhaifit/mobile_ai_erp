@@ -1,3 +1,5 @@
+import 'package:mobile_ai_erp/core/utils/parse_utils.dart';
+
 enum OrderStatus {
   pending,
   processing,
@@ -87,8 +89,8 @@ class OrderItem {
       productName: json['productName'] as String?,
       sku: json['sku'] as String?,
       quantity: json['quantity'] as int? ?? 0,
-      unitPrice: _parseDouble(json['unitPrice']),
-      totalPrice: _parseDouble(json['totalPrice']),
+      unitPrice: parseDouble(json['unitPrice']),
+      totalPrice: parseDouble(json['totalPrice']),
     );
   }
 
@@ -147,10 +149,10 @@ class Order {
       date: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'].toString()) ?? DateTime.now()
           : DateTime.now(),
-      subtotal: _parseDouble(json['subtotal']),
-      discountAmount: _parseDouble(json['discountAmount']),
-      totalAmount: _parseDouble(json['totalPrice']),
-      shippingFee: _parseDouble(json['shippingFee']),
+      subtotal: parseDouble(json['subtotal']),
+      discountAmount: parseDouble(json['discountAmount']),
+      totalAmount: parseDouble(json['totalPrice']),
+      shippingFee: parseDouble(json['shippingFee']),
       shippingAddress: json['customerAddress'] as String? ?? '',
       paymentMethod: json['paymentMethod'] as String? ?? '',
       customerName: json['customerName'] as String?,
@@ -209,10 +211,3 @@ class Order {
   }
 }
 
-double _parseDouble(dynamic value) {
-  if (value == null) return 0.0;
-  if (value is double) return value;
-  if (value is int) return value.toDouble();
-  if (value is String) return double.tryParse(value) ?? 0.0;
-  return 0.0;
-}

@@ -1,18 +1,18 @@
-import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
+import 'package:dio/dio.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
 import 'package:mobile_ai_erp/domain/entity/order/order.dart';
 
 class StorefrontOrdersApi {
-  final DioClient _dioClient;
+  final Dio _dio;
 
-  StorefrontOrdersApi(this._dioClient);
+  StorefrontOrdersApi(this._dio);
 
   /// GET /storefront/orders?page=1&pageSize=10
   Future<StorefrontOrdersResult> getOrders({
     int page = 1,
     int pageSize = 10,
   }) async {
-    final res = await _dioClient.dio.get(
+    final res = await _dio.get(
       Endpoints.storefrontOrders,
       queryParameters: {'page': page, 'pageSize': pageSize},
     );
@@ -35,7 +35,7 @@ class StorefrontOrdersApi {
   /// GET /storefront/orders/:id
   Future<Order> getOrderById(String id) async {
     final res =
-        await _dioClient.dio.get(Endpoints.storefrontOrderById(id));
+        await _dio.get(Endpoints.storefrontOrderById(id));
     return Order.fromJson(res.data as Map<String, dynamic>);
   }
 }

@@ -248,7 +248,7 @@ class CheckoutRepositoryImpl extends CheckoutRepository {
       countryCode: 'VN',
       label: _mapAddressTypeToLabel(addr.type),
       state: addr.province,
-      postalCode: addr.ward,
+      postalCode: null, // ward is not a postal code
       isDefault: addr.isDefault,
     );
   }
@@ -265,7 +265,7 @@ class CheckoutRepositoryImpl extends CheckoutRepository {
       type: _mapLabelToAddressType(addr.label),
       province: addr.state,
       district: null,
-      ward: addr.postalCode,
+      ward: null, // postalCode is not a ward; no reverse mapping available
     );
   }
 

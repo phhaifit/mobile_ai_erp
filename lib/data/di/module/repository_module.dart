@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:mobile_ai_erp/data/local/datasources/checkout/checkout_datasource.dart';
 import 'package:mobile_ai_erp/data/network/apis/customer/customer_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/customer/customer_segment_api.dart';
@@ -162,7 +163,9 @@ class RepositoryModule {
     getIt.registerSingleton<RoleRepository>(
       RoleRepositoryImpl(getIt<RoleRemoteDataSource>()),
     );
-    getIt.registerSingleton<AuthRepository>(AuthRepositoryImpl(getIt()));
+    getIt.registerSingleton<AuthRepository>(
+      AuthRepositoryImpl(getIt(), getIt<Dio>(instanceName: 'refreshDio')),
+    );
 
     // web_builder:--------------------------------------------------------------
     getIt.registerLazySingleton<CmsPageRepository>(
