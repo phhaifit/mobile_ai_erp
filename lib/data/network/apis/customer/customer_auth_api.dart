@@ -145,8 +145,8 @@ class CustomerAuthApi {
       final response = await _dio.post(
         Endpoints.customerRefreshToken,
         data: {
-          refreshToken: refreshToken,
-          sessionId: sessionId,
+          'refreshToken': refreshToken,
+          'sessionId': sessionId,
         }
       );
       if (response.statusCode == 200) {
