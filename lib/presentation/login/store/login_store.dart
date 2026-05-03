@@ -121,6 +121,7 @@ abstract class _LoginStore with Store {
     const envAccessToken = String.fromEnvironment('ACCESS_TOKEN');
     const envRefreshToken = String.fromEnvironment('REFRESH_TOKEN');
     const envTenantId = String.fromEnvironment('TENANT_ID');
+    const envSessionId = String.fromEnvironment('SESSION_ID');
 
     if (envAccessToken.isNotEmpty && envTenantId.isNotEmpty) {
       await _sharedPreferenceHelper.saveAuthToken(
@@ -128,6 +129,9 @@ abstract class _LoginStore with Store {
         refreshToken: envRefreshToken,
       );
       await _sharedPreferenceHelper.saveTenantId(envTenantId);
+      if (envSessionId.isNotEmpty) {
+        await _sharedPreferenceHelper.saveSessionId(envSessionId);
+      }
 
       currentTenantId = envTenantId;
       needsOnboarding = false;

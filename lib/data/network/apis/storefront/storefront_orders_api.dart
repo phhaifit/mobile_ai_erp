@@ -23,9 +23,10 @@ class StorefrontOrdersApi {
             .toList() ??
         [];
     final meta = data['meta'] as Map<String, dynamic>?;
+    // Backend returns meta.totalItems (not meta.total)
     return StorefrontOrdersResult(
       orders: ordersList,
-      total: meta?['total'] as int? ?? ordersList.length,
+      total: meta?['totalItems'] as int? ?? ordersList.length,
       page: meta?['page'] as int? ?? page,
       pageSize: meta?['pageSize'] as int? ?? pageSize,
     );

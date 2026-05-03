@@ -35,25 +35,43 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<(String?, String?)> refreshToken(String refreshToken) async {
+  Future<(String?, String?, String?)> refreshToken(String refreshToken, {String? sessionId}) async {
     try {
-      final response = await dioClient.dio.get(
-        Endpoints.authRefresh,
+      // Use a clean Dio without interceptors to avoid infinite loop
+      final cleanDio = Dio(BaseOptions(
+        baseUrl: Endpoints.erpBaseUrl,
+        connectTimeout: const Duration(milliseconds: 30000),
+        receiveTimeout: const Duration(milliseconds: 15000),
+      ));
+
+      final body = <String, dynamic>{
+        'refreshToken': refreshToken,
+      };
+      if (sessionId != null && sessionId.isNotEmpty) {
+        body['sessionId'] = sessionId;
+      }
+
+      final response = await cleanDio.post(
+        Endpoints.customerAuthRefresh,
+        data: body,
         options: Options(
           headers: {
-            'Authorization': 'Bearer $refreshToken',
+            'X-Tenant-Id': Endpoints.tenantId,
           },
         ),
       );
 
       if (response.statusCode == 200 && response.data != null) {
-        return (response.data['token']?['accessToken'] as String?, response.data['token']?['refreshToken'] as String?);
+        final accessToken = response.data['accessToken'] as String?;
+        final newRefreshToken = response.data['refreshToken'] as String?;
+        final newSessionId = response.data['sessionId'] as String?;
+        return (accessToken, newRefreshToken, newSessionId);
       }
     } catch (e) {
       throw Exception('Refresh token request failed: $e');
     }
 
-    return (null, null);
+    return (null, null, null);
   }
 
   @override

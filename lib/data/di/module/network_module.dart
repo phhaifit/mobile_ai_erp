@@ -98,6 +98,7 @@ class NetworkModule {
           } else {
             await getIt<SharedPreferenceHelper>().removeTenantId();
             await getIt<SharedPreferenceHelper>().removeAuthToken();
+            await getIt<SharedPreferenceHelper>().removeSessionId();
           }
         },
         getNewTokens: () async {
@@ -108,9 +109,17 @@ class NetworkModule {
             if (refreshToken == null) {
               return (null, null);
             }
+            final sessionId = await sharedPreferenceHelper.sessionId;
             final AuthRepository authRepository = getIt<AuthRepository>();
-            final (newAccessToken, newRefreshToken) = await authRepository
-                .refreshToken(refreshToken);
+            final (newAccessToken, newRefreshToken, newSessionId) =
+                await authRepository.refreshToken(
+              refreshToken,
+              sessionId: sessionId,
+            );
+            // Save new sessionId if returned
+            if (newSessionId != null && newSessionId.isNotEmpty) {
+              await sharedPreferenceHelper.saveSessionId(newSessionId);
+            }
             return (newAccessToken, newRefreshToken ?? refreshToken);
           } catch (_) {
             return (null, null);

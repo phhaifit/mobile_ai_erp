@@ -23,7 +23,7 @@ class CheckoutApi {
     String? customerNote,
   }) async {
     final body = <String, dynamic>{
-      'address': address,
+      'shippingAddress': address,
       'paymentMethod': paymentMethod,
       if (couponCode != null && couponCode.trim().isNotEmpty)
         'couponCode': couponCode.trim(),

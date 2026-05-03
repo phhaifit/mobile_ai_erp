@@ -88,7 +88,8 @@ abstract class AuthRepository {
   Future<AuthStatusResponse> getAuthStatus(String accessToken);
 
   /// Refresh access token using refresh token
-  Future<(String?, String?)> refreshToken(String refreshToken);
+  /// Returns (accessToken, refreshToken, sessionId)
+  Future<(String?, String?, String?)> refreshToken(String refreshToken, {String? sessionId});
 
   /// Sign out the user
   Future<void> signOut(String accessToken, String tenantId);

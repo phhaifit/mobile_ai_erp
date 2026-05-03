@@ -22,12 +22,12 @@ class StorefrontPaymentsApi {
             .map(Payment.fromJson)
             .toList() ??
         [];
-    final meta = data['meta'] as Map<String, dynamic>?;
+    // Backend returns total/page/pageSize at top level (no meta wrapper)
     return StorefrontPaymentsResult(
       payments: paymentsList,
-      total: meta?['total'] as int? ?? paymentsList.length,
-      page: meta?['page'] as int? ?? page,
-      pageSize: meta?['pageSize'] as int? ?? pageSize,
+      total: data['total'] as int? ?? paymentsList.length,
+      page: data['page'] as int? ?? page,
+      pageSize: data['pageSize'] as int? ?? pageSize,
     );
   }
 

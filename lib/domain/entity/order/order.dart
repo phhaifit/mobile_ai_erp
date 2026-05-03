@@ -16,7 +16,9 @@ enum OrderStatus {
 }
 
 enum PaymentStatus {
+  unpaid,
   pending,
+  partial,
   completed,
   failed,
   refunded;
@@ -24,7 +26,7 @@ enum PaymentStatus {
   static PaymentStatus fromString(String? value) {
     return PaymentStatus.values.firstWhere(
       (e) => e.name == value,
-      orElse: () => PaymentStatus.pending,
+      orElse: () => PaymentStatus.unpaid,
     );
   }
 }

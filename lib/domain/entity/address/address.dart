@@ -58,7 +58,7 @@ class Address {
         if (province != null) 'province': province,
         if (district != null) 'district': district,
         if (ward != null) 'ward': ward,
-        'is_default': isDefault,
+        'isDefault': isDefault,
       };
 
   Address copyWith({

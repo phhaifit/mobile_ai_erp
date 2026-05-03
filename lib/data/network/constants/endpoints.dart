@@ -36,6 +36,9 @@ class Endpoints {
   static const String authSignOut = "/auth/sign-out";
   static const String tenantsCreate = "/tenants";
 
+  // customer auth endpoints
+  static const String customerAuthRefresh = "/customer/auth/refresh";
+
   static const String stackAuthHost = 'api.stack-auth.com';
   static const String stackAuthAuthenticate = '/api/v1/auth/oauth/authorize/';
   static const String stackAuthToken =
