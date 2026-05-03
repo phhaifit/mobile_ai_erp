@@ -1,4 +1,5 @@
-import 'package:mobile_ai_erp/presentation/product_metadata/attribute_sets/attribute_options_screen.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/attribute_sets/attribute_sets_form.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/attribute_sets/attribute_values_screen.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/attribute_sets/attribute_detail.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/attribute_sets/attributes_screen.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/brands/brand_detail.dart';
@@ -36,7 +37,6 @@ class ProductMetadataNavigator {
   static const String tagsRoute = '/product-metadata/tags';
   static const String tagFormRoute = '/product-metadata/tags/form';
   static const String tagDetailRoute = '/product-metadata/tags/detail';
-
   static Future<T?> openProductMetadataHome<T>(BuildContext context) {
     return _push<T>(
       context,

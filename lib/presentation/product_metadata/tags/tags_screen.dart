@@ -1,440 +1,95 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:mobx/mobx.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/tag.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/logic/metadata_pagination_logic.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/models/metadata_list_query.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_navigator.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/navigation/product_metadata_route_args.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
-import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_color_utils.dart';
-import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_empty_state.dart';
-import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_list_card.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/utils/metadata_confirm_delete.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/utils/metadata_error_reaction.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_list_controls.dart';
-import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_pagination_controls.dart';
-import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_status_chip.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_mobx/flutter_mobx.dart';
-
-enum _TagSortOption {
-  sortOrder('Sort order'),
-  nameAsc('Name A-Z'),
-  nameDesc('Name Z-A');
-
-  const _TagSortOption(this.label);
-
-  final String label;
-}
+import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_list_scaffold.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/widgets/metadata_sort_sheet.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/tags/tag_list_body.dart';
 
 class ProductMetadataTagsScreen extends StatefulWidget {
   const ProductMetadataTagsScreen({super.key});
-
   @override
-  State<ProductMetadataTagsScreen> createState() =>
-      _ProductMetadataTagsScreenState();
+  State<ProductMetadataTagsScreen> createState() => _ProductMetadataTagsScreenState();
 }
-
 class _ProductMetadataTagsScreenState extends State<ProductMetadataTagsScreen> {
-  static const int _pageSize = 10;
-
   final ProductMetadataStore _store = getIt<ProductMetadataStore>();
   final TextEditingController _searchController = TextEditingController();
-  String _query = '';
-  TagStatus? _statusFilter;
-  _TagSortOption _sortOption = _TagSortOption.sortOrder;
-  int _currentPage = 1;
-
+  MetadataListQuery _queryState = const MetadataListQuery();
+  late List<ReactionDisposer> _disposers;
   @override
   void initState() {
     super.initState();
-    Future<void>.microtask(() => _store.loadDashboard());
+    _disposers = [createMetadataErrorReaction(context: context, errorMessage: () => _store.errorStore.errorMessage, isMounted: () => mounted, actionLabel: 'load tags')];
+    Future<void>.microtask(_loadTags);
   }
-
   @override
   void dispose() {
+    for (final d in _disposers) {
+      d();
+    }
     _searchController.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Tags'),
-        actions: <Widget>[
-          IconButton(
-            onPressed: _goToProductMetadataHome,
-            icon: const Icon(Icons.dashboard_outlined),
-            tooltip: 'Back to Product Metadata',
-          ),
-        ],
+    return Observer(builder: (context) => MetadataListScaffold(
+      title: 'Tags',
+      addLabel: 'Add tag',
+      isLoading: _store.isTagLoading,
+      onAdd: _openTagForm,
+      controls: MetadataListControls(
+        searchController: _searchController,
+        onSearchChanged: (v) { _setQuery(_queryState.copyWith(search: v.trim(), page: 1)); _loadTags(); },
+        searchHint: 'Search by name',
+        resultLabel: 'Showing ${_store.tags.length} of ${_store.tagTotalItems} tags',
+        hasCustomSort: _queryState.hasCustomSort,
+        onOpenSort: _openSortSheet,
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => ProductMetadataNavigator.openTagForm(context),
-        icon: const Icon(Icons.add),
-        label: const Text('Add tag'),
+      child: TagListBody(
+        store: _store,
+        queryState: _queryState,
+        onPageChange: (p) { _setQuery(_queryState.copyWith(page: p)); _loadTags(); },
+        onEdit: (t) => _openTagForm(args: TagFormArgs(tagId: t.id)),
+        onDelete: _deleteTag,
+        onTap: _openTagDetail,
       ),
-      body: Observer(
-        builder: (context) {
-          if (_store.isLoading && !_store.hasLoadedDashboard) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final filteredTags = _applyFilters(_store.tags.toList());
-          final totalPages = _totalPages(filteredTags.length);
-          final currentPage =
-              totalPages == 0 ? 1 : _currentPage.clamp(1, totalPages);
-          final visibleTags = _pageItems(filteredTags, currentPage, _pageSize);
-
-          return Column(
-            children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: MetadataListControls(
-                  searchController: _searchController,
-                  onSearchChanged: (value) => setState(() {
-                    _query = value.trim();
-                    _currentPage = 1;
-                  }),
-                  searchHint: 'Search by tag or color',
-                  resultLabel:
-                      'Showing ${visibleTags.length} of ${filteredTags.length} tags',
-                  hasActiveFilter: _statusFilter != null,
-                  hasCustomSort: _sortOption != _TagSortOption.sortOrder,
-                  onOpenFilter: _openFilterSheet,
-                  onOpenSort: _openSortSheet,
-                ),
-              ),
-              Expanded(
-                child: filteredTags.isEmpty
-                    ? MetadataEmptyState(
-                        icon: Icons.sell_outlined,
-                        title: _store.tags.isEmpty
-                            ? 'No tags yet'
-                            : 'No matching tags',
-                        message: _store.tags.isEmpty
-                            ? 'Add your first tag to classify products faster.'
-                            : 'Try changing your search, filter, or sort settings.',
-                      )
-                    : ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-                        itemCount:
-                            visibleTags.length + (totalPages > 1 ? 1 : 0),
-                        separatorBuilder: (_, __) => const SizedBox(height: 12),
-                        itemBuilder: (context, index) {
-                          if (index >= visibleTags.length) {
-                            return MetadataPaginationControls(
-                              currentPage: currentPage,
-                              totalPages: totalPages,
-                              onPrevious: currentPage > 1
-                                  ? () => setState(() {
-                                        _currentPage = currentPage - 1;
-                                      })
-                                  : null,
-                              onNext: currentPage < totalPages
-                                  ? () => setState(() {
-                                        _currentPage = currentPage + 1;
-                                      })
-                                  : null,
-                            );
-                          }
-
-                          final tag = visibleTags[index];
-                          return MetadataListCard(
-                            title: tag.name,
-                            leading: _TagColorDot(colorHex: tag.colorHex),
-                            detailLines: _tagSummary(tag),
-                            chips: <Widget>[
-                              MetadataStatusChip(label: tag.status.label),
-                            ],
-                            trailing: PopupMenuButton<String>(
-                              onSelected: (value) {
-                                switch (value) {
-                                  case 'edit':
-                                    ProductMetadataNavigator.openTagForm(
-                                      context,
-                                      args: TagFormArgs(tagId: tag.id),
-                                    );
-                                    break;
-                                  case 'delete':
-                                    _deleteTag(tag);
-                                    break;
-                                }
-                              },
-                              itemBuilder: (context) =>
-                                  const <PopupMenuEntry<String>>[
-                                PopupMenuItem<String>(
-                                  value: 'edit',
-                                  child: Text('Edit'),
-                                ),
-                                PopupMenuItem<String>(
-                                  value: 'delete',
-                                  child: Text('Delete'),
-                                ),
-                              ],
-                            ),
-                            onTap: () => ProductMetadataNavigator.openTagDetail(
-                              context,
-                              args: TagDetailArgs(tagId: tag.id),
-                            ),
-                          );
-                        },
-                      ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
+    ));
   }
-
-  List<Tag> _applyFilters(List<Tag> tags) {
-    final query = _query.toLowerCase();
-    final filtered = tags.where((tag) {
-      if (_statusFilter != null && tag.status != _statusFilter) {
-        return false;
-      }
-      if (query.isEmpty) {
-        return true;
-      }
-      return tag.name.toLowerCase().contains(query) ||
-          (tag.colorHex?.toLowerCase().contains(query) ?? false);
-    }).toList();
-
-    filtered.sort((left, right) {
-      switch (_sortOption) {
-        case _TagSortOption.sortOrder:
-          final orderCompare = left.sortOrder.compareTo(right.sortOrder);
-          if (orderCompare != 0) {
-            return orderCompare;
-          }
-          return left.name.toLowerCase().compareTo(right.name.toLowerCase());
-        case _TagSortOption.nameAsc:
-          return left.name.toLowerCase().compareTo(right.name.toLowerCase());
-        case _TagSortOption.nameDesc:
-          return right.name.toLowerCase().compareTo(left.name.toLowerCase());
-      }
-    });
-
-    return filtered;
+  Future<void> _openSortSheet() => showMetadataSortSheet(
+    context,
+    title: 'Sort tags',
+    options: const [defaultMetadataSortOption],
+    onSelected: (by, order) {
+      _setQuery(_queryState.copyWith(sortBy: by, sortOrder: order, page: 1));
+      _loadTags();
+    },
+  );
+  Future<void> _openTagForm({TagFormArgs? args}) async {
+    final changed = await ProductMetadataNavigator.openTagForm<bool>(context, args: args);
+    if (changed == true && mounted) await _loadTags();
   }
-
-  Future<void> _openFilterSheet() async {
-    final result = await showModalBottomSheet<_TagFilterResult>(
-      context: context,
-      builder: (context) {
-        TagStatus? tempStatus = _statusFilter;
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      'Filter tags',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 16),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('All statuses'),
-                      trailing:
-                          tempStatus == null ? const Icon(Icons.check) : null,
-                      onTap: () => setModalState(() {
-                        tempStatus = null;
-                      }),
-                    ),
-                    for (final status in TagStatus.values)
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(status.label),
-                        trailing: tempStatus == status
-                            ? const Icon(Icons.check)
-                            : null,
-                        onTap: () => setModalState(() {
-                          tempStatus = status;
-                        }),
-                      ),
-                    const SizedBox(height: 8),
-                    FilledButton(
-                      onPressed: () => Navigator.of(context).pop(
-                        _TagFilterResult(status: tempStatus),
-                      ),
-                      child: const Text('Apply'),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-
-    if (result == null || !mounted) {
-      return;
-    }
-    setState(() {
-      _statusFilter = result.status;
-      _currentPage = 1;
-    });
+  Future<void> _openTagDetail(Tag tag) async {
+    await ProductMetadataNavigator.openTagDetail<void>(context, args: TagDetailArgs(tagId: tag.id));
+    if (mounted) await _loadTags();
   }
-
-  Future<void> _openSortSheet() async {
-    final selected = await showModalBottomSheet<_TagSortOption>(
-      context: context,
-      builder: (context) {
-        _TagSortOption tempSort = _sortOption;
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      'Sort tags',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 16),
-                    for (final option in _TagSortOption.values)
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(option.label),
-                        trailing:
-                            tempSort == option ? const Icon(Icons.check) : null,
-                        onTap: () => setModalState(() {
-                          tempSort = option;
-                        }),
-                      ),
-                    const SizedBox(height: 8),
-                    FilledButton(
-                      onPressed: () => Navigator.of(context).pop(tempSort),
-                      child: const Text('Apply'),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-
-    if (selected == null || !mounted) {
-      return;
-    }
-    setState(() {
-      _sortOption = selected;
-      _currentPage = 1;
-    });
-  }
-
-  int _totalPages(int itemCount) =>
-      itemCount == 0 ? 0 : ((itemCount - 1) ~/ _pageSize) + 1;
-
-  void _goToProductMetadataHome() {
-    Navigator.of(context).popUntil(
-      (route) =>
-          route.settings.name ==
-              ProductMetadataNavigator.productMetadataHomeRoute ||
-          route.isFirst,
-    );
-  }
-
-  List<Tag> _pageItems(List<Tag> items, int page, int pageSize) {
-    final start = (page - 1) * pageSize;
-    if (start >= items.length) {
-      return const <Tag>[];
-    }
-    final end = (start + pageSize).clamp(0, items.length);
-    return items.sublist(start, end);
-  }
-
-  List<String> _tagSummary(Tag tag) {
-    return <String>[
-      if (tag.colorHex != null && tag.colorHex!.trim().isNotEmpty)
-        'Color: ${tag.colorHex}',
-      'Sort order: ${tag.sortOrder}',
-    ];
-  }
-
   Future<void> _deleteTag(Tag tag) async {
-    final confirmed = await showDialog<bool>(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              title: const Text('Delete tag?'),
-              content: Text('Delete "${tag.name}"? This can\'t be undone.'),
-              actions: <Widget>[
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(false),
-                  child: const Text('Cancel'),
-                ),
-                FilledButton(
-                  onPressed: () => Navigator.of(context).pop(true),
-                  child: const Text('Delete'),
-                ),
-              ],
-            );
-          },
-        ) ??
-        false;
-
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      await _store.deleteTag(tag.id);
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Deleted "${tag.name}".')),
-      );
-    } catch (error) {
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Couldn\'t delete tag. Try again.'),
-        ),
-      );
-    }
+    final confirmed = await showMetadataDeleteDialog(context, title: 'Delete tag?', message: 'Delete "${tag.name}"? This action cannot be undone.');
+    if (!confirmed) return;
+    final prev = _store.tagTotalItems;
+    await _store.deleteTag(tag.id);
+    _setQuery(_queryState.copyWith(page: resolveMetadataPageAfterDelete(currentPage: _queryState.page, pageSize: _queryState.pageSize, totalItems: prev)));
+    await _loadTags();
+    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Deleted "${tag.name}".')));
   }
-}
-
-class _TagFilterResult {
-  const _TagFilterResult({required this.status});
-
-  final TagStatus? status;
-}
-
-class _TagColorDot extends StatelessWidget {
-  const _TagColorDot({required this.colorHex});
-
-  final String? colorHex;
-
-  @override
-  Widget build(BuildContext context) {
-    final parsedColor = tryParseHexColor(colorHex);
-    if (parsedColor == null) {
-      return const Icon(Icons.sell_outlined);
-    }
-
-    return Container(
-      width: 20,
-      height: 20,
-      decoration: BoxDecoration(
-        color: parsedColor,
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outlineVariant,
-        ),
-      ),
-    );
-  }
+  void _setQuery(MetadataListQuery q) { if (mounted) setState(() => _queryState = q); }
+  Future<void> _loadTags() => _store.loadTags(page: _queryState.page, pageSize: _queryState.pageSize, search: _queryState.search, sortBy: _queryState.sortBy, sortOrder: _queryState.sortOrder);
 }

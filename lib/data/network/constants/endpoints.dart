@@ -2,7 +2,7 @@ class Endpoints {
   Endpoints._();
 
   // ERP backend base url - override at build time:
-  //   --dart-define=ERP_BASE_URL=https://erp-api.jarvis.cx/api
+  //   --dart-define=ERP_BASE_URL=https://erp-api.jarvis.cx
   static const String erpBaseUrl = String.fromEnvironment(
     'ERP_BASE_URL',
     defaultValue: 'https://erp-api.jarvis.cx',

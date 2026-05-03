@@ -7,6 +7,11 @@ import 'package:mobile_ai_erp/core/data/network/dio/interceptors/token_refresh_i
 import 'package:mobile_ai_erp/data/network/apis/customer/customer_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/customer/customer_segment_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/orders/order_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/product_metadata/brand_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/product_metadata/brand_image_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/product_metadata/category_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/product_metadata/tag_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/product_metadata/attribute_set_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/storefront_products_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/web_builder/web_builder_api.dart';
@@ -176,6 +181,11 @@ class NetworkModule {
     getIt.registerSingleton(
       StorefrontApi(getIt<DioClient>(instanceName: 'storefront')),
     );
+    getIt.registerSingleton(BrandApi(getIt<DioClient>(instanceName: erpDioClientName)));
+    getIt.registerSingleton(BrandImageApi(getIt<DioClient>(instanceName: erpDioClientName)));
+    getIt.registerSingleton(CategoryApi(getIt<DioClient>(instanceName: erpDioClientName)));
+    getIt.registerSingleton(TagApi(getIt<DioClient>(instanceName: erpDioClientName)));
+    getIt.registerSingleton(AttributeSetApi(getIt<DioClient>(instanceName: erpDioClientName)));
     getIt.registerSingleton(PostApi(getIt<DioClient>(), getIt<RestClient>()));
 
     // customer apis:----------------------------------------------------------
