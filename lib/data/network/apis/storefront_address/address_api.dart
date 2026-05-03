@@ -52,7 +52,7 @@ class StorefrontAddressApi {
   /// Delete address
   Future<void> deleteAddress(String id) async {
     try {
-      await _dioClient.dio.delete('${Endpoints.customerAddresses}/$id');
+      await _dioClient.dio.delete('${Endpoints.storefrontCustomerAddresses}/$id');
     } catch (e) {
       rethrow;
     }

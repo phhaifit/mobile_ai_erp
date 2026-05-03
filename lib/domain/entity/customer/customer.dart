@@ -144,67 +144,6 @@ class Customer {
       transactions: transactions ?? this.transactions,
     );
   }
-
-  factory Customer.fromJson(Map<String, dynamic> json) {
-    return Customer(
-      id: json['id']?.toString() ?? '',
-      firstName: json['firstName'] ?? json['first_name'] ?? '',
-      lastName: json['lastName'] ?? json['last_name'] ?? '',
-      email: json['email'] ?? '',
-      phone: json['phone'],
-      avatarUrl: json['avatarUrl'] ?? json['avatar_url'],
-      groupId: json['groupId'] ?? json['group_id'],
-      notes: json['notes'],
-      status: CustomerStatus.fromApiString(json['status']) ?? CustomerStatus.active,
-      type: (json['type'] == 'business' || json['type'] == 'Business') 
-          ? CustomerType.business 
-          : CustomerType.individual,
-      createdAt: json['createdAt'] != null 
-          ? DateTime.parse(json['createdAt'])
-          : json['created_at'] != null 
-              ? DateTime.parse(json['created_at'])
-              : DateTime.now(),
-      updatedAt: json['updatedAt'] != null 
-          ? DateTime.parse(json['updatedAt'])
-          : json['updated_at'] != null 
-              ? DateTime.parse(json['updated_at'])
-              : null,
-      lastSignInAt: json['lastSignInAt'] != null 
-          ? DateTime.parse(json['lastSignInAt'])
-          : json['last_sign_in_at'] != null 
-              ? DateTime.parse(json['last_sign_in_at'])
-              : null,
-      emailVerifiedAt: json['emailVerifiedAt'] != null 
-          ? DateTime.parse(json['emailVerifiedAt'])
-          : json['email_verified_at'] != null 
-              ? DateTime.parse(json['email_verified_at'])
-              : null,
-      transactions: (json['transactions'] as List<dynamic>?)
-              ?.map((e) => CustomerOrder.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          const [],
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'firstName': firstName,
-      'lastName': lastName,
-      'email': email,
-      'phone': phone,
-      'avatarUrl': avatarUrl,
-      'groupId': groupId,
-      'notes': notes,
-      'status': status.apiValue,
-      'type': type == CustomerType.business ? 'business' : 'individual',
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt?.toIso8601String(),
-      'lastSignInAt': lastSignInAt?.toIso8601String(),
-      'emailVerifiedAt': emailVerifiedAt?.toIso8601String(),
-      'transactions': transactions.map((e) => e.toJson()).toList(),
-    };
-  }
 }
 
 const Object _sentinel = Object();

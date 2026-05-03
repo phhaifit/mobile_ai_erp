@@ -148,7 +148,7 @@ class StorefrontCustomer {
   factory StorefrontCustomer.fromJson(Map<String, dynamic> json) {
     return StorefrontCustomer(
       id: json['id']?.toString() ?? '',
-      firstName: json['firstName'] ?? json['first_name'] ?? '',
+      firstName: json['firstName'] ?? json['first_name'] ?? json['name'] ?? '',
       lastName: json['lastName'] ?? json['last_name'] ?? '',
       email: json['email'] ?? '',
       phone: json['phone'],

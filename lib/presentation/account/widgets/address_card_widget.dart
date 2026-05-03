@@ -37,7 +37,7 @@ class AddressCardWidget extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    address.type,
+                    address.type.toString().split('.').last,
                     style: const TextStyle(
                         fontWeight: FontWeight.bold, fontSize: 16),
                   ),

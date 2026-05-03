@@ -22,7 +22,7 @@ class OrderApiDataSource implements OrderDataSource {
   @override
   Future<List<StorefrontOrder>> getOrderHistory({String? status, int? page, int? pageSize}) async {
     try {
-      final customerId = await _prefs.customerId;
+      final customerId = await _prefs.getCustomerId();
       if (customerId == null || customerId.isEmpty) {
         throw Exception('Customer ID not found. User may not be logged in.');
       }

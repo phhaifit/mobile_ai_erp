@@ -1,7 +1,26 @@
+enum AddressType {
+  home('home'),
+  office('office'),
+  billing('billing'),
+  shipping('shipping'),
+  warehouse('warehouse'),
+  other('other');
+
+  const AddressType(this.value);
+  final String value;
+
+  static AddressType fromString(String? val) {
+    return AddressType.values.firstWhere(
+      (e) => e.value == val,
+      orElse: () => AddressType.home,
+    );
+  }
+}
+
 class StorefrontAddress {
   final String id;
   final String address;
-  final String type;
+  final AddressType type; // Updated to Enum
   final String? province;
   final String? district;
   final String? ward;
@@ -20,7 +39,7 @@ class StorefrontAddress {
   StorefrontAddress copyWith({
     String? id,
     String? address,
-    String? type,
+    AddressType? type,
     Object? province,
     Object? district,
     Object? ward,
@@ -41,7 +60,7 @@ class StorefrontAddress {
     return {
       'id': id,
       'address': address,
-      'type': type,
+      'type': type.value, // Send the string value to NestJS
       'province': province,
       'district': district,
       'ward': ward,
@@ -53,7 +72,7 @@ class StorefrontAddress {
     return StorefrontAddress(
       id: json['id']?.toString() ?? '',
       address: json['address']?.toString() ?? '',
-      type: json['type']?.toString() ?? '',
+      type: AddressType.fromString(json['type']?.toString()), // Parse string back to Enum
       province: json['province']?.toString(),
       district: json['district']?.toString(),
       ward: json['ward']?.toString(),

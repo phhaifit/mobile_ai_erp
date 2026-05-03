@@ -172,14 +172,6 @@ class RepositoryModule {
     getIt.registerLazySingleton<LoyaltyLedgerRepository>(
         () => LoyaltyRepositoryImpl(getIt<LoyaltyLedgerApiDataSource>()));
 
-    getIt.registerLazySingleton<StorefrontAddressRepository>(
-      () => AddressRepositoryImpl(getIt<AddressApiDataSource>()),
-    );
-
-    getIt.registerLazySingleton<StorefrontOrderRepository>(
-      () => OrderRepositoryImpl(getIt<OrderApiDataSource>()),
-    );
-
     // post_purchase:----------------------------------------------------------
     getIt.registerSingleton<PostPurchaseDataSource>(PostPurchaseDataSource());
     getIt.registerSingleton<PostPurchaseRepository>(

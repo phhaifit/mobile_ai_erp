@@ -5,7 +5,7 @@ class AddressMockDataSource {
     StorefrontAddress(
       id: 'addr_1',
       address: '227 Nguyen Van Cu',
-      type: 'home',
+      type: AddressType.home,
       province: 'Ho Chi Minh',
       district: 'District 1',
       ward: 'Ward 1',
@@ -14,7 +14,7 @@ class AddressMockDataSource {
     StorefrontAddress(
       id: 'addr_2',
       address: '123 Le Loi, District 1',
-      type: 'work',
+      type: AddressType.office,
       province: 'Ho Chi Minh',
       district: 'District 1',
       ward: 'Ward 2',

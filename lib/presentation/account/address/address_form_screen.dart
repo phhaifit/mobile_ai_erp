@@ -14,10 +14,12 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final AddressStore _addressStore = getIt<AddressStore>();
 
-  late TextEditingController _nameController;
-  late TextEditingController _phoneController;
-  late TextEditingController _streetController;
-  late TextEditingController _cityController;
+  late TextEditingController _addressController;
+  late TextEditingController _provinceController;
+  late TextEditingController _districtController;
+  late TextEditingController _wardController;
+  
+  AddressType _selectedType = AddressType.home;
   bool _isDefault = false;
   bool _isLoading = false;
   bool _isInit = false;
@@ -33,11 +35,12 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
         _existingAddress = args;
       }
 
-      _nameController = TextEditingController(text: _existingAddress?.address ?? '');
-      _phoneController = TextEditingController(text: _existingAddress?.type ?? '');
-      _streetController = TextEditingController(text: _existingAddress?.district ?? '');
-      _cityController = TextEditingController(text: _existingAddress?.province ?? '');
-      // If editing, use the existing status. If creating new, check if the list is empty!
+      _addressController = TextEditingController(text: _existingAddress?.address ?? '');
+      _provinceController = TextEditingController(text: _existingAddress?.province ?? '');
+      _districtController = TextEditingController(text: _existingAddress?.district ?? '');
+      _wardController = TextEditingController(text: _existingAddress?.ward ?? '');
+      
+      _selectedType = _existingAddress?.type ?? AddressType.home;
       _isDefault = _existingAddress?.isDefault ?? _addressStore.addresses.isEmpty;
       
       _isInit = true; 
@@ -46,10 +49,10 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _phoneController.dispose();
-    _streetController.dispose();
-    _cityController.dispose();
+    _addressController.dispose();
+    _provinceController.dispose();
+    _districtController.dispose();
+    _wardController.dispose();
     super.dispose();
   }
 
@@ -58,17 +61,19 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
       setState(() => _isLoading = true);
       
       try {
-        final newFullName = _nameController.text.trim();
-        final newStreet = _streetController.text.trim();
-        final newCity = _cityController.text.trim();
-        final newPhone = _phoneController.text.trim();
+        final newAddress = _addressController.text.trim();
+        final newProvince = _provinceController.text.trim();
+        final newDistrict = _districtController.text.trim();
+        final newWard = _wardController.text.trim();
 
-        // Duplicate Check: Prevent adding/updating to an address that already exists (except itself when editing)
+        // Exact match Duplicate Check based on DB fields
         final isDuplicate = _addressStore.addresses.any((existing) => 
-            existing.address.toLowerCase() == newFullName.toLowerCase() &&
+            existing.address.toLowerCase() == newAddress.toLowerCase() &&
             existing.id != _existingAddress?.id && 
-            (existing.district?.toLowerCase() ?? '').startsWith(newStreet.toLowerCase()) &&
-            (existing.province?.toLowerCase() ?? '').startsWith(newCity.toLowerCase())
+            (existing.province?.toLowerCase() ?? '') == newProvince.toLowerCase() &&
+            (existing.district?.toLowerCase() ?? '') == newDistrict.toLowerCase() &&
+            (existing.ward?.toLowerCase() ?? '') == newWard.toLowerCase() &&
+            existing.type == _selectedType
         );
 
         if (isDuplicate) {
@@ -83,10 +88,11 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
 
         final addressData = StorefrontAddress(
           id: _existingAddress?.id ?? 'addr_${DateTime.now().millisecondsSinceEpoch}',
-          address: _nameController.text.trim(),
-          type: newPhone,
-          province: newCity,
-          district: newStreet,
+          address: newAddress,
+          type: _selectedType,
+          province: newProvince.isEmpty ? null : newProvince,
+          district: newDistrict.isEmpty ? null : newDistrict,
+          ward: newWard.isEmpty ? null : newWard,
           isDefault: _isDefault,
         );
 
@@ -125,62 +131,34 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              TextFormField(
-                controller: _nameController,
-                enabled: !_isLoading,
-                maxLength: 100,
+              // 1. Address Type Dropdown
+              DropdownButtonFormField<AddressType>(
+                value: _selectedType,
                 decoration: const InputDecoration(
-                  labelText: 'Full Name', 
+                  labelText: 'Address Type',
                   border: OutlineInputBorder(),
-                  counterText: '',
-                  errorStyle: TextStyle(color: Colors.red),
                 ),
-                validator: (val) {
-                  final text = val?.trim() ?? '';
-                  if (text.isEmpty) return 'Required';
-                  if (text.length < 2) return 'Name must be at least 2 characters';
-                  if (text.length > 100) return 'Name cannot exceed 100 characters';
-                  if (!RegExp(r"^[\p{L}\p{N}\s,-]+$", unicode: true).hasMatch(text)) {
-                    return 'Name contains invalid characters or numbers';
+                items: AddressType.values.map((type) {
+                  return DropdownMenuItem(
+                    value: type,
+                    child: Text(type.value.toUpperCase()), // E.g. "HOME", "OFFICE"
+                  );
+                }).toList(),
+                onChanged: _isLoading ? null : (AddressType? newValue) {
+                  if (newValue != null) {
+                    setState(() => _selectedType = newValue);
                   }
-                  return null;
                 },
               ),
               
               const SizedBox(height: 16),
-              
-              TextFormField(
-                controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                enabled: !_isLoading,
-                maxLength: 15,
-                decoration: const InputDecoration(
-                  labelText: 'Phone Number', 
-                  border: OutlineInputBorder(),
-                  counterText: '',
-                  errorStyle: TextStyle(color: Colors.red),
-                ),
-                validator: (val) {
-                  final text = val?.trim() ?? '';
-                  if (text.isEmpty) return 'Required';
-                  if (text.length < 7) return 'Phone number too short';
-                  
-                  final cleanPhone = text.replaceAll(RegExp(r'[\s\-]'), '');
-                  
-                  if (!RegExp(r'^\+?[0-9]{7,15}$').hasMatch(cleanPhone)) {
-                    return 'Enter a valid phone number';
-                  }
-                  return null;
-                },
-              ),
 
-              const SizedBox(height: 16),
-
+              // 2. Street Address
               TextFormField(
-                controller: _streetController,
+                controller: _addressController,
                 enabled: !_isLoading,
-                maxLength: 255,
-                maxLines: 1,
+                maxLength: 500,
+                maxLines: 2,
                 decoration: const InputDecoration(
                   labelText: 'Street Address', 
                   border: OutlineInputBorder(),
@@ -190,33 +168,66 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
                 validator: (val) {
                   final text = val?.trim() ?? '';
                   if (text.isEmpty) return 'Required';
-                  if (text.length < 5) return 'Address is too short to be valid';
+                  if (text.length < 5) return 'Address is too short';
                   return null;
                 },
               ),
 
               const SizedBox(height: 16),
 
+              // 3. Province
               TextFormField(
-                controller: _cityController,
+                controller: _provinceController,
                 enabled: !_isLoading,
                 maxLength: 100,
                 decoration: const InputDecoration(
-                  labelText: 'City / Province', 
+                  labelText: 'Province / State', 
                   border: OutlineInputBorder(),
                   counterText: '',
-                  errorStyle: TextStyle(color: Colors.red),
                 ),
-                validator: (val) {
-                  final text = val?.trim() ?? '';
-                  if (text.isEmpty) return 'Required';
-                  if (text.length < 2) return 'City name is too short';
-                  
-                  if (!RegExp(r"^[\p{L}\p{N}\s,-]+$", unicode: true).hasMatch(text)) {
-                    return 'City contains invalid characters';
-                  }
-                  return null;
+              ),
+
+              const SizedBox(height: 16),
+
+              // 4. District
+              TextFormField(
+                controller: _districtController,
+                enabled: !_isLoading,
+                maxLength: 100,
+                decoration: const InputDecoration(
+                  labelText: 'District / City', 
+                  border: OutlineInputBorder(),
+                  counterText: '',
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // 5. Ward
+              TextFormField(
+                controller: _wardController,
+                enabled: !_isLoading,
+                maxLength: 100,
+                decoration: const InputDecoration(
+                  labelText: 'Ward / Area', 
+                  border: OutlineInputBorder(),
+                  counterText: '',
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // 6. Set as Default Checkbox
+              CheckboxListTile(
+                title: const Text("Set as default address"),
+                value: _isDefault,
+                onChanged: _isLoading ? null : (bool? value) {
+                  setState(() {
+                    _isDefault = value ?? false;
+                  });
                 },
+                controlAffinity: ListTileControlAffinity.leading,
+                contentPadding: EdgeInsets.zero,
               ),
 
               const SizedBox(height: 32),

@@ -106,7 +106,6 @@ class _ProfileDashboardScreenState extends State<ProfileDashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // FIX: Add a fallback for empty text
                 Text(
                   _profileStore.userName.isNotEmpty ? _profileStore.userName : 'Loading...',
                   style: const TextStyle(

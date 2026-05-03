@@ -95,4 +95,8 @@ class SharedPreferenceHelper {
   Future<void> changeLanguage(String language) {
     return _sharedPreference.setString(Preferences.current_language, language);
   }
+
+  Future<String?> getCustomerId() async {
+    return _sharedPreference.getString(Preferences.customer_id);
+  }
 }

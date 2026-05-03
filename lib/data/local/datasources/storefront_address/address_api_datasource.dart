@@ -22,7 +22,7 @@ class AddressApiDataSource implements AddressDataSource {
   Future<List<StorefrontAddress>> getAddresses() async {
     try {
       // Get the stored customer ID (set during login)
-      final customerId = await _prefs.customerId;
+      final customerId = await _prefs.getCustomerId();
       print('🔵 [AddressApiDataSource.getAddresses] Stored customer ID: $customerId');
       
       if (customerId == null || customerId.isEmpty) {

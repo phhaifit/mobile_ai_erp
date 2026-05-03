@@ -37,7 +37,7 @@ class AccountCustomerApiDataSource implements AccountCustomerDataSource {
   Future<StorefrontCustomer> getProfile() async {
     try {
       // Get the stored customer ID (set during login)
-      final customerId = await _prefs.customerId;
+      final customerId = await _prefs.getCustomerId();
       print('🔵 [AccountCustomerApiDataSource.getProfile] Stored customer ID: $customerId');
       
       if (customerId == null || customerId.isEmpty) {
@@ -48,7 +48,7 @@ class AccountCustomerApiDataSource implements AccountCustomerDataSource {
       print('📞 [AccountCustomerApiDataSource.getProfile] Calling StorefrontCustomerApi.getProfile($customerId)');
       // Use the new unified endpoint with Prisma include
       final customer = await _customerApi.getProfile();
-      print('✅ [AccountCustomerApiDataSource.getProfile] Got customer: ${customer.name}');
+      print('✅ [AccountCustomerApiDataSource.getProfile] Got customer: ${customer.firstName} ${customer.lastName}');
       return customer;
     } catch (e) {
       print('❌ [AccountCustomerApiDataSource.getProfile] Error: $e');

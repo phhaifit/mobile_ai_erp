@@ -24,7 +24,7 @@ abstract class _ProfileStore with Store {
   bool isLoading = false;
 
   @computed
-  String get userName => customer?.fullName ?? '';
+  String get userName => customer?.firstName ?? '';
 
   @computed
   String get userEmail => customer?.email ?? '';
@@ -36,7 +36,6 @@ abstract class _ProfileStore with Store {
   @computed
   int get loyaltyPoints => 0; 
 
-  // 🚀 RESTORED: The missing fetchProfile method!
   @action
   Future<void> fetchProfile() async {
     try {
