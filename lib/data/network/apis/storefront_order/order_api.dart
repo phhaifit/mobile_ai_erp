@@ -14,7 +14,7 @@ class StorefrontOrderApi {
   Future<List<StorefrontOrder>> getOrderHistory({String? status, int? page, int? pageSize}) async {
     try {
       final res = await _dioClient.dio.get(
-        Endpoints.customerOrders,
+        Endpoints.storefrontCustomerOrders,
         queryParameters: {
           if (status != null) 'status': status,
           if (page != null) 'page': page,
@@ -34,7 +34,7 @@ class StorefrontOrderApi {
   /// Get order details (NOTE: Backend endpoint needed)
   Future<StorefrontOrder> getOrderDetails(String orderId) async {
     try {
-      final res = await _dioClient.dio.get('${Endpoints.customerOrders}/$orderId');
+      final res = await _dioClient.dio.get('${Endpoints.storefrontCustomerOrders}/$orderId');
       return StorefrontOrder.fromJson(res.data);
     } catch (e) {
       rethrow;
@@ -44,7 +44,7 @@ class StorefrontOrderApi {
   /// Cancel order (NOTE: Backend endpoint needed)
   Future<void> cancelOrder(String orderId) async {
     try {
-      await _dioClient.dio.patch('${Endpoints.customerOrders}/$orderId/cancel');
+      await _dioClient.dio.patch('${Endpoints.storefrontCustomerOrders}/$orderId/cancel');
     } catch (e) {
       rethrow;
     }
@@ -55,7 +55,7 @@ class StorefrontOrderApi {
     try {
       // Hits the NestJS: @Post(':orderId/return')
       await _dioClient.dio.post(
-        '${Endpoints.customerOrders}/$orderId/return',
+        '${Endpoints.storefrontCustomerOrders}/$orderId/return',
         data: data, // This will be your SubmitReturnPayload mapped to JSON
       );
     } catch (e) {
@@ -69,7 +69,7 @@ class StorefrontOrderApi {
     try {
       // Hits the NestJS: @Post(':orderId/reorder')
       final response = await _dioClient.dio.post(
-        '${Endpoints.customerOrders}/$orderId/reorder', 
+        '${Endpoints.storefrontCustomerOrders}/$orderId/reorder', 
       );
       return response.data; // Returns { message, cartId } from your backend
     } catch (e) {
@@ -82,7 +82,7 @@ class StorefrontOrderApi {
   Future<void> confirmOrder(String orderId) async {
     try {
       // Hits the new NestJS endpoint perfectly
-      await _dioClient.dio.patch('${Endpoints.customerOrders}/$orderId/confirm');
+      await _dioClient.dio.patch('${Endpoints.storefrontCustomerOrders}/$orderId/confirm');
     } catch (e) {
       print('❌ [OrderApi.confirmOrder] Error: $e');
       rethrow;

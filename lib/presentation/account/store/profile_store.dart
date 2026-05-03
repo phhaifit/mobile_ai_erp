@@ -46,7 +46,7 @@ abstract class _ProfileStore with Store {
       // Call the Use Case (adjust params if your UseCase requires a specific empty parameter)
       customer = await _getProfileUseCase.call();
       
-      print('✅ [ProfileStore.fetchProfile] Success: ${customer?.name}');
+      print('✅ [ProfileStore.fetchProfile] Success: ${customer?.firstName}');
     } catch (e) {
       print('❌ [ProfileStore.fetchProfile] Error: $e');
     } finally {
@@ -84,8 +84,6 @@ abstract class _ProfileStore with Store {
 
       // 2. Clear local storage
       await _prefs.removeAuthToken();
-      await _prefs.removeCustomerId();
-      await _prefs.saveIsLoggedIn(false);
 
       print('✅ [ProfileStore.logout] Successfully cleared session data.');
     } catch (e) {

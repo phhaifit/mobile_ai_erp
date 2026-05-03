@@ -170,57 +170,6 @@ class _LoginScreenState extends State<LoginScreen> {
     return SizedBox.shrink();
   }
 
-  _showSuccessMessage(String message) {
-    Future.delayed(Duration(milliseconds: 0), () {
-      FlushbarHelper.createSuccess(
-        message: message,
-        title: 'Success',
-        duration: Duration(seconds: 3),
-      )..show(context);
-    });
-  }
-
-  _showForgotPasswordDialog() {
-    TextEditingController emailController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Forgot Password'),
-          content: TextField(
-            controller: emailController,
-            decoration: InputDecoration(hintText: 'Enter your email'),
-            keyboardType: TextInputType.emailAddress,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () async {
-                if (emailController.text.isNotEmpty) {
-                  try {
-                    await _loginStore.forgotPassword(emailController.text);
-                    Navigator.of(context).pop();
-                    if (_loginStore.success) {
-                      _showSuccessMessage('Password reset email sent!');
-                    }
-                  } catch (e) {
-                    _showErrorMessage(_loginStore.errorStore.errorMessage);
-                  }
-                } else {
-                  _showErrorMessage('Please enter your email');
-                }
-              },
-              child: Text('Submit'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   // dispose:-------------------------------------------------------------------
   @override
   void dispose() {

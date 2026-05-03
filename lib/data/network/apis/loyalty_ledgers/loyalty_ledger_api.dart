@@ -12,7 +12,7 @@ class LoyaltyLedgerApi {
     try {
       // Assuming you add this to your Endpoints file, otherwise use the string:
       // '/storefront/account/loyalty-points/balance'
-      final res = await _dioClient.dio.get(Endpoints.customerLoyalty + '/balance');
+      final res = await _dioClient.dio.get(Endpoints.storefrontCustomerLoyalty + '/balance');
       return res.data;
     } catch (e) {
       print('❌ [LoyaltyLedgerApi.getBalance] Error: $e');
@@ -25,7 +25,7 @@ class LoyaltyLedgerApi {
     try {
       // Assuming: Endpoints.customerLoyalty + '/history'
       final res = await _dioClient.dio.get(
-        Endpoints.customerLoyalty + '/history',
+        Endpoints.storefrontCustomerLoyalty + '/history',
         queryParameters: {
           'page': page,
           'pageSize': pageSize,

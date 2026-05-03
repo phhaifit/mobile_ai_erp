@@ -76,9 +76,6 @@ import 'package:mobile_ai_erp/domain/usecase/inventory_audit_outbound/submit_inv
 import 'package:mobile_ai_erp/domain/usecase/order_tracking/find_order_tracking_scenario_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/order_tracking/get_order_tracking_scenarios_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/post/get_post_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/storefront_customer/customer_forgot_password_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/storefront_customer/customer_login_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/storefront_customer/customer_register_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/storefront_customer/get_profile_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/storefront_customer/update_profile_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/create_role_usecase.dart';
@@ -167,7 +164,7 @@ class StoreModule {
       ),
     );
 
-    getIt.registerLazySingleton<AddressStore>(() => AddressStore(getIt<AddressRepository>()));
+    getIt.registerLazySingleton<AddressStore>(() => AddressStore(getIt<StorefrontAddressRepository>()));
     getIt.registerSingleton<OrderStore>(
       OrderStore(
         getIt<GetOrderHistoryUseCase>(),

@@ -11,7 +11,7 @@ class StorefrontAddressApi {
   /// Get customer addresses (Securely fetches only the logged-in user's addresses)
   Future<List<StorefrontAddress>> getAddresses() async {
     try {
-      final res = await _dioClient.dio.get(Endpoints.customerAddresses);
+      final res = await _dioClient.dio.get(Endpoints.storefrontCustomerAddresses);
       // Ensure we map the list properly
       final List data = res.data ?? [];
       return data.map((e) => StorefrontAddress.fromJson(e)).toList();
@@ -25,7 +25,7 @@ class StorefrontAddressApi {
   Future<StorefrontAddress> createAddress(Map<String, dynamic> data) async {
     try {
       final res = await _dioClient.dio.post(
-        Endpoints.customerAddresses,
+        Endpoints.storefrontCustomerAddresses,
         data: data,
       );
       return StorefrontAddress.fromJson(res.data);
@@ -39,11 +39,12 @@ class StorefrontAddressApi {
   Future<StorefrontAddress> updateAddress(String id, Map<String, dynamic> data) async {
     try {
       final res = await _dioClient.dio.patch(
-        '${Endpoints.customerAddresses}/$id',
+        '${Endpoints.storefrontCustomerAddresses}/$id',
         data: data,
       );
       return StorefrontAddress.fromJson(res.data);
     } catch (e) {
+      print('❌ [StorefrontAddressApi.updateAddress] Error: $e');
       rethrow;
     }
   }

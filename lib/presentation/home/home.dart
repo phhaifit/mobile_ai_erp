@@ -366,21 +366,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildProductsBody() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-      child: Card(
-        child: ListTile(
-          leading: Icon(Icons.insights_outlined),
-          title: Text(ProductStrings.screenTitle),
-          subtitle: Text(ProductStrings.screenDescription),
-          trailing: Icon(Icons.chevron_right),
-          onTap: () => Navigator.of(context).pushNamed(Routes.productManagementList),
-        ),
-      ),
-    );
-  }
-
   // app bar methods:-----------------------------------------------------------
   PreferredSizeWidget _buildAppBar() {
     return AppBar(

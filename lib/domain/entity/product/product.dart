@@ -27,8 +27,6 @@ class Product {
   final List<Tag> tags; // list of tags, can be empty
   final List<Attribute> attributes; // list of attributes, can be empty
 
-
-
   Product({
     this.id,
     required this.name,

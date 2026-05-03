@@ -12,11 +12,12 @@ class StorefrontCustomerApi {
   Future<Map<String, dynamic>> login(String email, String password) async {
     try {
       final res = await _dioClient.dio.post(
-        Endpoints.customerLogin,
+        Endpoints.storefrontCustomerLogin,
         data: {'email': email, 'password': password},
       );
       return res.data;
     } catch (e) {
+      print('❌ [CustomerApi.login] Error: $e');
       rethrow;
     }
   }
@@ -25,11 +26,12 @@ class StorefrontCustomerApi {
   Future<Map<String, dynamic>> register(String name, String email, String password) async {
     try {
       final res = await _dioClient.dio.post(
-        Endpoints.customerRegister,
+        Endpoints.storefrontCustomerRegister,
         data: {'name': name, 'email': email, 'password': password},
       );
       return res.data;
     } catch (e) {
+      print('❌ [CustomerApi.register] Error: $e');
       rethrow;
     }
   }
@@ -38,10 +40,11 @@ class StorefrontCustomerApi {
   Future<void> forgotPassword(String email) async {
     try {
       await _dioClient.dio.post(
-        Endpoints.customerForgotPassword,
+        Endpoints.storefrontCustomerForgotPassword,
         data: {'email': email},
       );
     } catch (e) {
+      print('❌ [CustomerApi.forgotPassword] Error: $e');
       rethrow;
     }
   }
@@ -49,7 +52,7 @@ class StorefrontCustomerApi {
   /// Get customer profile (Token provides identity)
   Future<Customer> getProfile() async {
     try {
-      final res = await _dioClient.dio.get(Endpoints.customerProfile);
+      final res = await _dioClient.dio.get(Endpoints.storefrontCustomerProfile);
       return Customer.fromJson(res.data);
     } catch (e) {
       print('❌ [CustomerApi.getProfile] Error: $e');
@@ -61,7 +64,7 @@ class StorefrontCustomerApi {
   Future<Customer> updateProfile(Map<String, dynamic> data) async {
     try {
       final res = await _dioClient.dio.patch(
-        Endpoints.customerProfile,
+        Endpoints.storefrontCustomerProfile,
         data: data,
       );
       return Customer.fromJson(res.data);
