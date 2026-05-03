@@ -137,7 +137,7 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
       case 'logout':
         _authStore.logout().then((_) {
           if (mounted) {
-            Navigator.of(context).pushReplacementNamed('/');
+            Navigator.of(context).pushReplacementNamed(Routes.customerLogin);
           }
         });
         break;

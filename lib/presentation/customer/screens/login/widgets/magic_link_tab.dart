@@ -66,19 +66,15 @@ class _MagicLinkTabState extends State<MagicLinkTab> {
   @override
   Widget build(BuildContext context) {
     return Observer(
-      builder: (_) => LoadingOverlay(
-        isLoading: widget.signInStore.isMagicLinkLoading,
-        message: 'Sending magic code...',
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: _buildRequestView(context),
-        ),
+      builder: (_) => SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: _buildRequestView(context),
       ),
     );
   }
 
   Widget _buildRequestView(BuildContext context) {
-    final isLoading = widget.signInStore.isMagicLinkLoading;
+    final isLoading = widget.signInStore.isMagicLinkLoading || widget.signInStore.isMagicLinkSent;
     return Form(
       key: _formKey,
       child: Column(

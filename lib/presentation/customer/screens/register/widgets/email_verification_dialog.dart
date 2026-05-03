@@ -4,7 +4,7 @@ import 'package:mobile_ai_erp/presentation/customer/store/signup_store.dart';
 import 'package:mobile_ai_erp/presentation/customer/store/signin_store.dart';
 
 /// EmailVerificationDialog - Dialog for email verification flow
-/// Displays verification code input and resend options
+/// Displays verification code input
 /// Supports both sign-up (verifyEmail) and sign-in (confirmMagicLink) flows
 class EmailVerificationDialog extends StatefulWidget {
   final String? email;
@@ -32,9 +32,6 @@ class _EmailVerificationDialogState extends State<EmailVerificationDialog> {
     6,
     (index) => FocusNode(),
   );
-
-  bool _isResending = false;
-  int _resendCountdown = 0;
 
   @override
   void dispose() {
@@ -130,57 +127,6 @@ class _EmailVerificationDialogState extends State<EmailVerificationDialog> {
   }
 
   /// Handle resend verification code
-  Future<void> _handleResendCode() async {
-    if (_resendCountdown > 0) return;
-
-    setState(() {
-      _isResending = true;
-    });
-
-    try {
-      // Simulate API call to resend
-      await Future.delayed(const Duration(seconds: 1));
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Verification code sent!'),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
-        ),
-      );
-
-      // Start countdown
-      setState(() {
-        _resendCountdown = 60;
-      });
-
-      for (int i = 60; i > 0; i--) {
-        await Future.delayed(const Duration(seconds: 1));
-        if (mounted) {
-          setState(() {
-            _resendCountdown = i - 1;
-          });
-        }
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Resend failed: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isResending = false;
-        });
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Observer(
@@ -241,33 +187,6 @@ class _EmailVerificationDialogState extends State<EmailVerificationDialog> {
                     : const Text('Verify Email'),
               ),
               const SizedBox(height: 16),
-
-              // Resend Code Link
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    "Didn't receive the code? ",
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  GestureDetector(
-                    onTap: _isResending || _resendCountdown > 0
-                        ? null
-                        : _handleResendCode,
-                    child: Text(
-                      _resendCountdown > 0
-                          ? 'Resend in ${_resendCountdown}s'
-                          : 'Resend',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: _isResending || _resendCountdown > 0
-                                ? Colors.grey
-                                : Theme.of(context).primaryColor,
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                  ),
-                ],
-              ),
             ],
           ),
         ),

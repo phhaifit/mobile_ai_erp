@@ -35,6 +35,9 @@ abstract class SignUpStoreBase with Store {
   @observable
   String? verificationEmail;
 
+  @observable
+  bool isEmailVerified = false;
+
   @computed
   bool get hasError => errorMessage != null && errorMessage!.isNotEmpty;
 
@@ -85,10 +88,11 @@ abstract class SignUpStoreBase with Store {
       // Call API
       final tokenResponse = await _authRepository.verifyEmail(token: token);
 
-      await _customerAuthStore.setTokenPair(tokenResponse.toTokenPair(), false);
+      await _customerAuthStore.setTokenPair(tokenResponse.toTokenPair());
 
       // Store customer
       isEmailVerificationPending = false;
+      isEmailVerified = true;
       successMessage = 'Email verified successfully!';
 
       result = true;
@@ -108,6 +112,7 @@ abstract class SignUpStoreBase with Store {
     isLoading = false;
     isEmailVerificationPending = false;
     verificationEmail = null;
+    isEmailVerified = false;
   }
 
   /// Clear error message

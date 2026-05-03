@@ -28,7 +28,7 @@ abstract class CustomerAuthStoreBase with Store {
   bool isLoggedIn = false;
 
   @action
-  Future<void> setTokenPair(TokenPair tokenPair, bool remember) async {
+  Future<void> setTokenPair(TokenPair tokenPair) async {
     await _sharedPreferenceHelper.saveTokenPair(tokenPair);
     isLoggedIn = true;
   }

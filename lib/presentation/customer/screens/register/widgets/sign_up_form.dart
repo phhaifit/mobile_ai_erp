@@ -4,6 +4,7 @@ import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/presentation/customer/store/signup_store.dart';
 import 'password_field.dart';
 import 'email_verification_dialog.dart';
+import 'package:mobile_ai_erp/utils/routes/routes.dart';
 
 /// SignUpForm - Main sign-up form widget
 /// Handles email, password input and form validation
@@ -117,6 +118,13 @@ class _SignUpFormState extends State<SignUpForm> {
           signUpStore: signUpStore,
         ),
       );
+
+      // After dialog, check if email was verified
+      if (signUpStore.isEmailVerified) {
+        if (mounted) {
+          Navigator.of(context).pushReplacementNamed(Routes.customerHome);
+        }
+      }
     }
   }
 
@@ -132,7 +140,7 @@ class _SignUpFormState extends State<SignUpForm> {
           children: [
             TextFormField(
               controller: _nameController,
-              enabled: !signUpStore.isLoading,
+              enabled: !signUpStore.isLoading && !signUpStore.isEmailVerificationPending,
               maxLength: 255,
               decoration: InputDecoration(
                 labelText: 'Name',
@@ -157,7 +165,7 @@ class _SignUpFormState extends State<SignUpForm> {
             // Email Field
             TextFormField(
               controller: _emailController,
-              enabled: !signUpStore.isLoading,
+              enabled: !signUpStore.isLoading && !signUpStore.isEmailVerificationPending,
               keyboardType: TextInputType.emailAddress,
               decoration: InputDecoration(
                 labelText: 'Email Address',
@@ -179,7 +187,7 @@ class _SignUpFormState extends State<SignUpForm> {
             PasswordField(
               controller: _passwordController,
               labelText: 'Password',
-              enabled: !signUpStore.isLoading,
+              enabled: !signUpStore.isLoading && !signUpStore.isEmailVerificationPending,
               validator: _validatePassword,
               onChanged: (_) => setState(() {}),
             ),
@@ -191,7 +199,7 @@ class _SignUpFormState extends State<SignUpForm> {
             PasswordField(
               controller: _confirmPasswordController,
               labelText: 'Confirm Password',
-              enabled: !signUpStore.isLoading,
+              enabled: !signUpStore.isLoading && !signUpStore.isEmailVerificationPending,
               validator: _validateConfirmPassword,
             ),
             const SizedBox(height: 16),
@@ -267,7 +275,7 @@ class _SignUpFormState extends State<SignUpForm> {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: signUpStore.isLoading
+              child: signUpStore.isLoading && !signUpStore.isEmailVerificationPending
                   ? const SizedBox(
                       height: 20,
                       width: 20,

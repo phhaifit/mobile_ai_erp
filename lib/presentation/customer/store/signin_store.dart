@@ -51,7 +51,6 @@ abstract class SignInStoreBase with Store {
   Future<bool> signIn({
     required String email,
     required String password,
-    required bool remember,
   }) async {
     bool result = false;
     try {
@@ -66,7 +65,7 @@ abstract class SignInStoreBase with Store {
       );
 
       // Store the token pair in the auth store
-      await _customerAuthStore.setTokenPair(tokenPair, remember);
+      await _customerAuthStore.setTokenPair(tokenPair);
 
       successMessage = 'Signed in successfully!';
       result = true;
@@ -96,7 +95,7 @@ abstract class SignInStoreBase with Store {
       if (error != null) {
         throw error;
       }
-      await _customerAuthStore.setTokenPair(TokenResponseDto.fromJson(resultUri.queryParameters).toTokenPair(), false);
+      await _customerAuthStore.setTokenPair(TokenResponseDto.fromJson(resultUri.queryParameters).toTokenPair());
 
       successMessage = 'Signed in successfully!';
       result = true;
@@ -151,7 +150,7 @@ abstract class SignInStoreBase with Store {
       final tokenResponse = await _authRepository.confirmMagicLink(token: token);
 
       // Store the token pair
-      await _customerAuthStore.setTokenPair(tokenResponse.toTokenPair(), false);
+      await _customerAuthStore.setTokenPair(tokenResponse.toTokenPair());
 
       isMagicLinkSent = false;
       successMessage = 'Signed in successfully!';

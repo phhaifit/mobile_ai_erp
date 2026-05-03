@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
+import 'package:mobile_ai_erp/presentation/customer/store/auth_store.dart';
 import 'package:mobile_ai_erp/presentation/customer/store/signin_store.dart';
 import 'widgets/email_password_tab.dart';
 import 'widgets/magic_link_tab.dart';
 import 'package:mobile_ai_erp/presentation/customer/screens/login/widgets/oauth_buttons.dart';
-import '../register/register_screen.dart';
+import 'package:mobile_ai_erp/utils/routes/routes.dart';
 
 /// Main login screen with tabbed interface for different auth methods
 class CustomerLoginScreen extends StatefulWidget {
@@ -26,12 +28,14 @@ class CustomerLoginScreen extends StatefulWidget {
 class _CustomerLoginScreenState extends State<CustomerLoginScreen> with TickerProviderStateMixin {
   late TabController _tabController;
   late SignInStore _signInStore;
+  late CustomerAuthStore _authStore;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _signInStore = getIt<SignInStore>();
+    _authStore = getIt<CustomerAuthStore>();
   }
 
   @override
@@ -40,11 +44,10 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> with TickerPr
     super.dispose();
   }
 
-  void _handleEmailPasswordSignIn(String email, String password, bool rememeber) async {
+  void _handleEmailPasswordSignIn(String email, String password) async {
     await _signInStore.signIn(
       email: email,
       password: password,
-      remember: rememeber,
     );
   }
 
@@ -53,15 +56,31 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> with TickerPr
   }
 
   void _handleSignUpPressed() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const RegisterScreen(),
-      ),
-    );
+    Navigator.of(context).pushNamed(Routes.customerRegister);
+  }
+
+  Widget navigateToHome(BuildContext context) {
+    Future.delayed(Duration(milliseconds: 0), () {
+      if (context.mounted) {
+        Navigator.of(context).pushNamedAndRemoveUntil(Routes.customerHome, (Route<dynamic> route) => false);
+      }
+    });
+
+    return Container();
   }
 
   @override
   Widget build(BuildContext context) {
+    return Observer(
+      builder: (context) {
+        return _authStore.isLoggedIn
+            ? navigateToHome(context)
+            : _build(context);
+      },
+    );
+  }
+
+  Widget _build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
