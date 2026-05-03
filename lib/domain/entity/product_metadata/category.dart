@@ -1,63 +1,70 @@
-enum CategoryStatus {
-  active('Active'),
-  archived('Archived');
-
-  const CategoryStatus(this.label);
-
-  final String label;
-}
+enum CategoryStatus { active, inactive }
 
 class Category {
   const Category({
     required this.id,
+    required this.tenantId,
     required this.name,
-    required this.code,
     required this.slug,
     this.parentId,
-    this.sortOrder = 0,
-    this.status = CategoryStatus.active,
+    this.parentName,
+    this.level = 0,
+    this.childrenCount,
     this.description,
-    this.coverImageUrl,
+    this.status = CategoryStatus.active,
+    this.createdAt,
+    this.updatedAt,
   });
 
   final String id;
+  final String tenantId;
   final String name;
-  final String code;
   final String slug;
   final String? parentId;
-  final int sortOrder;
-  final CategoryStatus status;
+  final String? parentName;
+  final int level;
+  final int? childrenCount;
   final String? description;
-  final String? coverImageUrl;
+  final CategoryStatus status;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   bool get isActive => status == CategoryStatus.active;
 
   Category copyWith({
     String? id,
+    String? tenantId,
     String? name,
-    String? code,
     String? slug,
     Object? parentId = _sentinel,
-    int? sortOrder,
-    CategoryStatus? status,
+    Object? parentName = _sentinel,
+    int? level,
+    Object? childrenCount = _sentinel,
     Object? description = _sentinel,
-    Object? coverImageUrl = _sentinel,
+    CategoryStatus? status,
+    DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return Category(
       id: id ?? this.id,
+      tenantId: tenantId ?? this.tenantId,
       name: name ?? this.name,
-      code: code ?? this.code,
       slug: slug ?? this.slug,
       parentId:
           identical(parentId, _sentinel) ? this.parentId : parentId as String?,
-      sortOrder: sortOrder ?? this.sortOrder,
-      status: status ?? this.status,
+      parentName: identical(parentName, _sentinel)
+          ? this.parentName
+          : parentName as String?,
+      level: level ?? this.level,
+      childrenCount: identical(childrenCount, _sentinel)
+          ? this.childrenCount
+          : childrenCount as int?,
       description: identical(description, _sentinel)
           ? this.description
           : description as String?,
-      coverImageUrl: identical(coverImageUrl, _sentinel)
-          ? this.coverImageUrl
-          : coverImageUrl as String?,
+      status: status ?? this.status,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }

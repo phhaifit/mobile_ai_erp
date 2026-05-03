@@ -16,10 +16,7 @@ import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 
 part 'login_store.g.dart';
 
-enum OAuthProvider {
-  google,
-  github,
-}
+enum OAuthProvider { google, github }
 
 // ignore: library_private_types_in_public_api
 class LoginStore = _LoginStore with _$LoginStore;
@@ -55,9 +52,7 @@ abstract class _LoginStore with Store {
   late List<ReactionDisposer> _disposers;
 
   void _setupDisposers() {
-    _disposers = [
-      reaction((_) => success, (_) => success = false, delay: 200),
-    ];
+    _disposers = [reaction((_) => success, (_) => success = false, delay: 200)];
   }
 
   // store variables:-----------------------------------------------------------
@@ -89,7 +84,7 @@ abstract class _LoginStore with Store {
       final result = await _createTenantUseCase.call(
         params: CreateTenantParams(name: name, subdomain: subdomain),
       );
-      currentTenantId = result['tenantId'];
+      currentTenantId = result['id'] ?? result['tenantId'];
       if (currentTenantId != null) {
         await _sharedPreferenceHelper.saveTenantId(currentTenantId!);
       }
@@ -108,7 +103,9 @@ abstract class _LoginStore with Store {
   Future<void> logout() async {
     try {
       final accessToken = await _sharedPreferenceHelper.accessToken;
-      if (accessToken != null && currentUser != null && currentTenantId != null) {
+      if (accessToken != null &&
+          currentUser != null &&
+          currentTenantId != null) {
         await _authRepository.signOut(accessToken, currentTenantId!);
       }
     } catch (e) {
@@ -122,6 +119,26 @@ abstract class _LoginStore with Store {
 
   @action
   Future<bool> validateStoredSession() async {
+    // Dev-only fallback for local testing with --dart-define-from-file=.env
+    // This does not affect normal login flow when env values are absent
+    const envAccessToken = String.fromEnvironment('ACCESS_TOKEN');
+    const envRefreshToken = String.fromEnvironment('REFRESH_TOKEN');
+    const envTenantId = String.fromEnvironment('TENANT_ID');
+
+    if (envAccessToken.isNotEmpty && envTenantId.isNotEmpty) {
+      await _sharedPreferenceHelper.saveAuthToken(
+        accessToken: envAccessToken,
+        refreshToken: envRefreshToken,
+      );
+      await _sharedPreferenceHelper.saveTenantId(envTenantId);
+
+      currentTenantId = envTenantId;
+      needsOnboarding = false;
+      isLoggedIn = true;
+      errorMessage = null;
+      return true;
+    }
+
     final accessToken = await _sharedPreferenceHelper.accessToken;
     if (accessToken == null || accessToken.isEmpty) {
       await _clearSession();
@@ -129,8 +146,11 @@ abstract class _LoginStore with Store {
     }
 
     try {
-      final authStatusResponse = await _authRepository.getAuthStatus(accessToken);
-      if (!authStatusResponse.hasTenant || authStatusResponse.user?.tenantId == null) {
+      final authStatusResponse = await _authRepository.getAuthStatus(
+        accessToken,
+      );
+      if (!authStatusResponse.hasTenant ||
+          authStatusResponse.user?.tenantId == null) {
         await _clearSession();
         return false;
       }
@@ -173,27 +193,41 @@ abstract class _LoginStore with Store {
     final (codeChallenge, codeVerifier) = _generateCodeChallenge();
     final authProviderId = provider.name;
     final state = _randomState(32);
-    final stackAuthUrl = Uri.https(Endpoints.stackAuthHost, "${Endpoints.stackAuthAuthenticate}/$authProviderId", {
-      'client_id': Env.stackAuthClientId,
-      'client_secret': Env.stackAuthClientSecret,
-      'redirect_uri': redirectUri,
-      'scope': 'legacy',
-      'grant_type': 'authorization_code',
-      'response_type': 'code',
-      'code_challenge_method': "S256",
-      'code_challenge': codeChallenge,
-      'state': state,
-    });
-    final resultUriStr = await FlutterWebAuth2.authenticate(url: stackAuthUrl.toString(), callbackUrlScheme: callbackUrlScheme, options: const FlutterWebAuth2Options(useWebview: false));
+    final stackAuthUrl = Uri.https(
+      Endpoints.stackAuthHost,
+      "${Endpoints.stackAuthAuthenticate}/$authProviderId",
+      {
+        'client_id': Env.stackAuthClientId,
+        'client_secret': Env.stackAuthClientSecret,
+        'redirect_uri': redirectUri,
+        'scope': 'legacy',
+        'grant_type': 'authorization_code',
+        'response_type': 'code',
+        'code_challenge_method': "S256",
+        'code_challenge': codeChallenge,
+        'state': state,
+      },
+    );
+    final resultUriStr = await FlutterWebAuth2.authenticate(
+      url: stackAuthUrl.toString(),
+      callbackUrlScheme: callbackUrlScheme,
+      options: const FlutterWebAuth2Options(useWebview: false),
+    );
     final resultUri = Uri.parse(resultUriStr);
 
     if (state != (resultUri.queryParameters['state'] ?? '')) {
       throw Exception('invalid state received back');
     }
     final authorizationCode = resultUri.queryParameters['code'] ?? '';
-    final tokens = await _authRepository.getAccessToken(authorizationCode, codeVerifier, redirectUri);
+    final tokens = await _authRepository.getAccessToken(
+      authorizationCode,
+      codeVerifier,
+      redirectUri,
+    );
 
-    final authStatusResponse = await _authRepository.getAuthStatus(tokens.accessToken);
+    final authStatusResponse = await _authRepository.getAuthStatus(
+      tokens.accessToken,
+    );
     bool needsOnboarding = false;
     if (!authStatusResponse.hasTenant) {
       needsOnboarding = true;
@@ -209,7 +243,10 @@ abstract class _LoginStore with Store {
     
 
     this.needsOnboarding = needsOnboarding;
-    await _sharedPreferenceHelper.saveAuthToken(accessToken: tokens.accessToken, refreshToken: tokens.refreshToken);
+    await _sharedPreferenceHelper.saveAuthToken(
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    );
     isLoggedIn = true;
   }
 
@@ -221,7 +258,9 @@ abstract class _LoginStore with Store {
 
   String _randomState(int len) {
     var r = Random();
-    return String.fromCharCodes(List.generate(len, (index) => r.nextInt(33) + 89));
+    return String.fromCharCodes(
+      List.generate(len, (index) => r.nextInt(33) + 89),
+    );
   }
 
   // general methods:-----------------------------------------------------------

@@ -82,6 +82,8 @@ class _MyAppState extends State<MyApp> {
 
     return Observer(
       builder: (context) {
+        final loginStore = getIt<LoginStore>();
+        final hasSession = loginStore.isLoggedIn;
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           title: Strings.appName,

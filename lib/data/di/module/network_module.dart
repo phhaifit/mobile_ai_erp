@@ -5,8 +5,21 @@ import 'package:mobile_ai_erp/core/data/network/dio/interceptors/auth_intercepto
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/logging_interceptor.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/tenant_header_interceptor.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/token_refresh_interceptor.dart';
+import 'package:mobile_ai_erp/data/network/apis/customer/customer_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/customer/customer_segment_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/orders/order_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/product_metadata/brand_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/product_metadata/brand_image_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/product_metadata/category_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/product_metadata/tag_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/product_metadata/attribute_set_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/storefront_products_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/web_builder/web_builder_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/cart/cart_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/wishlist/wishlist_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/coupon/coupon_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/suppliers/supplier_api.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
 import 'package:mobile_ai_erp/data/network/constants/storefront_endpoints.dart';
 import 'package:mobile_ai_erp/data/network/datasources/role/role_remote_datasource.dart';
@@ -51,19 +64,37 @@ class NetworkModule {
     getIt.registerSingleton<ErrorInterceptor>(ErrorInterceptor(getIt()));
     getIt.registerSingleton<AuthInterceptor>(
       AuthInterceptor(
-        accessToken: () async => await getIt<SharedPreferenceHelper>().accessToken,
+        accessToken: () async {
+          const envToken = String.fromEnvironment('ACCESS_TOKEN');
+
+          if (envToken.isNotEmpty) {
+            return envToken;
+          }
+
+          return await getIt<SharedPreferenceHelper>().accessToken;
+        },
       ),
     );
     getIt.registerSingleton<TenantHeaderInterceptor>(
       TenantHeaderInterceptor(
-        tenantId: () async => getIt<SharedPreferenceHelper>().tenantId,
         subdomain: () async => getIt<SharedPreferenceHelper>().subdomain,
+        tenantId: () async {
+          final storedTenantId = await getIt<SharedPreferenceHelper>().tenantId;
+
+          if (storedTenantId != null && storedTenantId.isNotEmpty) {
+            return storedTenantId;
+          }
+
+          return Endpoints.tenantId;
+        },
       ),
     );
     getIt.registerSingleton<TokenRefreshInterceptor>(
       TokenRefreshInterceptor(
-        accessToken: () async => await getIt<SharedPreferenceHelper>().accessToken,
-        getRefreshToken: () async => await getIt<SharedPreferenceHelper>().refreshToken,
+        accessToken: () async =>
+            await getIt<SharedPreferenceHelper>().accessToken,
+        getRefreshToken: () async =>
+            await getIt<SharedPreferenceHelper>().refreshToken,
         saveAuthToken: (tokens) async {
           if (tokens.$1 != null && tokens.$2 != null) {
             await getIt<SharedPreferenceHelper>().saveAuthToken(accessToken: tokens.$1!, refreshToken: tokens.$2!);
@@ -75,7 +106,8 @@ class NetworkModule {
         },
         getNewTokens: () async {
           try {
-            final SharedPreferenceHelper sharedPreferenceHelper = getIt<SharedPreferenceHelper>();
+            final SharedPreferenceHelper sharedPreferenceHelper =
+                getIt<SharedPreferenceHelper>();
             final refreshToken = await sharedPreferenceHelper.refreshToken;
             if (refreshToken == null) {
               return (null, null);
@@ -96,7 +128,9 @@ class NetworkModule {
         },
         tenantId: () async => await getIt<SharedPreferenceHelper>().tenantId,
         dioClient: DioClient(dioConfigs: getIt())
-          ..addInterceptors([getIt<LoggingInterceptor>()]), // Separate Dio with same config
+          ..addInterceptors([
+            getIt<LoggingInterceptor>(),
+          ]), // Separate Dio with same config
       ),
     );
 
@@ -112,36 +146,35 @@ class NetworkModule {
     getIt.registerSingleton(RestClient());
 
     // dio (ERP backend - separate base URL + tenant header):-------------------
-    final erpDioClient = DioClient(
-      dioConfigs: getIt(),
-    )..addInterceptors([
+    final erpDioClient = DioClient(dioConfigs: getIt())
+      ..addInterceptors([
         getIt<TokenRefreshInterceptor>(),
         getIt<TenantHeaderInterceptor>(),
         getIt<AuthInterceptor>(),
         getIt<ErrorInterceptor>(),
         getIt<LoggingInterceptor>(),
       ]);
-    getIt.registerSingleton<DioClient>(erpDioClient, instanceName: erpDioClientName);
+    getIt.registerSingleton<DioClient>(
+      erpDioClient,
+      instanceName: erpDioClientName,
+    );
     getIt.registerSingleton<DioClient>(erpDioClient);
 
-    // storefront dio:---------------------------------------------------------------------
-    getIt.registerSingleton<DioConfigs>(
-      const DioConfigs(
-        baseUrl: StorefrontEndpoints.baseUrl,
-        connectionTimeout: StorefrontEndpoints.connectionTimeout,
-        receiveTimeout: StorefrontEndpoints.receiveTimeout,
-      ),
-      instanceName: 'storefront',
-    );
+    // dio (storefront backend - separate base URL + storefront tenant):--------
+    final storefrontDioClient =
+        DioClient(
+          dioConfigs: const DioConfigs(
+            baseUrl: StorefrontEndpoints.baseUrl,
+            connectionTimeout: StorefrontEndpoints.connectionTimeout,
+            receiveTimeout: StorefrontEndpoints.receiveTimeout,
+          ),
+        )..addInterceptors([
+          getIt<TenantInterceptor>(instanceName: 'storefront'),
+          getIt<ErrorInterceptor>(),
+          getIt<LoggingInterceptor>(),
+        ]);
     getIt.registerSingleton<DioClient>(
-      DioClient(dioConfigs: getIt<DioConfigs>(instanceName: 'storefront'))
-        ..addInterceptors(
-          [
-            getIt<TenantInterceptor>(instanceName: 'storefront'),
-            getIt<ErrorInterceptor>(),
-            getIt<LoggingInterceptor>(),
-          ],
-        ),
+      storefrontDioClient,
       instanceName: 'storefront',
     );
 
@@ -149,10 +182,34 @@ class NetworkModule {
     getIt.registerSingleton<WebBuilderApi>(
       WebBuilderApi(getIt<DioClient>(instanceName: erpDioClientName)),
     );
+    getIt.registerSingleton<CartApi>(
+      CartApi(getIt<DioClient>(instanceName: erpDioClientName)),
+    );
+
+    getIt.registerSingleton<WishlistApi>(
+      WishlistApi(getIt<DioClient>(instanceName: erpDioClientName)),
+    );
+
+    getIt.registerSingleton<CouponApi>(
+      CouponApi(getIt<DioClient>(instanceName: erpDioClientName)),
+    );
     getIt.registerSingleton(
       StorefrontApi(getIt<DioClient>(instanceName: 'storefront')),
     );
+    getIt.registerSingleton(BrandApi(getIt<DioClient>(instanceName: erpDioClientName)));
+    getIt.registerSingleton(BrandImageApi(getIt<DioClient>(instanceName: erpDioClientName)));
+    getIt.registerSingleton(CategoryApi(getIt<DioClient>(instanceName: erpDioClientName)));
+    getIt.registerSingleton(TagApi(getIt<DioClient>(instanceName: erpDioClientName)));
+    getIt.registerSingleton(AttributeSetApi(getIt<DioClient>(instanceName: erpDioClientName)));
     getIt.registerSingleton(PostApi(getIt<DioClient>(), getIt<RestClient>()));
+
+    // customer apis:----------------------------------------------------------
+    getIt.registerSingleton<CustomerSegmentApi>(
+      CustomerSegmentApi(getIt<DioClient>(instanceName: erpDioClientName)),
+    );
+    getIt.registerSingleton<CustomerApi>(
+      CustomerApi(getIt<DioClient>(instanceName: erpDioClientName)),
+    );
 
     // datasources:-----------------------------------------------------------
     getIt.registerSingleton<RoleRemoteDataSource>(
@@ -162,5 +219,14 @@ class NetworkModule {
       UserRemoteDataSourceImpl(erpDioClient.dio),
     );
 
+    getIt.registerSingleton(
+      SupplierApi(getIt<DioClient>(instanceName: erpDioClientName)),
+    );
+    getIt.registerSingleton(
+      OrderApi(getIt<DioClient>(instanceName: erpDioClientName)),
+    );
+    getIt.registerSingleton<StorefrontProductsApi>(
+      StorefrontProductsApi(getIt<DioClient>(instanceName: erpDioClientName)),
+    );
   }
 }
