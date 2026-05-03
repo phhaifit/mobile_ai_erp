@@ -12,7 +12,7 @@ class CustomerSharedPreferenceHelper extends SharedPreferenceHelper {
     );
 
     await sharedPreference.setString(
-      Preferences.session_id,
+      Preferences.customer_session_id,
       tokenPair.sessionId,
     );
   }
@@ -22,10 +22,10 @@ class CustomerSharedPreferenceHelper extends SharedPreferenceHelper {
   }
 
   String? get customerId => sharedPreference.getString(Preferences.customer_id);
-  String? get sessionId => sharedPreference.getString(Preferences.session_id);
+  String? get customerSessionId => sharedPreference.getString(Preferences.customer_session_id);
 
   Future<void> removeCustomerAuth() async {
-    await sharedPreference.remove(Preferences.session_id);
+    await sharedPreference.remove(Preferences.customer_session_id);
     await sharedPreference.remove(Preferences.customer_id);
     await removeAuthToken();
   }

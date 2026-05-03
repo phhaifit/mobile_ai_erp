@@ -1,6 +1,7 @@
 import 'package:mobile_ai_erp/constants/app_theme.dart';
 import 'package:mobile_ai_erp/constants/strings.dart';
 import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
+import 'package:mobile_ai_erp/presentation/auth/onboarding_screen.dart';
 import 'package:mobile_ai_erp/presentation/home/home.dart';
 import 'package:mobile_ai_erp/presentation/home/store/language/language_store.dart';
 import 'package:mobile_ai_erp/presentation/home/store/theme/theme_store.dart';
@@ -83,8 +84,6 @@ class _MyAppState extends State<MyApp> {
 
     return Observer(
       builder: (context) {
-        final loginStore = getIt<LoginStore>();
-        final hasSession = loginStore.isLoggedIn;
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           title: Strings.appName,
@@ -116,7 +115,7 @@ class _MyAppState extends State<MyApp> {
             // Resolve static routes
             WidgetBuilder? builder;
             if (routeName == '/') {
-              builder = (context) => _loginStore.isLoggedIn ? HomeScreen() : LoginScreen();
+              builder = (context) => !_loginStore.isLoggedIn ? LoginScreen() : _loginStore.needsOnboarding ? OnboardingScreen() : HomeScreen();
             } else {
               builder = Routes.routes[routeName];
             }

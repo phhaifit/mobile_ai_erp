@@ -18,7 +18,6 @@ class OrderStatusBadge extends StatelessWidget {
       case OrderStatus.delivered:
         bgColor = Colors.green.shade100;
         text = 'Delivered';
-        break;
       case OrderStatus.pending:
         bgColor = Colors.orange.shade100;
         text = 'Pending';

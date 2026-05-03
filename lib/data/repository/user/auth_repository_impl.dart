@@ -9,8 +9,9 @@ import 'package:mobile_ai_erp/domain/repository/user/auth_repository.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final DioClient dioClient;
+  final Dio _refreshDio;
 
-  AuthRepositoryImpl(this.dioClient);
+  AuthRepositoryImpl(this.dioClient, this._refreshDio);
 
   @override
   Future<AuthStatusResponse> getAuthStatus(String accessToken) async {
@@ -35,25 +36,54 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<(String?, String?)> refreshToken(String refreshToken) async {
+  Future<(String?, String?, String?)> refreshToken(String refreshToken, {String? sessionId}) async {
     try {
-      final response = await dioClient.dio.get(
-        Endpoints.authRefresh,
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $refreshToken',
+      // Use the injected Dio instance (configured without auth interceptors to avoid infinite loop)
+      if (sessionId != null && sessionId.isNotEmpty) {
+        // Customer auth flow: POST /customer/auth/refresh
+        final response = await _refreshDio.post(
+          Endpoints.customerAuthRefresh,
+          data: {
+            'refreshToken': refreshToken,
+            'sessionId': sessionId,
           },
-        ),
-      );
+          options: Options(
+            headers: {
+              'X-Tenant-Id': Endpoints.tenantId,
+            },
+          ),
+        );
 
-      if (response.statusCode == 200 && response.data != null) {
-        return (response.data['token']?['accessToken'] as String?, response.data['token']?['refreshToken'] as String?);
+        if (response.statusCode == 200 && response.data != null) {
+          final accessToken = response.data['accessToken'] as String?;
+          final newRefreshToken = response.data['refreshToken'] as String?;
+          final newSessionId = response.data['sessionId'] as String?;
+          return (accessToken, newRefreshToken, newSessionId);
+        }
+      } else {
+        // ERP/admin auth flow: GET /auth/refresh
+        final response = await _refreshDio.get(
+          Endpoints.authRefresh,
+          options: Options(
+            headers: {
+              'Authorization': 'Bearer $refreshToken',
+            },
+          ),
+        );
+
+        if (response.statusCode == 200 && response.data != null) {
+          return (
+            response.data['token']?['accessToken'] as String?,
+            response.data['token']?['refreshToken'] as String?,
+            null,
+          );
+        }
       }
     } catch (e) {
       throw Exception('Refresh token request failed: $e');
     }
 
-    return (null, null);
+    return (null, null, null);
   }
 
   @override

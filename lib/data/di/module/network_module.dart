@@ -1,10 +1,12 @@
 import 'package:mobile_ai_erp/constants/env.dart';
+import 'package:dio/dio.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/configs/dio_configs.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/auth_interceptor.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/logging_interceptor.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/tenant_header_interceptor.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/token_refresh_interceptor.dart';
+import 'package:mobile_ai_erp/data/network/apis/dashboard/dashboard_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/customer/customer_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/customer/customer_segment_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/orders/order_api.dart';
@@ -24,6 +26,10 @@ import 'package:mobile_ai_erp/data/network/apis/cart/cart_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/wishlist/wishlist_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/coupon/coupon_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/suppliers/supplier_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/storefront/addresses_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/storefront/checkout_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/storefront/storefront_orders_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/storefront/storefront_payments_api.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
 import 'package:mobile_ai_erp/data/network/constants/storefront_endpoints.dart';
 import 'package:mobile_ai_erp/data/network/datasources/role/role_remote_datasource.dart';
@@ -105,6 +111,7 @@ class NetworkModule {
             await getIt<SharedPreferenceHelper>().saveAuthToken(accessToken: tokens.$1!, refreshToken: tokens.$2!);
           } else if (!Env.isCustomerApp) {
             await getIt<LoginStore>().logout();
+            await getIt<SharedPreferenceHelper>().removeSessionId();
           } else {
             await getIt<CustomerAuthStore>().logout();
           }
@@ -118,13 +125,22 @@ class NetworkModule {
               return (null, null);
             }
             if (Env.isCustomerApp) {
-              final sessionId = getIt<CustomerSharedPreferenceHelper>().sessionId;
+              final sessionId = getIt<CustomerSharedPreferenceHelper>().customerSessionId;
               if (sessionId == null) {
                 return (null, null);
               }
               return await getIt<CustomerAuthRepository>().refreshToken(refreshToken: refreshToken, sessionId: sessionId);
             } else {
-              final (newAccessToken, newRefreshToken) = await getIt<AuthRepository>().refreshToken(refreshToken);
+              final sessionId = await sharedPreferenceHelper.sessionId;
+              final AuthRepository authRepository = getIt<AuthRepository>();
+              final (newAccessToken, newRefreshToken, newSessionId) = await authRepository.refreshToken(
+                refreshToken,
+                sessionId: sessionId,
+              );
+              // Save new sessionId if returned
+              if (newSessionId != null && newSessionId.isNotEmpty) {
+                await sharedPreferenceHelper.saveSessionId(newSessionId);
+              }
               return (newAccessToken, newRefreshToken ?? refreshToken);
             }
           } catch (_) {
@@ -140,15 +156,22 @@ class NetworkModule {
     );
 
     getIt.registerSingleton<TenantInterceptor>(
-      TenantInterceptor(Endpoints.tenantId),
-    );
-    getIt.registerSingleton<TenantInterceptor>(
       TenantInterceptor(StorefrontEndpoints.tenantId),
       instanceName: 'storefront',
     );
 
     // rest client:-------------------------------------------------------------
     getIt.registerSingleton(RestClient());
+
+    // Clean Dio for token refresh (no auth interceptors to avoid infinite loop)
+    getIt.registerSingleton<Dio>(
+      Dio(BaseOptions(
+        baseUrl: Endpoints.erpBaseUrl,
+        connectTimeout: const Duration(milliseconds: 30000),
+        receiveTimeout: const Duration(milliseconds: 15000),
+      )),
+      instanceName: 'refreshDio',
+    );
 
     // dio (ERP backend - separate base URL + tenant header):-------------------
     final erpDioClient = DioClient(dioConfigs: getIt())
@@ -263,14 +286,33 @@ class NetworkModule {
       UserRemoteDataSourceImpl(erpDioClient.dio),
     );
 
-    getIt.registerSingleton(
+        getIt.registerSingleton(
       SupplierApi(getIt<DioClient>(instanceName: erpDioClientName)),
     );
     getIt.registerSingleton(
       OrderApi(getIt<DioClient>(instanceName: erpDioClientName)),
     );
+
+    // dashboard:---------------------------------------------------------------
+    getIt.registerSingleton<DashboardApi>(
+      DashboardApi(getIt<DioClient>(instanceName: erpDioClientName)),
+    );
     getIt.registerSingleton<StorefrontProductsApi>(
-      StorefrontProductsApi(getIt<DioClient>(instanceName: erpDioClientName)),
+      StorefrontProductsApi(getIt<DioClient>(instanceName: erpDioClientName).dio),
+    );
+
+    // storefront: addresses, checkout, orders, payments
+    getIt.registerSingleton<AddressesApi>(
+      AddressesApi(getIt<DioClient>(instanceName: erpDioClientName).dio),
+    );
+    getIt.registerSingleton<CheckoutApi>(
+      CheckoutApi(getIt<DioClient>(instanceName: erpDioClientName).dio),
+    );
+    getIt.registerSingleton<StorefrontOrdersApi>(
+      StorefrontOrdersApi(getIt<DioClient>(instanceName: erpDioClientName).dio),
+    );
+    getIt.registerSingleton<StorefrontPaymentsApi>(
+      StorefrontPaymentsApi(getIt<DioClient>(instanceName: erpDioClientName).dio),
     );
   }
 }

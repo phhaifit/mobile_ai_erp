@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:mobile_ai_erp/data/local/datasources/checkout/checkout_datasource.dart';
 import 'package:mobile_ai_erp/data/network/apis/customer/customer_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/customer/customer_segment_api.dart';
@@ -19,7 +20,6 @@ import 'package:mobile_ai_erp/data/network/apis/loyalty_ledgers/loyalty_ledger_a
 import 'package:mobile_ai_erp/data/repository/customer/customer_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/storefront_account/customer_repository_impl.dart';
 import 'package:mobile_ai_erp/domain/repository/customer/customer_repository.dart';
-import 'package:mobile_ai_erp/domain/repository/account/customer_repository.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
 import 'package:mobile_ai_erp/data/network/datasources/role/role_remote_datasource.dart';
 import 'package:mobile_ai_erp/data/network/datasources/user/user_remote_datasource.dart';
@@ -36,7 +36,8 @@ import 'package:mobile_ai_erp/data/network/apis/suppliers/supplier_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/web_builder/web_builder_api.dart';
 import 'package:mobile_ai_erp/data/repository/checkout/checkout_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/customer/customer_repository_impl.dart';
-import 'package:mobile_ai_erp/data/repository/dashboard/mock_dashboard_repository.dart';
+import 'package:mobile_ai_erp/data/network/apis/dashboard/dashboard_api.dart';
+import 'package:mobile_ai_erp/data/repository/dashboard/live_dashboard_repository.dart';
 import 'package:mobile_ai_erp/data/repository/fulfillment/fulfillment_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/inventory_audit_outbound/mock_inventory_audit_outbound_repository.dart';
 import 'package:mobile_ai_erp/data/repository/order_tracking/order_tracking_repository_impl.dart';
@@ -59,9 +60,7 @@ import 'package:mobile_ai_erp/data/repository/web_builder/store_settings_reposit
 import 'package:mobile_ai_erp/data/repository/web_builder/web_theme_repository_impl.dart';
 import 'package:mobile_ai_erp/domain/repository/checkout/checkout_repository.dart';
 import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
-import 'package:mobile_ai_erp/domain/repository/account/address_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/account/order_repository.dart';
-import 'package:mobile_ai_erp/domain/repository/account/loyalty_ledger_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/customer/customer_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/dashboard/dashboard_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/fulfillment/fulfillment_repository.dart';
@@ -73,6 +72,10 @@ import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadat
 import 'package:mobile_ai_erp/domain/repository/setting/setting_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/stock_operations/stock_operations_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/storefront/storefront_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/storefront_account/customer_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/storefront_account/address_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/storefront_account/order_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/storefront_account/loyalty_ledger_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/supplier/supplier_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/role_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/user_repository.dart';
@@ -81,12 +84,20 @@ import 'package:mobile_ai_erp/data/repository/storefront_account/order_repositor
 import 'package:mobile_ai_erp/data/repository/storefront_account/loyalty_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/user/auth_repository_impl.dart';
 import 'package:mobile_ai_erp/domain/repository/user/auth_repository.dart';
-import 'package:mobile_ai_erp/domain/repository/account/address_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/account/order_repository.dart';
 import 'package:mobile_ai_erp/data/repository/storefront_account/address_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/storefront_account/order_repository_impl.dart';
 import 'package:mobile_ai_erp/data/local/datasources/account/address_mock_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/account/order_mock_datasource.dart';
+import 'package:mobile_ai_erp/domain/repository/account/payment_repository.dart';
+import 'package:mobile_ai_erp/data/repository/account/address_repository_impl.dart';
+import 'package:mobile_ai_erp/data/repository/account/order_repository_impl.dart';
+import 'package:mobile_ai_erp/data/repository/account/payment_repository_impl.dart';
+import 'package:mobile_ai_erp/data/network/apis/storefront/addresses_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/storefront/checkout_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/storefront/storefront_orders_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/storefront/storefront_payments_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/coupon/coupon_api.dart';
 import 'package:mobile_ai_erp/domain/repository/web_builder/cms_page_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/web_builder/store_settings_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/web_builder/web_theme_repository.dart';
@@ -106,7 +117,9 @@ class RepositoryModule {
       CustomerRepositoryImpl(getIt<CustomerApi>(), getIt<CustomerSegmentApi>()),
     );
 
-    getIt.registerSingleton<DashboardRepository>(MockDashboardRepository());
+        getIt.registerSingleton<DashboardRepository>(
+      LiveDashboardRepository(getIt<DashboardApi>()),
+    );
 
     getIt.registerSingleton<SettingRepository>(
       SettingRepositoryImpl(getIt<SharedPreferenceHelper>()),
@@ -172,6 +185,9 @@ class RepositoryModule {
     getIt.registerLazySingleton<LoyaltyLedgerRepository>(
         () => LoyaltyRepositoryImpl(getIt<LoyaltyLedgerApiDataSource>()));
 
+    getIt.registerLazySingleton<PaymentRepository>(
+        () => PaymentRepositoryImpl(getIt<StorefrontPaymentsApi>()));
+
     // post_purchase:----------------------------------------------------------
     getIt.registerSingleton<PostPurchaseDataSource>(PostPurchaseDataSource());
     getIt.registerSingleton<PostPurchaseRepository>(
@@ -186,7 +202,9 @@ class RepositoryModule {
     getIt.registerSingleton<RoleRepository>(
       RoleRepositoryImpl(getIt<RoleRemoteDataSource>()),
     );
-    getIt.registerSingleton<AuthRepository>(AuthRepositoryImpl(getIt()));
+    getIt.registerSingleton<AuthRepository>(
+      AuthRepositoryImpl(getIt(), getIt<Dio>(instanceName: 'refreshDio')),
+    );
 
     // web_builder:--------------------------------------------------------------
     getIt.registerLazySingleton<CmsPageRepository>(
@@ -216,7 +234,12 @@ class RepositoryModule {
     // checkout:--------------------------------------------------------------
     getIt.registerSingleton<CheckoutDataSource>(CheckoutLocalDataSourceImpl());
     getIt.registerSingleton<CheckoutRepository>(
-      CheckoutRepositoryImpl(getIt<CheckoutDataSource>()),
+      CheckoutRepositoryImpl(
+        getIt<CheckoutDataSource>(),
+        getIt<CheckoutApi>(),
+        getIt<AddressesApi>(),
+        getIt<CouponApi>(),
+      ),
     );
 
     getIt.registerSingleton<ProductManagementRepository>(

@@ -96,7 +96,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       return;
     }
 
-    await _cartStore.addToCart(productId: product.id, qty: _quantity);
+    await _cartStore.addToCart(productId: variant.id, qty: _quantity);
 
     if (!mounted) return;
 

@@ -22,7 +22,7 @@ abstract class CustomerAuthStoreBase with Store {
     _sharedPreferenceHelper = sharedPreferenceHelper,
     _customerAuthRepository = customerAuthRepository
   {
-    isLoggedIn = _sharedPreferenceHelper.sessionId != null;
+    isLoggedIn = _sharedPreferenceHelper.customerSessionId != null;
   }
 
   // Observable State

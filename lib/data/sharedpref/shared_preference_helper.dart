@@ -66,6 +66,18 @@ class SharedPreferenceHelper {
     return _sharedPreference.remove(Preferences.customer_subdomain);
   }
 
+  Future<String?> get sessionId async {
+    return _sharedPreference.getString(Preferences.session_id);
+  }
+
+  Future<bool> saveSessionId(String sessionId) {
+    return _sharedPreference.setString(Preferences.session_id, sessionId);
+  }
+
+  Future<bool> removeSessionId() async {
+    return _sharedPreference.remove(Preferences.session_id);
+  }
+
   // Login:---------------------------------------------------------------------
   bool get isLoggedIn {
     final authTokenValue = _sharedPreference.get(Preferences.auth_token);
