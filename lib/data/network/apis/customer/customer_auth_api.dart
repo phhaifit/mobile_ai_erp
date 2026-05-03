@@ -123,11 +123,14 @@ class CustomerAuthApi {
     required String token,
   }) async {
     try {
-      final response = await _dio.get(
+      final response = await _dio.post(
         Endpoints.customerConfirmMagicLink,
-        queryParameters: {'token': token},
+        data: {'token': token},
       );
-      return TokenResponseDto.fromJson(response.data);
+      if (response.statusCode == 200) {
+        return TokenResponseDto.fromJson(response.data);
+      }
+      throw MessageResponseDto.fromJson(response.data).message;
     } catch (e) {
       rethrow;
     }
