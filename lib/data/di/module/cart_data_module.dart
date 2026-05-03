@@ -1,69 +1,72 @@
 import 'package:get_it/get_it.dart';
-import 'package:mobile_ai_erp/data/local/datasources/cart/cart_datasource.dart';
-import 'package:mobile_ai_erp/data/local/datasources/cart/cart_local_datasource_impl.dart';
+import 'package:mobile_ai_erp/data/network/apis/cart/cart_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/wishlist/wishlist_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/coupon/coupon_api.dart';
 import 'package:mobile_ai_erp/data/repository/cart/cart_repository.dart';
 import 'package:mobile_ai_erp/data/repository/cart/cart_repository_impl.dart';
+import 'package:mobile_ai_erp/data/repository/wishlist/wishlist_repository.dart';
+import 'package:mobile_ai_erp/data/repository/wishlist/wishlist_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/product/product_repository.dart';
 import 'package:mobile_ai_erp/data/repository/product/product_repository_impl.dart';
+import 'package:mobile_ai_erp/data/repository/coupon/coupon_repository.dart';
+import 'package:mobile_ai_erp/data/repository/coupon/coupon_repository_impl.dart';
+import 'package:mobile_ai_erp/domain/repository/product/product_detail_repository.dart';
 
-/// Dependency Injection module for Cart data layer.
-/// Registers CartDataSource, CartRepository, and mock ProductRepository
 class CartDataModule {
   CartDataModule._();
 
-  /// Setup cart data layer dependencies
   static void setup(GetIt getIt) {
-    _setupDataSource(getIt);
     _setupRepository(getIt);
   }
 
-  /// Register CartDataSource and its implementation
-  static void _setupDataSource(GetIt getIt) {
-    if (!getIt.isRegistered<CartDataSource>()) {
-      getIt.registerSingleton<CartDataSource>(
-        CartLocalDataSourceImpl(),
-      );
-    }
-  }
-
-  /// Register repositories and their implementations
   static void _setupRepository(GetIt getIt) {
     if (!getIt.isRegistered<CartRepository>()) {
       getIt.registerSingleton<CartRepository>(
-        CartRepositoryImpl(
-          dataSource: getIt<CartDataSource>(),
-        ),
+        CartRepositoryImpl(cartApi: getIt<CartApi>()),
       );
     }
 
-    /// Temporary mock ProductRepository
-    /// Replace later when Product team delivers real implementation
+    if (!getIt.isRegistered<WishlistRepository>()) {
+      getIt.registerSingleton<WishlistRepository>(
+        WishlistRepositoryImpl(wishlistApi: getIt<WishlistApi>()),
+      );
+    }
+
+    if (!getIt.isRegistered<CouponRepository>()) {
+      getIt.registerSingleton<CouponRepository>(
+        CouponRepositoryImpl(couponApi: getIt<CouponApi>()),
+      );
+    }
+
     if (!getIt.isRegistered<ProductRepository>()) {
       getIt.registerSingleton<ProductRepository>(
-        ProductRepositoryImpl(),
+        ProductRepositoryImpl(getIt<ProductDetailRepository>()),
       );
     }
   }
 
-  /// Reset/clear cart module from GetIt (useful for testing)
   static void reset(GetIt getIt) {
     if (getIt.isRegistered<CartRepository>()) {
       getIt.unregister<CartRepository>();
     }
 
+    if (getIt.isRegistered<WishlistRepository>()) {
+      getIt.unregister<WishlistRepository>();
+    }
+
+    if (getIt.isRegistered<CouponRepository>()) {
+      getIt.unregister<CouponRepository>();
+    }
+
     if (getIt.isRegistered<ProductRepository>()) {
       getIt.unregister<ProductRepository>();
     }
-
-    if (getIt.isRegistered<CartDataSource>()) {
-      getIt.unregister<CartDataSource>();
-    }
   }
 
-  /// Check if cart module is registered
   static bool isRegistered(GetIt getIt) {
     return getIt.isRegistered<CartRepository>() &&
+        getIt.isRegistered<WishlistRepository>() &&
         getIt.isRegistered<ProductRepository>() &&
-        getIt.isRegistered<CartDataSource>();
+        getIt.isRegistered<CouponRepository>();
   }
 }

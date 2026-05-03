@@ -1,24 +1,25 @@
 import '../../../domain/entity/address/address.dart';
 import '../../../domain/repository/account/address_repository.dart';
-import '../../local/datasources/account/address_mock_datasource.dart';
+import '../../network/apis/storefront/addresses_api.dart';
 
 class AddressRepositoryImpl implements AddressRepository {
-  final AddressMockDataSource _dataSource;
+  final AddressesApi _api;
 
-  AddressRepositoryImpl(this._dataSource);
-
-  @override
-  Future<List<Address>> getAddresses() => _dataSource.getAddresses();
+  AddressRepositoryImpl(this._api);
 
   @override
-  Future<void> addAddress(Address address) => _dataSource.addAddress(address);
+  Future<List<Address>> getAddresses() => _api.getAddresses();
 
   @override
-  Future<void> updateAddress(Address address) => _dataSource.updateAddress(address);
+  Future<void> addAddress(Address address) => _api.createAddress(address);
 
   @override
-  Future<void> setDefault(String id) => _dataSource.setDefault(id);
-  
+  Future<void> updateAddress(Address address) =>
+      _api.updateAddress(address.id, address);
+
   @override
-  Future<void> deleteAddress(String id) => _dataSource.deleteAddress(id);
+  Future<void> setDefault(String id) => _api.setDefault(id);
+
+  @override
+  Future<void> deleteAddress(String id) => _api.deleteAddress(id);
 }

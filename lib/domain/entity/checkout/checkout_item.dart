@@ -104,7 +104,8 @@ class CheckoutItem {
   bool get isInStock => stockAvailable == null || stockAvailable! > 0;
 
   /// Check if item has low stock (less than 5)
-  bool get isLowStock => stockAvailable != null && stockAvailable! > 0 && stockAvailable! <= 5;
+  bool get isLowStock =>
+      stockAvailable != null && stockAvailable! > 0 && stockAvailable! <= 5;
 
   // ==================== Factory Constructors ====================
 
@@ -114,15 +115,20 @@ class CheckoutItem {
       id: cartItem.id,
       productId: cartItem.productId,
       productName: cartItem.productName,
-      imageUrl: cartItem.imageUrl,
-      variantId: cartItem.variantId,
       sku: cartItem.sku,
-      selectedSize: cartItem.selectedSize,
-      selectedColorName: cartItem.selectedColorName,
-      selectedColorValue: cartItem.selectedColorValue,
-      price: cartItem.price,
-      salePrice: cartItem.salePrice,
-      stockAvailable: cartItem.stockAvailable,
+      imageUrl: cartItem.thumbnailUrl,
+      variantId: cartItem.variantId ?? '',
+      selectedSize: null,
+      selectedColorName: cartItem.variantSummary,
+      selectedColorValue: null,
+      // price = list price (original), salePrice = discounted price the customer pays
+      price: cartItem.originalPrice != null
+          ? double.tryParse(cartItem.originalPrice!) ?? 0
+          : double.tryParse(cartItem.unitPrice) ?? 0,
+      salePrice: cartItem.originalPrice != null
+          ? double.tryParse(cartItem.unitPrice)
+          : null,
+      stockAvailable: cartItem.availableStock,
       quantity: cartItem.quantity,
       weight: null, // CartItem doesn't have weight
     );

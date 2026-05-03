@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
+import 'package:mobile_ai_erp/data/network/apis/orders/dto/order_detail_response.dart';
+import 'package:mobile_ai_erp/presentation/order_tracking/utils/order_tracking_order_info.dart';
+import 'package:mobile_ai_erp/presentation/order_tracking/widgets/order_tracking_shared_widgets.dart';
 import 'package:mobile_ai_erp/domain/entity/order_tracking/order_tracking_scenario.dart';
 import 'package:mobile_ai_erp/presentation/order_tracking/store/order_tracking_store.dart';
 import 'package:mobile_ai_erp/presentation/order_tracking/widgets/tracking_carrier_card.dart';
@@ -9,7 +12,6 @@ import 'package:mobile_ai_erp/presentation/order_tracking/widgets/tracking_curre
 import 'package:mobile_ai_erp/presentation/order_tracking/widgets/tracking_delivery_alert_banner.dart';
 import 'package:mobile_ai_erp/presentation/order_tracking/widgets/tracking_detailed_timeline_card.dart';
 import 'package:mobile_ai_erp/presentation/order_tracking/widgets/tracking_return_exchange_card.dart';
-import 'package:mobile_ai_erp/presentation/order_tracking/widgets/tracking_scenario_selector.dart';
 import 'package:mobile_ai_erp/presentation/order_tracking/widgets/tracking_timeline_header.dart';
 import 'package:mobile_ai_erp/utils/locale/app_localization.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -24,11 +26,11 @@ class OrderTrackingScreen extends StatefulWidget {
 class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   final OrderTrackingStore _orderTrackingStore = getIt<OrderTrackingStore>();
   bool _isSeededFromRouteArgs = false;
+  String? _orderId;
 
   @override
   void initState() {
     super.initState();
-    _orderTrackingStore.loadScenarios();
   }
 
   @override
@@ -43,11 +45,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     if (args is Map<String, dynamic>) {
       final String orderId = (args['orderId'] ?? '').toString().trim();
       if (orderId.isNotEmpty) {
-        final OrderTrackingScenario? found =
-            _orderTrackingStore.findByOrderId(orderId);
-        if (found != null) {
-          _orderTrackingStore.selectScenario(found);
-        }
+        _orderId = orderId;
+        _orderTrackingStore.startRealtimeTracking(orderId);
       }
     }
     _isSeededFromRouteArgs = true;
@@ -55,6 +54,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
   @override
   void dispose() {
+    _orderTrackingStore.stopRealtimeTracking();
     super.dispose();
   }
 
@@ -70,7 +70,61 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         final double contentMaxWidth = isWideLayout ? 1200 : 860;
         final OrderTrackingScenario? selected =
             _orderTrackingStore.selectedScenario;
+        final OrderDetailResponse? orderDetail =
+            _orderTrackingStore.orderDetail;
         final String title = _tr(t, 'tracking_title', 'Order Tracking');
+
+        if (_orderTrackingStore.isLoading) {
+          return Scaffold(
+            backgroundColor: colorScheme.surface,
+            appBar: AppBar(
+              elevation: 0,
+              backgroundColor: colorScheme.surface,
+              foregroundColor: colorScheme.onSurface,
+              title: Text(
+                title,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+            body: const Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (_orderTrackingStore.errorMessage != null) {
+          return Scaffold(
+            backgroundColor: colorScheme.surface,
+            appBar: AppBar(
+              elevation: 0,
+              backgroundColor: colorScheme.surface,
+              foregroundColor: colorScheme.onSurface,
+              title: Text(
+                title,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    _orderTrackingStore.errorMessage ?? 'Unable to load order',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: colorScheme.error),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      if (_orderId != null && _orderId!.isNotEmpty) {
+                        _orderTrackingStore.startRealtimeTracking(_orderId!);
+                      }
+                    },
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
 
         if (selected == null) {
           return Scaffold(
@@ -84,7 +138,13 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
-            body: const Center(child: CircularProgressIndicator()),
+            body: Center(
+              child: Text(
+                _orderId == null || _orderId!.isEmpty
+                    ? 'Missing order ID.'
+                    : 'No order details available.',
+              ),
+            ),
           );
         }
 
@@ -118,6 +178,29 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                         orderIdLabel:
                             _tr(t, 'tracking_order_id_label', 'Order ID'),
                       ),
+                    if (orderDetail != null) ...[
+                      Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          isWideLayout ? 20 : 16,
+                          20,
+                          isWideLayout ? 20 : 16,
+                          0,
+                        ),
+                        child: _buildOrderSummaryCard(
+                          context: context,
+                          detail: orderDetail,
+                        ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          isWideLayout ? 20 : 16,
+                          12,
+                          isWideLayout ? 20 : 16,
+                          0,
+                        ),
+                        child: _buildLiveIndicator(context),
+                      ),
+                    ],
                     Padding(
                       padding: EdgeInsets.fromLTRB(
                         isWideLayout ? 20 : 16,
@@ -161,19 +244,6 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        TrackingScenarioSelector(
-          isCompact: isCompact,
-          scenarios: _scenarios,
-          selected: selectedScenario,
-          primaryColor: colorScheme.primary,
-          onChanged: _orderTrackingStore.selectScenario,
-          scenarioLabel: _tr(
-            t,
-            'tracking_scenario_label',
-            'Tracking scenario',
-          ),
-        ),
-        const SizedBox(height: 16),
         TrackingCurrentStatusCard(
           selected: selectedScenario,
           primaryColor: colorScheme.primary,
@@ -271,19 +341,6 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        TrackingScenarioSelector(
-          isCompact: isCompact,
-          scenarios: _scenarios,
-          selected: selectedScenario,
-          primaryColor: colorScheme.primary,
-          onChanged: _orderTrackingStore.selectScenario,
-          scenarioLabel: _tr(
-            t,
-            'tracking_scenario_label',
-            'Tracking scenario',
-          ),
-        ),
-        const SizedBox(height: 16),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
@@ -393,7 +450,127 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     );
   }
 
-  List<OrderTrackingScenario> get _scenarios => _orderTrackingStore.scenarios;
+  Widget _buildOrderSummaryCard({
+    required BuildContext context,
+    required OrderDetailResponse detail,
+  }) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final TextTheme textTheme = Theme.of(context).textTheme;
+    final NumberFormat currencyFormat = NumberFormat.decimalPattern('vi_VN');
+
+    final OrderInfo info = OrderInfoMapper.fromDetail(detail);
+    final DateTime? createdAt = info.createdAt;
+    final String createdLabel = createdAt == null
+      ? ''
+      : DateFormat('dd MMM yyyy, HH:mm').format(createdAt);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colorScheme.outlineVariant.withOpacity(0.4)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      info.code,
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      info.customerName,
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurface.withOpacity(0.7),
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              StatusBadge(
+                label: formatOrderStatus(info.status),
+                background: getOrderStatusColor(info.status, colorScheme),
+              ),
+            ],
+          ),
+          if (info.deliveryInfo.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              info.deliveryInfo,
+              style: textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurface.withOpacity(0.65),
+              ),
+            ),
+          ],
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: InfoRow(
+                  label: 'Total',
+                  value: '${formatOrderPrice(info.totalPrice, currencyFormat)} đ',
+                  valueStyle: textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              if (info.itemsCount > 0)
+                Expanded(
+                  child: InfoRow(
+                    label: 'Items',
+                    value: '${info.itemsCount} items',
+                    alignEnd: true,
+                    valueStyle: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurface.withOpacity(0.7),
+                    ),
+                  ),
+                )
+              else if (createdLabel.isNotEmpty)
+                Expanded(
+                  child: InfoRow(
+                    label: 'Created',
+                    value: createdLabel,
+                    alignEnd: true,
+                    valueStyle: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurface.withOpacity(0.7),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          if (info.itemsCount > 0 && createdLabel.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            InfoRow(
+              label: 'Created',
+              value: createdLabel,
+              valueStyle: textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurface.withOpacity(0.7),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 
   Future<void> _openCarrierUrl(String url) async {
     final Uri uri = Uri.parse(url);
@@ -465,4 +642,44 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   String _formatDateTime(DateTime value) {
     return DateFormat('dd MMM yyyy, HH:mm').format(value);
   }
+
+  Widget _buildLiveIndicator(BuildContext context) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final TextTheme textTheme = Theme.of(context).textTheme;
+    final DateTime? lastUpdated = _orderTrackingStore.lastUpdatedAt;
+    final String lastUpdatedLabel = lastUpdated == null
+        ? 'Updating...'
+        : 'Last updated: ${DateFormat('HH:mm:ss').format(lastUpdated)}';
+
+    return Row(
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: _orderTrackingStore.isPolling
+                ? Colors.green
+                : colorScheme.outline,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          'Live tracking',
+          style: textTheme.bodySmall?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: colorScheme.onSurface.withOpacity(0.75),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Text(
+          lastUpdatedLabel,
+          style: textTheme.bodySmall?.copyWith(
+            color: colorScheme.onSurface.withOpacity(0.6),
+          ),
+        ),
+      ],
+    );
+  }
+
 }

@@ -1,0 +1,23 @@
+import 'package:get_it/get_it.dart';
+import 'package:mobile_ai_erp/constants/env.dart';
+import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
+import 'package:mobile_ai_erp/data/network/apis/customer/customer_auth_api.dart';
+import 'package:mobile_ai_erp/data/repository/customer_auth_repository_impl.dart';
+import 'package:mobile_ai_erp/domain/repository/customer_auth_repository.dart';
+
+class CustomerDataModule {
+  static void setup(GetIt getIt) {
+    if (!Env.isCustomerApp) {
+      return;
+    }
+    // APIs
+    getIt.registerSingleton<CustomerAuthApi>(
+      CustomerAuthApi(dio: getIt<DioClient>().dio),
+    );
+
+    // Repositories
+    getIt.registerSingleton<CustomerAuthRepository>(
+      CustomerAuthRepositoryImpl(api: getIt()),
+    );
+  }
+}

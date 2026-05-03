@@ -31,7 +31,7 @@ void main() {
 
     expect(find.text('Business Health Overview'), findsOneWidget);
     expect(find.text('Pending Tasks'), findsOneWidget);
-    expect(find.text('Real-Time Sales (Mocked)'), findsOneWidget);
+    expect(find.text('Real-Time Sales'), findsOneWidget);
     expect(find.text('Smart Insights Feed'), findsOneWidget);
     expect(find.text('Quick Navigation'), findsOneWidget);
   });

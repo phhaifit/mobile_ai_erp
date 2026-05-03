@@ -11,6 +11,9 @@ class SharedPreferenceHelper {
   // constructor
   SharedPreferenceHelper(this._sharedPreference);
 
+  // Protected getter for subclasses
+  SharedPreferences get sharedPreference => _sharedPreference;
+
   // General Methods: ----------------------------------------------------------
   Future<String?> get accessToken async {
     final authTokenValue = _sharedPreference.get(Preferences.auth_token);
@@ -39,7 +42,7 @@ class SharedPreferenceHelper {
     return null;
   }
 
-  Future<String?> get tenantId async {
+  String? get tenantId {
     return _sharedPreference.getString(Preferences.tenant_id);
   }
 
@@ -49,6 +52,30 @@ class SharedPreferenceHelper {
 
   Future<bool> removeTenantId() async {
     return _sharedPreference.remove(Preferences.tenant_id);
+  }
+
+  /// Save subdomain to shared preferences
+  Future<void> saveSubdomain(String subdomain) async {
+    await sharedPreference.setString(Preferences.customer_subdomain, subdomain);
+  }
+
+  /// Get stored subdomain
+  String? get subdomain => sharedPreference.getString(Preferences.customer_subdomain);
+
+  Future<bool> removeSubdomain() async {
+    return _sharedPreference.remove(Preferences.customer_subdomain);
+  }
+
+  Future<String?> get sessionId async {
+    return _sharedPreference.getString(Preferences.session_id);
+  }
+
+  Future<bool> saveSessionId(String sessionId) {
+    return _sharedPreference.setString(Preferences.session_id, sessionId);
+  }
+
+  Future<bool> removeSessionId() async {
+    return _sharedPreference.remove(Preferences.session_id);
   }
 
   // Login:---------------------------------------------------------------------

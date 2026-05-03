@@ -87,7 +87,7 @@ abstract class _DashboardStore with Store {
     }
   }
 
-  @action
+    @action
   Future<void> setPeriod(DashboardPeriod value) async {
     if (period == value) {
       return;
@@ -95,4 +95,9 @@ abstract class _DashboardStore with Store {
     period = value;
     await loadDashboard();
   }
+
+  /// Convenience alias for pull-to-refresh and polling support.
+  /// Delegates to [loadDashboard] so that request de-duplication is respected.
+  @action
+  Future<void> refreshDashboard() => loadDashboard();
 }

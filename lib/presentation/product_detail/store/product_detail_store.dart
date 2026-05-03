@@ -1,7 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:mobile_ai_erp/core/stores/error/error_store.dart';
-import 'package:mobile_ai_erp/domain/repository/storefront/storefront_repository.dart';
 import 'package:mobile_ai_erp/domain/entity/product_detail/product_detail.dart';
+import 'package:mobile_ai_erp/domain/repository/product/product_detail_repository.dart';
 import 'package:mobx/mobx.dart';
 
 part 'product_detail_store.g.dart';
@@ -11,11 +10,28 @@ class ProductDetailStore = _ProductDetailStore with _$ProductDetailStore;
 abstract class _ProductDetailStore with Store {
   _ProductDetailStore(this._repository, this.errorStore);
 
-  final StorefrontRepository _repository;
+  final ProductDetailRepository _repository;
   final ErrorStore errorStore;
 
   @observable
   ProductDetail? product;
+
+  @observable
+  ObservableList<StorefrontProductSummary> relatedProducts =
+      ObservableList<StorefrontProductSummary>();
+
+  @observable
+  ObservableList<StorefrontProductSummary> brandProducts =
+      ObservableList<StorefrontProductSummary>();
+
+  @observable
+  StorefrontCategoryDetail? categoryDetail;
+
+  @observable
+  bool isLoading = false;
+
+  @observable
+  String? errorMessage;
 
   @observable
   String? selectedColorName;
@@ -28,9 +44,6 @@ abstract class _ProductDetailStore with Store {
 
   @observable
   bool isDescriptionExpanded = false;
-
-  @observable
-  bool isLoading = false;
 
   @computed
   List<ProductColor> get availableColors {
@@ -47,9 +60,16 @@ abstract class _ProductDetailStore with Store {
 
   @computed
   List<String> get availableSizes {
-    if (product == null || selectedColorName == null) return [];
+    if (product == null) return [];
+    final seen = <String>{};
     return product!.variants
-        .where((v) => v.color?.name == selectedColorName && v.size != null)
+        .where(
+          (v) =>
+              (selectedColorName == null ||
+                  v.color?.name == selectedColorName) &&
+              v.size != null &&
+              seen.add(v.size!),
+        )
         .map((v) => v.size!)
         .toList();
   }
@@ -57,37 +77,48 @@ abstract class _ProductDetailStore with Store {
   @computed
   ProductVariant? get selectedVariant {
     if (product == null) return null;
+    if (product!.variants.isEmpty) return null;
+    final hasColors = availableColors.isNotEmpty;
+    final hasSizes = availableSizes.isNotEmpty;
     for (final v in product!.variants) {
-      if (v.color?.name == selectedColorName && v.size == selectedSize) {
+      final colorMatches =
+          !hasColors ||
+          selectedColorName == null ||
+          v.color?.name == selectedColorName;
+      final sizeMatches =
+          !hasSizes || selectedSize == null || v.size == selectedSize;
+      if (colorMatches && sizeMatches) {
         return v;
       }
     }
-    return null;
+    return product!.variants.first;
   }
 
   @computed
   double get displayPrice {
-    final v = selectedVariant ?? product?.variants.first;
+    final v = selectedVariant ?? (product?.variants.isNotEmpty == true ? product!.variants.first : null);
     return v?.effectivePrice ?? 0;
   }
 
   @computed
   double? get originalPrice {
-    final v = selectedVariant ?? product?.variants.first;
+    final v = selectedVariant ?? (product?.variants.isNotEmpty == true ? product!.variants.first : null);
     if (v == null || !v.hasDiscount) return null;
     return v.price;
   }
 
   @computed
   int get discountPercentage {
-    final v = selectedVariant ?? product?.variants.first;
+    final v = selectedVariant ?? (product?.variants.isNotEmpty == true ? product!.variants.first : null);
     return v?.discountPercentage ?? 0;
   }
 
   bool isSizeInStock(String size) {
-    if (product == null || selectedColorName == null) return false;
+    if (product == null) return false;
     for (final v in product!.variants) {
-      if (v.color?.name == selectedColorName && v.size == size) {
+      final colorMatches =
+          selectedColorName == null || v.color?.name == selectedColorName;
+      if (colorMatches && v.size == size) {
         return v.inStock;
       }
     }
@@ -95,9 +126,11 @@ abstract class _ProductDetailStore with Store {
   }
 
   bool isSizeLowStock(String size) {
-    if (product == null || selectedColorName == null) return false;
+    if (product == null) return false;
     for (final v in product!.variants) {
-      if (v.color?.name == selectedColorName && v.size == size) {
+      final colorMatches =
+          selectedColorName == null || v.color?.name == selectedColorName;
+      if (colorMatches && v.size == size) {
         return v.isLowStock;
       }
     }
@@ -107,21 +140,38 @@ abstract class _ProductDetailStore with Store {
   @action
   Future<void> loadProduct(String productId) async {
     isLoading = true;
-    errorStore.errorMessage = '';
+    errorMessage = null;
+    product = null;
+    relatedProducts.clear();
+    brandProducts.clear();
+    categoryDetail = null;
+    currentImageIndex = 0;
+
     try {
-      final remote = await _repository.getProductDetail(productId);
-      product = _mapProductDetail(remote);
-      if (availableColors.isNotEmpty) {
-        selectedColorName = availableColors.first.name;
-      }
-      if (availableSizes.isNotEmpty) {
-        selectedSize = availableSizes.first;
-      }
+      final data = await _repository.getProductDetailPage(productId);
+      product = data.product;
+      relatedProducts = ObservableList.of(data.relatedProducts);
+      brandProducts = ObservableList.of(data.brandProducts);
+      categoryDetail = data.categoryDetail;
+      selectedColorName = availableColors.isNotEmpty
+          ? availableColors.first.name
+          : null;
+      selectedSize = availableSizes.isNotEmpty ? availableSizes.first : null;
     } catch (error) {
-      errorStore.errorMessage = error.toString();
+      final message = error.toString();
+      errorMessage = message;
+      errorStore.setErrorMessage(message);
     } finally {
       isLoading = false;
     }
+  }
+
+  @action
+  void setLoadError(String message) {
+    isLoading = false;
+    product = null;
+    errorMessage = message;
+    errorStore.setErrorMessage(message);
   }
 
   @action
@@ -144,112 +194,5 @@ abstract class _ProductDetailStore with Store {
   @action
   void toggleDescription() {
     isDescriptionExpanded = !isDescriptionExpanded;
-  }
-
-  ProductDetail _mapProductDetail(dynamic remote) {
-    final variants = (remote.variants as List<dynamic>? ?? const []);
-    final hasColorDimension = variants.any(
-      (variant) => (variant.attributes as List<dynamic>).any(
-        (attribute) => attribute.toString().toLowerCase().startsWith('color:'),
-      ),
-    );
-    final hasSizeDimension = variants.any(
-      (variant) => (variant.attributes as List<dynamic>).any(
-        (attribute) => attribute.toString().toLowerCase().startsWith('size:'),
-      ),
-    );
-
-    return ProductDetail(
-      id: remote.id as String,
-      name: remote.title as String,
-      brandName: remote.brand as String? ?? 'Unknown brand',
-      categoryName: remote.category as String? ?? 'Uncategorized',
-      media: (remote.images as List<String>)
-          .map((url) => ProductMedia(url: url, type: MediaType.image))
-          .toList(),
-      variants: variants
-          .map((item) => _mapVariant(item, hasColorDimension, hasSizeDimension))
-          .cast<ProductVariant>()
-          .toList(),
-      descriptionHtml: remote.description as String? ?? '',
-      specifications: [
-        ProductSpecification(
-          name: 'Brand',
-          value: remote.brand as String? ?? 'Unknown',
-        ),
-        ProductSpecification(
-          name: 'Category',
-          value: remote.category as String? ?? 'Uncategorized',
-        ),
-        ProductSpecification(
-          name: 'Availability',
-          value: remote.inStock == true ? 'In stock' : 'Out of stock',
-        ),
-      ],
-      reviews: const [],
-      averageRating: (remote.rating as num?)?.toDouble() ?? 0,
-      reviewCount: 0,
-    );
-  }
-
-  ProductVariant _mapVariant(
-    dynamic variant,
-    bool hasColorDimension,
-    bool hasSizeDimension,
-  ) {
-    final attributes = (variant.attributes as List<dynamic>? ?? const [])
-        .map((item) => item.toString())
-        .toList();
-    final colorValue = _extractAttribute(attributes, 'color');
-    final sizeValue = _extractAttribute(attributes, 'size');
-    final effectiveVariantId =
-        variant.id as String? ?? variant.sku as String? ?? 'default';
-    final effectiveSku = variant.sku as String? ?? effectiveVariantId;
-    return ProductVariant(
-      id: effectiveVariantId,
-      sku: effectiveSku,
-      color: hasColorDimension && colorValue != null
-          ? ProductColor(name: colorValue, color: _colorFromName(colorValue))
-          : (!hasColorDimension
-                ? const ProductColor(name: 'Default', color: Color(0xFF424242))
-                : null),
-      size: hasSizeDimension ? sizeValue : 'Default',
-      price:
-          (variant.basePrice as num?)?.toDouble() ??
-          (variant.sellingPrice as num?)?.toDouble() ??
-          0,
-      salePrice: (variant.sellingPrice as num?)?.toDouble(),
-      stockQuantity: 20,
-    );
-  }
-
-  String? _extractAttribute(List<String> attributes, String key) {
-    for (final attribute in attributes) {
-      final parts = attribute.split(':');
-      if (parts.length < 2) {
-        continue;
-      }
-      if (parts.first.trim().toLowerCase() == key.toLowerCase()) {
-        return parts.sublist(1).join(':').trim();
-      }
-    }
-    return null;
-  }
-
-  Color _colorFromName(String value) {
-    switch (value.toLowerCase()) {
-      case 'black':
-        return const Color(0xFF212121);
-      case 'white':
-        return const Color(0xFFFFFFFF);
-      case 'red':
-        return const Color(0xFFC62828);
-      case 'blue':
-        return const Color(0xFF1565C0);
-      case 'green':
-        return const Color(0xFF2E7D32);
-      default:
-        return const Color(0xFF757575);
-    }
   }
 }

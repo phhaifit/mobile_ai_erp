@@ -5,14 +5,14 @@ class CustomerSectionCard extends StatelessWidget {
     super.key,
     required this.title,
     required this.description,
-    required this.countLabel,
+    this.countLabel,
     required this.icon,
     required this.onTap,
   });
 
   final String title;
   final String description;
-  final String countLabel;
+  final String? countLabel;
   final IconData icon;
   final VoidCallback onTap;
 
@@ -42,23 +42,21 @@ class CustomerSectionCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
+                    Text(title, style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 4),
                     Text(
                       description,
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
-                    const SizedBox(height: 10),
-                    Text(
-                      countLabel,
-                      style:
-                          Theme.of(context).textTheme.labelLarge?.copyWith(
-                                color: colorScheme.primary,
-                              ),
-                    ),
+                    if (countLabel != null) ...<Widget>[
+                      const SizedBox(height: 10),
+                      Text(
+                        countLabel!,
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: colorScheme.primary,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

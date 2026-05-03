@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/presentation/cart/screens/cart_screen.dart';
+import 'package:mobile_ai_erp/presentation/cart/store/cart_store.dart';
 import 'package:mobile_ai_erp/presentation/checkout/screens/checkout_screen.dart';
 import 'package:mobile_ai_erp/domain/entity/checkout/checkout_item.dart';
 
@@ -38,16 +40,22 @@ class CartRoutes {
     String? appliedCouponCode;
     
     if (args != null) {
-      final cartData = args['cartData'] as Map<String, dynamic>?;
-      if (cartData != null) {
-        final items = cartData['items'] as List<dynamic>? ?? [];
-        checkoutItems = items
-            .map((item) => CheckoutItem.fromCheckoutData(item as Map<String, dynamic>))
-            .toList();
-        customerId = cartData['userId'] as String?;
-        // Extract couponCode from cartData (single source of truth)
-        appliedCouponCode = cartData['couponCode'] as String?;
-      }
+      // Cart screen passes: {cartId, customerId, tenantId, selectedItemIds, calculation}
+      customerId = args['customerId'] as String?;
+      
+      // Get selected item IDs from arguments
+      final selectedItemIds = args['selectedItemIds'] as List<dynamic>? ?? [];
+      
+      // Use CartStore to get the actual cart items and convert to CheckoutItems
+      final cartStore = getIt<CartStore>();
+      final selectedIdsSet = selectedItemIds.map((e) => e.toString()).toSet();
+      checkoutItems = cartStore.cart.items
+          .where((item) => selectedIdsSet.contains(item.id))
+          .map((cartItem) => CheckoutItem.fromCartItem(cartItem))
+          .toList();
+      
+      // Extract applied coupon code from cart store
+      appliedCouponCode = cartStore.appliedCouponCode;
     }
 
     return CheckoutScreen(

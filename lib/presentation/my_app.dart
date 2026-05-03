@@ -1,5 +1,6 @@
 import 'package:mobile_ai_erp/constants/app_theme.dart';
 import 'package:mobile_ai_erp/constants/strings.dart';
+import 'package:mobile_ai_erp/presentation/auth/onboarding_screen.dart';
 import 'package:mobile_ai_erp/presentation/home/home.dart';
 import 'package:mobile_ai_erp/presentation/home/store/language/language_store.dart';
 import 'package:mobile_ai_erp/presentation/home/store/theme/theme_store.dart';
@@ -23,6 +24,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   final ThemeStore _themeStore = getIt<ThemeStore>();
   final LanguageStore _languageStore = getIt<LanguageStore>();
+  final _loginStore = getIt<LoginStore>();
   
   bool _initialized = false;
 
@@ -33,7 +35,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> _validateStoredSession() async {
-    await getIt<LoginStore>().validateStoredSession();
+    await _loginStore.validateStoredSession();
     if (!mounted) return;
     setState(() {
       _initialized = true;
@@ -81,8 +83,6 @@ class _MyAppState extends State<MyApp> {
 
     return Observer(
       builder: (context) {
-        final loginStore = getIt<LoginStore>();
-        final hasSession = loginStore.isLoggedIn;
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           title: Strings.appName,
@@ -104,7 +104,7 @@ class _MyAppState extends State<MyApp> {
                 routeName.startsWith(Routes.storefrontLegacyHome);
 
             // If the route is protected and there is no session, force login
-            if (!isPublic && !hasSession) {
+            if (!isPublic && !_loginStore.isLoggedIn) {
               return MaterialPageRoute(
                 builder: (context) => LoginScreen(),
                 settings: settings,
@@ -114,7 +114,7 @@ class _MyAppState extends State<MyApp> {
             // Resolve static routes
             WidgetBuilder? builder;
             if (routeName == '/') {
-              builder = (context) => hasSession ? HomeScreen() : LoginScreen();
+              builder = (context) => !_loginStore.isLoggedIn ? LoginScreen() : _loginStore.needsOnboarding ? OnboardingScreen() : HomeScreen();
             } else {
               builder = Routes.routes[routeName];
             }
