@@ -124,6 +124,8 @@ class _SignUpFormState extends State<SignUpForm> {
         if (mounted) {
           Navigator.of(context).pushReplacementNamed(Routes.customerHome);
         }
+      } else {
+        signUpStore.resetSignUp();
       }
     }
   }
