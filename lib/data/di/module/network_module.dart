@@ -192,12 +192,25 @@ class NetworkModule {
       ),
       instanceName: 'customer',
     );
+    getIt.registerSingleton<TenantHeaderInterceptor>(
+      TenantHeaderInterceptor(
+        subdomain: () async => getIt<SharedPreferenceHelper>().subdomain,
+        tenantId: () async {
+          final storedTenantId = await getIt<SharedPreferenceHelper>().tenantId;
+          if (storedTenantId != null && storedTenantId.isNotEmpty) {
+            return storedTenantId;
+          }
+          return StorefrontEndpoints.tenantId;
+        },
+      ),
+      instanceName: 'customer',
+    );
     getIt.registerSingleton<DioClient>(
       DioClient(dioConfigs: getIt(instanceName: 'customer'))
         ..addInterceptors(
           [
             getIt<AuthInterceptor>(),
-            getIt<TenantInterceptor>(),
+            getIt<TenantHeaderInterceptor>(instanceName: 'customer'),
             getIt<ErrorInterceptor>(),
             getIt<LoggingInterceptor>(),
           ],

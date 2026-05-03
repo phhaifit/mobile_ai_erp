@@ -5,6 +5,7 @@ import '../store/profile_store.dart';
 import '../store/loyalty_store.dart';
 import '../widgets/loyalty_point_card.dart';
 import '../../../../di/service_locator.dart';
+import 'package:mobile_ai_erp/presentation/customer/store/auth_store.dart';
 
 class ProfileDashboardScreen extends StatefulWidget {
   const ProfileDashboardScreen({Key? key}) : super(key: key);
@@ -17,6 +18,7 @@ class _ProfileDashboardScreenState extends State<ProfileDashboardScreen> {
   // Fetch the store from DI
   final ProfileStore _profileStore = getIt<ProfileStore>();
   final LoyaltyStore _loyaltyStore = getIt<LoyaltyStore>();
+  final CustomerAuthStore _authStore = getIt<CustomerAuthStore>();
 
   @override
   void initState() {
@@ -202,9 +204,24 @@ class _ProfileDashboardScreenState extends State<ProfileDashboardScreen> {
               child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
             ),
             TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
+              onPressed: () async {
+                // 1. Pop the confirmation dialog first (if this button is inside a dialog)
+                Navigator.of(context).pop(); 
+
+                // 2. Perform the logout
+                await _authStore.logout();
+
+                // 3. Check if the widget is still in the tree before navigating
+                if (context.mounted) {
+                  // 4. Wipe the navigation stack and push the login screen
+                  Navigator.of(context).pushNamedAndRemoveUntil(
+                    Routes.customerLogin,
+                    (Route<dynamic> route) => false, // This destroys all previous routes
+                  );
+                }
+              },
               child: const Text('Log Out', style: TextStyle(color: Colors.red)),
-            ),
+            )
           ],
         );
       },
