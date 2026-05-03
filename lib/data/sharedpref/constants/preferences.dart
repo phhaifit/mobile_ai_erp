@@ -11,4 +11,5 @@ class Preferences {
   /// Customer app preferences
   static const String customer_subdomain = "customer_subdomain";
   static const String session_id = "session_id";
+  static const String customer_id = "customer_id";
 }

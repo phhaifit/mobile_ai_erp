@@ -1,5 +1,7 @@
 import 'dart:developer';
 
+import 'package:flutter/material.dart';
+import 'package:mobile_ai_erp/data/model/customer_auth/customer_auth_models.dart';
 import 'package:mobile_ai_erp/data/sharedpref/customer_shared_preference_helper.dart';
 import 'package:mobile_ai_erp/domain/entity/customer_auth/token_pair.dart';
 import 'package:mobile_ai_erp/domain/repository/customer_auth_repository.dart';
@@ -27,21 +29,31 @@ abstract class CustomerAuthStoreBase with Store {
   @observable
   bool isLoggedIn = false;
 
+  // Observable State
+  @observable
+  GetCustomerProfileDto? currentCustomer;
+
   @action
   Future<void> setTokenPair(TokenPair tokenPair) async {
-    await _sharedPreferenceHelper.saveTokenPair(tokenPair);
-    isLoggedIn = true;
+    try {
+      await _sharedPreferenceHelper.saveTokenPair(tokenPair);
+      currentCustomer = await _customerAuthRepository.getCurrentCustomer();
+      await _sharedPreferenceHelper.saveCustomerId(currentCustomer!.id);
+
+      isLoggedIn = true;
+    } catch (_) {
+      await _clearSession();
+      rethrow;
+    }
   }
 
   @action
   Future<bool> validateStoredSession() async {
     try {
-      final isValid = await _customerAuthRepository.validateSession();
-      if (!isValid) {
-        await logout();
-      }
-      isLoggedIn = isValid;
-      return isValid;
+      currentCustomer = await _customerAuthRepository.getCurrentCustomer();
+      await _sharedPreferenceHelper.saveCustomerId(currentCustomer!.id);
+      isLoggedIn = true;
+      return true;
     } catch (e) {
       log("Exception when validating session $e");
       await logout();
@@ -57,8 +69,13 @@ abstract class CustomerAuthStoreBase with Store {
     } catch (e) {
       log("Exception when signing out in server $e");
     } finally {
-      await _sharedPreferenceHelper.removeTokenPair();
-      isLoggedIn = false;
+      await _clearSession();
     }
+  }
+
+  Future<void> _clearSession() async {
+    await _sharedPreferenceHelper.removeCustomerAuth();
+    isLoggedIn = false;
+    currentCustomer = null;
   }
 }

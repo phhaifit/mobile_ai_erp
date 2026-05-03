@@ -44,6 +44,6 @@ abstract class CustomerAuthRepository {
     required String sessionId,
   });
 
-  /// Get new access token from refresh token
-  Future<bool> validateSession();
+  /// Get current customer
+  Future<GetCustomerProfileDto> getCurrentCustomer();
 }

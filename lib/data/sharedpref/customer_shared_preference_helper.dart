@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:mobile_ai_erp/data/sharedpref/constants/preferences.dart';
 import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
 import 'package:mobile_ai_erp/domain/entity/customer_auth/token_pair.dart';
@@ -19,10 +17,16 @@ class CustomerSharedPreferenceHelper extends SharedPreferenceHelper {
     );
   }
 
+  Future<void> saveCustomerId(String customerId) async {
+    await sharedPreference.setString(Preferences.customer_id, customerId);
+  }
+
+  String? get customerId => sharedPreference.getString(Preferences.customer_id);
   String? get sessionId => sharedPreference.getString(Preferences.session_id);
 
-  Future<void> removeTokenPair() async {
+  Future<void> removeCustomerAuth() async {
     await sharedPreference.remove(Preferences.session_id);
+    await sharedPreference.remove(Preferences.customer_id);
     await removeAuthToken();
   }
 

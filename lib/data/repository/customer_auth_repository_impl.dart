@@ -116,13 +116,11 @@ class CustomerAuthRepositoryImpl implements CustomerAuthRepository {
     }
   }
 
-  @override
-  Future<bool> validateSession() async {
+  Future<GetCustomerProfileDto> getCurrentCustomer() async {
     try {
-      final _ = await _api.listSessions();
-      return true;
+      return await _api.getCurrentCustomer();
     } catch (_) {
+      rethrow;
     }
-    return false;
   }
 }

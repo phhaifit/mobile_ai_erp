@@ -168,6 +168,19 @@ class CustomerAuthApi {
   }
 
   /// Sign out current session
+  Future<GetCustomerProfileDto> getCurrentCustomer() async {
+    try {
+      final response = await _dio.get(Endpoints.storefrontAccountProfile);
+      if (response.statusCode == 200) {
+        return GetCustomerProfileDto.fromJson(response.data);
+      }
+      throw MessageResponseDto.fromJson(response.data).message;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Sign out current session
   Future<List<SessionResponseDto>> listSessions() async {
     try {
       final response = await _dio.get(Endpoints.customerAuthGetSessions);

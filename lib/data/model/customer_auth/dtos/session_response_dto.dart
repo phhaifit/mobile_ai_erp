@@ -1,5 +1,4 @@
 import 'package:json_annotation/json_annotation.dart';
-import 'package:mobile_ai_erp/domain/entity/customer_auth/customer_auth_entities.dart';
 
 part 'session_response_dto.g.dart';
 
