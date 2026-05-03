@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
+import 'package:mobile_ai_erp/presentation/customer/screens/register/widgets/email_verification_dialog.dart';
 import 'package:mobile_ai_erp/presentation/customer/store/auth_store.dart';
 import 'package:mobile_ai_erp/presentation/customer/store/signin_store.dart';
+import 'package:mobile_ai_erp/presentation/customer/widgets/auth_error_dialog.dart';
 import 'widgets/email_password_tab.dart';
 import 'widgets/magic_link_tab.dart';
 import 'package:mobile_ai_erp/presentation/customer/screens/login/widgets/oauth_buttons.dart';
@@ -44,15 +46,46 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> with TickerPr
     super.dispose();
   }
 
+  void _checkAndShowError(String title) {
+    if (mounted && _signInStore.errorMessage?.isEmpty == false) {
+      AuthErrorDialog.show(
+        context,
+        message: _signInStore.errorMessage!,
+        title: title,
+      );
+      _signInStore.errorMessage = null;
+    }
+  }
+
   void _handleEmailPasswordSignIn(String email, String password) async {
     await _signInStore.signIn(
       email: email,
       password: password,
     );
+    _checkAndShowError('Sign In Failed');
   }
 
   void _handleGoogleOAuthPressed() async {
     await _signInStore.signInWithGoogle();
+  }
+
+  void _handleRequestMagicLink(String email) async {
+    final result = await _signInStore.requestMagicLink(email: email);
+    if (result) {
+      if (mounted) {
+        await showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => EmailVerificationDialog(
+            email: _signInStore.magicLinkEmail,
+            signInStore: _signInStore,
+          ),
+        );
+      }
+    } else {
+      _checkAndShowError('Sign In Failed');
+    }
+    _signInStore.resetMagicLink();
   }
 
   void _handleSignUpPressed() {
@@ -140,6 +173,7 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> with TickerPr
                 // Magic Code Tab
                 MagicLinkTab(
                   signInStore: _signInStore,
+                  onMagicLinkRequest: _handleRequestMagicLink,
                 ),
               ],
             ),

@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:mobile_ai_erp/utils/validators_utils.dart';
 import 'package:mobile_ai_erp/presentation/customer/store/signin_store.dart';
-import 'package:mobile_ai_erp/presentation/customer/screens/register/widgets/email_verification_dialog.dart';
-import '../../../widgets/auth_error_dialog.dart';
 
 /// Magic code passwordless authentication tab widget
 class MagicLinkTab extends StatefulWidget {
+  final Function(String) onMagicLinkRequest;
   final SignInStore signInStore;
 
   const MagicLinkTab({
     super.key,
+    required this.onMagicLinkRequest,
     required this.signInStore,
   }) : super();
 
@@ -28,38 +28,9 @@ class _MagicLinkTabState extends State<MagicLinkTab> {
     super.dispose();
   }
 
-  @override
-  void didUpdateWidget(MagicLinkTab oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.signInStore.errorMessage != null && widget.signInStore.errorMessage!.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          AuthErrorDialog.show(
-            context,
-            message: widget.signInStore.errorMessage!,
-            title: 'Magic Code Error',
-          );
-        }
-      });
-    }
-  }
-
-  void _handleRequestMagicLink() async {
+  void _handleRequestMagicLink() {
     if (_formKey.currentState!.validate()) {
-      final result = await widget.signInStore.requestMagicLink(email: _emailController.text.trim());
-      if (result) {
-        _emailController.text = widget.signInStore.magicLinkEmail ?? '';
-        if (mounted) {
-          await showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (context) => EmailVerificationDialog(
-              email: widget.signInStore.magicLinkEmail,
-              signInStore: widget.signInStore,
-            ),
-          );
-        }
-      }
+      widget.onMagicLinkRequest(_emailController.text.trim());
     }
   }
 

@@ -3,7 +3,6 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:mobile_ai_erp/presentation/customer/store/signin_store.dart';
 import 'package:mobile_ai_erp/utils/validators_utils.dart';
 import '../../../widgets/password_field.dart';
-import '../../../widgets/auth_error_dialog.dart';
 
 /// Email/Password login tab widget
 class EmailPasswordTab extends StatefulWidget {
@@ -39,22 +38,6 @@ class _EmailPasswordTabState extends State<EmailPasswordTab> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
-  }
-
-  @override
-  void didUpdateWidget(EmailPasswordTab oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.signInStore.errorMessage != null && widget.signInStore.errorMessage!.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          AuthErrorDialog.show(
-            context,
-            message: widget.signInStore.errorMessage!,
-            title: 'Sign In Failed',
-          );
-        }
-      });
-    }
   }
 
   void _handleSignIn() {
