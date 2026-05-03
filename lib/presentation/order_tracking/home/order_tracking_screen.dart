@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
+import 'package:mobile_ai_erp/data/network/apis/orders/dto/order_detail_response.dart';
+import 'package:mobile_ai_erp/presentation/order_tracking/utils/order_tracking_order_info.dart';
+import 'package:mobile_ai_erp/presentation/order_tracking/widgets/order_tracking_shared_widgets.dart';
 import 'package:mobile_ai_erp/domain/entity/order_tracking/order_tracking_scenario.dart';
 import 'package:mobile_ai_erp/presentation/order_tracking/store/order_tracking_store.dart';
 import 'package:mobile_ai_erp/presentation/order_tracking/widgets/tracking_carrier_card.dart';
@@ -67,7 +70,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         final double contentMaxWidth = isWideLayout ? 1200 : 860;
         final OrderTrackingScenario? selected =
             _orderTrackingStore.selectedScenario;
-        final Map<String, dynamic>? orderDetail =
+        final OrderDetailResponse? orderDetail =
             _orderTrackingStore.orderDetail;
         final String title = _tr(t, 'tracking_title', 'Order Tracking');
 
@@ -449,22 +452,17 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
   Widget _buildOrderSummaryCard({
     required BuildContext context,
-    required Map<String, dynamic> detail,
+    required OrderDetailResponse detail,
   }) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final TextTheme textTheme = Theme.of(context).textTheme;
     final NumberFormat currencyFormat = NumberFormat.decimalPattern('vi_VN');
 
-    final String code = _orderTrackingStore.getOrderCode(detail);
-    final String status = _orderTrackingStore.getOrderStatus(detail);
-    final String total = _orderTrackingStore.getTotalPrice(detail);
-    final int itemsCount = _orderTrackingStore.getItemsCount(detail);
-    final String customerName = _orderTrackingStore.getCustomerName(detail);
-    final String deliveryInfo = _orderTrackingStore.getDeliveryInfo(detail);
-    final DateTime? createdAt = _orderTrackingStore.getOrderCreatedAt(detail);
+    final OrderInfo info = OrderInfoMapper.fromDetail(detail);
+    final DateTime? createdAt = info.createdAt;
     final String createdLabel = createdAt == null
-        ? ''
-        : DateFormat('dd MMM yyyy, HH:mm').format(createdAt);
+      ? ''
+      : DateFormat('dd MMM yyyy, HH:mm').format(createdAt);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -491,7 +489,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      code,
+                      info.code,
                       style: textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -499,7 +497,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      customerName,
+                      info.customerName,
                       style: textTheme.bodyMedium?.copyWith(
                         color: colorScheme.onSurface.withOpacity(0.7),
                       ),
@@ -508,16 +506,16 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   ],
                 ),
               ),
-              _StatusBadge(
-                label: _formatStatus(status),
-                background: _getStatusColor(status, colorScheme),
+              StatusBadge(
+                label: formatOrderStatus(info.status),
+                background: getOrderStatusColor(info.status, colorScheme),
               ),
             ],
           ),
-          if (deliveryInfo.isNotEmpty) ...[
+          if (info.deliveryInfo.isNotEmpty) ...[
             const SizedBox(height: 10),
             Text(
-              deliveryInfo,
+              info.deliveryInfo,
               style: textTheme.bodySmall?.copyWith(
                 color: colorScheme.onSurface.withOpacity(0.65),
               ),
@@ -527,19 +525,19 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
           Row(
             children: [
               Expanded(
-                child: _InfoRow(
+                child: InfoRow(
                   label: 'Total',
-                  value: '${_formatPrice(total, currencyFormat)} đ',
+                  value: '${formatOrderPrice(info.totalPrice, currencyFormat)} đ',
                   valueStyle: textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
-              if (itemsCount > 0)
+              if (info.itemsCount > 0)
                 Expanded(
-                  child: _InfoRow(
+                  child: InfoRow(
                     label: 'Items',
-                    value: '$itemsCount items',
+                    value: '${info.itemsCount} items',
                     alignEnd: true,
                     valueStyle: textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurface.withOpacity(0.7),
@@ -548,7 +546,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 )
               else if (createdLabel.isNotEmpty)
                 Expanded(
-                  child: _InfoRow(
+                  child: InfoRow(
                     label: 'Created',
                     value: createdLabel,
                     alignEnd: true,
@@ -559,9 +557,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 ),
             ],
           ),
-          if (itemsCount > 0 && createdLabel.isNotEmpty) ...[
+          if (info.itemsCount > 0 && createdLabel.isNotEmpty) ...[
             const SizedBox(height: 6),
-            _InfoRow(
+            InfoRow(
               label: 'Created',
               value: createdLabel,
               valueStyle: textTheme.bodySmall?.copyWith(
@@ -684,106 +682,4 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     );
   }
 
-  Color _getStatusColor(String status, ColorScheme colorScheme) {
-    switch (status.toLowerCase()) {
-      case 'pending':
-        return Colors.orange;
-      case 'confirmed':
-      case 'packed':
-      case 'shipped':
-      case 'shipping':
-      case 'in_transit':
-        return Colors.blue;
-      case 'delivered':
-        return Colors.green;
-      case 'cancelled':
-      case 'canceled':
-      case 'failed':
-        return colorScheme.error;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  String _formatPrice(String price, NumberFormat currencyFormat) {
-    try {
-      final num value = num.parse(price);
-      return currencyFormat.format(value.round());
-    } catch (_) {
-      return price;
-    }
-  }
-
-  String _formatStatus(String status) {
-    final normalized = status.replaceAll('_', ' ').trim();
-    if (normalized.isEmpty) return 'Unknown';
-    return normalized[0].toUpperCase() + normalized.substring(1);
-  }
-}
-
-class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({
-    required this.label,
-    required this.background,
-  });
-
-  final String label;
-  final Color background;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: Colors.white,
-        ),
-      ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({
-    required this.label,
-    required this.value,
-    this.alignEnd = false,
-    this.valueStyle,
-  });
-
-  final String label;
-  final String value;
-  final bool alignEnd;
-  final TextStyle? valueStyle;
-
-  @override
-  Widget build(BuildContext context) {
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
-    return Column(
-      crossAxisAlignment:
-          alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurface.withOpacity(0.6),
-              ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: valueStyle,
-          textAlign: alignEnd ? TextAlign.end : TextAlign.start,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ],
-    );
-  }
 }

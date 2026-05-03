@@ -3,7 +3,8 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/presentation/order_tracking/store/order_list_store.dart';
-import 'package:mobile_ai_erp/presentation/order_tracking/widgets/order_pagination_controls.dart';
+import 'package:mobile_ai_erp/presentation/order_tracking/utils/order_tracking_order_info.dart';
+import 'package:mobile_ai_erp/presentation/order_tracking/widgets/order_tracking_shared_widgets.dart';
 
 class OrderListScreen extends StatefulWidget {
   const OrderListScreen({super.key});
@@ -81,59 +82,29 @@ class _OrderListScreenState extends State<OrderListScreen> {
             );
           }
 
-          return Column(
-            children: [
-              Expanded(
-                child: ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                  itemCount: _orderListStore.orders.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    final order = _orderListStore.orders[index];
-                    final orderId = _orderListStore.getOrderId(order);
-                    final orderCode = _orderListStore.getOrderCode(order);
-                    final status = _orderListStore.getOrderStatus(order);
-                    final totalPrice = _orderListStore.getTotalPrice(order);
-                    final customerName = _orderListStore.getCustomerName(order);
-                    final createdAt = _orderListStore.getOrderCreatedAt(order);
-                    final itemsCount = _orderListStore.getItemsCount(order);
-                    final deliveryInfo = _orderListStore.getDeliveryInfo(order);
+          return ListView.separated(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            itemCount: _orderListStore.orders.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              final order = _orderListStore.orders[index];
+              final OrderInfo info = OrderInfoMapper.fromSummary(order);
 
-                    return _buildOrderCard(
-                      context: context,
-                      colorScheme: colorScheme,
-                      textTheme: textTheme,
-                      currencyFormat: currencyFormat,
-                      orderId: orderId,
-                      orderCode: orderCode,
-                      status: status,
-                      customerName: customerName,
-                      totalPrice: totalPrice,
-                      createdAt: createdAt,
-                      itemsCount: itemsCount,
-                      deliveryInfo: deliveryInfo,
-                    );
-                  },
-                ),
-              ),
-              OrderPaginationControls(
-                currentPage: _orderListStore.currentPage,
-                totalPages: _orderListStore.totalPages,
-                isLoading: _orderListStore.isLoading,
-                onPrevious: _orderListStore.currentPage > 1
-                    ? () {
-                        _orderListStore.loadOrders(
-                          page: _orderListStore.currentPage - 1,
-                        );
-                      }
-                    : null,
-                onNext: _orderListStore.hasMoreOrders
-                    ? () {
-                        _orderListStore.loadMoreOrders();
-                      }
-                    : null,
-              ),
-            ],
+              return _buildOrderCard(
+                context: context,
+                colorScheme: colorScheme,
+                textTheme: textTheme,
+                currencyFormat: currencyFormat,
+                orderId: info.id,
+                orderCode: info.code,
+                status: info.status,
+                customerName: info.customerName,
+                totalPrice: info.totalPrice,
+                createdAt: info.createdAt,
+                itemsCount: info.itemsCount,
+                deliveryInfo: info.deliveryInfo,
+              );
+            },
           );
         },
       ),
@@ -154,8 +125,8 @@ class _OrderListScreenState extends State<OrderListScreen> {
     required int itemsCount,
     required String deliveryInfo,
   }) {
-    final Color statusColor = _getStatusColor(status, colorScheme);
-    final String priceLabel = _formatPrice(totalPrice, currencyFormat);
+    final Color statusColor = getOrderStatusColor(status, colorScheme);
+    final String priceLabel = formatOrderPrice(totalPrice, currencyFormat);
     final String dateLabel = createdAt == null
         ? ''
         : DateFormat('dd MMM yyyy, HH:mm').format(createdAt);
@@ -233,8 +204,8 @@ class _OrderListScreenState extends State<OrderListScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      _StatusBadge(
-                        label: _formatStatus(status),
+                      StatusBadge(
+                        label: formatOrderStatus(status),
                         background: statusColor,
                       ),
                       const SizedBox(height: 10),
@@ -250,7 +221,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: _InfoRow(
+                    child: InfoRow(
                       label: 'Total',
                       value: '$priceLabel đ',
                       valueStyle: textTheme.titleSmall?.copyWith(
@@ -260,7 +231,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
                   ),
                   if (itemsLabel.isNotEmpty)
                     Expanded(
-                      child: _InfoRow(
+                      child: InfoRow(
                         label: 'Items',
                         value: itemsLabel,
                         alignEnd: true,
@@ -271,7 +242,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
                     )
                   else if (dateLabel.isNotEmpty)
                     Expanded(
-                      child: _InfoRow(
+                      child: InfoRow(
                         label: 'Created',
                         value: dateLabel,
                         alignEnd: true,
@@ -284,7 +255,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
               ),
               if (itemsLabel.isNotEmpty && dateLabel.isNotEmpty) ...[
                 const SizedBox(height: 6),
-                _InfoRow(
+                InfoRow(
                   label: 'Created',
                   value: dateLabel,
                   valueStyle: textTheme.bodySmall?.copyWith(
@@ -299,110 +270,9 @@ class _OrderListScreenState extends State<OrderListScreen> {
     );
   }
 
-  Color _getStatusColor(String status, ColorScheme colorScheme) {
-    switch (status.toLowerCase()) {
-      case 'pending':
-        return Colors.orange;
-      case 'confirmed':
-      case 'packed':
-      case 'shipped':
-      case 'shipping':
-      case 'in_transit':
-        return Colors.blue;
-      case 'delivered':
-        return Colors.green;
-      case 'cancelled':
-      case 'canceled':
-      case 'failed':
-        return colorScheme.error;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  String _formatPrice(String price, NumberFormat currencyFormat) {
-    try {
-      final num value = num.parse(price);
-      return currencyFormat.format(value.round());
-    } catch (e) {
-      return price;
-    }
-  }
-
-  String _formatStatus(String status) {
-    final normalized = status.replaceAll('_', ' ').trim();
-    if (normalized.isEmpty) return 'Unknown';
-    return normalized[0].toUpperCase() + normalized.substring(1);
-  }
-
   void _showSnackBar(BuildContext context, String message) {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
-  }
-}
-
-class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({required this.label, required this.background});
-
-  final String label;
-  final Color background;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: Colors.white,
-        ),
-      ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({
-    required this.label,
-    required this.value,
-    this.alignEnd = false,
-    this.valueStyle,
-  });
-
-  final String label;
-  final String value;
-  final bool alignEnd;
-  final TextStyle? valueStyle;
-
-  @override
-  Widget build(BuildContext context) {
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
-
-    return Column(
-      crossAxisAlignment: alignEnd
-          ? CrossAxisAlignment.end
-          : CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: colorScheme.onSurface.withOpacity(0.6),
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: valueStyle ?? Theme.of(context).textTheme.bodyMedium,
-          textAlign: alignEnd ? TextAlign.end : TextAlign.start,
-        ),
-      ],
-    );
   }
 }

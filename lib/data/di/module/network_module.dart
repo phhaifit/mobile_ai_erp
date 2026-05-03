@@ -14,7 +14,6 @@ import 'package:mobile_ai_erp/data/network/apis/cart/cart_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/wishlist/wishlist_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/coupon/coupon_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/suppliers/supplier_api.dart';
-import 'package:mobile_ai_erp/data/network/apis/orders/orders_api.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
 import 'package:mobile_ai_erp/data/network/constants/storefront_endpoints.dart';
 import 'package:mobile_ai_erp/data/network/datasources/role/role_remote_datasource.dart';
@@ -204,6 +203,5 @@ class NetworkModule {
     getIt.registerSingleton<StorefrontProductsApi>(
       StorefrontProductsApi(getIt<DioClient>(instanceName: erpDioClientName)),
     );
-    getIt.registerSingleton(OrdersApi(getIt<DioClient>()));
   }
 }

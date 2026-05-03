@@ -104,7 +104,7 @@ import 'package:mobile_ai_erp/presentation/login/store/login_store.dart'
 import 'package:mobile_ai_erp/presentation/order_fulfillment/store/fulfillment_store.dart';
 import 'package:mobile_ai_erp/presentation/order_tracking/store/order_tracking_store.dart';
 import 'package:mobile_ai_erp/presentation/order_tracking/store/order_list_store.dart';
-import 'package:mobile_ai_erp/data/network/apis/orders/orders_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/orders/order_api.dart';
 import 'package:mobile_ai_erp/presentation/post/store/post_store.dart';
 import 'package:mobile_ai_erp/presentation/product_detail/store/product_detail_store.dart';
 import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
@@ -206,14 +206,14 @@ class StoreModule {
       OrderTrackingStore(
         getIt<GetOrderTrackingScenariosUseCase>(),
         getIt<FindOrderTrackingScenarioUseCase>(),
-        getIt<OrdersApi>(),
+        getIt<OrderApi>(),
         getIt<ErrorStore>(),
       ),
     );
 
     getIt.registerSingleton<OrderListStore>(
       OrderListStore(
-        getIt<OrdersApi>(),
+        getIt<OrderApi>(),
         getIt<ErrorStore>(),
       ),
     );
