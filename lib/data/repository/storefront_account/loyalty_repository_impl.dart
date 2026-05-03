@@ -1,5 +1,5 @@
 import '../../../domain/entity/loyalty_ledgers/loyalty_ledger.dart';
-import '../../../domain/repository/account/loyalty_ledger_repository.dart';
+import '../../../domain/repository/storefront_account/loyalty_ledger_repository.dart';
 import '../../local/datasources/loyalty_ledgers/loyalty_ledger_api_datasource.dart';
 
 class LoyaltyRepositoryImpl implements LoyaltyLedgerRepository {

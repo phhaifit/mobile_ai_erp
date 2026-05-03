@@ -1,5 +1,5 @@
 import '../../../domain/entity/storefront_customer/storefront_customer.dart';
-import '../../../domain/repository/account/customer_repository.dart';
+import '../../../domain/repository/storefront_account/customer_repository.dart';
 import '../../local/datasources/storefront_customer/customer_api_datasource.dart';
 
 class AccountCustomerRepositoryImpl implements AccountCustomerRepository {

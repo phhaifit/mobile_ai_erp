@@ -1,4 +1,4 @@
-import '../../repository/account/loyalty_ledger_repository.dart';
+import '../../repository/storefront_account/loyalty_ledger_repository.dart';
 
 class GetLoyaltyBalanceUseCase {
   final LoyaltyLedgerRepository _repository;

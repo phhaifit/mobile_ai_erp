@@ -1,5 +1,5 @@
 import 'package:mobile_ai_erp/core/domain/usecase/use_case.dart';
-import 'package:mobile_ai_erp/domain/repository/account/customer_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/storefront_account/customer_repository.dart';
 
 class CustomerForgotPasswordParams {
   final String email;

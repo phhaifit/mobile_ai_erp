@@ -1,5 +1,5 @@
 import '../../../domain/entity/storefront_address/storefront_address.dart';
-import '../../../domain/repository/account/address_repository.dart';
+import '../../../domain/repository/storefront_account/address_repository.dart';
 import '../../local/datasources/storefront_address/address_api_datasource.dart';
 
 class AddressRepositoryImpl implements StorefrontAddressRepository {

@@ -1,6 +1,6 @@
 import 'package:mobile_ai_erp/core/domain/usecase/use_case.dart';
 import 'package:mobile_ai_erp/domain/entity/storefront_customer/storefront_customer.dart';
-import 'package:mobile_ai_erp/domain/repository/account/customer_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/storefront_account/customer_repository.dart';
 
 class GetProfileUseCase implements UseCase<StorefrontCustomer, void> {
   final AccountCustomerRepository _customerRepository;
