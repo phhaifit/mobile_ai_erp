@@ -8,17 +8,13 @@ part 'order_list_store.g.dart';
 class OrderListStore = _OrderListStore with _$OrderListStore;
 
 abstract class _OrderListStore with Store {
-  _OrderListStore(
-    this._orderApi,
-    this.errorStore,
-  );
+  _OrderListStore(this._orderApi, this.errorStore);
 
   final OrderApi _orderApi;
   final ErrorStore errorStore;
 
   @observable
-  ObservableList<OrderSummaryDto> orders =
-      ObservableList<OrderSummaryDto>();
+  ObservableList<OrderSummaryDto> orders = ObservableList<OrderSummaryDto>();
 
   @observable
   bool isLoading = false;
@@ -51,16 +47,32 @@ abstract class _OrderListStore with Store {
 
     try {
       final response = await _orderApi.getOrders(
-        pageSize: 20,
-        page: 1,
+        pageSize: pageSize,
+        page: page,
       );
-      orders = ObservableList<OrderSummaryDto>.of(response.data);
+
+      if (append) {
+        orders.addAll(response.data);
+      } else {
+        orders = ObservableList<OrderSummaryDto>.of(response.data);
+      }
+
+      currentPage = response.meta.page;
+      totalPages = response.meta.totalPages;
+      totalItems = response.meta.totalItems;
     } catch (e) {
       error = 'Failed to load orders. ${e.toString()}';
       errorStore.setErrorMessage(error ?? 'Failed to load orders.');
     } finally {
       isLoading = false;
     }
+  }
+
+  @action
+  Future<void> loadMoreOrders() async {
+    if (isLoading) return;
+    if (currentPage >= totalPages) return;
+    await loadOrders(page: currentPage + 1, append: true);
   }
 
   @action
