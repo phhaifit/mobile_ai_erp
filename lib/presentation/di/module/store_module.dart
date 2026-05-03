@@ -85,6 +85,7 @@ import 'package:mobile_ai_erp/domain/usecase/user/get_role_by_id_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/update_role_usercase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/get_all_users_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/get_user_by_id_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/assign_role_to_user_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/create_user_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/update_user_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/delete_user_usecase.dart';

@@ -1,4 +1,4 @@
-import 'customer_order.dart';
+import '../storefront_order/order.dart';
 
 enum CustomerStatus {
   pendingVerification('Pending verification'),
@@ -44,8 +44,8 @@ enum CustomerType {
   final String label;
 }
 
-class Customer {
-  const Customer({
+class StorefrontCustomer {
+  const StorefrontCustomer({
     required this.id,
     required this.firstName,
     required this.lastName,
@@ -77,7 +77,7 @@ class Customer {
   final DateTime? updatedAt;
   final DateTime? lastSignInAt;
   final DateTime? emailVerifiedAt;
-  final List<CustomerOrder> transactions;
+  final List<StorefrontOrder> transactions;
 
   String get fullName {
     final first = firstName.trim();
@@ -99,7 +99,7 @@ class Customer {
       status == CustomerStatus.active ||
       status == CustomerStatus.pendingVerification;
 
-  Customer copyWith({
+  StorefrontCustomer copyWith({
     String? id,
     String? firstName,
     String? lastName,
@@ -114,9 +114,9 @@ class Customer {
     Object? updatedAt = _sentinel,
     Object? lastSignInAt = _sentinel,
     Object? emailVerifiedAt = _sentinel,
-    List<CustomerOrder>? transactions,
+    List<StorefrontOrder>? transactions,
   }) {
-    return Customer(
+    return StorefrontCustomer(
       id: id ?? this.id,
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
@@ -145,8 +145,8 @@ class Customer {
     );
   }
 
-  factory Customer.fromJson(Map<String, dynamic> json) {
-    return Customer(
+  factory StorefrontCustomer.fromJson(Map<String, dynamic> json) {
+    return StorefrontCustomer(
       id: json['id']?.toString() ?? '',
       firstName: json['firstName'] ?? json['first_name'] ?? '',
       lastName: json['lastName'] ?? json['last_name'] ?? '',
@@ -180,7 +180,7 @@ class Customer {
               ? DateTime.parse(json['email_verified_at'])
               : null,
       transactions: (json['transactions'] as List<dynamic>?)
-              ?.map((e) => CustomerOrder.fromJson(e as Map<String, dynamic>))
+              ?.map((e) => StorefrontOrder.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],
     );

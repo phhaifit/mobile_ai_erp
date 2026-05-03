@@ -1,4 +1,4 @@
-import '../../../domain/entity/customer/customer.dart';
+import '../../../domain/entity/storefront_customer/storefront_customer.dart';
 import '../../../domain/repository/account/customer_repository.dart';
 import '../../local/datasources/storefront_customer/customer_api_datasource.dart';
 
@@ -23,12 +23,12 @@ class AccountCustomerRepositoryImpl implements AccountCustomerRepository {
   }
 
   @override
-  Future<Customer> getProfile() {
+  Future<StorefrontCustomer> getProfile() {
     return _dataSource.getProfile();
   }
 
   @override
-  Future<Customer> updateProfile(Map<String, dynamic> data) {
+  Future<StorefrontCustomer> updateProfile(Map<String, dynamic> data) {
     return _dataSource.updateProfile(data);
   }
 }

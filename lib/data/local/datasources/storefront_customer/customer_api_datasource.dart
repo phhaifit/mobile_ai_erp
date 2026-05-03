@@ -2,14 +2,14 @@ import 'dart:async';
 
 import 'package:mobile_ai_erp/data/network/apis/storefront_customer/customer_api.dart';
 import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
-import 'package:mobile_ai_erp/domain/entity/customer/customer.dart';
+import 'package:mobile_ai_erp/domain/entity/storefront_customer/storefront_customer.dart';
 
 abstract class AccountCustomerDataSource {
   Future<Map<String, dynamic>> login(String email, String password);
   Future<Map<String, dynamic>> register(String name, String email, String password);
   Future<void> forgotPassword(String email);
-  Future<Customer> getProfile();
-  Future<Customer> updateProfile(Map<String, dynamic> data);
+  Future<StorefrontCustomer> getProfile();
+  Future<StorefrontCustomer> updateProfile(Map<String, dynamic> data);
 }
 
 class AccountCustomerApiDataSource implements AccountCustomerDataSource {
@@ -34,7 +34,7 @@ class AccountCustomerApiDataSource implements AccountCustomerDataSource {
   }
 
   @override
-  Future<Customer> getProfile() async {
+  Future<StorefrontCustomer> getProfile() async {
     try {
       // Get the stored customer ID (set during login)
       final customerId = await _prefs.customerId;
@@ -57,7 +57,7 @@ class AccountCustomerApiDataSource implements AccountCustomerDataSource {
   }
 
   @override
-  Future<Customer> updateProfile(Map<String, dynamic> data) {
+  Future<StorefrontCustomer> updateProfile(Map<String, dynamic> data) {
     return _customerApi.updateProfile(data);
   }
 }

@@ -163,11 +163,11 @@ class RepositoryModule {
       ProductMetadataRepositoryImpl(getIt<ProductMetadataDataSource>());
 
     getIt.registerLazySingleton<StorefrontAddressRepository>(
-      () => AddressRepositoryImpl(getIt<AddressMockDataSource>()),
+      () => AddressRepositoryImpl(getIt<AddressApiDataSource>()),
     );
 
     getIt.registerLazySingleton<StorefrontOrderRepository>(
-      () => OrderRepositoryImpl(getIt<OrderMockDataSource>()),
+      () => OrderRepositoryImpl(getIt<OrderApiDataSource>()),
     );
 
     // post_purchase:----------------------------------------------------------
