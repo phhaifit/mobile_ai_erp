@@ -10,7 +10,7 @@ import 'package:mobile_ai_erp/presentation/home/store/theme/theme_store.dart';
 import 'package:mobile_ai_erp/presentation/storefront/storefront_home_page.dart';
 import 'package:mobile_ai_erp/utils/locale/app_localization.dart';
 import 'package:mobile_ai_erp/utils/routes/cart_routes.dart';
-import 'package:mobile_ai_erp/utils/routes/customer_routes.dart';
+import 'package:mobile_ai_erp/utils/routes/routes.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
 
 /// Customer home page with cart, wishlist, theme, and language features
@@ -132,7 +132,7 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
         _themeStore.changeBrightnessToDark(!_themeStore.darkMode);
         break;
       case 'profile':
-        Navigator.pushNamed(context, CustomerRoutes.profileDashboard);
+        Navigator.pushNamed(context, Routes.profileDashboard);
         break;
       case 'logout':
         _authStore.logout().then((_) {

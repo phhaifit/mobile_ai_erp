@@ -9,7 +9,7 @@ import 'package:mobile_ai_erp/presentation/home/store/language/language_store.da
 import 'package:mobile_ai_erp/presentation/home/store/theme/theme_store.dart';
 import 'package:mobile_ai_erp/presentation/customer/screens/customer_home.dart';
 import 'package:mobile_ai_erp/utils/locale/app_localization.dart';
-import 'package:mobile_ai_erp/utils/routes/customer_routes.dart';
+import 'package:mobile_ai_erp/utils/routes/routes.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
@@ -77,8 +77,8 @@ class _CustomerAppState extends State<CustomerApp> {
               ? AppThemeData.darkThemeData
               : AppThemeData.lightThemeData,
           home: _buildHome(),
-          routes: CustomerRoutes.routes,
-          onGenerateRoute: CustomerRoutes.onGenerateRoute,
+          routes: Routes.routes,
+          onGenerateRoute: Routes.onGenerateRoute,
           locale: Locale(_languageStore.locale),
           supportedLocales: _languageStore.supportedLanguages
               .map((language) => Locale(language.locale, language.code))
