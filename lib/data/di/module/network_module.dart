@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/configs/dio_configs.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/auth_interceptor.dart';
@@ -20,6 +21,10 @@ import 'package:mobile_ai_erp/data/network/apis/cart/cart_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/wishlist/wishlist_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/coupon/coupon_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/suppliers/supplier_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/storefront/addresses_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/storefront/checkout_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/storefront/storefront_orders_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/storefront/storefront_payments_api.dart';
 import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
 import 'package:mobile_ai_erp/data/network/constants/storefront_endpoints.dart';
 import 'package:mobile_ai_erp/data/network/datasources/role/role_remote_datasource.dart';
@@ -94,6 +99,7 @@ class NetworkModule {
           } else {
             await getIt<SharedPreferenceHelper>().removeTenantId();
             await getIt<SharedPreferenceHelper>().removeAuthToken();
+            await getIt<SharedPreferenceHelper>().removeSessionId();
           }
         },
         getNewTokens: () async {
@@ -104,9 +110,17 @@ class NetworkModule {
             if (refreshToken == null) {
               return (null, null);
             }
+            final sessionId = await sharedPreferenceHelper.sessionId;
             final AuthRepository authRepository = getIt<AuthRepository>();
-            final (newAccessToken, newRefreshToken) = await authRepository
-                .refreshToken(refreshToken);
+            final (newAccessToken, newRefreshToken, newSessionId) =
+                await authRepository.refreshToken(
+              refreshToken,
+              sessionId: sessionId,
+            );
+            // Save new sessionId if returned
+            if (newSessionId != null && newSessionId.isNotEmpty) {
+              await sharedPreferenceHelper.saveSessionId(newSessionId);
+            }
             return (newAccessToken, newRefreshToken ?? refreshToken);
           } catch (_) {
             return (null, null);
@@ -130,6 +144,16 @@ class NetworkModule {
 
     // rest client:-------------------------------------------------------------
     getIt.registerSingleton(RestClient());
+
+    // Clean Dio for token refresh (no auth interceptors to avoid infinite loop)
+    getIt.registerSingleton<Dio>(
+      Dio(BaseOptions(
+        baseUrl: Endpoints.erpBaseUrl,
+        connectTimeout: const Duration(milliseconds: 30000),
+        receiveTimeout: const Duration(milliseconds: 15000),
+      )),
+      instanceName: 'refreshDio',
+    );
 
     // dio (ERP backend - separate base URL + tenant header):-------------------
     final erpDioClient = DioClient(dioConfigs: getIt())
@@ -213,10 +237,25 @@ class NetworkModule {
     );
 
     // dashboard:---------------------------------------------------------------
-    getIt.registerSingleton(
+    getIt.registerSingleton<DashboardApi>(
       DashboardApi(getIt<DioClient>(instanceName: erpDioClientName)),
+    );
     getIt.registerSingleton<StorefrontProductsApi>(
-      StorefrontProductsApi(getIt<DioClient>(instanceName: erpDioClientName)),
+      StorefrontProductsApi(getIt<DioClient>(instanceName: erpDioClientName).dio),
+    );
+
+    // storefront: addresses, checkout, orders, payments
+    getIt.registerSingleton<AddressesApi>(
+      AddressesApi(getIt<DioClient>(instanceName: erpDioClientName).dio),
+    );
+    getIt.registerSingleton<CheckoutApi>(
+      CheckoutApi(getIt<DioClient>(instanceName: erpDioClientName).dio),
+    );
+    getIt.registerSingleton<StorefrontOrdersApi>(
+      StorefrontOrdersApi(getIt<DioClient>(instanceName: erpDioClientName).dio),
+    );
+    getIt.registerSingleton<StorefrontPaymentsApi>(
+      StorefrontPaymentsApi(getIt<DioClient>(instanceName: erpDioClientName).dio),
     );
   }
 }
