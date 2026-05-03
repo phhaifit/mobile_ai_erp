@@ -91,8 +91,14 @@ class CustomerAuthApi {
   Future<String> getGoogleOAuthUrl(String redirectUri) async {
     try {
       final response = await _dio.get(Endpoints.customerGetGoogleOAuthUrl, queryParameters: {"redirectUri": redirectUri});
-      final location = response.headers['location'];
-      return location?.firstOrNull ?? '';
+      if (response.statusCode == 200) {
+        return response.data['url'] ?? '';
+      }
+      if (response.statusCode == 302) {
+        final location = response.headers['location'];
+        return location?.firstOrNull ?? '';
+      }
+      throw MessageResponseDto.fromJson(response.data).message;
     } catch (e) {
       rethrow;
     }
@@ -145,8 +151,8 @@ class CustomerAuthApi {
       final response = await _dio.post(
         Endpoints.customerRefreshToken,
         data: {
-          refreshToken: refreshToken,
-          sessionId: sessionId,
+          'refreshToken': refreshToken,
+          'sessionId': sessionId,
         }
       );
       if (response.statusCode == 200) {
