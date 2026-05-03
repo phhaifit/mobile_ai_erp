@@ -1,3 +1,4 @@
+import 'package:mobile_ai_erp/constants/env.dart';
 import 'package:dio/dio.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/configs/dio_configs.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
@@ -32,12 +33,20 @@ import 'package:mobile_ai_erp/data/network/datasources/user/user_remote_datasour
 import 'package:mobile_ai_erp/data/network/interceptors/error_interceptor.dart';
 import 'package:mobile_ai_erp/data/network/interceptors/tenant_interceptor.dart';
 import 'package:mobile_ai_erp/data/network/rest_client.dart';
+import 'package:mobile_ai_erp/data/sharedpref/customer_shared_preference_helper.dart';
 import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
 import 'package:event_bus/event_bus.dart';
 import 'package:mobile_ai_erp/data/network/apis/storefront/storefront_api.dart';
+import 'package:mobile_ai_erp/domain/repository/customer_auth_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/auth_repository.dart';
+import 'package:mobile_ai_erp/presentation/customer/store/auth_store.dart';
+import 'package:mobile_ai_erp/presentation/login/store/login_store.dart';
 
 import '../../../di/service_locator.dart';
+
+bool defaultValidateStatusIgnoreRedirect(int? status) {
+  return (status != null && status >= 200 && status < 300) || status == 302;
+}
 
 class NetworkModule {
   static const String erpDioClientName = 'erpDioClient';
@@ -52,6 +61,7 @@ class NetworkModule {
         baseUrl: Endpoints.erpBaseUrl,
         connectionTimeout: Endpoints.connectionTimeout,
         receiveTimeout: Endpoints.receiveTimeout,
+        validateStatus: defaultValidateStatusIgnoreRedirect,
       ),
     );
 
@@ -73,6 +83,7 @@ class NetworkModule {
     );
     getIt.registerSingleton<TenantHeaderInterceptor>(
       TenantHeaderInterceptor(
+        subdomain: () async => getIt<SharedPreferenceHelper>().subdomain,
         tenantId: () async {
           final storedTenantId = await getIt<SharedPreferenceHelper>().tenantId;
 
@@ -92,14 +103,12 @@ class NetworkModule {
             await getIt<SharedPreferenceHelper>().refreshToken,
         saveAuthToken: (tokens) async {
           if (tokens.$1 != null && tokens.$2 != null) {
-            await getIt<SharedPreferenceHelper>().saveAuthToken(
-              accessToken: tokens.$1!,
-              refreshToken: tokens.$2!,
-            );
-          } else {
-            await getIt<SharedPreferenceHelper>().removeTenantId();
-            await getIt<SharedPreferenceHelper>().removeAuthToken();
+            await getIt<SharedPreferenceHelper>().saveAuthToken(accessToken: tokens.$1!, refreshToken: tokens.$2!);
+          } else if (!Env.isCustomerApp) {
+            await getIt<LoginStore>().logout();
             await getIt<SharedPreferenceHelper>().removeSessionId();
+          } else {
+            await getIt<CustomerAuthStore>().logout();
           }
         },
         getNewTokens: () async {
@@ -110,18 +119,25 @@ class NetworkModule {
             if (refreshToken == null) {
               return (null, null);
             }
-            final sessionId = await sharedPreferenceHelper.sessionId;
-            final AuthRepository authRepository = getIt<AuthRepository>();
-            final (newAccessToken, newRefreshToken, newSessionId) =
-                await authRepository.refreshToken(
-              refreshToken,
-              sessionId: sessionId,
-            );
-            // Save new sessionId if returned
-            if (newSessionId != null && newSessionId.isNotEmpty) {
-              await sharedPreferenceHelper.saveSessionId(newSessionId);
+            if (Env.isCustomerApp) {
+              final sessionId = getIt<CustomerSharedPreferenceHelper>().customerSessionId;
+              if (sessionId == null) {
+                return (null, null);
+              }
+              return await getIt<CustomerAuthRepository>().refreshToken(refreshToken: refreshToken, sessionId: sessionId);
+            } else {
+              final sessionId = await sharedPreferenceHelper.sessionId;
+              final AuthRepository authRepository = getIt<AuthRepository>();
+              final (newAccessToken, newRefreshToken, newSessionId) = await authRepository.refreshToken(
+                refreshToken,
+                sessionId: sessionId,
+              );
+              // Save new sessionId if returned
+              if (newSessionId != null && newSessionId.isNotEmpty) {
+                await sharedPreferenceHelper.saveSessionId(newSessionId);
+              }
+              return (newAccessToken, newRefreshToken ?? refreshToken);
             }
-            return (newAccessToken, newRefreshToken ?? refreshToken);
           } catch (_) {
             return (null, null);
           }
@@ -134,9 +150,6 @@ class NetworkModule {
       ),
     );
 
-    getIt.registerSingleton<TenantInterceptor>(
-      TenantInterceptor(Endpoints.tenantId),
-    );
     getIt.registerSingleton<TenantInterceptor>(
       TenantInterceptor(StorefrontEndpoints.tenantId),
       instanceName: 'storefront',

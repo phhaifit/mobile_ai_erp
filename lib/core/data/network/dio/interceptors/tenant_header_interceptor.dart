@@ -7,9 +7,11 @@ class TenantHeaderInterceptor extends Interceptor {
       '00000000-0000-0000-0000-000000000000';
 
   final AsyncValueGetter<String?> tenantId;
+  final AsyncValueGetter<String?> subdomain;
 
   TenantHeaderInterceptor({
     required this.tenantId,
+    required this.subdomain,
   });
 
   @override
@@ -27,6 +29,11 @@ class TenantHeaderInterceptor extends Interceptor {
         tenant.isNotEmpty &&
         tenant != _placeholderTenantId) {
       options.headers.putIfAbsent('X-Tenant-Id', () => tenant);
+    }
+
+    final domain = await subdomain();
+    if (domain != null && domain.isNotEmpty) {
+      options.headers.putIfAbsent('X-Subdomain', () => domain);
     }
 
     super.onRequest(options, handler);

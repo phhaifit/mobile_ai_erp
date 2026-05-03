@@ -51,6 +51,9 @@ import 'package:mobile_ai_erp/presentation/web_builder/store_settings/store_sett
 import 'package:mobile_ai_erp/presentation/web_builder/theme_engine/theme_detail_screen.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/theme_engine/theme_list_screen.dart';
 import 'package:mobile_ai_erp/presentation/web_builder/web_builder_dashboard.dart';
+import 'package:mobile_ai_erp/presentation/customer/screens/customer_home.dart';
+import 'package:mobile_ai_erp/presentation/customer/screens/login/login_screen.dart';
+import 'package:mobile_ai_erp/presentation/customer/screens/register/register_screen.dart';
 import 'cart_routes.dart';
 import 'product_metadata_routes.dart';
 
@@ -111,6 +114,10 @@ class Routes {
   static const String orderDetail = '/order_detail';
   static const String returnRequest = '/return_request';
 
+  static const String customerLogin = '/customer/login';
+  static const String customerHome = '/customer/home';
+  static const String customerRegister = '/customer/register';
+
   static final routes = <String, WidgetBuilder>{
     login: (BuildContext context) => LoginScreen(),
     onboarding: (BuildContext context) => OnboardingScreen(),
@@ -170,6 +177,9 @@ class Routes {
     checkoutTest: (BuildContext context) => const CheckoutTestScreen(),
     productManagementList: (BuildContext context) => ProductListScreen(),
     productManagementFilter: (BuildContext context) => ProductFilterScreen(),
+    customerLogin: (BuildContext context) => const CustomerLoginScreen(),
+    customerHome: (BuildContext context) => const CustomerHomePage(),
+    customerRegister: (BuildContext context) => const RegisterScreen(),
   };
 
   /// Navigate to checkout screen with items
