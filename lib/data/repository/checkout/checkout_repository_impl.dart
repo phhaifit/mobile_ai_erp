@@ -294,25 +294,43 @@ class CheckoutRepositoryImpl extends CheckoutRepository {
   }
 
   /// Parse the coupon validation API response into a [Coupon].
+  ///
+  /// Expected backend response shape:
+  /// ```json
+  /// {
+  ///   "isValid": true,
+  ///   "discountAmount": 99.9,
+  ///   "promotion": {
+  ///     "code": "DEV10",
+  ///     "discount_type": "percent",       // "percent" or "fixed"
+  ///     "discount_value": "10",            // Decimal → string
+  ///     "min_order_amount": "100",         // Decimal → string
+  ///     "name": "Dev 10% off"
+  ///   }
+  /// }
+  /// ```
   Coupon? _parseCouponResponse(Map<String, dynamic> response) {
     if (response.isEmpty) return null;
 
     final valid = response['valid'] as bool? ?? response['isValid'] as bool? ?? false;
     if (!valid) return null;
 
-    final discountTypeStr = response['discountType'] as String? ?? 'fixed';
-    final discountType = discountTypeStr == 'percentage'
+    final promotion = response['promotion'] as Map<String, dynamic>?;
+    if (promotion == null) return null;
+
+    final discountTypeStr = promotion['discount_type'] as String? ?? 'fixed';
+    final discountType = discountTypeStr == 'percent'
         ? CouponDiscountType.percentage
         : CouponDiscountType.fixed;
 
     return Coupon(
-      code: response['code'] as String? ?? '',
+      code: promotion['code'] as String? ?? '',
       discountType: discountType,
-      discountValue: (response['discountValue'] as num?)?.toDouble() ?? 0.0,
+      discountValue: double.tryParse(promotion['discount_value']?.toString() ?? '') ?? 0.0,
       isValid: true,
-      description: response['description'] as String?,
-      minOrderAmount: (response['minOrderAmount'] as num?)?.toDouble() ?? 0.0,
-      maxDiscountAmount: (response['maxDiscountAmount'] as num?)?.toDouble(),
+      description: promotion['name'] as String?,
+      minOrderAmount: double.tryParse(promotion['min_order_amount']?.toString() ?? '') ?? 0.0,
+      maxDiscountAmount: null,
     );
   }
 }
