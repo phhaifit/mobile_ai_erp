@@ -23,7 +23,8 @@ import 'package:mobile_ai_erp/data/network/apis/suppliers/supplier_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/web_builder/web_builder_api.dart';
 import 'package:mobile_ai_erp/data/repository/checkout/checkout_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/customer/customer_repository_impl.dart';
-import 'package:mobile_ai_erp/data/repository/dashboard/mock_dashboard_repository.dart';
+import 'package:mobile_ai_erp/data/network/apis/dashboard/dashboard_api.dart';
+import 'package:mobile_ai_erp/data/repository/dashboard/live_dashboard_repository.dart';
 import 'package:mobile_ai_erp/data/repository/fulfillment/fulfillment_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/inventory_audit_outbound/mock_inventory_audit_outbound_repository.dart';
 import 'package:mobile_ai_erp/data/repository/order_tracking/order_tracking_repository_impl.dart';
@@ -87,7 +88,9 @@ class RepositoryModule {
       CustomerRepositoryImpl(getIt<CustomerApi>(), getIt<CustomerSegmentApi>()),
     );
 
-    getIt.registerSingleton<DashboardRepository>(MockDashboardRepository());
+        getIt.registerSingleton<DashboardRepository>(
+      LiveDashboardRepository(getIt<DashboardApi>()),
+    );
 
     getIt.registerSingleton<SettingRepository>(
       SettingRepositoryImpl(getIt<SharedPreferenceHelper>()),
