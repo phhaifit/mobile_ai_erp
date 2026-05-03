@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:mobile_ai_erp/di/service_locator.dart';
 import 'package:mobile_ai_erp/presentation/customer/store/signin_store.dart';
 import 'widgets/email_password_tab.dart';
@@ -67,37 +66,15 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> with TickerPr
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        leading: ModalRoute.of(context)?.canPop ?? false
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.black),
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            : null,
       ),
       body: Column(
         children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Welcome Back',
-                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Sign in to access your AI ERP account',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-
           // Tab bar
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 24),
@@ -121,7 +98,7 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> with TickerPr
                   icon: Icon(Icons.mail_outline, size: 20),
                 ),
                 Tab(
-                  text: 'Magic Link',
+                  text: 'Magic Code',
                   icon: Icon(Icons.link, size: 20),
                 ),
               ],
@@ -141,7 +118,7 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> with TickerPr
                   onSignUp: _handleSignUpPressed,
                 ),
 
-                // Magic Link Tab
+                // Magic Code Tab
                 MagicLinkTab(
                   signInStore: _signInStore,
                 ),

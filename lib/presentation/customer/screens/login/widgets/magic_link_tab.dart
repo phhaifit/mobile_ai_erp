@@ -5,7 +5,7 @@ import 'package:mobile_ai_erp/presentation/customer/store/signin_store.dart';
 import 'package:mobile_ai_erp/presentation/customer/screens/register/widgets/email_verification_dialog.dart';
 import '../../../widgets/auth_error_dialog.dart';
 
-/// Magic link passwordless authentication tab widget
+/// Magic code passwordless authentication tab widget
 class MagicLinkTab extends StatefulWidget {
   final SignInStore signInStore;
 
@@ -37,7 +37,7 @@ class _MagicLinkTabState extends State<MagicLinkTab> {
           AuthErrorDialog.show(
             context,
             message: widget.signInStore.errorMessage!,
-            title: 'Magic Link Error',
+            title: 'Magic Code Error',
           );
         }
       });
@@ -68,7 +68,7 @@ class _MagicLinkTabState extends State<MagicLinkTab> {
     return Observer(
       builder: (_) => LoadingOverlay(
         isLoading: widget.signInStore.isMagicLinkLoading,
-        message: 'Sending magic link...',
+        message: 'Sending magic code...',
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: _buildRequestView(context),
@@ -111,7 +111,7 @@ class _MagicLinkTabState extends State<MagicLinkTab> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'We\'ll send a secure link to your email',
+                        'We\'ll send a secure code to your email',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Colors.grey.shade600,
                         ),
@@ -126,14 +126,14 @@ class _MagicLinkTabState extends State<MagicLinkTab> {
 
           // Welcome message
           Text(
-            'Sign in with a magic link',
+            'Sign in with a magic code',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'No password needed. Enter your email to receive a secure sign-in link.',
+            'No password needed. Enter your email to receive a secure sign-in code.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: Colors.grey.shade600,
             ),
@@ -157,7 +157,7 @@ class _MagicLinkTabState extends State<MagicLinkTab> {
           ),
           const SizedBox(height: 24),
 
-          // Send magic link button
+          // Send magic code button
           ElevatedButton(
             onPressed: isLoading ? null : _handleRequestMagicLink,
             style: ElevatedButton.styleFrom(
@@ -175,37 +175,8 @@ class _MagicLinkTabState extends State<MagicLinkTab> {
               ),
             )
                 : const Text(
-              'Send Magic Link',
+              'Send Magic Code',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Info box
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.amber.shade50,
-              border: Border.all(color: Colors.amber.shade200),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.info_outline,
-                  color: Colors.amber.shade700,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'The link will expire in 24 hours for security.',
-                    style: TextStyle(
-                      color: Colors.amber.shade900,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-              ],
             ),
           ),
         ],
