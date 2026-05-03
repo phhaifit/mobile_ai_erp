@@ -92,7 +92,11 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
         return OrderItemCardWidget(
           order: order,
           onTap: () {
-            Navigator.pushNamed(context, Routes.orderDetail, arguments: order);
+            // Add .then() to wait for the user to come back!
+            Navigator.pushNamed(context, Routes.orderDetail, arguments: order).then((_) {
+              // This block runs the exact moment the OrderDetailScreen is popped.
+              _orderStore.fetchOrders(); 
+            });
           },
         );
       },
