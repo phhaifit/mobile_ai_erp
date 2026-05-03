@@ -73,7 +73,7 @@ class Product {
     this.attributeSetId,
     required this.type,
     required this.status,
-    required this.warrantyMonths,
+    this.warrantyMonths,
     this.lengthCm,
     this.widthCm,
     this.heightCm,

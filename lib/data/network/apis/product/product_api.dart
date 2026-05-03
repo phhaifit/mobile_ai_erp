@@ -1,7 +1,12 @@
+import 'dart:developer';
+
 import 'package:dio/dio.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
+import 'package:mobile_ai_erp/data/network/constants/endpoints.dart';
+import 'package:mobile_ai_erp/data/network/dto/shared/paginated_response.dto.dart';
 import 'package:mobile_ai_erp/domain/entity/product/product.dart';
 import 'package:mobile_ai_erp/domain/entity/product/product_status.dart';
+import 'package:mobile_ai_erp/domain/entity/shared/paginated_result.dart';
 
 /// ProductApi handles all product-related network requests
 class ProductApi {
@@ -12,22 +17,72 @@ class ProductApi {
   /// Saves a product by sending a POST request for new products or PATCH for updates
   /// Returns the saved Product entity
   Future<Product> saveProduct(Product product) async {
+    log("in api");
+
     try {
       final payload = _buildProductPayload(product);
 
       final response = product.id == null || product.id!.isEmpty
           ? await _dioClient.dio.post<Map<String, dynamic>>(
-              '/erp/products',
+              Endpoints.productsUrl,
               data: payload,
               options: Options(contentType: Headers.jsonContentType),
             )
           : await _dioClient.dio.patch<Map<String, dynamic>>(
-              '/erp/products/${product.id}',
+              '${Endpoints.productsUrl}/${product.id}',
               data: payload,
               options: Options(contentType: Headers.jsonContentType),
             );
 
       return _mapProduct(response.data ?? <String, dynamic>{});
+    } on DioException catch (error) {
+      throw _mapProductError(error);
+    }
+  }
+
+  /// Loads a paginated product list from the API
+  Future<PaginatedResult<Product>> getProducts({
+    int page = 1,
+    int pageSize = 10,
+    String? search,
+    String? sortBy,
+    String? sortOrder,
+  }) async {
+    try {
+      final normalizedPage = page < 1 ? 1 : page;
+      final normalizedPageSize = pageSize.clamp(1, 100);
+      final queryParams = <String, dynamic>{
+        'page': normalizedPage,
+        'pageSize': normalizedPageSize,
+      };
+      if (search != null && search.trim().isNotEmpty) {
+        queryParams['search'] = search.trim();
+      }
+      if (sortBy != null && sortBy.isNotEmpty) {
+        queryParams['sortBy'] = sortBy;
+      }
+      if (sortOrder != null && sortOrder.isNotEmpty) {
+        queryParams['sortOrder'] = sortOrder;
+      }
+
+      final response = await _dioClient.dio.get<Map<String, dynamic>>(
+        Endpoints.productsUrl,
+        queryParameters: queryParams,
+      );
+
+      final pageDto = PaginatedResponseDto.fromJson(
+        response.data ?? const <String, dynamic>{},
+        pageFallback: normalizedPage,
+        pageSizeFallback: normalizedPageSize,
+      );
+
+      return PaginatedResult(
+        data: pageDto.data.map(_mapProduct).toList(growable: false),
+        page: pageDto.page,
+        pageSize: pageDto.pageSize,
+        totalItems: pageDto.totalItems,
+        totalPages: pageDto.totalPages,
+      );
     } on DioException catch (error) {
       throw _mapProductError(error);
     }
@@ -62,8 +117,10 @@ class ProductApi {
     
     payload['type'] = product.type.name;
     payload['status'] = _mapProductStatusToString(product.status);
-    payload['warranty_months'] = product.warrantyMonths ?? 0;
 
+    if (product.warrantyMonths != null) {
+      payload['warranty_months'] = product.warrantyMonths;
+    }
     // Dimensions
     if (product.lengthCm != null) {
       payload['length_cm'] = product.lengthCm;
@@ -82,7 +139,9 @@ class ProductApi {
     if (product.costPrice != null) {
       payload['cost_price'] = product.costPrice;
     }
-    payload['selling_price'] = product.sellingPrice;
+    if (product.sellingPrice != null) {
+      payload['selling_price'] = product.sellingPrice;
+    }
 
     // Images
     if (product.images.isNotEmpty) {

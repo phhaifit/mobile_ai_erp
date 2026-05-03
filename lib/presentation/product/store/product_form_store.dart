@@ -6,6 +6,7 @@ import 'package:mobile_ai_erp/domain/entity/product_metadata/tag.dart';
 import 'package:mobile_ai_erp/domain/entity/product/product_status.dart';
 import 'package:mobile_ai_erp/domain/entity/supplier/supplier.dart';
 import 'package:mobile_ai_erp/domain/repository/product/product_management_repository.dart';
+import 'package:mobile_ai_erp/domain/usecase/product/save_product_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/supplier/supplier_usecases.dart';
 import 'package:mobx/mobx.dart';
 
@@ -55,6 +56,7 @@ abstract class _ProductFormStore with Store {
   // repository and usecase instances
   final ProductManagementRepository _repository;
   final GetSuppliersUseCase _getSuppliersUseCase;
+  final SaveProductUseCase _saveProductUseCase;
 
   // store for handling errors
   final ErrorStore errorStore;
@@ -166,7 +168,7 @@ abstract class _ProductFormStore with Store {
   bool get isEditing => editingProduct != null;
 
   // constructor:---------------------------------------------------------------
-  _ProductFormStore(this._repository, this._getSuppliersUseCase, this.errorStore);
+  _ProductFormStore(this._repository, this._getSuppliersUseCase, this.errorStore, this._saveProductUseCase);
 
   // actions:-------------------------------------------------------------------
   
@@ -514,6 +516,7 @@ abstract class _ProductFormStore with Store {
 
   @action
   Future<Product?> submitForm() async {
+    log("Submitting");
     isSubmitting = true;
 
     var result = null;
@@ -549,24 +552,45 @@ abstract class _ProductFormStore with Store {
         id: editingProduct?.id,
         name: name,
         sku: sku,
+        barcode: barcode,
         description: description,
+        webTitle: webTitle,
+        webDescription: webDescription,
+        brandId: brandId,
+        categoryId: categoryId,
         type: ProductType.standalone,
         status: status,
         warrantyMonths: warrantyMonths != null ? int.tryParse(warrantyMonths!) : null,
+        lengthCm: length != null ? double.tryParse(length!) : null,
+        widthCm: width != null ? double.tryParse(width!) : null,
+        heightCm: height != null ? double.tryParse(height!) : null,
+        weightG: weight != null ? double.tryParse(weight!) : null,
         basePrice: parsedPrice,
         costPrice: parsedCostPrice,
-        sellingPrice: parsedSelling ?? parsedPrice,
-        categoryId: categoryId,
-        brandId: brandId,
+        sellingPrice: parsedSelling,
         images: imageUrls,
-        tags: const <Tag>[],
-        createdAt: editingProduct?.createdAt,
+        tagIds: tagIds,
+        suppliers: suppliers
+          .map((s) => {
+                'supplierId': s.supplierId,
+                'supplierSku': s.supplierSku,
+                'costPrice': s.costPrice,
+                'isPrimary': s.isPrimary,
+              })
+          .toList(),
+        
       );
 
-      if (isEditing) {
-        await _repository.updateProduct(result);
-      } else {
-        await _repository.createProduct(result);
+      // if (isEditing) {
+      //   await _repository.updateProduct(result);
+      // } else {
+      //   await _repository.createProduct(result);
+      //   reset();
+      // }
+
+      log("cp1");
+      await _saveProductUseCase.call(params: result);
+      if (!isEditing) {
         reset();
       }
 

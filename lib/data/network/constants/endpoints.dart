@@ -23,6 +23,9 @@ class Endpoints {
   // category endpoints
   static const String categoriesUrl = '/erp/categories';
 
+  // product endpoints
+  static const String productsUrl = '/erp/products';
+
   static const String getPosts = "/posts";
 
   // auth endpoints

@@ -92,39 +92,39 @@ class LoggingInterceptor extends Interceptor {
       return handler.next(options);
     }
 
-    logPrint('--> ${options.method} ${options.uri}');
+    // logPrint('--> ${options.method} ${options.uri}');
 
-    if (level == Level.basic) {
-      return handler.next(options);
-    }
+    // if (level == Level.basic) {
+    //   return handler.next(options);
+    // }
 
-    logPrint('[DIO][HEADERS]');
-    options.headers.forEach((key, value) {
-      logPrint('$key:$value');
-    });
+    // logPrint('[DIO][HEADERS]');
+    // options.headers.forEach((key, value) {
+    //   logPrint('$key:$value');
+    // });
 
-    if (level == Level.headers) {
-      logPrint('[DIO][HEADERS]--> END ${options.method}');
-      return handler.next(options);
-    }
+    // if (level == Level.headers) {
+    //   logPrint('[DIO][HEADERS]--> END ${options.method}');
+    //   return handler.next(options);
+    // }
 
-    final data = options.data;
-    if (data != null) {
-      // logPrint('[DIO]dataType:${data.runtimeType}');
-      if (data is Map) {
-        if (compact) {
-          logPrint('$data');
-        } else {
-          _prettyPrintJson(data);
-        }
-      } else if (data is FormData) {
-        // NOT IMPLEMENT
-      } else {
-        logPrint(data.toString());
-      }
-    }
+    // final data = options.data;
+    // if (data != null) {
+    //   // logPrint('[DIO]dataType:${data.runtimeType}');
+    //   if (data is Map) {
+    //     if (compact) {
+    //       logPrint('$data');
+    //     } else {
+    //       _prettyPrintJson(data);
+    //     }
+    //   } else if (data is FormData) {
+    //     // NOT IMPLEMENT
+    //   } else {
+    //     logPrint(data.toString());
+    //   }
+    // }
 
-    logPrint('[DIO]--> END ${options.method}');
+    // logPrint('[DIO]--> END ${options.method}');
 
     return handler.next(options);
   }

@@ -1,8 +1,17 @@
 import 'package:mobile_ai_erp/domain/entity/product/product.dart';
 import 'package:mobile_ai_erp/domain/entity/product/product_filter.dart';
+import 'package:mobile_ai_erp/domain/entity/shared/paginated_result.dart';
 
 abstract class ProductManagementRepository {
   Future<List<Product>> getProducts();
+
+  Future<PaginatedResult<Product>> getProductsPage({
+    int page = 1,
+    int pageSize = 10,
+    String? search,
+    String? sortBy,
+    String? sortOrder,
+  });
 
   Future<Product?> getProductById(int id);
 
