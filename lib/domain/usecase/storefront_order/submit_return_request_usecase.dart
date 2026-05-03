@@ -1,6 +1,6 @@
 import '../../../core/domain/usecase/use_case.dart';
 import '../../entity/storefront_order/return_request.dart';
-import '../../repository/account/order_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/storefront_account/order_repository.dart';
 
 class SubmitReturnParams {
   final String orderId;

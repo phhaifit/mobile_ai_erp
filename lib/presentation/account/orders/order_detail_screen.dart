@@ -47,7 +47,7 @@ class OrderDetailScreen extends StatelessWidget {
                     child: const Icon(Icons.image,
                         color: Colors.grey), // Mock Image
                   ),
-                  title: Text(item.displayName),
+                  title: Text(item.productName),
                   subtitle: Text('Qty: ${item.quantity}'),
                   trailing: Text(CurrencyUtils.format(item.unitPrice)),
                 )),

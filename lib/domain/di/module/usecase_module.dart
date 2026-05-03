@@ -1,6 +1,7 @@
 import 'dart:async';
 
-import 'package:mobile_ai_erp/domain/repository/account/customer_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/storefront_account/order_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/storefront_account/customer_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/checkout/checkout_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/fulfillment/fulfillment_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/post/post_repository.dart';
@@ -92,8 +93,7 @@ import 'package:mobile_ai_erp/domain/usecase/storefront_order/confirm_order_usec
 import 'package:mobile_ai_erp/domain/usecase/storefront_customer/update_profile_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/loyalty_ledgers/get_loyalty_balance_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/loyalty_ledgers/get_loyalty_history_usecase.dart';
-import 'package:mobile_ai_erp/domain/repository/account/order_repository.dart';
-import 'package:mobile_ai_erp/domain/repository/account/loyalty_ledger_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/storefront_account/loyalty_ledger_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/customer/customer_repository.dart';
 import 'package:mobile_ai_erp/domain/usecase/customer/get_customers_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/customer/get_customer_detail_usecase.dart';

@@ -84,13 +84,9 @@ import 'package:mobile_ai_erp/data/repository/storefront_account/order_repositor
 import 'package:mobile_ai_erp/data/repository/storefront_account/loyalty_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/user/auth_repository_impl.dart';
 import 'package:mobile_ai_erp/domain/repository/user/auth_repository.dart';
-import 'package:mobile_ai_erp/domain/repository/account/order_repository.dart';
-import 'package:mobile_ai_erp/data/repository/storefront_account/address_repository_impl.dart';
-import 'package:mobile_ai_erp/data/repository/storefront_account/order_repository_impl.dart';
 import 'package:mobile_ai_erp/data/local/datasources/account/address_mock_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/account/order_mock_datasource.dart';
 import 'package:mobile_ai_erp/domain/repository/account/payment_repository.dart';
-import 'package:mobile_ai_erp/data/repository/account/address_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/account/order_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/account/payment_repository_impl.dart';
 import 'package:mobile_ai_erp/data/network/apis/storefront/addresses_api.dart';
@@ -180,7 +176,7 @@ class RepositoryModule {
         () => AddressRepositoryImpl(getIt<AddressApiDataSource>()));
         
     getIt.registerLazySingleton<StorefrontOrderRepository>(
-        () => OrderRepositoryImpl(getIt<OrderApiDataSource>()));
+        () => StorefrontOrderRepositoryImpl(getIt<OrderApiDataSource>()));
         
     getIt.registerLazySingleton<LoyaltyLedgerRepository>(
         () => LoyaltyRepositoryImpl(getIt<LoyaltyLedgerApiDataSource>()));

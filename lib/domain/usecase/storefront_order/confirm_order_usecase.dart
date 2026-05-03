@@ -1,5 +1,5 @@
 import '../../../core/domain/usecase/use_case.dart';
-import '../../repository/account/order_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/storefront_account/order_repository.dart';
 
 class ConfirmOrderUsecase extends UseCase<void, String> {
   final StorefrontOrderRepository _repository;
