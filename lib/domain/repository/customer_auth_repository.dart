@@ -37,4 +37,13 @@ abstract class CustomerAuthRepository {
   Future<TokenResponseDto> confirmMagicLink({
     required String token,
   });
+
+  /// Get new access token from refresh token
+  Future<(String, String)> refreshToken({
+    required String refreshToken,
+    required String sessionId,
+  });
+
+  /// Get new access token from refresh token
+  Future<bool> validateSession();
 }

@@ -1,4 +1,5 @@
 import 'package:get_it/get_it.dart';
+import 'package:mobile_ai_erp/constants/env.dart';
 import 'package:mobile_ai_erp/domain/repository/customer_auth_repository.dart';
 import 'package:mobile_ai_erp/presentation/customer/store/auth_store.dart';
 import 'package:mobile_ai_erp/presentation/customer/store/signin_store.dart';
@@ -12,6 +13,9 @@ class CustomerPresentationDi {
 
   /// Setup cart presentation layer dependencies
   static void setup(GetIt getIt) {
+    if (!Env.isCustomerApp) {
+      return;
+    }
     // Stores
     // getIt.registerSingleton<AuthStore>(
     //   AuthStore(

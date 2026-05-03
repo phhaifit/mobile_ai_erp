@@ -9,6 +9,6 @@ class Preferences {
 
 
   /// Customer app preferences
-  static const String token_pair = "token_pair";
   static const String customer_subdomain = "customer_subdomain";
+  static const String session_id = "session_id";
 }

@@ -1,3 +1,4 @@
+import 'package:mobile_ai_erp/constants/env.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/configs/dio_configs.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/interceptors/auth_interceptor.dart';
@@ -13,10 +14,14 @@ import 'package:mobile_ai_erp/data/network/datasources/user/user_remote_datasour
 import 'package:mobile_ai_erp/data/network/interceptors/error_interceptor.dart';
 import 'package:mobile_ai_erp/data/network/interceptors/tenant_interceptor.dart';
 import 'package:mobile_ai_erp/data/network/rest_client.dart';
+import 'package:mobile_ai_erp/data/sharedpref/customer_shared_preference_helper.dart';
 import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
 import 'package:event_bus/event_bus.dart';
 import 'package:mobile_ai_erp/data/network/apis/storefront/storefront_api.dart';
+import 'package:mobile_ai_erp/domain/repository/customer_auth_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/auth_repository.dart';
+import 'package:mobile_ai_erp/presentation/customer/store/auth_store.dart';
+import 'package:mobile_ai_erp/presentation/login/store/login_store.dart';
 
 import '../../../di/service_locator.dart';
 
@@ -62,9 +67,10 @@ class NetworkModule {
         saveAuthToken: (tokens) async {
           if (tokens.$1 != null && tokens.$2 != null) {
             await getIt<SharedPreferenceHelper>().saveAuthToken(accessToken: tokens.$1!, refreshToken: tokens.$2!);
+          } else if (!Env.isCustomerApp) {
+            await getIt<LoginStore>().logout();
           } else {
-            await getIt<SharedPreferenceHelper>().removeTenantId();
-            await getIt<SharedPreferenceHelper>().removeAuthToken();
+            await getIt<CustomerAuthStore>().logout();
           }
         },
         getNewTokens: () async {
@@ -74,9 +80,16 @@ class NetworkModule {
             if (refreshToken == null) {
               return (null, null);
             }
-            final AuthRepository authRepository = getIt<AuthRepository>();
-            final (newAccessToken, newRefreshToken) = await authRepository.refreshToken(refreshToken);
-            return (newAccessToken, newRefreshToken ?? refreshToken);
+            if (Env.isCustomerApp) {
+              final sessionId = getIt<CustomerSharedPreferenceHelper>().sessionId;
+              if (sessionId == null) {
+                return (null, null);
+              }
+              return await getIt<CustomerAuthRepository>().refreshToken(refreshToken: refreshToken, sessionId: sessionId);
+            } else {
+              final (newAccessToken, newRefreshToken) = await getIt<AuthRepository>().refreshToken(refreshToken);
+              return (newAccessToken, newRefreshToken ?? refreshToken);
+            }
           } catch (_) {
             return (null, null);
           }

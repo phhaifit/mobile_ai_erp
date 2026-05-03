@@ -101,4 +101,28 @@ class CustomerAuthRepositoryImpl implements CustomerAuthRepository {
       rethrow;
     }
   }
+
+  @override
+  Future<(String, String)> refreshToken({
+    required String refreshToken,
+    required String sessionId,
+  }) async
+  {
+    try {
+      final result = await _api.refreshToken(refreshToken: refreshToken, sessionId: sessionId);
+      return (result.accessToken, result.refreshToken);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<bool> validateSession() async {
+    try {
+      final _ = await _api.listSessions();
+      return true;
+    } catch (_) {
+    }
+    return false;
+  }
 }

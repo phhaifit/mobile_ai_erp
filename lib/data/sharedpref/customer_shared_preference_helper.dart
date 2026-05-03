@@ -7,16 +7,6 @@ import 'package:mobile_ai_erp/domain/entity/customer_auth/token_pair.dart';
 class CustomerSharedPreferenceHelper extends SharedPreferenceHelper {
   CustomerSharedPreferenceHelper(super.sharedPreference);
 
-  TokenPair? loadTokenPair() {
-    final tokenPairStr = sharedPreference.getString(Preferences.token_pair);
-
-    if (tokenPairStr == null) {
-      return null;
-    }
-
-    return TokenPair.fromJson(jsonDecode(tokenPairStr));
-  }
-
   Future<void> saveTokenPair(TokenPair tokenPair) async {
     await saveAuthToken(
       accessToken: tokenPair.accessToken,
@@ -24,13 +14,15 @@ class CustomerSharedPreferenceHelper extends SharedPreferenceHelper {
     );
 
     await sharedPreference.setString(
-      Preferences.token_pair,
-      jsonEncode(tokenPair.toJson()),
+      Preferences.session_id,
+      tokenPair.sessionId,
     );
   }
 
+  String? get sessionId => sharedPreference.getString(Preferences.session_id);
+
   Future<void> removeTokenPair() async {
-    await sharedPreference.remove(Preferences.token_pair);
+    await sharedPreference.remove(Preferences.session_id);
     await removeAuthToken();
   }
 

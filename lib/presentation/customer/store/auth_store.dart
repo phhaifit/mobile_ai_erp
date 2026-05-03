@@ -18,32 +18,47 @@ abstract class CustomerAuthStoreBase with Store {
     required CustomerAuthRepository customerAuthRepository,
   }) :
     _sharedPreferenceHelper = sharedPreferenceHelper,
-    _customerAuthRepository = customerAuthRepository {
-    tokenPair = _sharedPreferenceHelper.loadTokenPair();
+    _customerAuthRepository = customerAuthRepository
+  {
+    isLoggedIn = _sharedPreferenceHelper.sessionId != null;
   }
 
   // Observable State
   @observable
-  TokenPair? tokenPair;
+  bool isLoggedIn = false;
 
   @action
   Future<void> setTokenPair(TokenPair tokenPair, bool remember) async {
-    if (remember) {
-      await _sharedPreferenceHelper.saveTokenPair(tokenPair);
+    await _sharedPreferenceHelper.saveTokenPair(tokenPair);
+    isLoggedIn = true;
+  }
+
+  @action
+  Future<bool> validateStoredSession() async {
+    try {
+      final isValid = await _customerAuthRepository.validateSession();
+      if (!isValid) {
+        await logout();
+      }
+      isLoggedIn = isValid;
+      return isValid;
+    } catch (e) {
+      log("Exception when validating session $e");
+      await logout();
+      return false;
     }
-    this.tokenPair = tokenPair;
   }
 
   Future<void> logout() async {
     try {
-      if (tokenPair != null) {
+      if (isLoggedIn) {
         await _customerAuthRepository.signOut();
       }
     } catch (e) {
       log("Exception when signing out in server $e");
     } finally {
       await _sharedPreferenceHelper.removeTokenPair();
-      tokenPair = null;
+      isLoggedIn = false;
     }
   }
 }

@@ -1,6 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
 import 'package:mobile_ai_erp/domain/entity/customer_auth/customer_auth_entities.dart';
-import '../customer_model.dart';
 
 part 'token_response_dto.g.dart';
 
@@ -9,13 +8,13 @@ class TokenResponseDto {
   final String accessToken;
   final String refreshToken;
   final String? expiresIn; // in seconds, typically 900 (15 minutes)
-  final String? sessionId;
+  final String sessionId;
 
   TokenResponseDto({
     required this.accessToken,
     required this.refreshToken,
     this.expiresIn,
-    this.sessionId,
+    required this.sessionId,
   });
 
   factory TokenResponseDto.fromJson(Map<String, dynamic> json) =>
@@ -28,7 +27,6 @@ class TokenResponseDto {
     return TokenPair(
       accessToken: accessToken,
       refreshToken: refreshToken,
-      expiresAt: DateTime.now().add(Duration(seconds: int.tryParse(expiresIn ?? "") ?? 0)),
       sessionId: sessionId,
     );
   }
@@ -40,7 +38,7 @@ class SignInResponseModel extends TokenResponseDto {
     required super.accessToken,
     required super.refreshToken,
     super.expiresIn,
-    super.sessionId,
+    required super.sessionId,
   });
 
   factory SignInResponseModel.fromJson(Map<String, dynamic> json) =>

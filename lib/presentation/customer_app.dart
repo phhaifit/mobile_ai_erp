@@ -33,14 +33,19 @@ class _CustomerAppState extends State<CustomerApp> {
   @override
   void initState() {
     super.initState();
-    _checkSubdomain();
+    _validateStoredAuthData();
   }
 
-  Future<void> _checkSubdomain() async {
+  Future<void> _validateStoredAuthData() async {
     // Validate the stored subdomain via the store
     final valid = await _subdomainStore.validateStoredSubdomain();
     if (!valid) {
       await _authStore.logout();
+    }
+    
+    // Validate stored session if logged in
+    if (_authStore.isLoggedIn) {
+      await _authStore.validateStoredSession();
     }
     
     if (!mounted) return;
@@ -93,7 +98,7 @@ class _CustomerAppState extends State<CustomerApp> {
     if (_subdomainStore.subdomain == null) {
       return SubdomainScreen();
     }
-    if (_authStore.tokenPair == null) {
+    if (!_authStore.isLoggedIn) {
       return const CustomerLoginScreen();
     }
     return const CustomerHomePage();

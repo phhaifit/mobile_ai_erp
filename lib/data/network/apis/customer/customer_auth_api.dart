@@ -136,34 +136,23 @@ class CustomerAuthApi {
     }
   }
 
-  /// Complete Google OAuth flow with authorization code
-  Future<SignInResponseModel> googleOAuthCallback({
-    required String authorizationCode,
-  }) async {
-    try {
-      final response = await _dio.post(
-        '/google/callback',
-        data: {'authorizationCode': authorizationCode},
-      );
-      return SignInResponseModel.fromJson(response.data);
-    } catch (e) {
-      rethrow;
-    }
-  }
-
   /// Refresh access token using refresh token
   Future<TokenResponseDto> refreshToken({
     required String refreshToken,
+    required String sessionId,
   }) async {
     try {
       final response = await _dio.post(
-        '/refresh',
-        data: {'refreshToken': refreshToken},
-        options: Options(
-          headers: {'Authorization': 'Bearer $refreshToken'},
-        ),
+        Endpoints.customerRefreshToken,
+        data: {
+          refreshToken: refreshToken,
+          sessionId: sessionId,
+        }
       );
-      return TokenResponseDto.fromJson(response.data);
+      if (response.statusCode == 200) {
+        return TokenResponseDto.fromJson(response.data);
+      }
+      throw MessageResponseDto.fromJson(response.data).message;
     } catch (e) {
       rethrow;
     }
@@ -178,38 +167,17 @@ class CustomerAuthApi {
     }
   }
 
-  /// Get list of active sessions
-  Future<List<SessionModel>> listSessions({
-    required String accessToken,
-  }) async {
+  /// Sign out current session
+  Future<List<SessionResponseDto>> listSessions() async {
     try {
-      final response = await _dio.get(
-        '/sessions',
-        options: Options(
-          headers: {'Authorization': 'Bearer $accessToken'},
-        ),
-      );
-      final sessions = (response.data['data'] as List)
-          .map((e) => SessionModel.fromJson(e as Map<String, dynamic>))
-          .toList();
-      return sessions;
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  /// Revoke a specific session
-  Future<void> revokeSession({
-    required String accessToken,
-    required String sessionId,
-  }) async {
-    try {
-      await _dio.delete(
-        '/sessions/$sessionId',
-        options: Options(
-          headers: {'Authorization': 'Bearer $accessToken'},
-        ),
-      );
+      final response = await _dio.get(Endpoints.customerAuthGetSessions);
+      if (response.statusCode == 200) {
+        if (response.data == null || response.data['sessions'] == null) {
+          return [];
+        }
+        return List<SessionResponseDto>.from((response.data['sessions'] as Iterable).map((item) => SessionResponseDto.fromJson(item)));
+      }
+      throw MessageResponseDto.fromJson(response.data).message;
     } catch (e) {
       rethrow;
     }
