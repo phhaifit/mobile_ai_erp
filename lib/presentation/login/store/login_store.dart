@@ -2,6 +2,7 @@ import 'package:mobile_ai_erp/constants/env.dart';
 import 'package:mobile_ai_erp/core/stores/error/error_store.dart';
 import 'package:mobile_ai_erp/core/stores/form/form_store.dart';
 import 'package:mobile_ai_erp/domain/usecase/auth/create_tenant_usecase.dart';
+import 'package:mobile_ai_erp/utils/oauth2_utils.dart';
 import 'package:mobx/mobx.dart';
 import 'dart:developer' as developer;
 
@@ -31,7 +32,6 @@ abstract class _LoginStore with Store {
   ) {
     // setting up disposers
     _setupDisposers();
-    isLoggedIn = _sharedPreferenceHelper.isLoggedIn;
   }
 
   // use cases:-----------------------------------------------------------------
@@ -87,6 +87,9 @@ abstract class _LoginStore with Store {
       currentTenantId = result['id'] ?? result['tenantId'];
       if (currentTenantId != null) {
         await _sharedPreferenceHelper.saveTenantId(currentTenantId!);
+      }
+      if (result['subdomain'] != null) {
+        await _sharedPreferenceHelper.saveSubdomain(result['subdomain']);
       }
       needsOnboarding = false;
       success = true;
@@ -154,12 +157,16 @@ abstract class _LoginStore with Store {
 
       currentUser = authStatusResponse.user;
       currentTenantId = authStatusResponse.user!.tenantId;
-      needsOnboarding = false;
-      isLoggedIn = true;
 
       if (currentTenantId != null) {
         await _sharedPreferenceHelper.saveTenantId(currentTenantId!);
       }
+      if (authStatusResponse.subdomain != null) {
+        await _sharedPreferenceHelper.saveSubdomain(authStatusResponse.subdomain!);
+      }
+
+      needsOnboarding = currentTenantId == null;
+      isLoggedIn = true;
 
       return true;
     } catch (e) {
@@ -177,11 +184,12 @@ abstract class _LoginStore with Store {
     isLoggedIn = false;
     await _sharedPreferenceHelper.removeTenantId();
     await _sharedPreferenceHelper.removeAuthToken();
+    await _sharedPreferenceHelper.removeSubdomain();
   }
 
   @action
   Future<void> authenticate(OAuthProvider provider) async {
-    final (callbackUrlScheme, redirectUri) = _getRedirectUri();
+    final (callbackUrlScheme, redirectUri) = OAuth2Utils.getRedirectUri();
     final (codeChallenge, codeVerifier) = _generateCodeChallenge();
     final authProviderId = provider.name;
     final state = _randomState(32);
@@ -229,6 +237,10 @@ abstract class _LoginStore with Store {
     if (currentTenantId != null) {
       await _sharedPreferenceHelper.saveTenantId(currentTenantId!);
     }
+    if (authStatusResponse.subdomain != null) {
+      await _sharedPreferenceHelper.saveSubdomain(authStatusResponse.subdomain!);
+    }
+    
 
     this.needsOnboarding = needsOnboarding;
     await _sharedPreferenceHelper.saveAuthToken(
@@ -236,27 +248,6 @@ abstract class _LoginStore with Store {
       refreshToken: tokens.refreshToken,
     );
     isLoggedIn = true;
-  }
-
-  (String, String) _getRedirectUri() {
-    if (kIsWeb) {
-      final callbackUri = Uri(
-        scheme: Uri.base.scheme,
-        host: Uri.base.host,
-        port: Uri.base.port,
-        path: '/auth.html',
-      );
-      return (Uri.base.scheme, callbackUri.toString());
-    } else if (defaultTargetPlatform == TargetPlatform.windows ||
-        defaultTargetPlatform == TargetPlatform.linux ||
-        defaultTargetPlatform == TargetPlatform.macOS) {
-      // TODO: dynamic port
-      return ('http://localhost:13123', 'http://localhost:13123/');
-    } else if (defaultTargetPlatform == TargetPlatform.android ||
-        defaultTargetPlatform == TargetPlatform.iOS) {
-      return ('mobile-ai-erp', 'mobile-ai-erp://');
-    }
-    throw UnimplementedError();
   }
 
   (String, String) _generateCodeChallenge() {

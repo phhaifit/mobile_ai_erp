@@ -147,7 +147,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _buildUsersManagementEntry(),
           // _buildSuppliersEntry(),
           _buildProductsBody(),
-          // Expanded(child: PostListScreen()),
+          _buildProductMetadataEntry(),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -361,6 +361,23 @@ class _HomeScreenState extends State<HomeScreen> {
           trailing: Icon(Icons.chevron_right),
           onTap: () =>
               Navigator.of(context).pushNamed(Routes.productManagementList),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProductMetadataEntry() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      child: Card(
+        child: ListTile(
+          leading: const Icon(Icons.dashboard_outlined),
+          title: const Text('Product Metadata'),
+          subtitle: const Text(
+            'Manage categories, attributes, brands, and tags.',
+          ),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => ProductMetadataNavigator.openProductMetadataHome(context),
         ),
       ),
     );

@@ -2,7 +2,7 @@ class Endpoints {
   Endpoints._();
 
   // ERP backend base url - override at build time:
-  //   --dart-define=ERP_BASE_URL=https://erp-api.jarvis.cx/api
+  //   --dart-define=ERP_BASE_URL=https://erp-api.jarvis.cx
   static const String erpBaseUrl = String.fromEnvironment(
     'ERP_BASE_URL',
     defaultValue: 'https://erp-api.jarvis.cx',
@@ -80,6 +80,20 @@ class Endpoints {
   static const String themes = "/themes";
   static const String activeTheme = "/themes/active";
 
+
+  // Customer auth endpoints
+  static String getTenantBySubdomain(String subdomain) => "/tenants/by-subdomain/$subdomain";
+  static String customerSignUp = "/customer/auth/sign-up";
+  static String customerSignIn = "/customer/auth/sign-in";
+  static String customerRefreshToken = "/customer/auth/refresh";
+  static String customerGetGoogleOAuthUrl = "/customer/auth/google";
+  static String customerSignOut = "/customer/auth/sign-out";
+  static String customerAuthGetSessions = "/customer/auth/sessions";
+  static String customerSendMagicLink = "/customer/auth/magic-link";
+  static String customerConfirmMagicLink = "$erpBaseUrl/customer/auth/magic-link/confirm";
+  static String customerVerifyEmail = "/customer/auth/verify-email";
+  static String customerCurrentProfile = "/customer/profile";
+
   // customer segments
   static const String customerSegments = '/erp/customer-segments';
   static String customerSegmentById(String id) => '/erp/customer-segments/$id';
@@ -142,4 +156,5 @@ class Endpoints {
 
   // ─── UNUSED ENDPOINTS ──────────────────────────────────────────────
   static const String storefrontCustomerLoyalty = "$storefrontAccountUrl/account/loyalty-points";
+  static String storefrontAccountProfile = "/storefront/account/profile";
 }

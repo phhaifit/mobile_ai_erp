@@ -15,6 +15,7 @@ import 'package:mobile_ai_erp/domain/repository/web_builder/store_settings_repos
 import 'package:mobile_ai_erp/domain/repository/web_builder/web_theme_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/supplier/supplier_repository.dart';
 import 'package:mobile_ai_erp/domain/usecase/supplier/supplier_usecases.dart';
+import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadata_repository.dart';
 import 'package:mobile_ai_erp/domain/usecase/checkout/checkout_usecases.dart';
 import 'package:mobile_ai_erp/domain/usecase/checkout/get_payment_methods_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/checkout/get_shipping_methods_usecase.dart';
@@ -109,6 +110,35 @@ import 'package:mobile_ai_erp/domain/usecase/customer/get_customer_transactions_
 import 'package:mobile_ai_erp/domain/usecase/customer/get_segment_members_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/customer/add_segment_members_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/customer/remove_segment_members_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/brands/get_brands_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/brands/get_brand_by_id_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/brands/create_brand_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/brands/update_brand_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/brands/delete_brand_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/brands/get_brand_image_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/brands/upload_brand_image_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/brands/delete_brand_image_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/tags/get_tags_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/tags/get_tag_by_id_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/tags/create_tag_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/tags/update_tag_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/tags/delete_tag_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/categories/get_categories_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/categories/get_category_tree_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/categories/get_category_by_id_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/categories/create_category_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/categories/update_category_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/categories/delete_category_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/get_attribute_sets_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/get_attribute_set_by_id_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/get_all_attribute_values_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/create_attribute_set_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/update_attribute_set_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/delete_attribute_set_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/get_attribute_values_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/create_attribute_value_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/update_attribute_value_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/delete_attribute_value_usecase.dart';
 
 import '../../../di/service_locator.dart';
 
@@ -479,6 +509,102 @@ class UseCaseModule {
     );
     getIt.registerSingleton<GetLoyaltyBalanceUseCase>(
       GetLoyaltyBalanceUseCase(getIt<LoyaltyLedgerRepository>()),
+    );
+    // product_metadata:-------------------------------------------------------
+    // brands
+    getIt.registerSingleton<GetBrandsUseCase>(
+      GetBrandsUseCase(getIt<ProductMetadataRepository>()),
+    );
+
+    getIt.registerSingleton<GetBrandByIdUseCase>(
+      GetBrandByIdUseCase(getIt<ProductMetadataRepository>()),
+    );
+    getIt.registerSingleton<CreateBrandUseCase>(
+      CreateBrandUseCase(getIt<ProductMetadataRepository>()),
+    );
+    getIt.registerSingleton<UpdateBrandUseCase>(
+      UpdateBrandUseCase(getIt<ProductMetadataRepository>()),
+    );
+    getIt.registerSingleton<DeleteBrandUseCase>(
+      DeleteBrandUseCase(getIt<ProductMetadataRepository>()),
+    );
+    getIt.registerSingleton<GetBrandImageUseCase>(
+      GetBrandImageUseCase(getIt<ProductMetadataRepository>()),
+    );
+    getIt.registerSingleton<UploadBrandImageUseCase>(
+      UploadBrandImageUseCase(getIt<ProductMetadataRepository>()),
+    );
+    getIt.registerSingleton<DeleteBrandImageUseCase>(
+      DeleteBrandImageUseCase(getIt<ProductMetadataRepository>()),
+    );
+
+    // tags
+    getIt.registerSingleton<GetTagsUseCase>(
+      GetTagsUseCase(getIt<ProductMetadataRepository>()),
+    );
+    getIt.registerSingleton<GetTagByIdUseCase>(
+      GetTagByIdUseCase(getIt<ProductMetadataRepository>()),
+    );
+    getIt.registerSingleton<CreateTagUseCase>(
+      CreateTagUseCase(getIt<ProductMetadataRepository>()),
+    );
+    getIt.registerSingleton<UpdateTagUseCase>(
+      UpdateTagUseCase(getIt<ProductMetadataRepository>()),
+    );
+    getIt.registerSingleton<DeleteTagUseCase>(
+      DeleteTagUseCase(getIt<ProductMetadataRepository>()),
+    );
+
+    // categories
+    getIt.registerSingleton<GetCategoriesUseCase>(
+      GetCategoriesUseCase(getIt<ProductMetadataRepository>()),
+    );
+    getIt.registerSingleton<GetCategoryTreeUseCase>(
+      GetCategoryTreeUseCase(getIt<ProductMetadataRepository>()),
+    );
+    getIt.registerSingleton<GetCategoryByIdUseCase>(
+      GetCategoryByIdUseCase(getIt<ProductMetadataRepository>()),
+    );
+    getIt.registerSingleton<CreateCategoryUseCase>(
+      CreateCategoryUseCase(getIt<ProductMetadataRepository>()),
+    );
+    getIt.registerSingleton<UpdateCategoryUseCase>(
+      UpdateCategoryUseCase(getIt<ProductMetadataRepository>()),
+    );
+    getIt.registerSingleton<DeleteCategoryUseCase>(
+      DeleteCategoryUseCase(getIt<ProductMetadataRepository>()),
+    );
+
+    // attribute sets
+    getIt.registerSingleton<GetAttributeSetsUseCase>(
+      GetAttributeSetsUseCase(getIt<ProductMetadataRepository>()),
+    );
+    getIt.registerSingleton<GetAttributeSetByIdUseCase>(
+      GetAttributeSetByIdUseCase(getIt<ProductMetadataRepository>()),
+    );
+    getIt.registerSingleton<GetAllAttributeValuesUseCase>(
+      GetAllAttributeValuesUseCase(getIt<ProductMetadataRepository>()),
+    );
+    getIt.registerSingleton<CreateAttributeSetUseCase>(
+      CreateAttributeSetUseCase(getIt<ProductMetadataRepository>()),
+    );
+    getIt.registerSingleton<UpdateAttributeSetUseCase>(
+      UpdateAttributeSetUseCase(getIt<ProductMetadataRepository>()),
+    );
+    getIt.registerSingleton<DeleteAttributeSetUseCase>(
+      DeleteAttributeSetUseCase(getIt<ProductMetadataRepository>()),
+    );
+    getIt.registerSingleton<GetAttributeValuesUseCase>(
+      GetAttributeValuesUseCase(getIt<ProductMetadataRepository>()),
+    );
+    getIt.registerSingleton<CreateAttributeValueUseCase>(
+      CreateAttributeValueUseCase(getIt<ProductMetadataRepository>()),
+    );
+    getIt.registerSingleton<UpdateAttributeValueUseCase>(
+      UpdateAttributeValueUseCase(getIt<ProductMetadataRepository>()),
+    );
+    getIt.registerSingleton<DeleteAttributeValueUseCase>(
+      DeleteAttributeValueUseCase(getIt<ProductMetadataRepository>()),
     );
   }
 }

@@ -1,0 +1,156 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:mobile_ai_erp/presentation/customer/store/signin_store.dart';
+import 'package:mobile_ai_erp/utils/validators_utils.dart';
+import '../../../widgets/password_field.dart';
+
+/// Email/Password login tab widget
+class EmailPasswordTab extends StatefulWidget {
+  final Function(String email, String password)? onSubmit;
+  final SignInStore signInStore;
+  final VoidCallback? onForgotPassword;
+  final VoidCallback? onSignUp;
+
+  const EmailPasswordTab({
+    super.key,
+    required this.signInStore,
+    this.onSubmit,
+    this.onForgotPassword,
+    this.onSignUp,
+  }) : super();
+
+  @override
+  State<EmailPasswordTab> createState() => _EmailPasswordTabState();
+}
+
+class _EmailPasswordTabState extends State<EmailPasswordTab> {
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  void _handleSignIn() {
+    if (_formKey.currentState!.validate()) {
+      widget.onSubmit?.call(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Observer(
+      builder: (_) => SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Welcome message
+              Text(
+                'Sign in to your account',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Enter your email and password to continue',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
+              ),
+              const SizedBox(height: 32),
+
+              // Email field
+              TextFormField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                validator: ValidatorsUtils.validateEmail,
+                decoration: InputDecoration(
+                  labelText: 'Email Address',
+                  hintText: 'your.email@example.com',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  prefixIcon: const Icon(Icons.email_outlined),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Password field
+              PasswordField(
+                controller: _passwordController,
+                label: 'Password',
+                hintText: 'Enter your password',
+                validator: (value) =>
+                    ValidatorsUtils.validateRequired(value, 'Password'),
+              ),
+              const SizedBox(height: 12),
+
+              // Sign in button
+              ElevatedButton(
+                onPressed: widget.signInStore.isLoading ? null : _handleSignIn,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: widget.signInStore.isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text(
+                        'Sign In',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+              ),
+              const SizedBox(height: 24),
+
+              // Sign up link
+              Center(
+                child: GestureDetector(
+                  onTap: widget.onSignUp,
+                  child: RichText(
+                    text: TextSpan(
+                      text: "Don't have an account? ",
+                      style: Theme.of(context).textTheme.bodyMedium,
+                      children: [
+                        TextSpan(
+                          text: 'Sign up',
+                          style: TextStyle(
+                            color: Theme.of(context).primaryColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

@@ -1,108 +1,73 @@
-enum AttributeValueType {
-  dropdown('Dropdown'),
-  multiselect('Multi-select'),
-  text('Text'),
-  number('Number');
-
-  const AttributeValueType(this.label);
-
-  final String label;
-
-  bool get supportsOptions =>
-      this == AttributeValueType.dropdown ||
-      this == AttributeValueType.multiselect;
-}
-
-class Attribute {
-  const Attribute({
+class AttributeSet {
+  const AttributeSet({
     required this.id,
+    required this.tenantId,
     required this.name,
-    required this.code,
-    required this.valueType,
     this.description,
-    this.unitLabel,
-    this.allowedUnitLabels = const <String>[],
-    this.sortOrder = 0,
-    this.isFilterable = true,
-    this.minLength,
-    this.maxLength,
-    this.inputPattern,
-    this.minValue,
-    this.maxValue,
-    this.decimalPlaces,
+    this.createdAt,
+    this.updatedAt,
+    this.values = const <AttributeValue>[],
   });
 
   final String id;
+  final String tenantId;
   final String name;
-  final String code;
-  final AttributeValueType valueType;
   final String? description;
-  final String? unitLabel;
-  final List<String> allowedUnitLabels;
-  final int sortOrder;
-  final bool isFilterable;
-  final int? minLength;
-  final int? maxLength;
-  final String? inputPattern;
-  final num? minValue;
-  final num? maxValue;
-  final int? decimalPlaces;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+  final List<AttributeValue> values;
 
-  List<String> get effectiveUnitLabels {
-    if (allowedUnitLabels.isNotEmpty) {
-      return List<String>.unmodifiable(allowedUnitLabels);
-    }
-    if (unitLabel != null && unitLabel!.trim().isNotEmpty) {
-      return List<String>.unmodifiable(<String>[unitLabel!.trim()]);
-    }
-    return const <String>[];
-  }
-
-  Attribute copyWith({
+  AttributeSet copyWith({
     String? id,
+    String? tenantId,
     String? name,
-    String? code,
-    AttributeValueType? valueType,
     Object? description = _sentinel,
-    Object? unitLabel = _sentinel,
-    List<String>? allowedUnitLabels,
-    int? sortOrder,
-    bool? isFilterable,
-    Object? minLength = _sentinel,
-    Object? maxLength = _sentinel,
-    Object? inputPattern = _sentinel,
-    Object? minValue = _sentinel,
-    Object? maxValue = _sentinel,
-    Object? decimalPlaces = _sentinel,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    List<AttributeValue>? values,
   }) {
-    return Attribute(
+    return AttributeSet(
       id: id ?? this.id,
+      tenantId: tenantId ?? this.tenantId,
       name: name ?? this.name,
-      code: code ?? this.code,
-      valueType: valueType ?? this.valueType,
       description: identical(description, _sentinel)
           ? this.description
           : description as String?,
-      unitLabel: identical(unitLabel, _sentinel)
-          ? this.unitLabel
-          : unitLabel as String?,
-      allowedUnitLabels: allowedUnitLabels ?? this.allowedUnitLabels,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      values: values ?? this.values,
+    );
+  }
+}
+
+class AttributeValue {
+  const AttributeValue({
+    required this.id,
+    required this.attributeSetId,
+    required this.value,
+    this.sortOrder = 0,
+    this.createdAt,
+  });
+
+  final String id;
+  final String attributeSetId;
+  final String value;
+  final int sortOrder;
+  final DateTime? createdAt;
+
+  AttributeValue copyWith({
+    String? id,
+    String? attributeSetId,
+    String? value,
+    int? sortOrder,
+    DateTime? createdAt,
+  }) {
+    return AttributeValue(
+      id: id ?? this.id,
+      attributeSetId: attributeSetId ?? this.attributeSetId,
+      value: value ?? this.value,
       sortOrder: sortOrder ?? this.sortOrder,
-      isFilterable: isFilterable ?? this.isFilterable,
-      minLength:
-          identical(minLength, _sentinel) ? this.minLength : minLength as int?,
-      maxLength:
-          identical(maxLength, _sentinel) ? this.maxLength : maxLength as int?,
-      inputPattern: identical(inputPattern, _sentinel)
-          ? this.inputPattern
-          : inputPattern as String?,
-      minValue:
-          identical(minValue, _sentinel) ? this.minValue : minValue as num?,
-      maxValue:
-          identical(maxValue, _sentinel) ? this.maxValue : maxValue as num?,
-      decimalPlaces: identical(decimalPlaces, _sentinel)
-          ? this.decimalPlaces
-          : decimalPlaces as int?,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
 }

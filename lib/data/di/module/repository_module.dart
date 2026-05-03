@@ -6,7 +6,6 @@ import 'package:mobile_ai_erp/data/network/apis/customer/customer_segment_api.da
 import 'package:mobile_ai_erp/data/local/datasources/order_tracking/order_tracking_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/post/post_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/post_purchase/post_purchase_datasource.dart';
-import 'package:mobile_ai_erp/data/local/datasources/product_metadata/product_metadata_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/user/user_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/storefront_address/address_api_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/storefront_order/order_api_datasource.dart';
@@ -25,6 +24,12 @@ import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
 import 'package:mobile_ai_erp/data/network/datasources/role/role_remote_datasource.dart';
 import 'package:mobile_ai_erp/data/network/datasources/user/user_remote_datasource.dart';
 import 'package:mobile_ai_erp/data/network/apis/orders/order_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/product_metadata/brand_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/product_metadata/brand_image_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/product_metadata/category_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/product_metadata/tag_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/product_metadata/attribute_set_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/product_metadata/metadata_api_client.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/storefront_products_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/suppliers/supplier_api.dart';
@@ -131,13 +136,19 @@ class RepositoryModule {
       OrderTrackingRepositoryImpl(getIt<OrderTrackingDataSource>()),
     );
 
-    getIt.registerSingleton<ProductMetadataDataSource>(
-      ProductMetadataDataSource(),
+    getIt.registerSingleton<MetadataApiClient>(
+      MetadataApiClient(
+        brands: getIt<BrandApi>(),
+        brandImages: getIt<BrandImageApi>(),
+        categories: getIt<CategoryApi>(),
+        tags: getIt<TagApi>(),
+        attributeSets: getIt<AttributeSetApi>(),
+      ),
     );
+
     getIt.registerSingleton<ProductMetadataRepository>(
-        ProductMetadataRepositoryImpl(
-      getIt<ProductMetadataDataSource>(),
-    ));
+      ProductMetadataRepositoryImpl(getIt<MetadataApiClient>()),
+    );
     
     getIt.registerLazySingleton<AccountCustomerApiDataSource>(
         () => AccountCustomerApiDataSource(getIt<StorefrontCustomerApi>(), getIt<SharedPreferenceHelper>()));
@@ -160,7 +171,6 @@ class RepositoryModule {
         
     getIt.registerLazySingleton<LoyaltyLedgerRepository>(
         () => LoyaltyRepositoryImpl(getIt<LoyaltyLedgerApiDataSource>()));
-      ProductMetadataRepositoryImpl(getIt<ProductMetadataDataSource>());
 
     getIt.registerLazySingleton<StorefrontAddressRepository>(
       () => AddressRepositoryImpl(getIt<AddressApiDataSource>()),

@@ -25,7 +25,32 @@ import 'package:mobile_ai_erp/domain/usecase/customer/add_segment_members_usecas
 import 'package:mobile_ai_erp/domain/usecase/customer/remove_segment_members_usecase.dart';
 import 'package:mobile_ai_erp/presentation/supplier/store/supplier_products_store.dart';
 import 'package:mobile_ai_erp/domain/repository/dashboard/dashboard_repository.dart';
-import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadata_repository.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/brands/get_brands_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/brands/get_brand_by_id_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/brands/create_brand_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/brands/update_brand_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/brands/delete_brand_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/tags/get_tag_by_id_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/tags/get_tags_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/tags/create_tag_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/tags/update_tag_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/tags/delete_tag_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/categories/get_categories_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/categories/get_category_tree_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/categories/get_category_by_id_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/categories/create_category_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/categories/update_category_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/categories/delete_category_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/get_attribute_sets_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/get_attribute_set_by_id_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/create_attribute_set_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/update_attribute_set_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/delete_attribute_set_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/get_all_attribute_values_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/get_attribute_values_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/create_attribute_value_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/update_attribute_value_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product_metadata/attribute_sets/delete_attribute_value_usecase.dart';
 import 'package:mobile_ai_erp/domain/repository/product/product_detail_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/setting/setting_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/stock_operations/stock_operations_repository.dart';
@@ -67,6 +92,11 @@ import 'package:mobile_ai_erp/domain/usecase/post_purchase/create_refund_from_is
 import 'package:mobile_ai_erp/domain/usecase/post_purchase/execute_refund_action_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/post_purchase/update_refund_notes_usecase.dart';
 import 'package:mobile_ai_erp/presentation/checkout/store/checkout_store.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/store/category_store.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/store/brand_store.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/store/tag_store.dart';
+import 'package:mobile_ai_erp/presentation/product_metadata/store/attribute_set_store.dart';
 import 'package:mobile_ai_erp/domain/usecase/inventory_audit_outbound/get_inventory_audit_records_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/inventory_audit_outbound/get_inventory_by_warehouse_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/inventory_audit_outbound/get_inventory_outbound_records_usecase.dart';
@@ -117,9 +147,10 @@ import 'package:mobile_ai_erp/presentation/login/store/login_store.dart'
     as auth;
 import 'package:mobile_ai_erp/presentation/order_fulfillment/store/fulfillment_store.dart';
 import 'package:mobile_ai_erp/presentation/order_tracking/store/order_tracking_store.dart';
+import 'package:mobile_ai_erp/presentation/order_tracking/store/order_list_store.dart';
+import 'package:mobile_ai_erp/data/network/apis/orders/order_api.dart';
 import 'package:mobile_ai_erp/presentation/post/store/post_store.dart';
 import 'package:mobile_ai_erp/presentation/product_detail/store/product_detail_store.dart';
-import 'package:mobile_ai_erp/presentation/product_metadata/store/product_metadata_store.dart';
 import 'package:mobile_ai_erp/presentation/reports/data/reports_mock_repository.dart';
 import 'package:mobile_ai_erp/presentation/reports/store/reports_store.dart';
 import 'package:mobile_ai_erp/presentation/account/store/profile_store.dart';
@@ -151,7 +182,7 @@ import '../../../di/service_locator.dart';
 
 class StoreModule {
   static Future<void> configureStoreModuleInjection() async {
-    getIt.registerFactory(() => ErrorStore());
+    getIt.registerSingleton(ErrorStore());
     getIt.registerFactory(() => FormErrorStore());
     getIt.registerFactory(
       () => FormStore(getIt<FormErrorStore>(), getIt<ErrorStore>()),
@@ -208,10 +239,65 @@ class StoreModule {
       DashboardStore(getIt<DashboardRepository>(), getIt<ErrorStore>()),
     );
 
+    getIt.registerSingleton<CategoryStore>(
+      CategoryStore(
+        getCategoriesUseCase: getIt<GetCategoriesUseCase>(),
+        getCategoryTreeUseCase: getIt<GetCategoryTreeUseCase>(),
+        createCategoryUseCase: getIt<CreateCategoryUseCase>(),
+        updateCategoryUseCase: getIt<UpdateCategoryUseCase>(),
+        deleteCategoryUseCase: getIt<DeleteCategoryUseCase>(),
+        errorStore: getIt<ErrorStore>(),
+      ),
+    );
+
+    getIt.registerSingleton<BrandStore>(
+      BrandStore(
+        getBrandsUseCase: getIt<GetBrandsUseCase>(),
+        createBrandUseCase: getIt<CreateBrandUseCase>(),
+        updateBrandUseCase: getIt<UpdateBrandUseCase>(),
+        deleteBrandUseCase: getIt<DeleteBrandUseCase>(),
+        errorStore: getIt<ErrorStore>(),
+      ),
+    );
+
+    getIt.registerSingleton<TagStore>(
+      TagStore(
+        getTagsUseCase: getIt<GetTagsUseCase>(),
+        createTagUseCase: getIt<CreateTagUseCase>(),
+        updateTagUseCase: getIt<UpdateTagUseCase>(),
+        deleteTagUseCase: getIt<DeleteTagUseCase>(),
+        errorStore: getIt<ErrorStore>(),
+      ),
+    );
+
+    getIt.registerSingleton<AttributeSetStore>(
+      AttributeSetStore(
+        getAttributeSetsUseCase: getIt<GetAttributeSetsUseCase>(),
+        createAttributeSetUseCase: getIt<CreateAttributeSetUseCase>(),
+        updateAttributeSetUseCase: getIt<UpdateAttributeSetUseCase>(),
+        deleteAttributeSetUseCase: getIt<DeleteAttributeSetUseCase>(),
+        createAttributeValueUseCase: getIt<CreateAttributeValueUseCase>(),
+        updateAttributeValueUseCase: getIt<UpdateAttributeValueUseCase>(),
+        deleteAttributeValueUseCase: getIt<DeleteAttributeValueUseCase>(),
+        getAllAttributeValuesUseCase: getIt<GetAllAttributeValuesUseCase>(),
+        getAttributeValuesUseCase: getIt<GetAttributeValuesUseCase>(),
+        errorStore: getIt<ErrorStore>(),
+      ),
+    );
+
+
+
     getIt.registerSingleton<ProductMetadataStore>(
       ProductMetadataStore(
-        getIt<ProductMetadataRepository>(),
-        getIt<ErrorStore>(),
+        categoryStore: getIt<CategoryStore>(),
+        brandStore: getIt<BrandStore>(),
+        tagStore: getIt<TagStore>(),
+        attributeSetStore: getIt<AttributeSetStore>(),
+        getBrandByIdUseCase: getIt<GetBrandByIdUseCase>(),
+        getTagByIdUseCase: getIt<GetTagByIdUseCase>(),
+        getCategoryByIdUseCase: getIt<GetCategoryByIdUseCase>(),
+        getAttributeSetByIdUseCase: getIt<GetAttributeSetByIdUseCase>(),
+        errorStore: getIt<ErrorStore>(),
       ),
     );
 
@@ -240,6 +326,14 @@ class StoreModule {
       OrderTrackingStore(
         getIt<GetOrderTrackingScenariosUseCase>(),
         getIt<FindOrderTrackingScenarioUseCase>(),
+        getIt<OrderApi>(),
+        getIt<ErrorStore>(),
+      ),
+    );
+
+    getIt.registerSingleton<OrderListStore>(
+      OrderListStore(
+        getIt<OrderApi>(),
         getIt<ErrorStore>(),
       ),
     );

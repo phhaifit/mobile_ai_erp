@@ -1,50 +1,37 @@
-enum TagStatus {
-  active('Active'),
-  reviewRequired('Review required'),
-  archived('Archived');
-
-  const TagStatus(this.label);
-
-  final String label;
-}
-
 class Tag {
   const Tag({
     required this.id,
+    required this.tenantId,
     required this.name,
     this.description,
-    this.colorHex,
-    this.sortOrder = 0,
-    this.status = TagStatus.active,
+    this.createdAt,
+    this.updatedAt,
   });
 
   final String id;
+  final String tenantId;
   final String name;
   final String? description;
-  final String? colorHex;
-  final int sortOrder;
-  final TagStatus status;
-
-  bool get isActive => status == TagStatus.active;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   Tag copyWith({
     String? id,
+    String? tenantId,
     String? name,
     Object? description = _sentinel,
-    Object? colorHex = _sentinel,
-    int? sortOrder,
-    TagStatus? status,
+    DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return Tag(
       id: id ?? this.id,
+      tenantId: tenantId ?? this.tenantId,
       name: name ?? this.name,
       description: identical(description, _sentinel)
           ? this.description
           : description as String?,
-      colorHex:
-          identical(colorHex, _sentinel) ? this.colorHex : colorHex as String?,
-      sortOrder: sortOrder ?? this.sortOrder,
-      status: status ?? this.status,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }

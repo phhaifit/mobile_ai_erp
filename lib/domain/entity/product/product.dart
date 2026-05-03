@@ -25,7 +25,7 @@ class Product {
   final Category? category; // product category //// can this be null?
   final Brand? brand; // product brand //// can this be null?
   final List<Tag> tags; // list of tags, can be empty
-  final List<Attribute> attributes; // list of attributes, can be empty
+  final List<AttributeSet> attributes; // list of attributes, can be empty
 
   Product({
     this.id,
@@ -45,7 +45,7 @@ class Product {
     this.category,
     this.brand,
     this.tags = const <Tag>[],
-    this.attributes = const <Attribute>[],
+    this.attributes = const <AttributeSet>[],
   }) {
     // Validation
     if (price < 0) {
