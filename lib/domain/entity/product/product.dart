@@ -141,7 +141,7 @@ class Product {
         costPrice: (json["costPrice"] as num?)?.toDouble(),
         sellingPrice: (json["sellingPrice"] as num?)?.toDouble() ?? 0.0,
         imageUrl: json["imageUrl"],
-        images: List<String>.from(json["images"] ?? []),
+        images: (json["images"] as List<dynamic>?)?.map((e) => e["url"] as String).toList() ?? [],
         attributeValueIds: List<String>.from(json["attributeValueIds"] ?? []),
         variants: json["variants"] ?? [],
         suppliers: json["suppliers"] ?? [],
