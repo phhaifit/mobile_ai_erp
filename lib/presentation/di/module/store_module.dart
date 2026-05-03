@@ -424,6 +424,7 @@ class StoreModule {
     getIt.registerSingleton<ProductFormStore>(
       ProductFormStore(
         getIt<ProductManagementRepository>(),
+        getIt<GetSuppliersUseCase>(),
         getIt<ErrorStore>(),
       ),
     );

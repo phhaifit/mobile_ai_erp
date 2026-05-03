@@ -4,10 +4,45 @@ import 'package:mobile_ai_erp/core/stores/error/error_store.dart';
 import 'package:mobile_ai_erp/domain/entity/product/product.dart';
 import 'package:mobile_ai_erp/domain/entity/product_metadata/tag.dart';
 import 'package:mobile_ai_erp/domain/entity/product/product_status.dart';
+import 'package:mobile_ai_erp/domain/entity/supplier/supplier.dart';
 import 'package:mobile_ai_erp/domain/repository/product/product_management_repository.dart';
+import 'package:mobile_ai_erp/domain/usecase/supplier/supplier_usecases.dart';
 import 'package:mobx/mobx.dart';
 
 part 'product_form_store.g.dart';
+
+/// Represents a supplier entry in the product form
+class SupplierEntry {
+  final String supplierId;
+  final String supplierName;
+  String? supplierSku;
+  String? costPrice;
+  final bool isPrimary;
+
+  SupplierEntry({
+    required this.supplierId,
+    required this.supplierName,
+    this.supplierSku,
+    this.costPrice,
+    this.isPrimary = false,
+  });
+
+  SupplierEntry copyWith({
+    String? supplierId,
+    String? supplierName,
+    String? supplierSku,
+    String? costPrice,
+    bool? isPrimary,
+  }) {
+    return SupplierEntry(
+      supplierId: supplierId ?? this.supplierId,
+      supplierName: supplierName ?? this.supplierName,
+      supplierSku: supplierSku ?? this.supplierSku,
+      costPrice: costPrice ?? this.costPrice,
+      isPrimary: isPrimary ?? this.isPrimary,
+    );
+  }
+}
 
 class ProductFormStore = _ProductFormStore with _$ProductFormStore;
 
@@ -17,8 +52,9 @@ abstract class _ProductFormStore with Store {
   // Constants for validation
   static const int MAX_PRODUCT_NAME_LENGTH = 100;
 
-  // repository instance
+  // repository and usecase instances
   final ProductManagementRepository _repository;
+  final GetSuppliersUseCase _getSuppliersUseCase;
 
   // store for handling errors
   final ErrorStore errorStore;
@@ -35,6 +71,9 @@ abstract class _ProductFormStore with Store {
 
   @observable
   String price = ""; // base price
+
+  @observable
+  String? costPrice;
 
   @observable
   String? sellingPrice;
@@ -61,16 +100,28 @@ abstract class _ProductFormStore with Store {
   String? warrantyMonths; // warranty time for product, in months
 
   @observable
-  String? weight;
+  String? weight; // weight of product in grams (g)
 
   @observable
-  String? weightUnitId;
+  String? height; // height of product in centimeters (cm)
+
+  @observable
+  String? width; // width of product in centimeters (cm)
+
+  @observable
+  String? length; // length of product in centimeters (cm)
 
   @observable
   List<String> tagIds = [];
 
   @observable
   List<String> imageUrls = [];
+
+  @observable
+  List<SupplierEntry> suppliers = [];
+
+  @observable
+  String? primarySupplierId; // ID of the primary supplier (can be null)
 
   @observable
   bool isSubmitting = false;
@@ -100,9 +151,6 @@ abstract class _ProductFormStore with Store {
   @observable
   String weightError = "";
 
-  @observable
-  String weightUnitError = "";
-
   // computed:------------------------------------------------------------------
   @computed
   bool get isFormValid {
@@ -118,7 +166,7 @@ abstract class _ProductFormStore with Store {
   bool get isEditing => editingProduct != null;
 
   // constructor:---------------------------------------------------------------
-  _ProductFormStore(this._repository, this.errorStore);
+  _ProductFormStore(this._repository, this._getSuppliersUseCase, this.errorStore);
 
   // actions:-------------------------------------------------------------------
   
@@ -174,20 +222,14 @@ abstract class _ProductFormStore with Store {
 
     // Validate weight and unit
     weightError = "";
-    weightUnitError = "";
     if (weight != null && weight!.isNotEmpty) {
-      if (weightUnitId == null) { // weight unit only required if weight is provided, unit is dropped if weight is empty
-        weightUnitError = 'Please select a weight unit.';
-      }
-
       final parsedWeight = double.tryParse(weight!);
       if (parsedWeight == null || parsedWeight <= 0) {
         weightError = 'Weight must be greater than 0.';
       }
-      log(weightError + " " + weightUnitError);
     }
-    log('Validating weight: weight="$weight", weightUnitId="$weightUnitId"', name: TAG);
 
+    // validate height, width, length
   }
 
   /// Check SKU uniqueness - only called during form submission
@@ -232,6 +274,12 @@ abstract class _ProductFormStore with Store {
   @action
   void setPrice(String value) {
     price = value;
+    validateForm();
+  }
+
+  @action
+  void setCostPrice(String value) {
+    costPrice = value.isEmpty ? null : value;
     validateForm();
   }
 
@@ -323,7 +371,7 @@ abstract class _ProductFormStore with Store {
   }
 
   @action
-  void setWarranteeMonths(String value) {
+  void setWarrantyMonths(String value) {
     warrantyMonths = value.isEmpty ? null : value;
     validateForm();
   }
@@ -335,9 +383,104 @@ abstract class _ProductFormStore with Store {
   }
 
   @action
-  void setWeightUnitId(String? value) {
-    weightUnitId = value;
+  void setHeight(String value) {
+    height = value.isEmpty ? null : value;
     validateForm();
+  }
+
+  @action
+  void setWidth(String value) {
+    width = value.isEmpty ? null : value;
+    validateForm();
+  }
+
+  @action
+  void setLength(String value) {
+    length = value.isEmpty ? null : value;
+    validateForm();
+  }
+
+  @action
+  void addSupplier(String supplierId, String supplierName) {
+    // Check if supplier already exists
+    if (suppliers.any((s) => s.supplierId == supplierId)) {
+      return;
+    }
+    
+    suppliers = List.from(suppliers)
+      ..add(SupplierEntry(
+        supplierId: supplierId,
+        supplierName: supplierName,
+      ));
+  }
+
+  @action
+  void removeSupplier(String supplierId) {
+    suppliers = suppliers.where((s) => s.supplierId != supplierId).toList();
+    
+    // If this was the primary supplier, remove the primary flag
+    if (primarySupplierId == supplierId) {
+      primarySupplierId = null;
+    }
+  }
+
+  @action
+  void updateSupplierSku(String supplierId, String sku) {
+    final index = suppliers.indexWhere((s) => s.supplierId == supplierId);
+    if (index != -1) {
+      final updatedSupplier = suppliers[index].copyWith(
+        supplierSku: sku.isEmpty ? null : sku,
+      );
+      suppliers = List.from(suppliers)..[index] = updatedSupplier;
+    }
+  }
+
+  @action
+  void updateSupplierCostPrice(String supplierId, String costPrice) {
+    final index = suppliers.indexWhere((s) => s.supplierId == supplierId);
+    if (index != -1) {
+      final updatedSupplier = suppliers[index].copyWith(
+        costPrice: costPrice.isEmpty ? null : costPrice,
+      );
+      suppliers = List.from(suppliers)..[index] = updatedSupplier;
+    }
+  }
+
+  @action
+  void setPrimarySupplier(String supplierId) {
+    // If setting the same supplier as primary, just return
+    if (primarySupplierId == supplierId) {
+      return;
+    }
+    
+    // Update the supplier list to mark the new primary and unmark the old one
+    suppliers = suppliers.map((supplier) {
+      if (supplier.supplierId == supplierId) {
+        return supplier.copyWith(isPrimary: true);
+      } else if (supplier.isPrimary) {
+        return supplier.copyWith(isPrimary: false);
+      }
+      return supplier;
+    }).toList();
+    
+    primarySupplierId = supplierId;
+  }
+
+  @action
+  void removePrimarySupplier() {
+    primarySupplierId = null;
+    suppliers = suppliers
+        .map((s) => s.isPrimary ? s.copyWith(isPrimary: false) : s)
+        .toList();
+  }
+
+  Future<(List<Supplier>, int)> fetchSuppliers(int page, int pageSize) async {
+    final result = await _getSuppliersUseCase(
+      page: page,
+      pageSize: pageSize,
+    );
+    
+    return (result.data, result.totalPages);
   }
 
   @action
@@ -355,8 +498,8 @@ abstract class _ProductFormStore with Store {
     tagIds = [];
     imageUrls = List.from(product.images);
     sellingPrice = product.sellingPrice.toString();
+    costPrice = product.costPrice?.toString();
     // barcode = product.barcode;
-    // sellingPrice = product.sellingPrice;
     // webTitle = product.webTitle;
     // webDescription = product.webDescription;
     warrantyMonths = product.warrantyMonths?.toString();
@@ -395,6 +538,9 @@ abstract class _ProductFormStore with Store {
 
       // Create product and submit
       final parsedPrice = double.parse(price); // Safe to parse since validation passed
+      final parsedCostPrice = (costPrice != null && costPrice!.isNotEmpty)
+          ? double.tryParse(costPrice!)
+          : null;
       final parsedSelling = (sellingPrice != null && sellingPrice!.isNotEmpty)
           ? double.tryParse(sellingPrice!)
           : null;
@@ -408,6 +554,7 @@ abstract class _ProductFormStore with Store {
         status: status,
         warrantyMonths: warrantyMonths != null ? int.tryParse(warrantyMonths!) : null,
         basePrice: parsedPrice,
+        costPrice: parsedCostPrice,
         sellingPrice: parsedSelling ?? parsedPrice,
         categoryId: categoryId,
         brandId: brandId,
@@ -441,17 +588,19 @@ abstract class _ProductFormStore with Store {
     price = "";
     description = "";
     barcode = null;
+    costPrice = null;
     sellingPrice = null;
     webTitle = null;
     webDescription = null;
     warrantyMonths = null;
     weight = null;
-    weightUnitId = null;
     status = ProductStatus.ACTIVE;
     categoryId = null;
     brandId = null;
     tagIds = [];
     imageUrls = [];
+    suppliers = [];
+    primarySupplierId = null;
     editingProduct = null;
     success = false;
     nameError = "";

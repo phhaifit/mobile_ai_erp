@@ -87,7 +87,7 @@ class _ProductInfoScreenState extends State<ProductInfoScreen> {
                 ),
                 SizedBox(height: 12),
                 Text(
-                  '\$${product.sellingPrice.toStringAsFixed(2)}',
+                  '\$${product.sellingPrice != null ? product.sellingPrice!.toStringAsFixed(2) : "N/A"}',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         color: Colors.green,
                         fontWeight: FontWeight.bold,
@@ -170,9 +170,9 @@ class _ProductInfoScreenState extends State<ProductInfoScreen> {
                 SizedBox(height: 20),
                 _buildDetailRow(ProductStrings.skuLabel, product.sku),
                 SizedBox(height: 16),
-                _buildDetailRow(ProductStrings.category, MockProductDataSource.getCategoryName(int.parse(product.categoryId ?? '0'))),
-                SizedBox(height: 16),
-                _buildDetailRow(ProductStrings.brand, MockProductDataSource.getBrandName(int.parse(product.brandId ?? '0'))),
+                // _buildDetailRow(ProductStrings.category, MockProductDataSource.getCategoryName(int.parse(product.categoryId ?? '0'))),
+                // SizedBox(height: 16),
+                // _buildDetailRow(ProductStrings.brand, MockProductDataSource.getBrandName(int.parse(product.brandId ?? '0'))),
                 SizedBox(height: 16),
                 _buildDetailRow(
                   ProductStrings.tags,

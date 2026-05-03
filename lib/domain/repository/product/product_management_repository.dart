@@ -13,4 +13,7 @@ abstract class ProductManagementRepository {
   Future<int> deleteProduct(int id);
 
   Future<List<Product>> searchProducts(ProductFilter filter);
+
+  /// Saves a product by sending a POST request for new products or PATCH for updates
+  Future<Product> saveProduct(Product product);
 }

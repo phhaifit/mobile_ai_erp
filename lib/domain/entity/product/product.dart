@@ -33,8 +33,9 @@ class Product {
   final double? widthCm;
   final double? heightCm;
   final double? weightG;
-  final double basePrice;
-  final double sellingPrice;
+  final double? basePrice;
+  final double? costPrice;
+  final double? sellingPrice;
   final String? imageUrl;
   final List<String> images;
   final List<String> attributeValueIds;
@@ -47,6 +48,7 @@ class Product {
   // final Category? category;
   // final Brand? brand;
   final List<Tag> tags; // list of tags, can be empty
+  final List<String>? tagIds; // list of tag IDs for API requests
   final List<AttributeSet> attributes; // list of attributes, can be empty
   final dynamic productMetadata;
   final bool isFlashSale;
@@ -76,8 +78,9 @@ class Product {
     this.widthCm,
     this.heightCm,
     this.weightG,
-    required this.basePrice,
-    required this.sellingPrice,
+    this.basePrice,
+    this.sellingPrice,
+    this.costPrice,
     this.imageUrl,
     this.images = const <String>[],
     this.attributeValueIds = const <String>[],
@@ -88,6 +91,7 @@ class Product {
     // this.category,
     // this.brand,
     this.tags = const <Tag>[],
+    this.tagIds,
     this.attributes = const <AttributeSet>[],
     this.productMetadata,
     this.isFlashSale = false,
@@ -95,11 +99,14 @@ class Product {
     this.flashSaleTo,
   }) {
     // Validation
-    if (basePrice < 0) {
+    if (basePrice != null && basePrice! < 0) {
       throw ArgumentError('Base price cannot be negative');
     }
-    if (sellingPrice < 0) {
+    if (sellingPrice != null && sellingPrice! < 0) {
       throw ArgumentError('Selling price cannot be negative');
+    }
+    if (costPrice != null && costPrice! < 0) {
+      throw ArgumentError('Cost price cannot be negative');
     }
   }
 
@@ -131,6 +138,7 @@ class Product {
         heightCm: (json["heightCm"] as num?)?.toDouble(),
         weightG: (json["weightG"] as num?)?.toDouble(),
         basePrice: (json["basePrice"] as num?)?.toDouble() ?? 0.0,
+        costPrice: (json["costPrice"] as num?)?.toDouble(),
         sellingPrice: (json["sellingPrice"] as num?)?.toDouble() ?? 0.0,
         imageUrl: json["imageUrl"],
         images: List<String>.from(json["images"] ?? []),
@@ -143,6 +151,8 @@ class Product {
         updatedAt: json["updatedAt"] != null
             ? DateTime.parse(json["updatedAt"] as String)
             : null,
+        tags: const <Tag>[],
+        tagIds: json["tagIds"] != null ? List<String>.from(json["tagIds"] as List) : null,
         productMetadata: json["productMetadata"],
         isFlashSale: json["isFlashSale"] ?? false,
         flashSaleFrom: json["flashSaleFrom"] != null
@@ -175,6 +185,7 @@ class Product {
         "heightCm": heightCm,
         "weightG": weightG,
         "basePrice": basePrice,
+        "costPrice": costPrice,
         "sellingPrice": sellingPrice,
         "imageUrl": imageUrl,
         "images": images,
@@ -183,6 +194,7 @@ class Product {
         "suppliers": suppliers,
         "createdAt": createdAt?.toIso8601String(),
         "updatedAt": updatedAt?.toIso8601String(),
+        "tagIds": tagIds,
         "productMetadata": productMetadata,
         "isFlashSale": isFlashSale,
         "flashSaleFrom": flashSaleFrom?.toIso8601String(),
@@ -211,6 +223,7 @@ class Product {
     double? heightCm,
     double? weightG,
     double? basePrice,
+    double? costPrice,
     double? sellingPrice,
     String? imageUrl,
     List<String>? images,
@@ -222,6 +235,7 @@ class Product {
     Category? category,
     Brand? brand,
     List<Tag>? tags,
+    List<String>? tagIds,
     List<AttributeSet>? attributes,
     dynamic productMetadata,
     bool? isFlashSale,
@@ -250,6 +264,7 @@ class Product {
       heightCm: heightCm ?? this.heightCm,
       weightG: weightG ?? this.weightG,
       basePrice: basePrice ?? this.basePrice,
+      costPrice: costPrice ?? this.costPrice,
       sellingPrice: sellingPrice ?? this.sellingPrice,
       imageUrl: imageUrl ?? this.imageUrl,
       images: images ?? this.images,
@@ -261,6 +276,7 @@ class Product {
       // category: category ?? this.category,
       // brand: brand ?? this.brand,
       tags: tags ?? this.tags,
+      tagIds: tagIds ?? this.tagIds,
       attributes: attributes ?? this.attributes,
       productMetadata: productMetadata ?? this.productMetadata,
       isFlashSale: isFlashSale ?? this.isFlashSale,

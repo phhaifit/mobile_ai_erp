@@ -87,7 +87,7 @@ class ProductCard extends StatelessWidget {
                     ),
                     SizedBox(height: 12),
                     Text(
-                      '\$${product.sellingPrice.toStringAsFixed(2)}',
+                      '\$${product.sellingPrice != null ? product.sellingPrice!.toStringAsFixed(2) : "N/A"}',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             color: Colors.green,
                             fontWeight: FontWeight.bold,
