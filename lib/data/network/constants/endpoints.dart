@@ -109,7 +109,7 @@ class Endpoints {
   static String customerSignUp = "/customer/auth/sign-up";
   static String customerSignIn = "/customer/auth/sign-in";
   static String customerRefreshToken = "/customer/auth/refresh";
-  static String customerGetGoogleOAuthUrl = "/customer/auth/google";
+  static String customerGetGoogleOAuthUrl = "/customer/auth/google/oauth";
   static String customerSignOut = "/customer/auth/sign-out";
   static String customerAuthGetSessions = "/customer/auth/sessions";
   static String customerSendMagicLink = "/customer/auth/magic-link";
