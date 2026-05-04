@@ -142,7 +142,6 @@ class _HomeScreenState extends State<HomeScreen> {
           _buildReportsEntry(),
           _buildPostPurchaseEntry(),
           _buildStorefrontEntry(),
-          _buildCustomerPortalEntry(),
           _buildSuppliersEntry(),
           _buildUsersManagementEntry(),
           // _buildSuppliersEntry(),
@@ -328,23 +327,6 @@ class _HomeScreenState extends State<HomeScreen> {
           title: Text("Suppliers"),
           trailing: Icon(Icons.chevron_right),
           onTap: () => Navigator.of(context).pushNamed(Routes.suppliers),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCustomerPortalEntry() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-      child: Card(
-        child: ListTile(
-          leading: Icon(
-            Icons.person_outline,
-          ), // Icon representing a user profile
-          title: Text('Customer Portal (Storefront)'),
-          subtitle: Text('Manage profile, address book, and order history.'),
-          trailing: Icon(Icons.chevron_right),
-          onTap: () => Navigator.of(context).pushNamed(Routes.profileDashboard),
         ),
       ),
     );
