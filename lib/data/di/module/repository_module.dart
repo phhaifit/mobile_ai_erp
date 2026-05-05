@@ -8,9 +8,10 @@ import 'package:mobile_ai_erp/data/local/datasources/order_tracking/order_tracki
 import 'package:mobile_ai_erp/data/local/datasources/post/post_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/post_purchase/post_purchase_datasource.dart';
 import 'package:mobile_ai_erp/data/local/datasources/user/user_datasource.dart';
+import 'package:mobile_ai_erp/data/network/apis/product/product_api.dart';
+import 'package:mobile_ai_erp/data/network/datasources/user/user_remote_datasource.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
 import 'package:mobile_ai_erp/data/network/datasources/role/role_remote_datasource.dart';
-import 'package:mobile_ai_erp/data/network/datasources/user/user_remote_datasource.dart';
 import 'package:mobile_ai_erp/data/network/apis/orders/order_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/product_metadata/brand_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/product_metadata/brand_image_api.dart';
@@ -204,7 +205,7 @@ class RepositoryModule {
     );
 
     getIt.registerSingleton<ProductManagementRepository>(
-      ProductManagementRepositoryImpl(getIt<MockProductDataSource>()),
+      ProductManagementRepositoryImpl(getIt<MockProductDataSource>(), getIt<ProductApi>()),
     );
 
     getIt.registerLazySingleton<ProductDetailRepository>(

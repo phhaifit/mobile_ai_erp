@@ -4,6 +4,7 @@ import 'package:mobile_ai_erp/domain/repository/checkout/checkout_repository.dar
 import 'package:mobile_ai_erp/domain/repository/fulfillment/fulfillment_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/post/post_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/post_purchase/post_purchase_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/product/product_management_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/role_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/order_tracking/order_tracking_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/user_repository.dart';
@@ -13,6 +14,8 @@ import 'package:mobile_ai_erp/domain/repository/web_builder/cms_page_repository.
 import 'package:mobile_ai_erp/domain/repository/web_builder/store_settings_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/web_builder/web_theme_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/supplier/supplier_repository.dart';
+import 'package:mobile_ai_erp/domain/usecase/product/get_products_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/product/save_product_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/supplier/supplier_usecases.dart';
 import 'package:mobile_ai_erp/domain/repository/product_metadata/product_metadata_repository.dart';
 import 'package:mobile_ai_erp/domain/usecase/checkout/checkout_usecases.dart';
@@ -543,5 +546,15 @@ class UseCaseModule {
     getIt.registerSingleton<DeleteAttributeValueUseCase>(
       DeleteAttributeValueUseCase(getIt<ProductMetadataRepository>()),
     );
+
+    //product:-----------------------------------------------------------------
+    getIt.registerSingleton<GetProductsUseCase>(
+      GetProductsUseCase(getIt<ProductManagementRepository>()),
+    );
+    getIt.registerSingleton<SaveProductUseCase>(
+      SaveProductUseCase(getIt<ProductManagementRepository>()),
+    );
   }
+
+  
 }

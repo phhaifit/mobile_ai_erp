@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:http/http.dart' as http;
 
@@ -10,8 +11,8 @@ class RestClient {
   final JsonDecoder _decoder = JsonDecoder();
 
   // Get:-----------------------------------------------------------------------
-  Future<dynamic> get(String path) {
-    return http.get(Uri.parse(path)).then(_createResponse);
+  Future<dynamic> get(String path, {Map<String, String>? headers, Map<String, String>? queryParameters}) {
+    return http.get(Uri.parse(path).replace(queryParameters: queryParameters), headers: headers).then(_createResponse);
   }
 
   // Post:----------------------------------------------------------------------
@@ -57,6 +58,9 @@ class RestClient {
   dynamic _createResponse(http.Response response) {
     final String res = response.body;
     final int statusCode = response.statusCode;
+
+    // print('Response: $res');
+    // print('Status Code: $statusCode\n\n\n\n');
 
     if (statusCode < 200 || statusCode > 400) {
       throw NetworkException(

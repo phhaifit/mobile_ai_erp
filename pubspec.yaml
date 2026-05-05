@@ -63,6 +63,7 @@ dependencies:
   # X
   xxtea: ^2.1.0
   highlight_text: ^1.8.0
+  dio_cache_interceptor: ^4.0.6
   # Y
   # Z
 

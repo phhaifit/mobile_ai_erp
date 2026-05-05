@@ -29,6 +29,11 @@ class ProductStrings {
   static const String category = "Category";
   static const String brand = "Brand";
   static const String tags = "Tags";
+  static const String warranty = "Warranty (months)";
+  static const String length = "Length (cm)";
+  static const String width = "Width (cm)";
+  static const String height = "Height (cm)";
+  static const String weight = "Weight (g)" ;
 
   // Status labels
   static const String statusNew = "New";
@@ -68,4 +73,20 @@ class ProductStrings {
   // Category & Brand field labels with required indicator
   static const String categoryRequired = "Category *";
   static const String brandRequired = "Brand *";
+
+  // Category & Brand form modal labels
+  static const String selectCategoryTitle = "Select Category";
+  static const String selectBrandTitle = "Select Brand";
+  static const String selectedCategoryLabel = "Selected category";
+  static const String selectedBrandLabel = "Selected brand";
+  static const String noCategoriesMessage = "No categories available";
+  static const String noBrandsMessage = "No brands available";
+  static const String noCategorySelectedText = "No category selected";
+  static const String noBrandSelectedText = "No brand selected";
+
+  // Tags form modal labels
+  static const String selectTagsTitle = "Select Tags";
+  static const String selectedTagsLabel = "Selected tags";
+  static const String noTagsMessage = "No tags available";
+  static const String noTagsSelectedText = "No tags selected";
 }

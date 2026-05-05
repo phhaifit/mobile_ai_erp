@@ -39,6 +39,18 @@ class Brand {
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
+
+  factory Brand.fromJson(Map<String, dynamic> json) {
+    return Brand(
+      id: json['id'] as String,
+      tenantId: json['tenant_id'] as String,
+      name: json['name'] as String,
+      description: json['description'] as String?,
+      logoUrl: json['logoUrl'] as String?,
+      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
+      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at']) : null,
+    );
+  }
 }
 
 const Object _sentinel = Object();

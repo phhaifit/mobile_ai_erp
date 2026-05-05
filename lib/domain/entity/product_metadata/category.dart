@@ -67,6 +67,20 @@ class Category {
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
+
+  factory Category.fromJson(Map<String, dynamic> json) {
+    return Category(
+      id: json['id'] as String,
+      tenantId: json['tenant_id'] as String,
+      name: json['name'] as String,
+      slug: json['slug'] as String,
+      parentId: json['parent_id'] as String?,
+      status: (json['status'] as String? ?? 'active') == 'active'
+          ? CategoryStatus.active
+          : CategoryStatus.inactive,
+      description: json['description'] as String?,
+    );
+  }
 }
 
 const Object _sentinel = Object();

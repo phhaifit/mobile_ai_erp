@@ -87,7 +87,7 @@ class _ProductInfoScreenState extends State<ProductInfoScreen> {
                 ),
                 SizedBox(height: 12),
                 Text(
-                  '\$${product.price.toStringAsFixed(2)}',
+                  '\$${product.sellingPrice != null ? product.sellingPrice!.toStringAsFixed(2) : "N/A"}',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         color: Colors.green,
                         fontWeight: FontWeight.bold,
@@ -118,7 +118,7 @@ class _ProductInfoScreenState extends State<ProductInfoScreen> {
                 SizedBox(height: 20),
 
                 // Images section
-                if (product.imageUrls.isNotEmpty) ...[
+                if (product.images.isNotEmpty) ...[
                   Text(
                     'Images',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -130,7 +130,7 @@ class _ProductInfoScreenState extends State<ProductInfoScreen> {
                     height: 200,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
-                      itemCount: product.imageUrls.length,
+                      itemCount: product.images.length,
                       itemBuilder: (context, index) {
                         return Container(
                           width: 200,
@@ -142,7 +142,7 @@ class _ProductInfoScreenState extends State<ProductInfoScreen> {
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(8),
                             child: Image.network(
-                              product.imageUrls[index],
+                              product.images[index],
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) => Center(
                                 child: Icon(
@@ -170,15 +170,15 @@ class _ProductInfoScreenState extends State<ProductInfoScreen> {
                 SizedBox(height: 20),
                 _buildDetailRow(ProductStrings.skuLabel, product.sku),
                 SizedBox(height: 16),
-                _buildDetailRow(ProductStrings.category, MockProductDataSource.getCategoryName(product.categoryId)),
-                SizedBox(height: 16),
-                _buildDetailRow(ProductStrings.brand, MockProductDataSource.getBrandName(product.brandId)),
+                // _buildDetailRow(ProductStrings.category, MockProductDataSource.getCategoryName(int.parse(product.categoryId ?? '0'))),
+                // SizedBox(height: 16),
+                // _buildDetailRow(ProductStrings.brand, MockProductDataSource.getBrandName(int.parse(product.brandId ?? '0'))),
                 SizedBox(height: 16),
                 _buildDetailRow(
                   ProductStrings.tags,
-                  product.tagIds.isEmpty
+                  product.tags.isEmpty
                       ? ProductStrings.noneValue
-                      : MockProductDataSource.getTagNames(product.tagIds).join(', '),
+                      : "MockProductDataSource.getTagNames(product.tags).join(', ')",
                 ),
                 SizedBox(height: 28),
 
@@ -191,7 +191,7 @@ class _ProductInfoScreenState extends State<ProductInfoScreen> {
                 ),
                 SizedBox(height: 12),
                 Text(
-                  product.description,
+                  product.description ?? "No description available.",
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         height: 1.6,
                       ),
@@ -247,7 +247,7 @@ class _ProductInfoScreenState extends State<ProductInfoScreen> {
           ),
           TextButton(
             onPressed: () {
-              _productStore.deleteProduct(product.id ?? 0);
+              // _productStore.deleteProduct(product.id ?? 0);
               Navigator.pop(context);
               Navigator.pop(context);
             },
