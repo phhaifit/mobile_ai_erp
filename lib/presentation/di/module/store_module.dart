@@ -5,6 +5,7 @@ import 'package:mobile_ai_erp/core/stores/form/form_store.dart';
 import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
 import 'package:mobile_ai_erp/domain/repository/customer/customer_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/storefront_account/customer_repository.dart';
+import 'package:mobile_ai_erp/domain/usecase/product/save_product_usecase.dart';
 import 'package:mobile_ai_erp/presentation/supplier/store/supplier_store.dart';
 import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
 import 'package:mobile_ai_erp/domain/usecase/customer/get_customers_usecase.dart';
@@ -521,7 +522,9 @@ class StoreModule {
     getIt.registerSingleton<ProductFormStore>(
       ProductFormStore(
         getIt<ProductManagementRepository>(),
+        getIt<GetSuppliersUseCase>(),
         getIt<ErrorStore>(),
+        getIt<SaveProductUseCase>(),
       ),
     );
   }

@@ -1,21 +1,51 @@
 import 'dart:async';
 
 import 'package:mobile_ai_erp/data/local/datasources/product/mock_product_datasource.dart';
+import 'package:mobile_ai_erp/data/network/apis/product/product_api.dart';
 import 'package:mobile_ai_erp/domain/entity/product/product.dart';
 import 'package:mobile_ai_erp/domain/entity/product/product_filter.dart';
+import 'package:mobile_ai_erp/domain/entity/shared/paginated_result.dart';
 import 'package:mobile_ai_erp/domain/repository/product/product_management_repository.dart';
 
 class ProductManagementRepositoryImpl extends ProductManagementRepository {
   // datasource instance
   final MockProductDataSource _dataSource;
+  final ProductApi? _productApi;
 
   // constructor
-  ProductManagementRepositoryImpl(this._dataSource);
+  ProductManagementRepositoryImpl(this._dataSource, [this._productApi]);
 
   @override
   Future<List<Product>> getProducts() async {
     try {
       return await _dataSource.getProducts();
+    } catch (error) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<PaginatedResult<Product>> getProductsPage({
+    int page = 1,
+    int pageSize = 10,
+    String? search,
+    String? sortBy,
+    String? sortOrder,
+  }) async {
+    try {
+      if (_productApi != null) {
+        return await _productApi.getProducts(
+          page: page,
+          pageSize: pageSize,
+          search: search,
+          sortBy: sortBy,
+          sortOrder: sortOrder,
+        );
+      }
+      else {
+        throw Exception('ProductApi is not configured');
+      }
+
     } catch (error) {
       rethrow;
     }
@@ -68,6 +98,18 @@ class ProductManagementRepositoryImpl extends ProductManagementRepository {
       }).toList();
 
       return filtered;
+    } catch (error) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<Product> saveProduct(Product product) async {
+    try {
+      if (_productApi == null) {
+        throw Exception('ProductApi is not configured');
+      }
+      return await _productApi.saveProduct(product);
     } catch (error) {
       rethrow;
     }

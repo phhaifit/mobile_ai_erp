@@ -28,6 +28,15 @@ class Endpoints {
   static const int receiveTimeout = 15000;
   static const int connectionTimeout = 30000;
 
+  // brand endpoints
+  static const String brandsUrl = '/erp/brands';
+
+  // category endpoints
+  static const String categoriesUrl = '/erp/categories';
+
+  // product endpoints
+  static const String productsUrl = '/erp/products';
+
   static const String getPosts = "/posts";
 
   // auth endpoints

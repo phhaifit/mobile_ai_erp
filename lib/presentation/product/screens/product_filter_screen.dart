@@ -70,42 +70,42 @@ class _ProductFilterScreenState extends State<ProductFilterScreen> {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             SizedBox(height: 12),
-            FutureBuilder(
-              future: _dataSource.getCategories(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return CircularProgressIndicator();
-                }
+            // FutureBuilder(
+            //   future: _dataSource.getCategories(),
+            //   builder: (context, snapshot) {
+            //     if (!snapshot.hasData) {
+            //       return CircularProgressIndicator();
+            //     }
 
-                final categories = snapshot.data ?? [];
-                return Wrap(
-                  spacing: 8,
-                  children: [
-                    FilterChip(
-                      label: Text(ProductStrings.all),
-                      selected: _selectedCategoryId == null,
-                      onSelected: (selected) {
-                        setState(() {
-                          _selectedCategoryId = null;
-                        });
-                      },
-                    ),
-                    ...categories.map((category) {
-                      final isSelected = _selectedCategoryId == category.id;
-                      return FilterChip(
-                        label: Text(category.name),
-                        selected: isSelected,
-                        onSelected: (selected) {
-                          setState(() {
-                            _selectedCategoryId = selected ? category.id : null;
-                          });
-                        },
-                      );
-                    }).toList(),
-                  ],
-                );
-              },
-            ),
+            //     final categories = snapshot.data ?? [];
+            //     return Wrap(
+            //       spacing: 8,
+            //       children: [
+            //         FilterChip(
+            //           label: Text(ProductStrings.all),
+            //           selected: _selectedCategoryId == null,
+            //           onSelected: (selected) {
+            //             setState(() {
+            //               _selectedCategoryId = null;
+            //             });
+            //           },
+            //         ),
+            //         ...categories.map((category) {
+            //           final isSelected = _selectedCategoryId == category.id;
+            //           return FilterChip(
+            //             label: Text(category.name),
+            //             selected: isSelected,
+            //             onSelected: (selected) {
+            //               setState(() {
+            //                 _selectedCategoryId = selected ? category.id : null;
+            //               });
+            //             },
+            //           );
+            //         }).toList(),
+            //       ],
+            //     );
+            //   },
+            // ),
             SizedBox(height: 24),
 
             // Brand filter
@@ -114,42 +114,42 @@ class _ProductFilterScreenState extends State<ProductFilterScreen> {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             SizedBox(height: 12),
-            FutureBuilder(
-              future: _dataSource.getBrands(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return CircularProgressIndicator();
-                }
+            // FutureBuilder(
+            //   future: (_dataSource.getBrands()),
+            //   builder: (context, snapshot) {
+            //     if (!snapshot.hasData) {
+            //       return CircularProgressIndicator();
+            //     }
 
-                final brands = snapshot.data ?? [];
-                return Wrap(
-                  spacing: 8,
-                  children: [
-                    FilterChip(
-                      label: Text(ProductStrings.all),
-                      selected: _selectedBrandId == null,
-                      onSelected: (selected) {
-                        setState(() {
-                          _selectedBrandId = null;
-                        });
-                      },
-                    ),
-                    ...brands.map((brand) {
-                      final isSelected = _selectedBrandId == brand.id;
-                      return FilterChip(
-                        label: Text(brand.name),
-                        selected: isSelected,
-                        onSelected: (selected) {
-                          setState(() {
-                            _selectedBrandId = selected ? brand.id : null;
-                          });
-                        },
-                      );
-                    }).toList(),
-                  ],
-                );
-              },
-            ),
+            //     final brands = snapshot.data ?? [];
+            //     return Wrap(
+            //       spacing: 8,
+            //       children: [
+            //         FilterChip(
+            //           label: Text(ProductStrings.all),
+            //           selected: _selectedBrandId == null,
+            //           onSelected: (selected) {
+            //             setState(() {
+            //               _selectedBrandId = null;
+            //             });
+            //           },
+            //         ),
+            //         ...brands.map((brand) {
+            //           final isSelected = _selectedBrandId == brand.id;
+            //           return FilterChip(
+            //             label: Text(brand.name),
+            //             selected: isSelected,
+            //             onSelected: (selected) {
+            //               setState(() {
+            //                 _selectedBrandId = selected ? brand.id : null;
+            //               });
+            //             },
+            //           );
+            //         }).toList(),
+            //       ],
+            //     );
+            //   },
+            // ),
             SizedBox(height: 32),
 
             // Action buttons

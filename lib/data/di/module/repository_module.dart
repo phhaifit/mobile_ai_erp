@@ -20,9 +20,10 @@ import 'package:mobile_ai_erp/data/network/apis/loyalty_ledgers/loyalty_ledger_a
 import 'package:mobile_ai_erp/data/repository/customer/customer_repository_impl.dart';
 import 'package:mobile_ai_erp/data/repository/storefront_account/customer_repository_impl.dart';
 import 'package:mobile_ai_erp/domain/repository/customer/customer_repository.dart';
+import 'package:mobile_ai_erp/data/network/apis/product/product_api.dart';
+import 'package:mobile_ai_erp/data/network/datasources/user/user_remote_datasource.dart';
 import 'package:mobile_ai_erp/core/data/network/dio/dio_client.dart';
 import 'package:mobile_ai_erp/data/network/datasources/role/role_remote_datasource.dart';
-import 'package:mobile_ai_erp/data/network/datasources/user/user_remote_datasource.dart';
 import 'package:mobile_ai_erp/data/network/apis/orders/order_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/product_metadata/brand_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/product_metadata/brand_image_api.dart';
@@ -239,7 +240,7 @@ class RepositoryModule {
     );
 
     getIt.registerSingleton<ProductManagementRepository>(
-      ProductManagementRepositoryImpl(getIt<MockProductDataSource>()),
+      ProductManagementRepositoryImpl(getIt<MockProductDataSource>(), getIt<ProductApi>()),
     );
 
     getIt.registerLazySingleton<ProductDetailRepository>(

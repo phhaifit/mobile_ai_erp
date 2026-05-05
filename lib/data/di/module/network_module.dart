@@ -10,6 +10,7 @@ import 'package:mobile_ai_erp/data/network/apis/dashboard/dashboard_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/customer/customer_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/customer/customer_segment_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/orders/order_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/product/product_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/product_metadata/brand_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/product_metadata/brand_image_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/product_metadata/category_api.dart';
@@ -269,6 +270,7 @@ class NetworkModule {
     getIt.registerSingleton<StorefrontAddressApi>(StorefrontAddressApi(getIt<DioClient>(instanceName: 'customer')));
     getIt.registerSingleton<StorefrontOrderApi>(StorefrontOrderApi(getIt<DioClient>(instanceName: 'customer')));
     getIt.registerSingleton<LoyaltyLedgerApi>(LoyaltyLedgerApi(getIt<DioClient>(instanceName: 'customer')));
+    getIt.registerSingleton(ProductApi(getIt<DioClient>(instanceName: erpDioClientName)));
 
     // customer apis:----------------------------------------------------------
     getIt.registerSingleton<CustomerSegmentApi>(
