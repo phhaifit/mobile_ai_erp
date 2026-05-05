@@ -46,7 +46,25 @@ class _AddressBookScreenState extends State<AddressBookScreen> {
               final address = _addressStore.addresses[index];
               return AddressCardWidget(
                 address: address,
-                onSetDefault: () => _addressStore.setDefault(address.id),
+                onSetDefault: () async {
+                  // 1. Check if the UI thinks it's loading
+                  if (_addressStore.isLoading) {
+                    print('🛑 BUTTON CLICKED, BUT STORE IS LOADING! Ignored.');
+                    return; 
+                  }
+
+                  print('🟢 BUTTON CLICKED! Calling Store...');
+                  final success = await _addressStore.setDefault(address.id);
+                  
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(success ? 'Default address updated!' : 'Failed to update.'),
+                        backgroundColor: success ? Colors.green : Colors.red,
+                      ),
+                    );
+                  }
+                },
                 onEdit: () {
                   // Pass the address object to the form so it knows we are editing
                   Navigator.pushNamed(context, Routes.addressForm,

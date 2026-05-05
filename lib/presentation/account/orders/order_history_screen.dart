@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import '../../../../domain/entity/order/order.dart';
+import '../../../domain/entity/storefront_order/order.dart';
 import '../../../../di/service_locator.dart';
 import '../../../../utils/routes/routes.dart';
 import '../store/order_store.dart';
@@ -24,9 +24,8 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 8 Tabs: All, Pending, Processing, Confirmed, Shipped, Delivered, Canceled, Returned
     return DefaultTabController(
-      length: 8,
+      length: 9, // 🚀 UPDATED from 6 to 9
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Order History'),
@@ -39,12 +38,13 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
             tabs: [
               Tab(text: 'All'),
               Tab(text: 'Pending'),
-              Tab(text: 'Processing'),
               Tab(text: 'Confirmed'),
-              Tab(text: 'Shipped'),
+              Tab(text: 'Packing'),    // 🚀 NEW
+              Tab(text: 'Shipping'),
               Tab(text: 'Delivered'),
-              Tab(text: 'Canceled'),
-              Tab(text: 'Returned'),
+              Tab(text: 'Success'),    // 🚀 NEW
+              Tab(text: 'Cancelled'),
+              Tab(text: 'Returned'),   // 🚀 NEW
             ],
           ),
         ),
@@ -58,11 +58,12 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               children: [
                 _buildOrderList(null), // All
                 _buildOrderList(OrderStatus.pending),
-                _buildOrderList(OrderStatus.processing),
                 _buildOrderList(OrderStatus.confirmed),
-                _buildOrderList(OrderStatus.shipped),
+                _buildOrderList(OrderStatus.packing),
+                _buildOrderList(OrderStatus.shipping),
                 _buildOrderList(OrderStatus.delivered),
-                _buildOrderList(OrderStatus.canceled),
+                _buildOrderList(OrderStatus.success),
+                _buildOrderList(OrderStatus.cancelled),
                 _buildOrderList(OrderStatus.returned),
               ],
             );
@@ -91,7 +92,11 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
         return OrderItemCardWidget(
           order: order,
           onTap: () {
-            Navigator.pushNamed(context, Routes.orderDetail, arguments: order);
+            // Add .then() to wait for the user to come back!
+            Navigator.pushNamed(context, Routes.orderDetail, arguments: order).then((_) {
+              // This block runs the exact moment the OrderDetailScreen is popped.
+              _orderStore.fetchOrders(); 
+            });
           },
         );
       },

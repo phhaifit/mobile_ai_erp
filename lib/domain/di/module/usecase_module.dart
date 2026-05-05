@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:mobile_ai_erp/domain/repository/storefront_account/order_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/storefront_account/customer_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/checkout/checkout_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/fulfillment/fulfillment_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/post/post_repository.dart';
@@ -81,6 +83,20 @@ import 'package:mobile_ai_erp/domain/usecase/web_builder/get_web_theme_by_id_use
 import 'package:mobile_ai_erp/domain/usecase/web_builder/get_web_themes_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/save_cms_page_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/save_store_settings_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/storefront_customer/customer_login_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/storefront_customer/customer_register_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/storefront_customer/customer_forgot_password_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/storefront_customer/get_profile_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/storefront_order/get_order_details_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/storefront_order/get_order_history_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/storefront_order/reorder_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/storefront_order/submit_return_request_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/storefront_order/cancel_order_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/storefront_order/confirm_order_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/storefront_customer/update_profile_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/loyalty_ledgers/get_loyalty_balance_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/loyalty_ledgers/get_loyalty_history_usecase.dart';
+import 'package:mobile_ai_erp/domain/repository/storefront_account/loyalty_ledger_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/customer/customer_repository.dart';
 import 'package:mobile_ai_erp/domain/usecase/customer/get_customers_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/customer/get_customer_detail_usecase.dart';
@@ -451,11 +467,58 @@ class UseCaseModule {
       RemoveSegmentMembersUseCase(getIt<CustomerRepository>()),
     );
 
+    // customer account:-------------------------------------------------------
+    getIt.registerSingleton<CustomerLoginUseCase>(
+      CustomerLoginUseCase(getIt<AccountCustomerRepository>()),
+    );
+    getIt.registerSingleton<CustomerRegisterUseCase>(
+      CustomerRegisterUseCase(getIt<AccountCustomerRepository>()),
+    );
+    getIt.registerSingleton<CustomerForgotPasswordUseCase>(
+      CustomerForgotPasswordUseCase(getIt<AccountCustomerRepository>()),
+    );
+    getIt.registerSingleton<GetProfileUseCase>(
+      GetProfileUseCase(getIt<AccountCustomerRepository>()),
+    );
+
+    getIt.registerSingleton<UpdateProfileUseCase>(
+      UpdateProfileUseCase(getIt<AccountCustomerRepository>()),
+    );
+
+    // Customer order:-------------------------------------------------------
+
+    getIt.registerSingleton<GetOrderHistoryUseCase>(
+      GetOrderHistoryUseCase(getIt<StorefrontOrderRepository>()),
+    );
+    getIt.registerSingleton<GetOrderDetailsUseCase>(
+      GetOrderDetailsUseCase(getIt<StorefrontOrderRepository>()),
+    );
+    getIt.registerSingleton<CancelOrderUseCase>(
+      CancelOrderUseCase(getIt<StorefrontOrderRepository>()),
+    );
+    getIt.registerSingleton<SubmitReturnRequestUseCase>(
+      SubmitReturnRequestUseCase(getIt<StorefrontOrderRepository>()),
+    );
+    getIt.registerSingleton<ReorderUseCase>(
+      ReorderUseCase(getIt<StorefrontOrderRepository>()),
+    );
+    getIt.registerSingleton<ConfirmOrderUsecase>(
+      ConfirmOrderUsecase(getIt<StorefrontOrderRepository>()),
+    );
+
+    // loyalty ledger:-------------------------------------------------------
+    getIt.registerSingleton<GetLoyaltyHistoryUseCase>(
+      GetLoyaltyHistoryUseCase(getIt<LoyaltyLedgerRepository>()),
+    );
+    getIt.registerSingleton<GetLoyaltyBalanceUseCase>(
+      GetLoyaltyBalanceUseCase(getIt<LoyaltyLedgerRepository>()),
+    );
     // product_metadata:-------------------------------------------------------
     // brands
     getIt.registerSingleton<GetBrandsUseCase>(
       GetBrandsUseCase(getIt<ProductMetadataRepository>()),
     );
+
     getIt.registerSingleton<GetBrandByIdUseCase>(
       GetBrandByIdUseCase(getIt<ProductMetadataRepository>()),
     );

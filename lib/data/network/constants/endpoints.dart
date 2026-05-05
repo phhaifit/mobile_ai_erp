@@ -171,5 +171,22 @@ class Endpoints {
   static String storefrontCategoryByKey(String categoryKey) =>
       "/storefront/categories/$categoryKey";
 
+  // Create distinct bases for Auth vs. Account Portal
+  static const String customerAuthUrl = "$erpBaseUrl/customer/auth";
+  static const String storefrontAccountUrl = "$erpBaseUrl/storefront";
+
+  // ─── CUSTOMER AUTHENTICATION ──────────────────────────────────────────
+  static const String storefrontCustomerLogin = "$customerAuthUrl/sign-in";
+  static const String storefrontCustomerRegister = "$customerAuthUrl/sign-up";
+  static const String storefrontCustomerForgotPassword = "$customerAuthUrl/magic-link";
+
+  // ─── STOREFRONT ACCOUNT PORTAL (Feature 15) ─────────────────────────
+  // These now correctly point to the secure controller we just built
+  static const String storefrontCustomerProfile = "$storefrontAccountUrl/account/profile";
+  static const String storefrontCustomerAddresses = "$storefrontAccountUrl/addresses";
+  static const String storefrontCustomerOrders = "$storefrontAccountUrl/account/orders";
+
+  // ─── UNUSED ENDPOINTS ──────────────────────────────────────────────
+  static const String storefrontCustomerLoyalty = "$storefrontAccountUrl/account/loyalty-points";
   static String storefrontAccountProfile = "/storefront/account/profile";
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../domain/entity/order/order.dart';
+import '../../../utils/routes/cart_routes.dart';
+import '../../../domain/entity/storefront_order/order.dart';
 import '../../../../di/service_locator.dart';
 import '../../../../utils/routes/routes.dart';
 import '../../../../utils/formatters/currency_utils.dart';
@@ -11,7 +12,7 @@ class OrderDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final order = ModalRoute.of(context)!.settings.arguments as Order;
+    final order = ModalRoute.of(context)!.settings.arguments as StorefrontOrder;
     final orderStore = getIt<OrderStore>();
 
     return Scaffold(
@@ -46,9 +47,9 @@ class OrderDetailScreen extends StatelessWidget {
                     child: const Icon(Icons.image,
                         color: Colors.grey), // Mock Image
                   ),
-                  title: Text(item.displayName),
+                  title: Text(item.productName),
                   subtitle: Text('Qty: ${item.quantity}'),
-                  trailing: Text(CurrencyUtils.format(item.price)),
+                  trailing: Text(CurrencyUtils.format(item.unitPrice)),
                 )),
             const Divider(height: 32),
             const Text('Shipping Information',
@@ -56,7 +57,8 @@ class OrderDetailScreen extends StatelessWidget {
             const SizedBox(height: 8),
             Text(order.shippingAddress),
             const SizedBox(height: 8),
-            Text('Payment Method: ${order.paymentMethod}'),
+            if (order.shippingProvince != null)
+              Text('${order.shippingProvince}, ${order.shippingDistrict}, ${order.shippingWard}'),
             const Divider(height: 32),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -91,63 +93,98 @@ class OrderDetailScreen extends StatelessWidget {
             ),
             // 1. Buy Again Button (Always visible)
             const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: Colors.blue,
+            
+            // LOGIC 1: Success, Cancelled, Returned -> Buy Again
+            if (order.status == OrderStatus.success || 
+                order.status == OrderStatus.cancelled || 
+                order.status == OrderStatus.returned)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: Colors.blue,
+                  ),
+                  onPressed: () async {
+                    try {
+                      await orderStore.reorder(order.id);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Items added to your cart!')),
+                        );
+                        Navigator.pushNamed(context, CartRoutes.cartScreen);
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to reorder: $e')),
+                        );
+                      }
+                    }
+                  },
+                  child: const Text('Buy Again', style: TextStyle(color: Colors.white, fontSize: 16)),
                 ),
-                onPressed: () {
-                  orderStore.buyAgain(order);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Mock: Redirecting to Checkout...')),
-                  );
-                },
-                child: const Text('Buy Again',
-                    style: TextStyle(color: Colors.white, fontSize: 16)),
               ),
-            ),
-            const SizedBox(height: 12),
 
-            // Return / Exchange Button (ONLY visible if Delivered)
-            if (order.status == OrderStatus.delivered)
+            // LOGIC 2: Delivered -> Confirm Success OR Return
+            if (order.status == OrderStatus.delivered) ...[
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: Colors.green,
+                  ),
+                  onPressed: () async {
+                    try {
+                      // 1. Show a loading indicator or just disable the button (optional)
+                      // 2. Call the store
+                      await orderStore.confirmOrder(order.id);
+                      
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Order successfully confirmed! Thank you!')),
+                        );
+                        // Pop back to the Order History screen so it refreshes
+                        Navigator.pop(context);
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to confirm order: $e')),
+                        );
+                      }
+                    }
+                  },
+                  child: const Text('Confirm Received', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                ),
+              ),
+              const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16)),
+                  style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
                   onPressed: () {
-                    Navigator.pushNamed(context, Routes.returnRequest,
-                        arguments: order);
+                    Navigator.pushNamed(context, Routes.returnRequest, arguments: order);
                   },
-                  child: const Text('Return / Exchange Items',
-                      style: TextStyle(color: Colors.red)),
+                  child: const Text('Return / Exchange Items', style: TextStyle(color: Colors.red)),
                 ),
               ),
+            ],
 
-            // Cancel Order Button (ONLY visible if Pending)
-            if (order.status == OrderStatus.pending)
+            if (order.status == OrderStatus.pending || order.status == OrderStatus.confirmed)
               SizedBox(
                 width: double.infinity,
                 child: TextButton(
-                  style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16)),
-                  onPressed: () async {
-                    await orderStore.cancelOrder(order.id);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('Order has been canceled.')),
-                      );
-                      Navigator.pop(context); // Go back to the history list
-                    }
+                  style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+                  onPressed: () {
+                    // Navigate to the new cancellation screen and pass the order
+                    Navigator.pushNamed(context, Routes.cancelOrder, arguments: order);
                   },
-                  child: const Text('Cancel Order',
-                      style: TextStyle(color: Colors.grey)),
+                  child: const Text('Cancel Order', style: TextStyle(color: Color.fromARGB(255, 217, 97, 97), fontSize: 16)),
                 ),
               ),
+            // LOGIC 4: Packing, Shipping -> No buttons (Intentionally blank)
           ],
         ),
       ),

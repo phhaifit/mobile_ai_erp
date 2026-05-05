@@ -15,6 +15,7 @@ import 'package:mobile_ai_erp/utils/routes/cart_routes.dart';
 import 'package:mobile_ai_erp/utils/locale/app_localization.dart';
 import 'package:mobile_ai_erp/utils/routes/routes.dart';
 import 'package:mobile_ai_erp/constants/strings.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -141,9 +142,9 @@ class _HomeScreenState extends State<HomeScreen> {
           _buildReportsEntry(),
           _buildPostPurchaseEntry(),
           _buildStorefrontEntry(),
-          _buildCustomerPortalEntry(),
           _buildSuppliersEntry(),
           _buildUsersManagementEntry(),
+          // _buildSuppliersEntry(),
           _buildProductsBody(),
           _buildProductMetadataEntry(),
         ],
@@ -326,23 +327,6 @@ class _HomeScreenState extends State<HomeScreen> {
           title: Text("Suppliers"),
           trailing: Icon(Icons.chevron_right),
           onTap: () => Navigator.of(context).pushNamed(Routes.suppliers),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCustomerPortalEntry() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-      child: Card(
-        child: ListTile(
-          leading: Icon(
-            Icons.person_outline,
-          ), // Icon representing a user profile
-          title: Text('Customer Portal (Storefront)'),
-          subtitle: Text('Manage profile, address book, and order history.'),
-          trailing: Icon(Icons.chevron_right),
-          onTap: () => Navigator.of(context).pushNamed(Routes.profileDashboard),
         ),
       ),
     );

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../../../domain/entity/order/order.dart';
+import '../../../domain/entity/storefront_order/order.dart';
 import '../../../../utils/formatters/currency_utils.dart';
 import 'order_status_badge.dart';
 
 class OrderItemCardWidget extends StatelessWidget {
-  final Order order;
+  final StorefrontOrder order;
   final VoidCallback onTap;
 
   const OrderItemCardWidget({
@@ -34,7 +34,7 @@ class OrderItemCardWidget extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    order.id,
+                    'Order #${order.code}',
                     style: const TextStyle(
                         fontWeight: FontWeight.bold, fontSize: 16),
                   ),
@@ -43,7 +43,7 @@ class OrderItemCardWidget extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'Date: ${order.date.toString().substring(0, 10)}',
+                'Date: ${order.createdAt.toString().substring(0, 10)}',
                 style: TextStyle(color: Colors.grey.shade600),
               ),
               const SizedBox(height: 4),

@@ -1,9 +1,23 @@
+import 'package:decimal/decimal.dart';
+
 class CurrencyUtils {
-  /// Formats a double into a localized currency string using Regex.
-  static String format(double amount, {String currencyCode = 'VND'}) {
+  /// Formats a number (double or Decimal) into a localized currency string using Regex.
+  static String format(dynamic amount, {String currencyCode = 'VND'}) {
+    // Convert amount to double
+    double doubleAmount;
+    if (amount is Decimal) {
+      doubleAmount = amount.toDouble();
+    } else if (amount is double) {
+      doubleAmount = amount;
+    } else if (amount is int) {
+      doubleAmount = amount.toDouble();
+    } else {
+      doubleAmount = double.tryParse(amount.toString()) ?? 0.0;
+    }
+
     // Determine decimal places (VND and JPY traditionally have 0)
     int decimals = (currencyCode == 'VND' || currencyCode == 'JPY') ? 0 : 2;
-    String fixedAmount = amount.toStringAsFixed(decimals);
+    String fixedAmount = doubleAmount.toStringAsFixed(decimals);
 
     // Split into integer and decimal parts
     List<String> parts = fixedAmount.split('.');

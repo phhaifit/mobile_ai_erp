@@ -1,5 +1,6 @@
 import 'package:mobile_ai_erp/constants/app_theme.dart';
 import 'package:mobile_ai_erp/constants/strings.dart';
+import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
 import 'package:mobile_ai_erp/presentation/auth/onboarding_screen.dart';
 import 'package:mobile_ai_erp/presentation/home/home.dart';
 import 'package:mobile_ai_erp/presentation/home/store/language/language_store.dart';
@@ -145,6 +146,14 @@ class _MyAppState extends State<MyApp> {
           ],
         );
       },
+    );
+  }
+
+  Widget _buildLoadingScreen() {
+    return Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(),
+      ),
     );
   }
 }

@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:mobile_ai_erp/core/stores/error/error_store.dart';
 import 'package:mobile_ai_erp/core/stores/form/form_store.dart';
+import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
+import 'package:mobile_ai_erp/domain/repository/customer/customer_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/storefront_account/customer_repository.dart';
 import 'package:mobile_ai_erp/domain/usecase/product/save_product_usecase.dart';
 import 'package:mobile_ai_erp/presentation/supplier/store/supplier_store.dart';
 import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
@@ -103,7 +106,8 @@ import 'package:mobile_ai_erp/domain/usecase/inventory_audit_outbound/submit_inv
 import 'package:mobile_ai_erp/domain/usecase/order_tracking/find_order_tracking_scenario_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/order_tracking/get_order_tracking_scenarios_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/post/get_post_usecase.dart';
-import 'package:mobile_ai_erp/domain/usecase/user/assign_role_to_user_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/storefront_customer/get_profile_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/storefront_customer/update_profile_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/create_role_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/delete_role_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/get_all_roles_usecase.dart';
@@ -111,6 +115,7 @@ import 'package:mobile_ai_erp/domain/usecase/user/get_role_by_id_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/update_role_usercase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/get_all_users_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/get_user_by_id_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/user/assign_role_to_user_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/create_user_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/update_user_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/user/delete_user_usecase.dart';
@@ -125,6 +130,14 @@ import 'package:mobile_ai_erp/domain/usecase/web_builder/get_web_themes_usecase.
 import 'package:mobile_ai_erp/domain/usecase/web_builder/publish_cms_page_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/save_cms_page_usecase.dart';
 import 'package:mobile_ai_erp/domain/usecase/web_builder/save_store_settings_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/storefront_order/cancel_order_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/storefront_order/get_order_details_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/storefront_order/get_order_history_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/storefront_order/reorder_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/storefront_order/submit_return_request_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/storefront_order/confirm_order_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/loyalty_ledgers/get_loyalty_balance_usecase.dart';
+import 'package:mobile_ai_erp/domain/usecase/loyalty_ledgers/get_loyalty_history_usecase.dart';
 import 'package:mobile_ai_erp/presentation/customer_management/store/customer_store.dart';
 import 'package:mobile_ai_erp/presentation/dashboard/store/dashboard_store.dart';
 import 'package:mobile_ai_erp/presentation/home/store/language/language_store.dart';
@@ -143,8 +156,9 @@ import 'package:mobile_ai_erp/presentation/reports/store/reports_store.dart';
 import 'package:mobile_ai_erp/presentation/account/store/profile_store.dart';
 import 'package:mobile_ai_erp/presentation/account/store/address_store.dart';
 import 'package:mobile_ai_erp/presentation/account/store/order_store.dart';
-import 'package:mobile_ai_erp/domain/repository/account/address_repository.dart';
-import 'package:mobile_ai_erp/domain/repository/account/order_repository.dart';
+import 'package:mobile_ai_erp/presentation/account/store/loyalty_store.dart';
+import 'package:mobile_ai_erp/domain/repository/storefront_account/address_repository.dart';
+import 'package:mobile_ai_erp/domain/repository/storefront_account/order_repository.dart';
 import 'package:mobile_ai_erp/presentation/stock_operations/store/stock_operations_store.dart';
 import 'package:mobile_ai_erp/presentation/user/store/role_store.dart';
 import 'package:mobile_ai_erp/presentation/user/store/user_store.dart'
@@ -163,6 +177,7 @@ import 'package:mobile_ai_erp/presentation/product/store/product_form_store.dart
 import 'package:mobile_ai_erp/presentation/product/store/product_store.dart';
 import 'package:mobile_ai_erp/domain/repository/product/product_management_repository.dart';
 
+
 import '../../../di/service_locator.dart';
 
 class StoreModule {
@@ -172,14 +187,34 @@ class StoreModule {
     getIt.registerFactory(
       () => FormStore(getIt<FormErrorStore>(), getIt<ErrorStore>()),
     );
+    
+    getIt.registerSingleton<ProfileStore>(
+      ProfileStore(
+        getIt<GetProfileUseCase>(),
+        getIt<UpdateProfileUseCase>(),
+        getIt<SharedPreferenceHelper>(),
+      ),
+    );
 
-    getIt.registerLazySingleton<ProfileStore>(() => ProfileStore());
-    getIt.registerLazySingleton<AddressStore>(
-      () => AddressStore(getIt<AddressRepository>()),
+    getIt.registerLazySingleton<AddressStore>(() => AddressStore(getIt<StorefrontAddressRepository>()));
+    getIt.registerSingleton<OrderStore>(
+      OrderStore(
+        getIt<GetOrderHistoryUseCase>(),
+        getIt<GetOrderDetailsUseCase>(),
+        getIt<CancelOrderUseCase>(),
+        getIt<SubmitReturnRequestUseCase>(),
+        getIt<ReorderUseCase>(),
+        getIt<ConfirmOrderUsecase>(),
+      ),
     );
-    getIt.registerLazySingleton<OrderStore>(
-      () => OrderStore(getIt<OrderRepository>()),
+
+    getIt.registerSingleton<LoyaltyStore>(
+      LoyaltyStore(
+        getIt<GetLoyaltyBalanceUseCase>(),
+        getIt<GetLoyaltyHistoryUseCase>(),
+      ),
     );
+
     getIt.registerLazySingleton(() => ReportsMockRepository());
 
     getIt.registerSingleton<auth.LoginStore>(

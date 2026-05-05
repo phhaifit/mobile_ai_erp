@@ -55,8 +55,6 @@ class Product {
   final DateTime? flashSaleFrom;
   final DateTime? flashSaleTo;
 
-
-
   Product({
     this.id,
     required this.name,
@@ -285,4 +283,3 @@ class Product {
     );
   }
 }
-

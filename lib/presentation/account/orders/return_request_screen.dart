@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../../domain/entity/order/order.dart';
+import '../../../domain/entity/storefront_order/order.dart';
+import '../../../../di/service_locator.dart';
+import '../store/order_store.dart';
+import '../../../domain/entity/storefront_order/return_request.dart'; 
 import '../../../../di/service_locator.dart';
 import '../store/order_store.dart';
 
@@ -32,7 +35,7 @@ class _ReturnRequestScreenState extends State<ReturnRequestScreen> {
   @override
   Widget build(BuildContext context) {
     final args = ModalRoute.of(context)?.settings.arguments;
-    if (args is! Order) {
+    if (args is! StorefrontOrder) {
       return Scaffold(
         appBar: AppBar(title: const Text('Error')),
         body: const Center(child: Text('Order details not found.')),
@@ -125,18 +128,33 @@ class _ReturnRequestScreenState extends State<ReturnRequestScreen> {
                       : () async {
                           if (_formKey.currentState!.validate()) {
                             setState(() => _isLoading = true);
+                            
+                            // Using the exact classes you provided
+                            final payload = SubmitReturnPayload(
+                              type: 'return',
+                              reason: '$_selectedReason: ${_reasonController.text}',
+                              items: order.items.map((item) => ReturnItemPayload(
+                                orderItemId: item.id, // The specific item UUID
+                                quantity: item.quantity, // Returning all of them
+                                reason: _selectedReason,
+                              )).toList(),
+                            );
+                            
                             try {
+                              // Pass the ID and the raw JSON map to the store
                               await orderStore.submitReturnRequest(
-                                  order.id, _selectedReason);
+                                order.id, 
+                                payload, // Make sure your Store is expecting the Payload object
+                              );
+                              
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                       content: Text('Return request submitted successfully!')),
                                 );
-                                Navigator.pop(context);
+                                Navigator.pop(context); // Go back to order details
                               }
                             } catch (e) {
-                              // Handle network errors when implementing real API calls
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(content: Text('Failed to submit: $e')),

@@ -1,46 +1,71 @@
 import 'package:mobx/mobx.dart';
-import '../../../../domain/entity/address/address.dart';
-import '../../../../domain/repository/account/address_repository.dart';
+import '../../../../domain/entity/storefront_address/storefront_address.dart';
+import '../../../domain/repository/storefront_account/address_repository.dart';
 
 part 'address_store.g.dart';
 
 class AddressStore = _AddressStore with _$AddressStore;
 
 abstract class _AddressStore with Store {
-  final AddressRepository _repository; // Changed type and name
+  final StorefrontAddressRepository _repository; // Changed type and name
 
   _AddressStore(this._repository); // Changed constructor
 
   @observable
-  ObservableList<Address> addresses = ObservableList<Address>();
+  ObservableList<StorefrontAddress> addresses = ObservableList<StorefrontAddress>();
 
   @observable
   bool isLoading = false;
 
   @action
   Future<void> fetchAddresses() async {
-    isLoading = true;
-    final data = await _repository.getAddresses(); // Use _repository here
-    addresses = ObservableList.of(data);
-    isLoading = false;
+    try {
+      print('🔵 [AddressStore.fetchAddresses] Starting addresses fetch');
+      isLoading = true;
+      
+      final data = await _repository.getAddresses();
+      print('✅ [AddressStore.fetchAddresses] Got ${data.length} addresses');
+      
+      if (data.isEmpty) {
+        print('⚠️ [AddressStore.fetchAddresses] Backend endpoint missing!');
+        print('⚠️ [AddressStore.fetchAddresses] See: report_missing_endpoints.md');
+      }
+      
+      addresses = ObservableList.of(data);
+      isLoading = false;
+    } catch (e) {
+      print('❌ [AddressStore.fetchAddresses] Error: $e');
+      isLoading = false;
+      // Don't rethrow - show empty list
+    }
   }
 
   @action
-  Future<void> setDefault(String id) async {
-    isLoading = true;
-    await _repository.setDefault(id); // Use _repository here
-    await fetchAddresses();
+  Future<bool> setDefault(String id) async {
+    try {
+      isLoading = true;
+      
+      await _repository.setDefault(id);
+      
+      await fetchAddresses();
+      return true; // Success
+    } catch (e) {
+      return false; // Failed
+    } finally {
+      isLoading = false;
+    }
   }
 
   @action
-  Future<void> addAddress(Address address) async {
+  Future<void> addAddress(StorefrontAddress address) async {
     isLoading = true;
     await _repository.addAddress(address);
     await fetchAddresses(); // Refresh list
   }
 
   @action
-  Future<void> updateAddress(Address address) async {
+
+  Future<void> updateAddress(StorefrontAddress address) async {
     isLoading = true;
     await _repository.updateAddress(address);
     await fetchAddresses(); // Refresh list

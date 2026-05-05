@@ -17,6 +17,10 @@ import 'package:mobile_ai_erp/data/network/apis/product_metadata/category_api.da
 import 'package:mobile_ai_erp/data/network/apis/product_metadata/tag_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/product_metadata/attribute_set_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/posts/post_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/storefront_customer/customer_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/storefront_address/address_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/storefront_order/order_api.dart';
+import 'package:mobile_ai_erp/data/network/apis/loyalty_ledgers/loyalty_ledger_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/storefront_products_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/web_builder/web_builder_api.dart';
 import 'package:mobile_ai_erp/data/network/apis/cart/cart_api.dart';
@@ -37,6 +41,7 @@ import 'package:mobile_ai_erp/data/network/rest_client.dart';
 import 'package:mobile_ai_erp/data/sharedpref/customer_shared_preference_helper.dart';
 import 'package:mobile_ai_erp/data/sharedpref/shared_preference_helper.dart';
 import 'package:event_bus/event_bus.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mobile_ai_erp/data/network/apis/storefront/storefront_api.dart';
 import 'package:mobile_ai_erp/domain/repository/customer_auth_repository.dart';
 import 'package:mobile_ai_erp/domain/repository/user/auth_repository.dart';
@@ -202,6 +207,41 @@ class NetworkModule {
       instanceName: 'storefront',
     );
 
+    // customer dio:-----------------------------------------------------------
+    getIt.registerSingleton<DioConfigs>(
+      const DioConfigs(
+        baseUrl: Endpoints.storefrontAccountUrl,
+        connectionTimeout: Endpoints.connectionTimeout,
+        receiveTimeout: Endpoints.receiveTimeout,
+      ),
+      instanceName: 'customer',
+    );
+    getIt.registerSingleton<TenantHeaderInterceptor>(
+      TenantHeaderInterceptor(
+        subdomain: () async => getIt<SharedPreferenceHelper>().subdomain,
+        tenantId: () async {
+          final storedTenantId = await getIt<SharedPreferenceHelper>().tenantId;
+          if (storedTenantId != null && storedTenantId.isNotEmpty) {
+            return storedTenantId;
+          }
+          return StorefrontEndpoints.tenantId;
+        },
+      ),
+      instanceName: 'customer',
+    );
+    getIt.registerSingleton<DioClient>(
+      DioClient(dioConfigs: getIt(instanceName: 'customer'))
+        ..addInterceptors(
+          [
+            getIt<AuthInterceptor>(),
+            getIt<TenantHeaderInterceptor>(instanceName: 'customer'),
+            getIt<ErrorInterceptor>(),
+            getIt<LoggingInterceptor>(),
+          ],
+        ),
+      instanceName: 'customer',
+    );
+
     // api's:-------------------------------------------------------------------
     getIt.registerSingleton<WebBuilderApi>(
       WebBuilderApi(getIt<DioClient>(instanceName: erpDioClientName)),
@@ -226,6 +266,10 @@ class NetworkModule {
     getIt.registerSingleton(TagApi(getIt<DioClient>(instanceName: erpDioClientName)));
     getIt.registerSingleton(AttributeSetApi(getIt<DioClient>(instanceName: erpDioClientName)));
     getIt.registerSingleton(PostApi(getIt<DioClient>(), getIt<RestClient>()));
+    getIt.registerSingleton<StorefrontCustomerApi>(StorefrontCustomerApi(getIt<DioClient>(instanceName: 'customer')));
+    getIt.registerSingleton<StorefrontAddressApi>(StorefrontAddressApi(getIt<DioClient>(instanceName: 'customer')));
+    getIt.registerSingleton<StorefrontOrderApi>(StorefrontOrderApi(getIt<DioClient>(instanceName: 'customer')));
+    getIt.registerSingleton<LoyaltyLedgerApi>(LoyaltyLedgerApi(getIt<DioClient>(instanceName: 'customer')));
     getIt.registerSingleton(ProductApi(getIt<DioClient>(instanceName: erpDioClientName)));
 
     // customer apis:----------------------------------------------------------

@@ -1,9 +1,2 @@
-import '../../entity/address/address.dart';
-
-abstract class AddressRepository {
-  Future<List<Address>> getAddresses();
-  Future<void> addAddress(Address address);
-  Future<void> updateAddress(Address address);
-  Future<void> setDefault(String id);
-  Future<void> deleteAddress(String id);
-}
+// Wrapper file for backwards compatibility
+export '../storefront_account/address_repository.dart';

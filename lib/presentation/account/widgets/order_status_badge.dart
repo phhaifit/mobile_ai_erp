@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../domain/entity/order/order.dart';
+import '../../../domain/entity/storefront_order/order.dart';
 
 class OrderStatusBadge extends StatelessWidget {
   final OrderStatus status;
@@ -21,21 +21,31 @@ class OrderStatusBadge extends StatelessWidget {
       case OrderStatus.pending:
         bgColor = Colors.orange.shade100;
         text = 'Pending';
-      case OrderStatus.processing:
-        bgColor = Colors.amber.shade100;
-        text = 'Processing';
+        break;
       case OrderStatus.confirmed:
-        bgColor = Colors.teal.shade100;
-        text = 'Confirmed';
-      case OrderStatus.shipped:
         bgColor = Colors.blue.shade100;
-        text = 'Shipped';
-      case OrderStatus.canceled:
+        text = 'Confirmed';
+        break;
+      case OrderStatus.packing:
+        bgColor = Colors.blue.shade100;
+        text = 'Packing';
+        break;
+      case OrderStatus.shipping:
+        bgColor = Colors.blue.shade100;
+        text = 'Shipping';
+        break;
+      case OrderStatus.cancelled:
         bgColor = Colors.red.shade100;
-        text = 'Canceled';
+        text = 'Cancelled';
+        break;
       case OrderStatus.returned:
         bgColor = Colors.purple.shade100;
         text = 'Returned';
+        break;
+      case OrderStatus.success:
+        bgColor = Colors.green.shade200;
+        text = 'Success';
+        break;
     }
 
     return Chip(
