@@ -70,7 +70,7 @@
 | API bonus (BE work)     | 0    |
 | Reviewer bonus          | 2    |
 | **Tổng (uncapped)**     | 12   |
-| **Capped @15**          | _12_ |
+| **Capped @10**          | _10_ |
 
 ---
 
